@@ -1,0 +1,695 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brown Dwarf Models &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Adding your Own Chemistry in PICASO" href="../B_chemistry/1_ChemicalEquilibrium.html" />
+    <link rel="prev" title="Computing Transmission Spectroscopy" href="6_AddingTransitSpectrum.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_GetStarted.html">Getting Started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_AddingClouds.html">Simple Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_AddingSurfaceReflectivity.html">Surface Reflectivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4_PlotDiagnostics.html">Plot Diagnostics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="5_AddingThermalFlux.html">Thermal Emission Spectroscopy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_AddingTransitSpectrum.html">Transmission Spectroscopy</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarf Spectroscopy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Download-and-Query-from-Sonora-Profile-Grid">Download and Query from Sonora Profile Grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Run-Spectrum">Run Spectrum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Convert-to-F_\nu-Units-and-Regrid">Convert to <span class="math notranslate nohighlight">\(F_\nu\)</span> Units and Regrid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Compare-with-Sonora-Grid">Compare with Sonora Grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Thermal-Contribution-Function">Thermal Contribution Function</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Brown Dwarf Models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/A_basics/7_BrownDwarfs.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/A_basics/7_BrownDwarfs.py">Download full notebook here</a></p>
+</div>
+<section id="Brown-Dwarf-Models">
+<h1>Brown Dwarf Models<a class="headerlink" href="#Brown-Dwarf-Models" title="Link to this heading"></a></h1>
+<p>Modeling brown dwarfs is very similar to modeling thermal emission for exoplanets. The only difference is there is no stellar input!</p>
+<p>In this tutorial you will learn:</p>
+<ol class="arabic simple">
+<li><p>How to turn that feature off</p></li>
+<li><p>Query a profile from the <a class="reference external" href="https://zenodo.org/record/1309035#.Xo5GbZNKjGJ">Sonora Grid</a>. Note, this is note necessary – just convenient!</p></li>
+<li><p>Create a Brown Dwarf Spectrum</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1">#picaso</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="c1">#plotting</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">output_notebook</span>
+
+<span class="n">output_notebook</span><span class="p">()</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span><span class="p">,</span><span class="n">figure</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="d89f2d99-0eb2-4926-a77b-c8927e0ba42d">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("d89f2d99-0eb2-4926-a77b-c8927e0ba42d");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("d89f2d99-0eb2-4926-a77b-c8927e0ba42d")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<p>Start with the same inputs as before</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span>
+
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">)</span>
+
+<span class="n">bd</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;browndwarf&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Note here that we do not need to provide case.star, since there is none!</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="mi">100</span> <span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/s**2&#39;</span><span class="p">))</span>
+
+<span class="c1">#this is the integration setup that was used to compute the Sonora grid</span>
+<span class="c1">#take a look at Spherical Integration Tutorial to get a look at what these parameters do</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="Download-and-Query-from-Sonora-Profile-Grid">
+<h2>Download and Query from Sonora Profile Grid<a class="headerlink" href="#Download-and-Query-from-Sonora-Profile-Grid" title="Link to this heading"></a></h2>
+<p>Download the profile files that are located in the <a class="reference external" href="https://zenodo.org/record/1309035#.Xo5GbZNKjGJ">profile.tar file</a></p>
+<p>Once you untar the file you can set the file path below. You do not need to unzip each profile. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> will do that upon read in. <code class="docutils literal notranslate"><span class="pre">picaso</span></code> will find the nearest neighbor and attach it to your class.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#point to where you untared your sonora profiles</span>
+<span class="c1"># sonora_profile_db = &#39;/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0&#39;#&#39;/data/sonora_profile/&#39;</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+
+<span class="n">Teff</span> <span class="o">=</span> <span class="mi">900</span>
+<span class="c1">#this function will grab the gravity you have input above and find the nearest neighbor with the</span>
+<span class="c1">#note sonora chemistry grid is on the same opacity grid as our opacities (1060).</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">sonora</span><span class="p">(</span><span class="n">sonora_profile_db</span><span class="p">,</span> <span class="n">Teff</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Note if you have added anything to your atmosphere profile (<code class="docutils literal notranslate"><span class="pre">bd.inputs['atmosphere']['profile']</span></code>), <code class="docutils literal notranslate"><span class="pre">sonora</span></code> function will overwrite it! Therefore, <strong>make sure that you add new column fields after running sonora.</strong></p>
+</section>
+<section id="Run-Spectrum">
+<h2>Run Spectrum<a class="headerlink" href="#Run-Spectrum" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Convert-to-F_\nu-Units-and-Regrid">
+<h2>Convert to <span class="math notranslate nohighlight">\(F_\nu\)</span> Units and Regrid<a class="headerlink" href="#Convert-to-F_\nu-Units-and-Regrid" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">PICASO</span></code> outputs the raw flux as:</p>
+<div class="math notranslate nohighlight">
+\[F_\lambda ( \frac{erc}{cm^2 * sec * cm})\]</div>
+<p>Typical fluxes shown in several Brown Dwarf papers are:</p>
+<div class="math notranslate nohighlight">
+\[F_\nu ( \frac{erc}{cm^2 * sec * Hz})\]</div>
+<p>Below is a little example of how to convert units.</p>
+<p><strong>NOTE</strong>: Some people like to plot out <code class="docutils literal notranslate"><span class="pre">Eddington</span> <span class="pre">Flux</span></code>, <span class="math notranslate nohighlight">\(H_\nu\)</span>. This gets confusing as the units appear to be erg/cm2/s/Hz but you will notice a factor of four difference:</p>
+<div class="math notranslate nohighlight">
+\[H_\nu = \frac{F_\nu}{4}\]</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#converts from picaso default units (can also specify original unit if different from picaso via kwarg f_unit and xgrid_unit)</span>
+<span class="n">fluxnu</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">convert_flux_units</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;thermal&#39;</span><span class="p">],</span> <span class="n">to_f_unit</span> <span class="o">=</span> <span class="s1">&#39;erg*cm^(-2)*s^(-1)*Hz^(-1)&#39;</span><span class="p">)</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;fluxnu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fluxnu</span>
+<span class="n">binx</span><span class="p">,</span><span class="n">biny</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">fluxnu</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span> <span class="c1">#wavenumber, erg/cm2/s/Hz</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;regridy&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="n">biny</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;regridx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">binx</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Compare-with-Sonora-Grid">
+<h2>Compare with Sonora Grid<a class="headerlink" href="#Compare-with-Sonora-Grid" title="Link to this heading"></a></h2>
+<p>The corresponding spectra are also available at the same link above. <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> doesn’t provide query functions for this. So if you want to compare, you will have to read in the files as is done below</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">son</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;sp_t900g100nc_m0.0&#39;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">,</span>
+                 <span class="n">skiprows</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">,</span><span class="s1">&#39;f&#39;</span><span class="p">])</span>
+<span class="n">sonx</span><span class="p">,</span> <span class="n">sony</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;w&#39;</span><span class="p">],</span> <span class="n">son</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">],</span> <span class="n">newx</span><span class="o">=</span><span class="n">binx</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">binx</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="p">,[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;regridy&#39;</span><span class="p">],</span> <span class="n">sony</span><span class="p">],</span> <span class="n">legend</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PICASO&#39;</span><span class="p">,</span> <span class="s1">&#39;Sonora&#39;</span><span class="p">]</span>
+                  <span class="p">,</span><span class="n">plot_width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span><span class="n">x_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">,</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="a19ffc52-42c1-41be-9096-428dcfb88837" data-root-id="p1001" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"97f98707-daa4-4464-babe-a5d7995101a2":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1001","attributes":{"width":800,"height":345,"x_range":{"type":"object","name":"Range1d","id":"p1010","attributes":{"start":3,"end":5}},"y_range":{"type":"object","name":"DataRange1d","id":"p1003"},"x_scale":{"type":"object","name":"LinearScale","id":"p1011"},"y_scale":{"type":"object","name":"LogScale","id":"p1012"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1040","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1034","attributes":{"selected":{"type":"object","name":"Selection","id":"p1035","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1036"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"T3/qzH8EFEBl/aUrcvMTQJIQhRFz4hNAYFYncoLRE0CG9zZBoMATQPOeaHLMrxNA2HB7+QafE0C5ATnKT44TQIlNddimfRNA064OGAxtE0Dc1e18f1wTQNm/BfsATBNALK5ThpA7E0CfHd8SLisTQK69uZTZGhNA3Gf//5IKE0ADF9ZIWvoSQLTebWMv6hJApeIARBLaEkAWTtPeAsoSQEZLMygBuhJA8fp4FA2qEkDVawaYJpoSQD2SR6dNihJAiz+yNoJ6EkDaGcY6xGoSQJaTDKgTWxJAK+MYc3BLEkCy+oeQ2jsSQJ1/APVRLBJAfsIyldYcEkDFtthlaA0SQI3qtVsH/hFAb36Xa7PuEUBSHVSKbN8RQFT0y6wy0BFAraroxwXBEUCbWZ3Q5bERQFSE5rvSohFABxDKfsyTEUDZO1cO04QRQO+Ypl/mdRFAfQLaZwZnEUDdlRwcM1gRQKmqonFsSRFA5cqpXbI6EUAfq3jVBCwRQKwiX85jHRFA1iO2Pc8OEUAetN8YRwARQIHkRlXL8RBAwclf6FvjEEC+dKfH+NQQQMXqo+ihxhBA9R3kQFe4EECh5f/FGKoQQMH2l23mmxBAYdxVLcCNEEAY8Ov6pX8QQIpSFcyXcRBA8uOVlpVjEECjPDpQn1UQQKal1+60RxBASRFMaNY5EEDJE36yAywQQOvbXMM8HhBAsSvgkIEQEEAIUQgR0gIQQP48vHNc6g9AFcjlAizPD0CDz8C7ErQPQFy9kYoQmQ9ANsutWyV+D0DZ83obUWMPQPzkb7aTSA9AAPETGe0tD0DPAP8vXRMPQLWF2efj+A5ARmtcLYHeDkBgCVHtNMQOQCAWkRT/qQ5A+JcGkN+PDkDJ16tM1nUOQARTizfjWw5A5q2/PQZCDkCmpXNMPygOQNAC4lCODg5AiItVOPP0DUD99SjwbdsNQMHaxmX+wQ1AV6ephqSoDUCikFtAYI8NQIKFdoAxdg1AYiGkNBhdDUDunp1KFEQNQLbKK7AlKw1A6PUmU0wSDUAp6XYhiPkMQFnXEgnZ4AxAdFAB+D7IDECBNFjcua8MQH2mPKRJlwxAY//iPe5+DEA0wY6Xp2YMQAiKkp91TgxAOwdQRFg2DECK6Dd0Tx4MQFLTyR1bBgxAz1WUL3vuC0Bs2jSYr9YLQBabV0b4vgtAmpS3KFWnC0Aheh4uxo8LQJSoZEVLeAtALhpxXeRgC0D7WTllkUkLQIF3wUtSMgtATPobACcbC0Cv1WlxDwQLQG5c2o4L7QpAgTSrRxvWCkDpSiiLPr8KQHjHq0h1qApAvACeb7+RCkDnb3XvHHsKQMektreNZApAvTn0txFOCkDRx87fqDcKQL/a9B5TIQpAGOUiZRALCkBpNCOi4PQJQG/lzcXD3glAUdgIwLnICUDppMeAwrIJQA+PC/jdnAlA/nrjFQyHCUCq4WvKTHEJQDnFzgWgWwlAeqVDuAVGCUBedA/SfTAJQI6KhEMIGwlA/JsC/aQFCUCBrPbuU/AIQIcE2wkV2whAvCU3PujFCEDPv598zbAIQDGltrXEmwhA578q2s2GCEBmBrja6HEIQHJwJ6gVXQhABuxOM1RICEBSUhFtpDMIQLJcXkYGHwhAupkysHkKCEA="},"shape":[154],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"8Of8kfBZlD4JAjC32LaYPhyR9fuVOpc+H7vpuY3qkj7YBKu39K6UPgCXy2RUb5s+wELyTCx+lz6bK7I18CKZPqmJHy9L+Zg+btLHiH/Jmj6xjMCeiweUPtKleW3ADpw+pmgPzuwgmj78XHKxZSGZPlJ91/e5y5Y+rL6CjDr5mz5gRfRDeHWfPqThS3Gpfpk+QNQ0qTUZmT68IcDHAb6dPqCVL1KF35s+I518VHAknj7W4R8Y3iCaPoxeWnklOZ0+ONVkK+Z3mD708kEzajefPhL87TMWPZ4+BbudvS3QmT7ouzdJgOmePrudOytQnJ0+RI6+5Q2Slz5G+iwU2hqbPhv4E3E3Lpw+5Vs3fPuRnD4ao9qj5DqbPk7strLk9p4+in5TV+Eqlz4OFTgrY9+aPuyh9nU6F6E+DkT/WmLTlz7aiIcFUOadPmxtfnNt654+6AiDEytumj5usubziuKbPl9oXbyfCaA+9BVPt3GVmz6gMowzdyOePs8OoU1t/Zs+ThAJR8lhnT56SESQGH+bPoobJb3qqJw+cYE3A7ssmz4TduAdmSqgPk284LebJKA+fLSHiwa4nj7GkgER7JifPnsSvnplqJ0+2vt5AgO1oD5R6lQujtqfPs49HsRZEZ8++39D0SDwnj66QOFXrAadPgXvP7kGUZ4+OgYZodlYnD7YjSoHbgiaPkjfH19+Gpo+jWqGTFCGmD7bZOuU1LyWPrx1IYiTK5g+n24epvflkT7cEi0jV+eTPnrFTryoV5I+upo+9QUOkj5DW3UTjYiPPpYwccomnY8+JOyx2eDnjj7NzpaaFJiMPoleL3xMT4s+FMLB5ZeFhj5Bf4cQNdKFPkFmOhrsSo4++7KXJpfqiD7Wd4LBOGmHPqoRw8lglIQ+fxSW9U8KgT4pqyrUp4WBPjub5uJx5IM+6vZGdqFLgD6U4saBvtV8PgFLMxuQl38+AvjSvlNIgD6faiSWv+55PrRT/CDM1nY+7JSCLgNUdj7pLt4YCo52Pt2+xSCWUnA+yOhrHTy5cT7cBT/B8kZuPnioyZHp2WY+MtL7tV0xaz6PMu6jyGdoPnTyp/oUcGc+aOG8J3KdZT5aPv9Dj4dkPniaI3jBJGI+hNXkRh+RYT4I8tqnnAZgPiQWnyWfXl4+xqdp5DexWj7atU8em21XPj60IU7mo1I+b4NCnKIiUz4s7rVa/r1VPmfgm/YaY1I+zj+Ruo2yVj4lAH8q/ydSPgCatOylk1Y+l+FMv12DVT7fjFCi/D1WPiEkS43NPVU+XX/iDNDSUD4/RVV3lnFCPm6K4UNpBC4+NDk8t+R8JD5f9ky4g2NLPj2Bvuepz1g+OqWRbGunXT5KeyYM65tbPnvJ753+9Vc+E+j1HF0VUD7h4J6K/PFNPkafEIOEV1A+wKiJLD1mTT4BEC1BePBMPmHhoIRaXUw+0lbOM4kdTT56rcRySrRRPlNRAykJqFM+IaHmPsvVVT5y4/j3ESpZPm7grIiFglk+kbfHWflnXj48EBS0geloPqrs2+DhFWU+eLQBn+1GaD4GHV8P0pluPnajLA6Wl3E+R5pXHl5Mcj6yNymbYG52PnbZ4ViwJHk+5Fs5nA2yfT7vv3KGfQSAPomBZU46kYA+cZ1kIk5kfj4="},"shape":[154],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1041","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1042"}}},"glyph":{"type":"object","name":"Line","id":"p1037","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1038","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1039","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1049","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1043","attributes":{"selected":{"type":"object","name":"Selection","id":"p1044","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1045"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"T3/qzH8EFEBl/aUrcvMTQJIQhRFz4hNAYFYncoLRE0CG9zZBoMATQPOeaHLMrxNA2HB7+QafE0C5ATnKT44TQIlNddimfRNA064OGAxtE0Dc1e18f1wTQNm/BfsATBNALK5ThpA7E0CfHd8SLisTQK69uZTZGhNA3Gf//5IKE0ADF9ZIWvoSQLTebWMv6hJApeIARBLaEkAWTtPeAsoSQEZLMygBuhJA8fp4FA2qEkDVawaYJpoSQD2SR6dNihJAiz+yNoJ6EkDaGcY6xGoSQJaTDKgTWxJAK+MYc3BLEkCy+oeQ2jsSQJ1/APVRLBJAfsIyldYcEkDFtthlaA0SQI3qtVsH/hFAb36Xa7PuEUBSHVSKbN8RQFT0y6wy0BFAraroxwXBEUCbWZ3Q5bERQFSE5rvSohFABxDKfsyTEUDZO1cO04QRQO+Ypl/mdRFAfQLaZwZnEUDdlRwcM1gRQKmqonFsSRFA5cqpXbI6EUAfq3jVBCwRQKwiX85jHRFA1iO2Pc8OEUAetN8YRwARQIHkRlXL8RBAwclf6FvjEEC+dKfH+NQQQMXqo+ihxhBA9R3kQFe4EECh5f/FGKoQQMH2l23mmxBAYdxVLcCNEEAY8Ov6pX8QQIpSFcyXcRBA8uOVlpVjEECjPDpQn1UQQKal1+60RxBASRFMaNY5EEDJE36yAywQQOvbXMM8HhBAsSvgkIEQEEAIUQgR0gIQQP48vHNc6g9AFcjlAizPD0CDz8C7ErQPQFy9kYoQmQ9ANsutWyV+D0DZ83obUWMPQPzkb7aTSA9AAPETGe0tD0DPAP8vXRMPQLWF2efj+A5ARmtcLYHeDkBgCVHtNMQOQCAWkRT/qQ5A+JcGkN+PDkDJ16tM1nUOQARTizfjWw5A5q2/PQZCDkCmpXNMPygOQNAC4lCODg5AiItVOPP0DUD99SjwbdsNQMHaxmX+wQ1AV6ephqSoDUCikFtAYI8NQIKFdoAxdg1AYiGkNBhdDUDunp1KFEQNQLbKK7AlKw1A6PUmU0wSDUAp6XYhiPkMQFnXEgnZ4AxAdFAB+D7IDECBNFjcua8MQH2mPKRJlwxAY//iPe5+DEA0wY6Xp2YMQAiKkp91TgxAOwdQRFg2DECK6Dd0Tx4MQFLTyR1bBgxAz1WUL3vuC0Bs2jSYr9YLQBabV0b4vgtAmpS3KFWnC0Aheh4uxo8LQJSoZEVLeAtALhpxXeRgC0D7WTllkUkLQIF3wUtSMgtATPobACcbC0Cv1WlxDwQLQG5c2o4L7QpAgTSrRxvWCkDpSiiLPr8KQHjHq0h1qApAvACeb7+RCkDnb3XvHHsKQMektreNZApAvTn0txFOCkDRx87fqDcKQL/a9B5TIQpAGOUiZRALCkBpNCOi4PQJQG/lzcXD3glAUdgIwLnICUDppMeAwrIJQA+PC/jdnAlA/nrjFQyHCUCq4WvKTHEJQDnFzgWgWwlAeqVDuAVGCUBedA/SfTAJQI6KhEMIGwlA/JsC/aQFCUCBrPbuU/AIQIcE2wkV2whAvCU3PujFCEDPv598zbAIQDGltrXEmwhA578q2s2GCEBmBrja6HEIQHJwJ6gVXQhABuxOM1RICEBSUhFtpDMIQLJcXkYGHwhAupkysHkKCEA="},"shape":[154],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"lo5q3NTylT6794RNwu6XPgwgmXuL/ZU+dw/s7maIkT49tc3TdBOUPuWl+X/Sh5o+g9Zg3923lT5x62ZaQxSYPjwWChUAAZg+jgLEkqdpmT6oXhca7BiUPhz0XWbKE5o+cx+A/hKDmD6NzRPaPBGYPsA9Kd+W55U+SkPVYGzSmT5lTg0wWOacPkFAxLakEZg+6A6YeA8elz6vYLO9x96cPg0oxrC2cpo+/98gIjyomz68+xJzWIGYPv/fXasjrJo+Dqa/4jO7lz4KWrf4f/2cPnp5HX71lJ0+iv3NG7Dalz7DQZ6oAt2cPtH7oihOOpw+f8QajLlvlT67B9T3wYKZPsxw9aHzJps+4DwtNuDomT5SeWDvzOuZPpQIPwWO4Js+CDeRmqLelz6qykunQdCYPhMakzfkB54+/3pX71QQlz4pwMBxg+yaPjM97I7UFJ0++q/Hp+bfmD60VVLjDsyaPiEtaoZ2M54+ZkycaXnomD5tgQ7kAP2bPjpz/Zlripo+2qKH0QSQmz7GsSigQMiYPrj398QW85s+VJCo6qC3mT6cNbt8qDicPvfSOk1ES5w+m92Xqj5Xnj7W5ixEriufPq1qjDa7oJw+KdbtSotXnz4vvxssoLicPnGmGBSTJJw+rh7jyl9QnD7ovdss8uSaPknYGJ6kXZs+tjaUTIHbmj5UDPPtAZGYPloqpu7/KZg+IO4IllWUlj4oI22Cu6uWPiEwG47i9JU+SqY9jlRfkj7reswK4XeTPt2xc8zemJE+XSiG4R2GkT7fJkiREvqPPrG86FSWvY0+UzVDJXibjT7GMUFt+niLPmNBBRC5oYs+Sch+nHyriD7cCId8M2qDPi1M/o103o4+5ljbyO6riD5cTi26TFWGPvKoFTSJL4M+TsewxlwlgT60i4mGzLGBPjULaHp1w4M+7nFMxDpxgT7l8p2Xp+F8Plwl8OX07H0+f79mABcefT50X0kJy6J8PvelApzwqXc+BaG2gcOgdz5cjE4AqeF1PkJMyUG473E+/wQDwQclcD5cewW+WoZrPl8DsNzRbWg+/GWCUIYQaT5U/Yfmf61oPuh7rwIr5Gc+oehGxDvyYz6tIdQ0hvtkPq+Zlaz/BmA+NPVT9xlkYT6zuVlAzyRdPsbaAIfvz14+NCUuzYJmWD6kM812POFUPhKj+QOIp1Q+hgjWpZ8+VD4RWnrX9e5SPiGL7zoVw1I+ZaUOZUHYVD5JeFkpo6lVPmo32mnL/VQ+bzx9ZyLjVT5O7Pz/R29WPmDOg1w92lQ+Dj+CftFcTj6oTMYDUK1BPp8FbrqXOSo+T6K/he/OJT5fMkvCG9FIPkbuS9iH9Vo+kW8vq6mtXD6RDY6bUkhYPqquN4dOn1U+Y+FCWDwATD6NLHoN9ctLPhHRCHr6c0w+13V8mdmbTD7sd60tl+5MPvH43D1DXkg+sq6brY9xST4gQCIuDuhNPj/symHFxkw+MVN9g4wwUT7kjJTHpX9WPg7R8GMsUFo+hGouFbelWz5WmcUbtptjPq1uQIlsBGE+GqnIlgfZYz7c60+gFB9oPuXKHr/V3m4+rw0uwGigcD7C96I4yoJxPvNkA0Ar1HM+xHxJJipvdz77NPWSthZ5Pg/6k4/76nU+Egu1hdcLcD4="},"shape":[154],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1050","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1051"}}},"glyph":{"type":"object","name":"Line","id":"p1046","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1047","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1048","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1009","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1023"},{"type":"object","name":"WheelZoomTool","id":"p1024","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1025","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1026","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1031"},{"type":"object","name":"ResetTool","id":"p1032"},{"type":"object","name":"HelpTool","id":"p1033"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1018","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1019","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1020"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1021"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1052","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1053","attributes":{"label":{"type":"value","value":"PICASO"},"renderers":[{"id":"p1040"}]}},{"type":"object","name":"LegendItem","id":"p1054","attributes":{"label":{"type":"value","value":"Sonora"},"renderers":[{"id":"p1049"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1013","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1014","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1015"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1016"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1017","attributes":{"axis":{"id":"p1013"}}},{"type":"object","name":"Grid","id":"p1022","attributes":{"dimension":1,"axis":{"id":"p1018"}}}]}}]}};
+  const render_items = [{"docid":"97f98707-daa4-4464-babe-a5d7995101a2","roots":{"p1001":"a19ffc52-42c1-41be-9096-428dcfb88837"},"root_ids":["p1001"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</section>
+<section id="Thermal-Contribution-Function">
+<h2>Thermal Contribution Function<a class="headerlink" href="#Thermal-Contribution-Function" title="Link to this heading"></a></h2>
+<p>Contribution functions give us an understanding of where pressures flux is being emitted (e.g. <a class="reference external" href="https://iopscience.iop.org/article/10.3847/1538-4357/aadd9e#apjaadd9es3-3-1">Lothringer et al 2018</a> Figure 12)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">CF</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">thermal_contribution</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;full_output&#39;</span><span class="p">],</span> <span class="n">norm</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mf">1e7</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1e11</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_A_basics_7_BrownDwarfs_16_0.png" src="../../_images/notebooks_A_basics_7_BrownDwarfs_16_0.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="6_AddingTransitSpectrum.html" class="btn btn-neutral float-left" title="Computing Transmission Spectroscopy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../B_chemistry/1_ChemicalEquilibrium.html" class="btn btn-neutral float-right" title="Adding your Own Chemistry in PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

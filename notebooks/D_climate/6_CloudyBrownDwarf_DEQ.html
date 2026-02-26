@@ -1,0 +1,1333 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Disequilibrium &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Creating a Grid of Models to use with GridFitter" href="7_CreateModelGrid.html" />
+    <link rel="prev" title="One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Equilibrium" href="5_CloudyBrownDwarf_PreW.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_BrownDwarf_PreW.html">Brown Dwarfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_Exoplanet_PreW.html">Planet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_Exoplanet-Photochemistry.html">Planet w/ Photochemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4_BrownDwarf_DEQ_SC_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4b_BrownDwarf_DEQ_const_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="5_CloudyBrownDwarf_PreW.html">Brown Dwarfs w/ Clouds</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarfs w/ Clouds and Disequilibrium Chemistry</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Plot-the-P-T-Profile">Plot the P-T Profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Cloudy-vs-Clear-Spectra">Cloudy vs Clear Spectra</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="7_CreateModelGrid.html">Creating a grid of models to use with PICASO's fitting tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="8_EnergyInjection.html">Brown Dwarfs w/ Energy Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Disequilibrium</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/6_CloudyBrownDwarf_DEQ.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/6_CloudyBrownDwarf_DEQ.py">Download full notebook here</a></p>
+</div>
+<section id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Clouds-in-Chemical-Disequilibrium">
+<h1>One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Disequilibrium<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Clouds-in-Chemical-Disequilibrium" title="Link to this heading"></a></h1>
+<p>In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds and chemical disequilibrium. For a more in depth look at the climate-cloud code check out <a href="#id1"><span class="problematic" id="id2">`Mang et al. 2026 &lt;&gt;`__</span></a> (note this should also be cited if using this code/tutorial).</p>
+<p>You should already be familiar with running 1-D climate models with running a <a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">simple clear brown dwarf model</a> and running clouds in <a href="#id1"><span class="problematic" id="id3">`equilibrium &lt;&gt;`__</span></a></p>
+<p>What you need to have downloaded for clouds to work:</p>
+<p><a class="reference external" href="https://natashabatalha.github.io/virga/installation.html">Virga</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vj</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cldplt</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span><span class="p">,</span> <span class="n">figure</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="f4d995f2-bfe2-4787-9483-aae2fc2eac4d">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("f4d995f2-bfe2-4787-9483-aae2fc2eac4d");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("f4d995f2-bfe2-4787-9483-aae2fc2eac4d")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># #sonora bobcat cloud free structures file</span>
+<span class="c1"># sonora_profile_db = &#39;/data/sonora_bobcat/structure/structures_m+0.0&#39;</span>
+<span class="c1"># sonora_profile_db = &#39;/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0&#39;</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We are going to initialize our climate run like other disequilibrium runs without using the pre-weighted ck tables</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="c1">#note you need to put the climate keyword to be True in order to do so</span>
+<span class="c1"># now you need to add these parameters to your calculation</span>
+
+<span class="n">teff</span><span class="o">=</span> <span class="mi">400</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">gases_fly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;N2&#39;</span><span class="p">,</span><span class="s1">&#39;HCN&#39;</span><span class="p">,</span><span class="s1">&#39;H2&#39;</span><span class="p">,</span><span class="s1">&#39;PH3&#39;</span><span class="p">,</span><span class="s1">&#39;C2H2&#39;</span><span class="p">,</span><span class="s1">&#39;Na&#39;</span><span class="p">,</span><span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;TiO&#39;</span><span class="p">,</span><span class="s1">&#39;VO&#39;</span><span class="p">,</span><span class="s1">&#39;FeH&#39;</span><span class="p">]</span>
+<span class="n">opacity_ck</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">,</span><span class="n">preload_gases</span><span class="o">=</span><span class="n">gases_fly</span><span class="p">)</span><span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+
+<span class="c1"># Here we&#39;re going to start with a cloudfree Sonora Elf Owl model</span>
+<span class="n">pressure</span><span class="p">,</span><span class="n">temp_guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;profilegrid_kz_1d9_qt_onfly_400_grav_1000_mh_+0.0_cto_1.0.dat&quot;</span><span class="p">,</span>
+                                <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">45</span> <span class="c1"># top most level of guessed convective zone</span>
+<span class="c1"># for the sake of time of this tutorial, I set it to 40 because I know where it should be in this case. In general for clouds it is better</span>
+<span class="c1"># to start deeper in the atmosphere and work your way up. It just takes more time.</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+
+<span class="c1"># this is the Kzz parameter</span>
+<span class="n">kzval</span> <span class="o">=</span> <span class="n">pressure</span><span class="o">*</span><span class="mi">0</span><span class="o">+</span><span class="mf">1e9</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">virga_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;virga&#39;</span><span class="p">)</span> <span class="c1"># path to virga directory with the Mie scattering files</span>
+</pre></div>
+</div>
+</div>
+<p>All requirements needed for this notebook will be met from properly following the previous notebook for clouds in equilibrium chemistry</p>
+<p><strong>New PICASO code parameters</strong>: We’ve introduced other optional chemical treatments into the disequilibrium runs that should be included in the <code class="docutils literal notranslate"><span class="pre">atmosphere()</span></code> function</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">vol_rainout</span></code> : (True/False) Follows rainout chemistry (ie. Sonora Bobcat) even in disequilibrium. Default = False</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cold_trap</span></code> : (True/False) If True, the abundances of volatile species like H2O, NH3, and CH4 will not be allowed to increase after they begin to rainout. Default = False</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">no_ph3</span></code> : (True/False) If True, completely remove PH3 from the atmosphere. Default = False</p></li>
+</ol>
+<p>These parameters are included to increase flexibility for you when you want to generate your own model! To play around with these different parameters you can look at the <a href="#id1"><span class="problematic" id="id4">`Fun with Chem notebook &lt;&gt;`__</span></a></p>
+<p><em>Note</em> that all disequilibrium models default to follow the kinetic CO2 prescription described in <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2014ApJ...797...41Z/abstract">Zahnle &amp; Marley 2014</a> where the abundance quenches with respect to CO in disequilibrium. This is a correction applied to <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2025RNAAS...9..108W/abstract">Sonora Elf Owl v2</a></p>
+<p>Our recommendation to follow for the latest release of the Sonora family of models are as follows:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">vol_rainout</span></code> = True</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cold_trap</span></code> = True</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">no_ph3</span></code> = True</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure</span><span class="p">,</span>
+                      <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">mh</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cto_relative</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">chem_method</span><span class="o">=</span><span class="s1">&#39;visscher&#39;</span><span class="p">,</span>
+                <span class="n">quench</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cold_trap</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">no_ph3</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">vol_rainout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="c1">#</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">kzval</span>
+
+<span class="c1"># Let&#39;s add in a few different cloud species that we expect to condense in the deeper parts of the atmosphere of this 400 K brown dwarf</span>
+<span class="n">df_cld_guess</span><span class="o">=</span><span class="n">cl_run</span><span class="o">.</span><span class="n">virga</span><span class="p">(</span><span class="n">condensates</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Cr&#39;</span><span class="p">,</span> <span class="s1">&#39;MnS&#39;</span><span class="p">,</span> <span class="s1">&#39;Na2S&#39;</span><span class="p">,</span> <span class="s1">&#39;ZnS&#39;</span><span class="p">,</span> <span class="s1">&#39;KCl&#39;</span><span class="p">],</span> <span class="n">fsed</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="n">virga_dir</span><span class="p">,</span> <span class="n">latent_heat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>In this case, with a good starting radiative-convective boundary guess and a good starting PT profile, this run should take ~10 minutes to compute. If it takes significantly longer longer there might be something wrong. Most times though, cloudy runs do take much longer on timescales of 30 minutes to an hour depending on how deep your intial radiaitve-convective zone boundary is.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">diseq_chem</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">self_consistent_kzz</span> <span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: True
+quench True
+cold_trap True
+vol_rainout True
+no_ph3 True
+Moist Adiabat: False
+Kzz for chem: [1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09]
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(74), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.3383512429196576  Tau tolerance is  0.4676702485839315
+Iteration number  0 , min , max temp  97.07595217065752 3475.327953233125 , flux balance  -0.06857046738999288
+Iteration number  1 , min , max temp  101.29356479978331 3475.383184029349 , flux balance  -0.06850137667305807
+Iteration number  2 , min , max temp  105.106965879701 3475.451337941017 , flux balance  -0.06841610900253045
+Iteration number  3 , min , max temp  108.70140911189293 3475.5355124931752 , flux balance  -0.06831078133737335
+Iteration number  4 , min , max temp  112.10744085158684 3475.639220279177 , flux balance  -0.06818098668914052
+Iteration number  5 , min , max temp  115.3564182446795 3475.766475374621 , flux balance  -0.06802168387482563
+Iteration number  6 , min , max temp  118.47449140456283 3475.921846484012 , flux balance  -0.06782712806196078
+Iteration number  7 , min , max temp  121.48222443883536 3476.1104858746503 , flux balance  -0.06759083057807258
+Iteration number  8 , min , max temp  124.39543160143317 3476.3381333383154 , flux balance  -0.06730554872349574
+Iteration number  9 , min , max temp  127.17938470438966 3476.611097701396 , flux balance  -0.06696330222475431
+Iterations exceeded it_max ! sorry
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(74), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.9993233244200024  Tau tolerance is  1.5211342582729834
+Big iteration is  127.17938470438966 0
+Iteration number  0 , min , max temp  129.4446293141681 3477.7466503291926 , flux balance  -0.08836680904625227
+Iteration number  1 , min , max temp  131.6737829136112 3478.964248982344 , flux balance  -0.08677898220472258
+Iteration number  2 , min , max temp  133.86801419978272 3480.2687313445504 , flux balance  -0.0850718653020132
+Iteration number  3 , min , max temp  136.02863712136332 3481.66781121493 , flux balance  -0.08323634067463331
+Iteration number  4 , min , max temp  138.15703274076566 3483.1677824801623 , flux balance  -0.08126313488050363
+Iteration number  5 , min , max temp  140.25457335282476 3484.774892500102 , flux balance  -0.07914286596989076
+Iteration number  6 , min , max temp  142.32256985308425 3486.495297260662 , flux balance  -0.076866085995576
+Iteration number  7 , min , max temp  144.36225718407317 3488.3350189674024 , flux balance  -0.07442332030223203
+Iteration number  8 , min , max temp  146.37479751878206 3490.299907664332 , flux balance  -0.07180510164695104
+Iteration number  9 , min , max temp  148.36127566288397 3492.3956072966157 , flux balance  -0.0690019987055977
+Iterations exceeded it_max ! sorry
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(74), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 1.6982310114146806  Tau tolerance is  2.3973959882963745
+Big iteration is  148.36127566288397 1
+Iteration number  0 , min , max temp  149.10149150157207 3495.3457568299996 , flux balance  -0.08400357547756393
+Iteration number  1 , min , max temp  149.8769497163065 3498.456460990265 , flux balance  -0.0797355960822556
+Iteration number  2 , min , max temp  150.68760117726129 3501.733320379009 , flux balance  -0.07521145053761592
+Iteration number  3 , min , max temp  151.53316493177272 3505.1812361335474 , flux balance  -0.0704213165654726
+Iteration number  4 , min , max temp  152.41315027339502 3508.7985056565103 , flux balance  -0.06535577478372329
+Iteration number  5 , min , max temp  153.32687872055786 3512.59344131197 , flux balance  -0.06000569783583811
+Iteration number  6 , min , max temp  154.27350706697925 3516.568492456859 , flux balance  -0.054362241040055
+Iteration number  7 , min , max temp  155.25205659770157 3520.7254628748815 , flux balance  -0.04841688957446251
+Iteration number  8 , min , max temp  156.26144438438627 3525.034929696396 , flux balance  -0.04216154669733274
+Iteration number  9 , min , max temp  157.30052416569956 3529.5078164091933 , flux balance  -0.03558918817481213
+Iterations exceeded it_max ! sorry
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 1.6221691891333787  Tau tolerance is  2.898402220953105
+Big iteration is  157.30052416569956 2
+Iteration number  0 , min , max temp  158.30349426916564 3535.4276918080163 , flux balance  -0.03478721196065647
+Iteration number  1 , min , max temp  159.3333258811886 3541.534595669979 , flux balance  -0.02565303894444579
+Iteration number  2 , min , max temp  160.38939090423995 3547.808959671139 , flux balance  -0.016144772329155434
+Iteration number  3 , min , max temp  161.47223968681558 3554.230319273939 , flux balance  -0.006273762311838105
+Iteration number  4 , min , max temp  162.15376998564858 3558.212027655567 , flux balance  -8.716651186079958e-05
+Iteration number  5 , min , max temp  162.17512455338633 3558.262690492785 , flux balance  -1.4778697524482196e-06
+In t_start: Converged Solution in iterations  5
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 1.6352730068583128  Tau tolerance is  2.7961064804028326
+Big iteration is  162.17512455338633 3
+Iteration number  0 , min , max temp  161.80490581687567 3565.41551734603 , flux balance  -0.000585244653941341
+Iteration number  1 , min , max temp  161.7829693468692 3565.7371014061714 , flux balance  -9.562737910297659e-06
+In t_start: Converged Solution in iterations  1
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(74), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.6662312734467366  Tau tolerance is  2.5580098197684973
+Big iteration is  161.7829693468692 4
+Iteration number  0 , min , max temp  161.85897336776628 3569.5363875128432 , flux balance  -9.422432075599093e-05
+Iteration number  1 , min , max temp  161.86647101855337 3569.584750924606 , flux balance  -1.4894904960659857e-06
+In t_start: Converged Solution in iterations  1
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(74), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 1.3239217851207996  Tau tolerance is  2.5284150137219323
+Profile converged before itmx
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.4713799200411257  Tau tolerance is  2.516947549077784
+Iteration number  0 , min , max temp  161.57402213205643 3557.9770513000685 , flux balance  0.00027289259723125523
+Iteration number  1 , min , max temp  161.56251306907188 3557.7756650095685 , flux balance  5.316697657825925e-06
+In t_start: Converged Solution in iterations  1
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.34006574549168755  Tau tolerance is  2.4874543834822656
+Big iteration is  161.56251306907188 0
+Iteration number  0 , min , max temp  162.51460314128045 3563.667767520963 , flux balance  -0.000143247674312362
+Iteration number  1 , min , max temp  162.5401708262654 3563.7383100375832 , flux balance  -2.4577311749437997e-06
+In t_start: Converged Solution in iterations  1
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(74), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.703366912545731  Tau tolerance is  2.4273665343145954
+Big iteration is  162.5401708262654 1
+Iteration number  0 , min , max temp  162.3281691120366 3565.4021359503 , flux balance  -5.226280524939613e-05
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(74), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.7830006910013307  Tau tolerance is  2.4487101357239798
+Big iteration is  162.3281691120366 2
+Iteration number  0 , min , max temp  162.49028623537518 3565.558652447689 , flux balance  -6.006885979974472e-06
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(74), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.6502643196621074  Tau tolerance is  2.5417703451439424
+Profile converged before itmx
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.6673183979192974  Tau tolerance is  2.5438374527538326
+Iteration number  0 , min , max temp  161.84726280308502 3554.7461853996224 , flux balance  -1.7598933400187633e-05
+Iteration number  1 , min , max temp  161.81865517451692 3554.7400354944302 , flux balance  -1.3937438421999156e-07
+In t_start: Converged Solution in iterations  1
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.09902320275262921  Tau tolerance is  2.5084849765267383
+Big iteration is  161.81865517451692 0
+Iteration number  0 , min , max temp  162.7426851215912 3559.263061452857 , flux balance  -0.00013080653499112475
+Iteration number  1 , min , max temp  162.7674466534943 3559.327810421815 , flux balance  -2.414880831764804e-06
+In t_start: Converged Solution in iterations  1
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.8050456514157065  Tau tolerance is  2.462691283939778
+Big iteration is  162.7674466534943 1
+Iteration number  0 , min , max temp  162.59396913107156 3560.2346006645844 , flux balance  -3.318186263126734e-05
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.728561590139559  Tau tolerance is  2.4758336254468225
+Big iteration is  162.59396913107156 2
+Iteration number  0 , min , max temp  162.69667718609068 3560.303102293255 , flux balance  -2.926416416536837e-06
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.6244731833641444  Tau tolerance is  2.4911881588531206
+Profile converged before itmx
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.6090485555070302  Tau tolerance is  2.5012015780589816
+Iteration number  0 , min , max temp  162.23576209825367 3553.7207273031404 , flux balance  -0.00020304889571518822
+Iteration number  1 , min , max temp  162.21755140589312 3553.8282708351335 , flux balance  -3.971322239020584e-06
+In t_start: Converged Solution in iterations  1
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.06757910366179298  Tau tolerance is  2.4825947801310866
+Big iteration is  162.21755140589312 0
+Iteration number  0 , min , max temp  162.858396131378 3557.0695425824865 , flux balance  -0.00010832298914153392
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.7616979590482202  Tau tolerance is  2.4734319707060415
+Big iteration is  162.858396131378 1
+Iteration number  0 , min , max temp  162.75840997809775 3557.778710048066 , flux balance  -2.7739308012025577e-05
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.7040046025297197  Tau tolerance is  2.4799702304974107
+Big iteration is  162.75840997809775 2
+Iteration number  0 , min , max temp  162.83454352437627 3557.8856735470176 , flux balance  -4.484584158393336e-06
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.5899674674240254  Tau tolerance is  2.47503588471675
+Profile converged before itmx
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.563372673362661  Tau tolerance is  2.4812443171654945
+Iteration number  0 , min , max temp  162.67101762665132 3555.7693007025982 , flux balance  -0.00017457121575525637
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.01435205114208049  Tau tolerance is  2.467538352467282
+Big iteration is  162.67101762665132 0
+Iteration number  0 , min , max temp  162.8945413622301 3557.1091301370993 , flux balance  -5.293796784482568e-05
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.7221089234820792  Tau tolerance is  2.4554880754425676
+Big iteration is  162.8945413622301 1
+Iteration number  0 , min , max temp  162.86687788629268 3557.4207090220866 , flux balance  -1.3344325545418847e-05
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.7204652115376935  Tau tolerance is  2.4584486159971055
+Big iteration is  162.86687788629268 2
+Iteration number  0 , min , max temp  162.89630070236572 3557.4807242187867 , flux balance  -2.61323106708538e-06
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.5685266769951678  Tau tolerance is  2.483017294766373
+Profile converged before itmx
+final [0, 41, 89, 0, 0, 0]
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.553747895929396  Tau tolerance is  2.486013961454489
+Iteration number  0 , min , max temp  162.90419216794672 3557.6405823514597 , flux balance  -6.630348704860757e-06
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.0057055758817696756  Tau tolerance is  2.472813078290206
+Big iteration is  162.90419216794672 0
+Iteration number  0 , min , max temp  162.9003845384215 3557.688368413607 , flux balance  -2.0443816406467242e-06
+In t_start: Converged Solution in iterations  0
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.7217991091444285  Tau tolerance is  2.4401363903840547
+Big iteration is  162.9003845384215 1
+ We are already at a root, tolf , test =  5e-05 ,  4.074099452651379e-05
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 2.7313032359205653  Tau tolerance is  2.4409903361055107
+Big iteration is  162.9003845384215 2
+ We are already at a root, tolf , test =  5e-05 ,  4.4132220128306795e-05
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(73), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(75), &#39;HCN&#39;: np.int64(73), &#39;PH3&#39;: np.int64(72)}
+Quench=True; Adjusting quench chemistry
+vol_rainout=True; Adjusting volatile rainout
+cold_trap=True; Adjusting cold trap
+no_ph3=True; Goodbye PH3!
+Doing clouds: Max TAUCLD diff is 0.5587862474720104  Tau tolerance is  2.4921334768716186
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<section id="Plot-the-P-T-Profile">
+<h2>Plot the P-T Profile<a class="headerlink" href="#Plot-the-P-T-Profile" title="Link to this heading"></a></h2>
+<p>Now we can plot the results, first let’s grab the condensation curve for all our cloud species</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">kcl_cond_p</span><span class="p">,</span> <span class="n">kcl_cond_t</span> <span class="o">=</span> <span class="n">vj</span><span class="o">.</span><span class="n">condensation_t</span><span class="p">(</span><span class="s1">&#39;KCl&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="n">pressure</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+<span class="n">na2s_cond_p</span><span class="p">,</span> <span class="n">na2s_cond_t</span> <span class="o">=</span> <span class="n">vj</span><span class="o">.</span><span class="n">condensation_t</span><span class="p">(</span><span class="s1">&#39;Na2S&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="n">pressure</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+<span class="n">mns_cond_p</span><span class="p">,</span> <span class="n">mns_cond_t</span> <span class="o">=</span> <span class="n">vj</span><span class="o">.</span><span class="n">condensation_t</span><span class="p">(</span><span class="s1">&#39;MnS&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="n">pressure</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+<span class="n">zns_cond_p</span><span class="p">,</span> <span class="n">zns_cond_t</span> <span class="o">=</span> <span class="n">vj</span><span class="o">.</span><span class="n">condensation_t</span><span class="p">(</span><span class="s1">&#39;ZnS&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="n">pressure</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+<span class="n">cr_cond_p</span><span class="p">,</span> <span class="n">cr_cond_t</span> <span class="o">=</span> <span class="n">vj</span><span class="o">.</span><span class="n">condensation_t</span><span class="p">(</span><span class="s1">&#39;Cr&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="n">pressure</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">pressure_elfowl</span><span class="p">,</span><span class="n">temp_elfowl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;profilegrid_kz_1d9_qt_onfly_400_grav_1000_mh_+0.0_cto_1.0.dat&quot;</span><span class="p">,</span>
+                                <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">3e3</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_bobcat</span><span class="p">,</span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sonora Bobcat&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_elfowl</span><span class="p">,</span><span class="n">pressure_elfowl</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sonora Elf Owl&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our Cloudy Run&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kcl_cond_t</span><span class="p">,</span><span class="n">kcl_cond_p</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;KCl Condensation Curve&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">na2s_cond_t</span><span class="p">,</span><span class="n">na2s_cond_p</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Na2S Condensation Curve&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mns_cond_t</span><span class="p">,</span><span class="n">mns_cond_p</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span><span class="s1">&#39;purple&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;MnS Condensation Curve&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">zns_cond_t</span><span class="p">,</span><span class="n">zns_cond_p</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;ZnS Condensation Curve&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cr_cond_t</span><span class="p">,</span><span class="n">cr_cond_p</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Cr Condensation Curve&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_6_CloudyBrownDwarf_DEQ_15_0.png" src="../../_images/notebooks_D_climate_6_CloudyBrownDwarf_DEQ_15_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># once again we can do a quick sanity check to make sure a cloud is present</span>
+<span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">mixing_ratio</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;spectrum_output&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="de4b8810-46fc-4d22-8209-bf595c58644b" data-root-id="p1001" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"576ec4f8-0312-492a-bebc-f88b194cda9c":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1001","attributes":{"x_range":{"type":"object","name":"Range1d","id":"p1010","attributes":{"start":1e-20,"end":5}},"y_range":{"type":"object","name":"Range1d","id":"p1011","attributes":{"start":4594.258302692743,"end":0.0009691841575891013}},"x_scale":{"type":"object","name":"LogScale","id":"p1012"},"y_scale":{"type":"object","name":"LogScale","id":"p1013"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1041","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1035","attributes":{"selected":{"type":"object","name":"Selection","id":"p1036","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1037"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZLjUSnrujTVkuNRKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTVkuNRKeu6NNWS41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01qbjUSnrujTWpuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTXat9RKeu6NNdq31Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNdq31Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o01lbfUSnrujTX06oHwY+aYOEmFyJchGKY78bRvewSh+Du9qHtjSHhCPIyZsEuJPXs84JGtkipSrTwz0ayvhknWPEgvDmVD4/086ZNUBlSoHD1ADP+Mqic4PTUNx9ol/FE9VXiEZaKjaD2W7Sv+9qt/PWokvGbmPZM91IajnCk/pj2fgtKjMYe4PWKpfr0Mz8k93ddOicfj2T2at7tPus/oPc7csjCNwfY9qiyGe0wRBD6dOTXbfBYRPpxAzH0OKxw+8arlkf2GJj4WhIPBdYExPnl5ohrkcTo+yEkMHghmQz7UaUj0fKpLPu6xmSl0OVM+rFPnQ1cQWj5YGarsgD5hPtIZ7YG+TWY+9HGwjO86bD4hjRU8ioBxPvakMPs1S3U+"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1042","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1043"}}},"glyph":{"type":"object","name":"Line","id":"p1038","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#000003","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1039","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#000003","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1040","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#000003","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1050","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1044","attributes":{"selected":{"type":"object","name":"Selection","id":"p1045","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1046"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"g0qZUUKZ6j+2ga5UQpnqP8GHBktCmeo/slLwWEKZ6j97OduIQpnqPwTmvuhCmeo/VKROmUOZ6j8y2oHBRJnqP6jM8YFGmeo/Tcd4BEmZ6j8K/8iPTJnqP4r8tldRmeo/ScE/VleZ6j/5acqHXpnqP83OcPpmmeo/6f6DPXGZ6j+Q39RhfpnqP+2ECxCPmeo/9gugLqSZ6j8thartv5nqP38BeM/lmeo/2vaXxhia6j+s7KnXYJrqP3QtATHAmuo/+pymJjOb6j8TE+1OoZvqPwRgnf8YnOo/uKdUscuc6j9bevFtgJ3qP8V71ZApnuo/L6aW0xuf6j8IVMn0FKDqPyYMdA+JoOo/i7TScZeg6j8MuNJxl6DqP0u+0nGXoOo/RMLScZeg6j+vz9Jxl6DqP/QA03GXoOo/2o/TcZeg6j/qoslxl6DqP6JFTnGXoOo/9GVVcZeg6j8AhCpxl6DqP9k+f8ecoOo/npwBiqCg6j+3qcLJnKDqP5BlFy2coOo/Hq/BuZ2g6j+rwlFDnaDqPxw4a++boOo/wvIxoZqg6j8UEEj2m6DqP9oOg3ykoOo//lcdzaig6j/yjjihpaDqP/D6+2mioOo/UCCw7Jyg6j9w8SFInqDqP8gRTViuoOo/9k0Vqbig6j8rsHshr6DqPzp2iFOmoOo/O+wZo6Wg6j/K2zy0p6DqP/of6KKuoOo/kUSuQ7ag6j95cg+dtqDqP2D8sBCyoOo/WpwNKqyg6j9wbEoDpaDqP+nbetKboOo/JFxrnpOg6j+ThzkckaDqPwb90MZvoOo/P3JgJh2g6j+iy9RYj5/qP8Z10eHHnuo/s2jY1uSd6j+q4J8KypzqP5yKjrxDm+o/HEvhuxWZ6j/iAPPjB5bqP6QawnwCkuo/il0Ic/+M6j9AnjWmD4fqPxi47zBkgOo/hOTlsxp56j/bg4JlsHHqPxBFeX0Ja+o/"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1051","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1052"}}},"glyph":{"type":"object","name":"Line","id":"p1047","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0D0A28","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1048","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0D0A28","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1049","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0D0A28","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1059","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1053","attributes":{"selected":{"type":"object","name":"Selection","id":"p1054","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1055"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZLjUSnrujTVkuNRKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTVkuNRKeu6NNWS41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNR+41Ep67o01280uys/SkDWGCVF5tcKhNRi4aWQ39rY1KXUYBAzyyjVEGBoCBoflNWuCVt95XwU2VB9svaYrKDaoWoCYnXtQNsiZejdiL4A2mPI7ALcRsTa20Vj6YS/7NnHF6GuNG143IqBxvpzJvDfeOLM88LoQODOlhn8bB1w4fgEXaP4EpDg2VEYQKaPqOG2xv9OpMzI51M4x8TxPezmYDzrP4z/MOZyKtyPPVCA6MTbKZuaKbzpOUj8wCn+5OkAVnezqbgE774wlvpRYRDuYXGdMbnCEO81OkKVk0ME7C7cpcHIi+zs53ddUjS4yPK09Qmwak2U8kk69xqvQljyWJygr8prFPJuzwZFgafI8PyPYXOpoHD1cnICtDe1DPcUDVWTdg2k9eztGTT/zjT10wQOqdi2wPQisrkdIJtA9NbxYgfLj7T0+/CGCDcIJPnBiuVFGsiQ+2FWkDhArPz5ZaYDX2ApWPiUf/w2kYW0+OiHOHKSDgj5MKyuWFR2WPqi2SXI4Hqk+6qKdQ0Mzuz4cVtv/iybMPqaXnkCU6ts+qdlbA06Y6j4QKGVDl2T4Pg6aEQTDlAU/+dPknH10Ej93i4FsHZAeP32OlD67iyg/33K1r3gnMz9gTQtFJhQ9P0vRcI4xgEU/9p4HPPACTz+qNCPFy9FVP9mLOgGq+10/2sOkWkgkZD9+bnE3hnhqP95pKf7XB3E/sVc/cPx7dT9q5Q5Rt5d6P4Qvk9lNKoA/"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1060","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1061"}}},"glyph":{"type":"object","name":"Line","id":"p1056","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#261157","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1057","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#261157","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1058","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#261157","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1068","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1062","attributes":{"selected":{"type":"object","name":"Selection","id":"p1063","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1064"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZLjUSnrujTVkuNRKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTVkuNRKeu6NNWS41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01qbjUSnrujTWpuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTXat9RKeu6NNdq31Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNdq31Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o01lbfUSnrujTXat9RKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNdq31Ep67o01H7jUSnrujTWpuNRKeu6NNWS41Ep67o01H7jUSnrujTX72AmSZUSZNTDmTsrK2NI1auZWYEdyOjZPn/36oGW2Nmn3Eptadiw3EBtQ8/sxmzelV/PxK+kDOPJ0m+QFvmY4m+1RKo+txDiNhkAw40QeOWPUDj1IDnI5ZjGlWN22wTksYyyA1NQMOi76L+WIqVM68sVYCJe0ljro36D27E7WOiBow+r74hI7/v4x5I3LSztuFv+uMruBOyaaj8aXxrM7HqXqHB1o4zu/B2IVzMUQPLk691KJuzk8C/QAd3GnYTxgzebvNLiFPOS0Nt0LIag8"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1069","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1070"}}},"glyph":{"type":"object","name":"Line","id":"p1065","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#470F77","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1066","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#470F77","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1067","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#470F77","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1077","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1071","attributes":{"selected":{"type":"object","name":"Selection","id":"p1072","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1073"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZLjUSnrujTVkuNRKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTVkuNRKeu6NNWS41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01qbjUSnrujTWpuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTXat9RKeu6NNdq31Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNdq31Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o01lbfUSnrujTXQcTY0hmjIN7J30BHyQRs6KPkqb9g3hTryE6Zs10PlOiJOpa6yijM7mrGnxZkzeTvqaOPnL6y1O4so7BWUDvA7+0O+qdOdHzwYSNZs3RtLPGG11u58mXM8AIVkhMJYmTzcbQ4uQMG9PCtvL+Bw+d88AJ2k06W6/zy4IDY2kjEdPUDxJMNe9Tg96666U9vPUz3YRBiuiVltPSzU3Vw6WIQ94qOHzPmQmj2saBKkDWywPVD2kBEWR8M9FlKQSp6S1T1fcOByrBDnPWO7yBn5lPc9ROlCdgoPBz60VFnt5ZkVPtlk9nhDciM+Gpgb4NbaMD6kWMMaiCg8PmD51yT7uEY+NDDVe1m+UT66hrVpgd1aPpiPw4NixGM+"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1078","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1079"}}},"glyph":{"type":"object","name":"Line","id":"p1074","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#661A80","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1075","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#661A80","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1076","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#661A80","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1086","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1080","attributes":{"selected":{"type":"object","name":"Selection","id":"p1081","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1082"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZLjUSnrujTVkuNRKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTVkuNRKeu6NNWS41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01qbjUSnrujTWpuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTXat9RKeu6NNdq31Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNdq31Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o01lbfUSnrujTVobh73z57+Nsr5PtBNdpg4unec2pqRFDlQ5FmIpYaFObend1Jb0+M5IIEcAcPbODpYL4FJCxCEOgP0AaHdQss6IhFGpUicBzse7+aGO5BBO4oN37ndY3U7qvr4Vb3WpjuuwkfsEqTVO8KARj0vYgI8C1gQ1mFHLDxZG3A6LcpTPDchkPwCSHk8br9XmLN7nTzyMx4XxJe/PMC1EBn8Nd88UPb1/Fmm/Dz+x7gzDJMYPT8QwqMXxDM9FooVNYH2TT2BkUr72HNlPXQtS3+OD3090t6pgg+ikj0LaMHgoammPZOsuuK+PLo9xq3qiF36zD34oBDoIZHePYvbR0IY4+49x+QOR5j1/T3s0T7BZvULPlv31TQGLhk+"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1087","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1088"}}},"glyph":{"type":"object","name":"Line","id":"p1083","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#852681","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1084","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#852681","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1085","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#852681","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1095","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1089","attributes":{"selected":{"type":"object","name":"Selection","id":"p1090","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1091"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZLjUSnrujTVkuNRKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTVkuNRKeu6NNWS41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01qbjUSnrujTWpuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTXat9RKeu6NNdq31Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNdq31Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o01lbfUSnrujTXat9RKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNdq31Ep67o01H7jUSnrujTWpuNRKeu6NNWS41Ep67o01H7jUSnrujTXMHQLK01KfNUcSgAvuTfE1QUq8SyQpYTaABrz7flHaNghvi3awfk43z0YaX6HTujdyxNj46j8iOG+eW5hliYM40pSxsxvJ4DiCVjqL0mU3OZUIo0/Oxoo5ef1pd/Nf2Tk2YWYaxBMkOuBThMkmy2o6gxWqxIVzrjqmN/rnWp3tOqnYMeNv8yg7kOETWKNdYjukEZcMUo+XO3irdEvpi8o7MHjm/I9w+jvaWnbZEUwnPAa7xkgdTFI8e1p62+rOeTwS8ROYXmKgPOan40Dl2sI8"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1096","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1097"}}},"glyph":{"type":"object","name":"Line","id":"p1092","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#A4307D","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1093","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#A4307D","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1094","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#A4307D","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1104","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1098","attributes":{"selected":{"type":"object","name":"Selection","id":"p1099","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1100"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZLjUSnrujTVkuNRKeu6NNdq31Ep67o012rfUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTVkuNRKeu6NNWS41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNWS41Ep67o01ZLjUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01qbjUSnrujTWpuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTXat9RKeu6NNdq31Ep67o01H7jUSnrujTUfuNRKeu6NNR+41Ep67o01H7jUSnrujTUfuNRKeu6NNdq31Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o012rfUSnrujTVkuNRKeu6NNR+41Ep67o01lbfUSnrujTXat9RKeu6NNdq31Ep67o01X5Og7dkgkzU3LNA5zlvFNXHTO/RiKDM2Sy6wwXDGoDYnROtbSXYNN6+WlJ3h9HM347mDvb7Z3DfV0zuwzVVAOCg4ZGz1qp84qY6aLPjC+Dhacjqkn4pPOf1asqvMhqA5sB9M2RWl7Dk/Vm9oucw0OgSbBRwWoXk69cAQbAs0uzo9Z2RPQQv5OpZRt4FiKzQ7BeCv4kmNbDtK4AMRfdqhO48M2HO929M7r4+/J4fFAzxl1F7WL64xPDVMpZkvpVw8hAbAYugohTyUHxle7nKsPJr8PlINfNE8Ct99Uuq88zwKXRnNYXoUPSARz9aJnTM9aMO7yU5wUT1B1dI3n9RsPeWGsVuOQYY9"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1105","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1106"}}},"glyph":{"type":"object","name":"Line","id":"p1101","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#C53C74","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1102","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#C53C74","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1103","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#C53C74","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1113","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1107","attributes":{"selected":{"type":"object","name":"Selection","id":"p1108","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1109"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"EVMiiV5GxT8RUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8RUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8RUyKJXkbFPxJTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxFTIoleRsU/EFMiiV5GxT8RUyKJXkbFPxFTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxFTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxFTIoleRsU/ElMiiV5GxT8RUyKJXkbFPxBTIoleRsU/EVMiiV5GxT8QUyKJXkbFPxBTIoleRsU/EVMiiV5GxT8QUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxBTIoleRsU/EFMiiV5GxT8SUyKJXkbFPxFTIoleRsU/EFMiiV5GxT8QUyKJXkbFPxBTIoleRsU/FLrlvlZGxT96YGuuUEbFP1jqL2xYRsU/p+ECFjtGxT94AkdUHkbFPxo19C0lRsU/lbufcBVGxT+e0G0H/0XFP8TtTTX/RcU/nvYOOghGxT+FKXgD+kXFPwl7NujfRcU/cse/c9xFxT+KO+HS4EXFP0qn4Z/LRcU/Z/EvfrRFxT/m77QEtUXFP8BVZqKiRcU/bIPjOH1FxT+Aj1DsXUXFP/puM8UsRcU/jVq/4vxExT9o7DEb6kTFP1lBGUu4RMU/kp0Wb0ZExT8VGuO/tkPFP5uPehkzQ8U/Tn4PQNNCxT8r1hYSYULFP+61OryyQcU/hKF/gtVAxT+ONnYdrz/FP0xarJ0yPsU/WkeRxnM8xT/otM4YgDrFPzJh3cZkOMU/5D9rGvA1xT8L7kktYTPFP5TzztA0McU/"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1114","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1115"}}},"glyph":{"type":"object","name":"Line","id":"p1110","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E14C66","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1111","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E14C66","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1112","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E14C66","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1122","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1116","attributes":{"selected":{"type":"object","name":"Selection","id":"p1117","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1118"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"dnCoSXKpHT6rCxZH458hPoTF5rioiiQ+GtVuIswSKT6DSMj1qEEwPriiljlfizY+ZwNMG/LrQD5gi/q6QhFLPqQwgGDlSVY+uGfxJ199Yj6MRYBMvLhuPhZ0cT4vMnk+SrseQHkYhD5KiG22VSSPPvryuhuMiZc+Wjl5FTKcoT5Q8fR9KW2qPk7nkzBq07M+Wi7Q6fS9vT6P77Z9wXvGPtSS4aFJQNE+UOYsMcF92j5epxvwGhjkPpah7++v5e0+cgMwnbPL9T75W7ijVUL/PlEAa2vxOQY/d1qrJkIQED/ijpvX/SkYP6lyRDURkCM/cOfO5A50MD+2hsUKJaVAP9sX0r4qa0k/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP8fIkuPU30s/x8iS49TfSz/HyJLj1N9LP6SLOZQY50s/5N/NCLL8Sz+WyZq+MlZMP35/oJSHq0w/LR1n2wqkTD9xS3850JxMP4xxdbJZlkw/gpqSIMxETD+HPlsNXuhLP2Y1gi+71ks/ntM6+ioNTD/UDKMed4FMP0C1oIjsJE0/jJ5AI2vmTT9y2cYHnbdOP1oReFHKjk8/"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1123","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1124"}}},"glyph":{"type":"object","name":"Line","id":"p1119","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F56A5B","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1120","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F56A5B","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1121","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F56A5B","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1131","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1125","attributes":{"selected":{"type":"object","name":"Selection","id":"p1126","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1127"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP0rUxqVs50E/StTGpWznQT9K1MalbOdBP4jGWGimREE/+ojfNu4VQD8uU2lfOiE+PwM8ZLONiTw/fMTr0gqhOz/gSyKynXk7P1KODxtYijs/1uq72ge5Oj9ciIbRMWo5P4CXbvtLnDg/iaLmVihaOD/TukoWOqs4P5Z57503lzk/zOqcvlMkOz9wuF/KJmU9PzXMXAF1PUA/"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1132","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1133"}}},"glyph":{"type":"object","name":"Line","id":"p1128","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FC9064","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1129","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FC9064","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1130","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FC9064","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1140","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1134","attributes":{"selected":{"type":"object","name":"Selection","id":"p1135","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1136"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP14mOQFqGwY/XiY5AWobBj9eJjkBahsGP2b0RCqi7Q0/EKvra6PGFD+HN4ruv8kYPxh5hbmb3hw/uwtw3XhwID8zzY1dmqgiPzeYIyoisyQ/27pxmVRlJT/S4qU8/xglP0Jv4vei2iQ/T4m4WunCJD9E5qZvr9YkPzCvbAEBESU/vMT2ouJiJT+tSgxmEr8lP5hqCajrHyY/"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1141","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1142"}}},"glyph":{"type":"object","name":"Line","id":"p1137","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FEB37B","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1138","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FEB37B","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1139","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FEB37B","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1149","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1143","attributes":{"selected":{"type":"object","name":"Selection","id":"p1144","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1145"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj8szIlFzOQGPyzMiUXM5AY/LMyJRczkBj+NHMUMfUcHP8DSZoUVFQg/BpS97QYQCT8Y2P9rFFUKPwrT1/Y3sQs/wNBOf6LIDD9w0amA1NwNP8OahI6aVw8/++LZyaycED8OXwvzz8IRP0LHUSq9IBM/paME7JW4FD9qT0oTyY4WP4625FU5qhg/"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1150","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1151"}}},"glyph":{"type":"object","name":"Line","id":"p1146","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDD89A","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1147","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDD89A","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1148","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FDD89A","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1158","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1152","attributes":{"selected":{"type":"object","name":"Selection","id":"p1153","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1154"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD9Np7r8U+EIP02nuvxT4Qg/Tae6/FPhCD+W3D5btFsIPyN9Euu6tgc/sDx4+LSHBz/qrE+ru3AHPxBpSc7gEQc/2CTQAcbkBT+ca7CByWYEP4bpnzBsNgM/iMMZyGE9Aj/4EV+eR2oBP1zgtUHrrwA/RjIomzEDAD8gYlshdrn+PryX35hScv0+"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Ud1cIRvCTz9Xm3z4bN9SP7avLcZHblY/TpxMGtuoWj9LowC1hq9fP3mY0mZi1GI/zoP8UShhZj+wJf1MQplqP6f9VCf9nG8/bkTPSl7Jcj8MFjSLEFR2P03Znp+yiXo/G+/9cX6Kfz9gKqugYL6CP0qOVm0AR4Y/NxjbDCx6ij9NNaOOCniPPzoOoWRps5I/Hbfo8/c5lj9IZV6PrmqaP0xE8HahZZ8/deftkniooj86+XEa9yymPxFg2CE6W6o/FUSUJENTrz9J4dAnjp2yP1BbfNz9H7Y/EMT7vs5Luj9SDkKR70C/P95Yix+qksI/8X+UNQwTxj/TZn5hbDzKP5kssLamLs8/WNxgdsyH0j9spEkhIgbWPzI2GQQTLdo/GdaYjmgc3z9TKZco9XziP/6eLZs/+eU/ZjaIocId6j9l7bkSNQrvP7ordjIkcvI/dN3UnmTs9T9JgIo0ew76P17+1DwM+P4/c/xHkFlnAkCiY9Ynkd8FQI8/4rc8/wlAEzyvBu7lDkAi4Fg+lVwSQNfJyzHF0hVA4bBUJgfwGUCRfhFq2tMeQOZF9zjXUSJAZjtRuADGJUA0IKp62uApQM5AyGDRwS5AAcZzfB9HMkAJdQW3Q7k1QNPmra+20TlAf56j5NKvPkC3ICEFbjxCQJ3DiSmOrEVA4WkuwJvCSUD9UXfv3p1OQNw8VM/CMVJASQKCC+CfVUAlGP2mibNZQDKyGnv1i15AzSZk1x0nYkBkmZRYOZNlQKZo7l6ApGlASbBogRZ6bkDqDqoZfxxyQJV8agyahnVAsNjZ4n+VeUD21T/8QWh+QJ9IgZLmEYJAoymvIgJ6hUAM6pktiIaJQN5CguV3Vo5A3khHPlQHkkDWphCXcW2VQHMhDDqZd5lAAasVN7hEnkATpVsZyPyhQGKBP2XoYKVAcQQRA7NoqUAjVOPqAjOuQM0RICBC8rFA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1159","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1160"}}},"glyph":{"type":"object","name":"Line","id":"p1155","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FBFCBF","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1156","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FBFCBF","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1157","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#FBFCBF","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1009","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1024"},{"type":"object","name":"WheelZoomTool","id":"p1025","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1026","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1027","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1032"},{"type":"object","name":"ResetTool","id":"p1033"},{"type":"object","name":"HelpTool","id":"p1034"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1019","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1020","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1021"},"axis_label":"Pressure(Bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1022"}}},{"type":"object","name":"Legend","id":"p1161","attributes":{"location":[0,-20],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1162","attributes":{"label":{"type":"value","value":"e-"},"renderers":[{"id":"p1041"}]}},{"type":"object","name":"LegendItem","id":"p1163","attributes":{"label":{"type":"value","value":"H2"},"renderers":[{"id":"p1050"}]}},{"type":"object","name":"LegendItem","id":"p1164","attributes":{"label":{"type":"value","value":"H"},"renderers":[{"id":"p1059"}]}},{"type":"object","name":"LegendItem","id":"p1165","attributes":{"label":{"type":"value","value":"H+"},"renderers":[{"id":"p1068"}]}},{"type":"object","name":"LegendItem","id":"p1166","attributes":{"label":{"type":"value","value":"H-"},"renderers":[{"id":"p1077"}]}},{"type":"object","name":"LegendItem","id":"p1167","attributes":{"label":{"type":"value","value":"H2-"},"renderers":[{"id":"p1086"}]}},{"type":"object","name":"LegendItem","id":"p1168","attributes":{"label":{"type":"value","value":"H2+"},"renderers":[{"id":"p1095"}]}},{"type":"object","name":"LegendItem","id":"p1169","attributes":{"label":{"type":"value","value":"H3+"},"renderers":[{"id":"p1104"}]}},{"type":"object","name":"LegendItem","id":"p1170","attributes":{"label":{"type":"value","value":"He"},"renderers":[{"id":"p1113"}]}},{"type":"object","name":"LegendItem","id":"p1171","attributes":{"label":{"type":"value","value":"H2O"},"renderers":[{"id":"p1122"}]}},{"type":"object","name":"LegendItem","id":"p1172","attributes":{"label":{"type":"value","value":"CH4"},"renderers":[{"id":"p1131"}]}},{"type":"object","name":"LegendItem","id":"p1173","attributes":{"label":{"type":"value","value":"CO"},"renderers":[{"id":"p1140"}]}},{"type":"object","name":"LegendItem","id":"p1174","attributes":{"label":{"type":"value","value":"NH3"},"renderers":[{"id":"p1149"}]}},{"type":"object","name":"LegendItem","id":"p1175","attributes":{"label":{"type":"value","value":"N2"},"renderers":[{"id":"p1158"}]}}]}}],"below":[{"type":"object","name":"LogAxis","id":"p1014","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1015","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1016"},"axis_label":"Mixing Ratio(v/v)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1017"}}}],"center":[{"type":"object","name":"Grid","id":"p1018","attributes":{"axis":{"id":"p1014"}}},{"type":"object","name":"Grid","id":"p1023","attributes":{"dimension":1,"axis":{"id":"p1019"}}}]}}]}};
+  const render_items = [{"docid":"576ec4f8-0312-492a-bebc-f88b194cda9c","roots":{"p1001":"de4b8810-46fc-4d22-8209-bf595c58644b"},"root_ids":["p1001"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># once again we can do a quick sanity check to make sure a cloud is present</span>
+<span class="n">show</span><span class="p">(</span><span class="n">cldplt</span><span class="o">.</span><span class="n">all_optics_1d</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;virga_output&#39;</span><span class="p">],</span> <span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="d59de6dc-1f14-4658-96fa-194135b89685" data-root-id="p1337" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"c20fd606-518d-4f25-b483-2e9ee2f095a2":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"GridPlot","id":"p1337","attributes":{"rows":null,"cols":null,"toolbar":{"type":"object","name":"Toolbar","id":"p1336","attributes":{"tools":[{"type":"object","name":"ToolProxy","id":"p1330","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1292"},{"type":"object","name":"PanTool","id":"p1226"},{"type":"object","name":"PanTool","id":"p1259"}]}},{"type":"object","name":"ToolProxy","id":"p1331","attributes":{"tools":[{"type":"object","name":"WheelZoomTool","id":"p1293","attributes":{"renderers":"auto"}},{"type":"object","name":"WheelZoomTool","id":"p1227","attributes":{"renderers":"auto"}},{"type":"object","name":"WheelZoomTool","id":"p1260","attributes":{"renderers":"auto"}}]}},{"type":"object","name":"ToolProxy","id":"p1332","attributes":{"tools":[{"type":"object","name":"BoxZoomTool","id":"p1294","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1295","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"BoxZoomTool","id":"p1228","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1229","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"BoxZoomTool","id":"p1261","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1262","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}}]}},{"type":"object","name":"SaveTool","id":"p1333"},{"type":"object","name":"ToolProxy","id":"p1334","attributes":{"tools":[{"type":"object","name":"ResetTool","id":"p1301"},{"type":"object","name":"ResetTool","id":"p1235"},{"type":"object","name":"ResetTool","id":"p1268"}]}},{"type":"object","name":"ToolProxy","id":"p1335","attributes":{"tools":[{"type":"object","name":"HelpTool","id":"p1302"},{"type":"object","name":"HelpTool","id":"p1236"},{"type":"object","name":"HelpTool","id":"p1269"}]}}]}},"children":[[{"type":"object","name":"Figure","id":"p1270","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"DataRange1d","id":"p1272"},"y_range":{"type":"object","name":"Range1d","id":"p1279","attributes":{"start":4611.400026269911,"end":0.0009728002988311}},"x_scale":{"type":"object","name":"LogScale","id":"p1280"},"y_scale":{"type":"object","name":"LogScale","id":"p1281"},"title":{"type":"object","name":"Title","id":"p1277"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1309","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1303","attributes":{"selected":{"type":"object","name":"Selection","id":"p1304","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1305"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"5Sy9KZRsSDpDTMTlTmGhOkh+KBrtu/Y6jIu4WU/kPzsE0rhxaTJ3O52NDR2TQKU7vVaYfw+zyjt/PUKvMYbtO2zCb3iZfQ88XXNI2ItpMDwBFF3l63hQPA5lRfp6tHA8fKHJdB9XkTx96At9gVOyPIbrNaW7uNM8cJL/V2Hg9TxNAFnRWzkZPVqZg+qMTDo9vyud+UMlWz3J43lF0y57PUdwR66Q0pk92BLSCar0tj2YutbHFxDUPew3QfQ3pPE9Aug92MyAED5Nr6ndx2YwPswBaPkZK1E+gDIOE9zjcT5VZflJxvCQPhvpMsCgAqw+r8fjdWPKwT7f1VF6YnLXPmM+ymSmAOg+EYSD0zbj9D7v3oLgZpkBP0rQrIZyfw8/HY4oO4NbHT9wNT7+hI4rPxqN/5bj2Tk/tNleGE7mRz+l8A+hLt9CPzmYcKYZx0Q/zNVOa+ijSz/lQ8ysdo5TPxZGZ9bwQl0/5rIAgQaZZj9jjNBkA9pxP2Jp5I9Hvnw/HyMP8n15hz+/9StP7E6TPz/o8tny0J8/o9cuhMAeqj/okUDm4ky1PwA6mRfBPME/OyzXGbTEyz9BG3fRPkPWP5zU5Y/9leE/ybGVE5TP6T/8sA9+QVfxP80eOyMA+Po/4WsFXu1oBUBaI+Za0LoPQGomkzBjphJA+/Gr0xAL9T+qRUSLBmjjP5RC3BqTz+s/NzdRTq6g9D8vje8vkaIAQOIaU9k9BApAX2MejCVhCkDnbmxtD+oQQAUdNyKpIhRAIcFDMPKvFEC3EN/uoREIQMVzslhOQdM/xXOyWE5Bwz8Fhh3B486ePwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Mc0IvHDgTz8VnkPJc/FSP7eNhJu0g1Y/rlbR+VHCWj9fk3+Qys1fPzqZwate5mI/Uvp8noh2Zj9uirdGqrJqP4ncCE4vu28/OcYRClDbcj8GcDNWZGl2Pw4fRrwLo3o/O5hC7p6ofz84FGngR9CCP2TMJb5HXIY/QlwhVXaTij/WdM5qGZaPPyWt/ipGxZI/PJLU0TJPlj+IrvAL6oOaP3LaUb2eg58/nvAL5kq6oj/95MKMJUKmPw+iXttmdKo/tOh13y5xrz8bdMwNVq+yP42IduofNbY/6eEYvuxkuj9wdOfKyV6/Px0Bfp5npMI/O9935iEoxj8zNtCue1XKP/AFV3lvTM8/OJRglH+Z0j+D6FF8KxvWP0OCOKgTRto/mtZ45B863z+LW7brnY7iP1c/kqc8DuY/xsIIpbQ26j+2zgQG2yfvP561w6DCg/I/rBjJY1UB9j/7C/ufXif6P1qDttegFf8/BzDPr+14AkD0QYmsdfQFQOqHzJMRGApASzRNU3EDD0AshiEVH24SQJ0faH2d5xVAgHQ9e80IGkDByYtyTPEeQP+fBc1WYyJAhKv90czaJUDcIRFRkvkpQFvSOC8y3y5ApZDI05RYMkBjc+SlA841QGjwDRBg6jlA7oAegyLNPkBZlbkl2U1CQI+XufRBwUVAQk/9sjbbSUBnqgpoHbtOQO0TKr8jQ1JAFckcuoe0VUAguqs0FsxZQLPDztciqV5AzpltnHQ4YkCfSLDx1KdlQNC36I/+vGlAd98/zDKXbkBz2tm5yy1yQJrkGJcpm3VAVdiGv++teUBRrDY/TYV+QHCuxhMpI4JA+vf9pYWOhUAGs1u+6Z6JQDRyjypyc45A4RGOpowYkkClaAka6YGVQBXlP4fsj5lA5BAqiKFhnkBmI4xu9g2iQNml5+5TdaVAXA8PFfiAqUBM/elR20+uQM8iH2hmA7JA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1310","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1311"}}},"glyph":{"type":"object","name":"Line","id":"p1306","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1307","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1308","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1278","attributes":{"tools":[{"id":"p1292"},{"id":"p1293"},{"id":"p1294"},{"type":"object","name":"SaveTool","id":"p1300"},{"id":"p1301"},{"id":"p1302"}]}},"toolbar_location":null,"left":[{"type":"object","name":"LogAxis","id":"p1287","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1288","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1289"},"axis_label":"Pressure (bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1290"}}}],"below":[{"type":"object","name":"LogAxis","id":"p1282","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1283","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1284"},"axis_label":"Optical Depth","major_label_policy":{"type":"object","name":"AllLabels","id":"p1285"}}}],"center":[{"type":"object","name":"Grid","id":"p1286","attributes":{"axis":{"id":"p1282"}}},{"type":"object","name":"Grid","id":"p1291","attributes":{"dimension":1,"axis":{"id":"p1287"}}}]}},0,0],[{"type":"object","name":"Figure","id":"p1204","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"DataRange1d","id":"p1206"},"y_range":{"type":"object","name":"Range1d","id":"p1213","attributes":{"start":4611.400026269911,"end":0.0009728002988311}},"x_scale":{"type":"object","name":"LinearScale","id":"p1214"},"y_scale":{"type":"object","name":"LogScale","id":"p1215"},"title":{"type":"object","name":"Title","id":"p1211"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1327","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1321","attributes":{"selected":{"type":"object","name":"Selection","id":"p1322","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1323"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"n80YGyQM7z/mzeOH9SzvP3nIow54Mu8/ocoJiiQx7z+QWrIW8CzvP5UQBE57KO8/SBZ9Oxoi7z8Qjwz9/CPvP/hGEnNaKu8/GfeA2A8w7z+ORtLz4TLvP28UCbShMu8/HrsJjZUs7z/RCf72RyDvP4jyFqrrDe8/NkuRJEoF7z9Ah7wmcA7vP832DRIF/+4/o+7yFUny7j/ViZRslujuPwNAzSBg4O4/uM4YwhXL7j/zQbtH06zuPyqdLZ0qg+4/idIyue1a7j9BCsNwWDbuP1Bvwgq5HO4/NHXP/n8a7j93YrtIgCXuP5G+BIW4PO4/b2VSSRAf7j8zdhl0WUnuP/8KQuMYYu4/rjUFYShc7j+mUpia20XuPzO75mBfOO4/9MQH2h0z7j+Hb0bPzjDuP8Bn+rFeM+4/oSoL7YY57j+i1SzdYgztPz/jOVRHP+w/0MIGbILH6z8YmEc2ZmzrPzMYv96mL+s/yIJcsScF6z+oT2PBLejqPzD6dFbJ1uo/JU1LP0jO6j/jT2k2I8rqP2OE1lztxuo/G9dktkrB6j8HzsSgKrfqP2G+gW6up+o/GDSzzgaU6j9wQ4aTCnrqPyFiMkvVTOo/PwfL5GzO6T9FWvvsvZLoP82cIyStMug/H/5mDgon6D/5kv3ElSfoP8GQOfgoYug/WHDW15v56T8W/ebBg+3tP3axfr/Jo+4/6CoFOG727j8NRSYPKPjuP3m8H7e8wO4/quSSgvbP7D8qT5gxeEjpP0GkVolqSek/tOgJfMdX6T/FDX+2bHTpP8UNf7ZsdOk/xQ1/tmx06T/HDX+2bHTpPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Mc0IvHDgTz8VnkPJc/FSP7eNhJu0g1Y/rlbR+VHCWj9fk3+Qys1fPzqZwate5mI/Uvp8noh2Zj9uirdGqrJqP4ncCE4vu28/OcYRClDbcj8GcDNWZGl2Pw4fRrwLo3o/O5hC7p6ofz84FGngR9CCP2TMJb5HXIY/QlwhVXaTij/WdM5qGZaPPyWt/ipGxZI/PJLU0TJPlj+IrvAL6oOaP3LaUb2eg58/nvAL5kq6oj/95MKMJUKmPw+iXttmdKo/tOh13y5xrz8bdMwNVq+yP42IduofNbY/6eEYvuxkuj9wdOfKyV6/Px0Bfp5npMI/O9935iEoxj8zNtCue1XKP/AFV3lvTM8/OJRglH+Z0j+D6FF8KxvWP0OCOKgTRto/mtZ45B863z+LW7brnY7iP1c/kqc8DuY/xsIIpbQ26j+2zgQG2yfvP561w6DCg/I/rBjJY1UB9j/7C/ufXif6P1qDttegFf8/BzDPr+14AkD0QYmsdfQFQOqHzJMRGApASzRNU3EDD0AshiEVH24SQJ0faH2d5xVAgHQ9e80IGkDByYtyTPEeQP+fBc1WYyJAhKv90czaJUDcIRFRkvkpQFvSOC8y3y5ApZDI05RYMkBjc+SlA841QGjwDRBg6jlA7oAegyLNPkBZlbkl2U1CQI+XufRBwUVAQk/9sjbbSUBnqgpoHbtOQO0TKr8jQ1JAFckcuoe0VUAguqs0FsxZQLPDztciqV5AzpltnHQ4YkCfSLDx1KdlQNC36I/+vGlAd98/zDKXbkBz2tm5yy1yQJrkGJcpm3VAVdiGv++teUBRrDY/TYV+QHCuxhMpI4JA+vf9pYWOhUAGs1u+6Z6JQDRyjypyc45A4RGOpowYkkClaAka6YGVQBXlP4fsj5lA5BAqiKFhnkBmI4xu9g2iQNml5+5TdaVAXA8PFfiAqUBM/elR20+uQM8iH2hmA7JA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1328","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1329"}}},"glyph":{"type":"object","name":"Line","id":"p1324","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1325","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1326","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1212","attributes":{"tools":[{"id":"p1226"},{"id":"p1227"},{"id":"p1228"},{"type":"object","name":"SaveTool","id":"p1234"},{"id":"p1235"},{"id":"p1236"}]}},"toolbar_location":null,"left":[{"type":"object","name":"LogAxis","id":"p1221","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1222","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1223"},"major_label_policy":{"type":"object","name":"AllLabels","id":"p1224"}}}],"below":[{"type":"object","name":"LinearAxis","id":"p1216","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1217","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1218"},"axis_label":"Single Scattering Albedo","major_label_policy":{"type":"object","name":"AllLabels","id":"p1219"}}}],"center":[{"type":"object","name":"Grid","id":"p1220","attributes":{"axis":{"id":"p1216"}}},{"type":"object","name":"Grid","id":"p1225","attributes":{"dimension":1,"axis":{"id":"p1221"}}}]}},0,1],[{"type":"object","name":"Figure","id":"p1237","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"DataRange1d","id":"p1239"},"y_range":{"type":"object","name":"Range1d","id":"p1246","attributes":{"start":4611.400026269911,"end":0.0009728002988311}},"x_scale":{"type":"object","name":"LinearScale","id":"p1247"},"y_scale":{"type":"object","name":"LogScale","id":"p1248"},"title":{"type":"object","name":"Title","id":"p1244"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1318","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1312","attributes":{"selected":{"type":"object","name":"Selection","id":"p1313","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1314"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"UD1godtN3T85DWOvvLnfP33SUgFuUOA/zgd0GFEq4D/bWk8HV7nfP6IsKpBIQd8/Kmb6dJG13j+Mq7T2TdzeP2PJkZn1cN8/CXInPSUT4D/WlNL3B2PgP3KESJzywOA/PTpWwp8b4T+uLf/z9WPhP1SDgepsneE/t9KloMaz4T+UoaHJLZ7hP7KES9v7xuE/9/d4GOXb4T+d0N5fgOfhP7LHCuvY9OE/h3toWs0U4j8EUyiuxEPiP3ehAuO4huI/8mhhc8nL4j9yYigvNg7jP05wRMRVP+M/MvwFTI1H4z8Naz9IVTjjPxBRVSXAE+M/8wzuMCVK4z+lMPBbKATjP5i9HxGM3OI/GxgaSITo4j9YM2fHyQ/jP2wMZYD+J+M/FPXH/Q0y4z+QZBgV8zbjP/qMELp2M+M/4mfKp9Ip4z+Nouk6VSzlP+HQsQn0a+Y/JlbqfYEQ5z/2scmPjYLnP6g1IBqXyec/ZlrdJQ/55z8sHAyZbBjoP05qsWrdKug/+2nk0MIz6D+2gPDwDDjoPxVjpllYO+g/itiGzx5B6D9ab8zRYUvoP5YD1E+UWug/X5tEKC9s6D+q3msgon7oPxGl4lQkleg/djArCDXU6D8SUyD5nxXpP/cjYK3wJek/+fjE7TAs6T8w07YEjSjpP1/JNlCC7+g/sHJqFqEK5z/Ds9qdaz/iP+qcpeBUleE/VgUd+ytj4T/quo9uDVfhP/901oFMLuE/65SYQmXJ4D8hgGn944vgP5b9TxmMaOE/WRiQstoX4j+f+/VFFZfiP5/79UUVl+I/n/v1RRWX4j+f+/VFFZfiPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},"shape":[90],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Mc0IvHDgTz8VnkPJc/FSP7eNhJu0g1Y/rlbR+VHCWj9fk3+Qys1fPzqZwate5mI/Uvp8noh2Zj9uirdGqrJqP4ncCE4vu28/OcYRClDbcj8GcDNWZGl2Pw4fRrwLo3o/O5hC7p6ofz84FGngR9CCP2TMJb5HXIY/QlwhVXaTij/WdM5qGZaPPyWt/ipGxZI/PJLU0TJPlj+IrvAL6oOaP3LaUb2eg58/nvAL5kq6oj/95MKMJUKmPw+iXttmdKo/tOh13y5xrz8bdMwNVq+yP42IduofNbY/6eEYvuxkuj9wdOfKyV6/Px0Bfp5npMI/O9935iEoxj8zNtCue1XKP/AFV3lvTM8/OJRglH+Z0j+D6FF8KxvWP0OCOKgTRto/mtZ45B863z+LW7brnY7iP1c/kqc8DuY/xsIIpbQ26j+2zgQG2yfvP561w6DCg/I/rBjJY1UB9j/7C/ufXif6P1qDttegFf8/BzDPr+14AkD0QYmsdfQFQOqHzJMRGApASzRNU3EDD0AshiEVH24SQJ0faH2d5xVAgHQ9e80IGkDByYtyTPEeQP+fBc1WYyJAhKv90czaJUDcIRFRkvkpQFvSOC8y3y5ApZDI05RYMkBjc+SlA841QGjwDRBg6jlA7oAegyLNPkBZlbkl2U1CQI+XufRBwUVAQk/9sjbbSUBnqgpoHbtOQO0TKr8jQ1JAFckcuoe0VUAguqs0FsxZQLPDztciqV5AzpltnHQ4YkCfSLDx1KdlQNC36I/+vGlAd98/zDKXbkBz2tm5yy1yQJrkGJcpm3VAVdiGv++teUBRrDY/TYV+QHCuxhMpI4JA+vf9pYWOhUAGs1u+6Z6JQDRyjypyc45A4RGOpowYkkClaAka6YGVQBXlP4fsj5lA5BAqiKFhnkBmI4xu9g2iQNml5+5TdaVAXA8PFfiAqUBM/elR20+uQM8iH2hmA7JA"},"shape":[90],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1319","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1320"}}},"glyph":{"type":"object","name":"Line","id":"p1315","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1316","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1317","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1245","attributes":{"tools":[{"id":"p1259"},{"id":"p1260"},{"id":"p1261"},{"type":"object","name":"SaveTool","id":"p1267"},{"id":"p1268"},{"id":"p1269"}]}},"toolbar_location":null,"left":[{"type":"object","name":"LogAxis","id":"p1254","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1255","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1256"},"major_label_policy":{"type":"object","name":"AllLabels","id":"p1257"}}}],"below":[{"type":"object","name":"LinearAxis","id":"p1249","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1250","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1251"},"axis_label":"Asymmetry","major_label_policy":{"type":"object","name":"AllLabels","id":"p1252"}}}],"center":[{"type":"object","name":"Grid","id":"p1253","attributes":{"axis":{"id":"p1249"}}},{"type":"object","name":"Grid","id":"p1258","attributes":{"dimension":1,"axis":{"id":"p1254"}}}]}},0,2]]}}]}};
+  const render_items = [{"docid":"c20fd606-518d-4f25-b483-2e9ee2f095a2","roots":{"p1337":"d59de6dc-1f14-4658-96fa-194135b89685"},"root_ids":["p1337"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</section>
+<section id="Cloudy-vs-Clear-Spectra">
+<h2>Cloudy vs Clear Spectra<a class="headerlink" href="#Cloudy-vs-Clear-Spectra" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opa_mon</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">15</span><span class="p">])</span>
+
+<span class="n">hi_res</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+<span class="n">teff</span><span class="o">=</span> <span class="mi">400</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+<span class="n">hi_res</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+
+<span class="n">hi_res</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">])</span>
+
+<span class="c1"># now let&#39;s add the cloud optical properties</span>
+<span class="n">hi_res</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;cld_df&#39;</span><span class="p">])</span>
+
+<span class="n">df_spec</span> <span class="o">=</span> <span class="n">hi_res</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa_mon</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">wno</span><span class="p">,</span> <span class="n">fp</span> <span class="o">=</span> <span class="n">df_spec</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">df_spec</span><span class="p">[</span><span class="s1">&#39;thermal&#39;</span><span class="p">]</span> <span class="c1">#erg/cm2/s/cm</span>
+<span class="n">wno</span><span class="p">,</span><span class="n">fp</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span><span class="n">fp</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span><span class="n">fp</span><span class="p">,</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="c35c310a-ccd7-4510-86c4-37c073db5dd5" data-root-id="p1345" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"4e902e00-ecb5-4a21-b4b8-9891fded2865":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1345","attributes":{"width":1000,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1346"},"y_range":{"type":"object","name":"DataRange1d","id":"p1347"},"x_scale":{"type":"object","name":"LogScale","id":"p1354"},"y_scale":{"type":"object","name":"LogScale","id":"p1355"},"title":{"type":"object","name":"Title","id":"p1352"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1383","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1377","attributes":{"selected":{"type":"object","name":"Selection","id":"p1378","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1379"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[783],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[783],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1384","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1385"}}},"glyph":{"type":"object","name":"Line","id":"p1380","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1381","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1382","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1353","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1366"},{"type":"object","name":"WheelZoomTool","id":"p1367","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1368","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1369","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1374"},{"type":"object","name":"ResetTool","id":"p1375"},{"type":"object","name":"HelpTool","id":"p1376"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1361","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1362","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1363"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1364"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"below":[{"type":"object","name":"LogAxis","id":"p1356","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1357","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1358"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1359"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1360","attributes":{"axis":{"id":"p1356"}}},{"type":"object","name":"Grid","id":"p1365","attributes":{"dimension":1,"axis":{"id":"p1361"}}}]}}]}};
+  const render_items = [{"docid":"4e902e00-ecb5-4a21-b4b8-9891fded2865","roots":{"p1345":"c35c310a-ccd7-4510-86c4-37c073db5dd5"},"root_ids":["p1345"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<p>This next spectrum is from the Sonora Elf Owl grid of models which are cloud-free to use as reference. To download the rest of the Sonora Elf Owl grid you can find them separated by <a class="reference external" href="https://zenodo.org/records/10385987">L</a>, <a class="reference external" href="https://zenodo.org/records/10385821">T</a>, and <a class="reference external" href="https://zenodo.org/records/10381250">Y</a> dwarfs.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds_elfowl</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="s2">&quot;spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now let’s regrid the spectra to R=200 to make sure the two spectra are on the same grid</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wno_elfowl</span><span class="p">,</span> <span class="n">fp_elfowl</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">ds_elfowl</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span><span class="n">ds_elfowl</span><span class="p">[</span><span class="s1">&#39;flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span><span class="n">R</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">wno_elfowl</span><span class="p">,</span><span class="n">fp_elfowl</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Sonora Elf Owl&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">wno</span><span class="p">,</span><span class="n">fp</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Our Cloudy Run&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Wavelength [micron]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;F$_</span><span class="se">\\</span><span class="s1">nu$ [erg/cm$^2$/s/Hz]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_6_CloudyBrownDwarf_DEQ_25_0.png" src="../../_images/notebooks_D_climate_6_CloudyBrownDwarf_DEQ_25_0.png" />
+</div>
+</div>
+<p>For these cloud species you can see their features in the Y and J bands for example in comparison to the cloud-free Sonora Elf Owl model</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="5_CloudyBrownDwarf_PreW.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Equilibrium" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="7_CreateModelGrid.html" class="btn btn-neutral float-right" title="Creating a Grid of Models to use with GridFitter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

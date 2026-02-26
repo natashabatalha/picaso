@@ -1,0 +1,1204 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Energy Injection in 1D Brown Dwarf Climate Models &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Spherical Integration in PICASO" href="../E_3dmodeling/1_SphericalIntegration.html" />
+    <link rel="prev" title="Creating a Grid of Models to use with GridFitter" href="7_CreateModelGrid.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_BrownDwarf_PreW.html">Brown Dwarfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_Exoplanet_PreW.html">Planet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_Exoplanet-Photochemistry.html">Planet w/ Photochemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4_BrownDwarf_DEQ_SC_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4b_BrownDwarf_DEQ_const_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="5_CloudyBrownDwarf_PreW.html">Brown Dwarfs w/ Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_CloudyBrownDwarf_DEQ.html">Brown Dwarfs w/ Clouds and Disequilibrium Chemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="7_CreateModelGrid.html">Creating a grid of models to use with PICASO's fitting tools</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarfs w/ Energy Injection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Analytical-Energy-Injection">Analytical Energy Injection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Numerical-Energy-Injection">Numerical Energy Injection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Energy Injection in 1D Brown Dwarf Climate Models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/8_EnergyInjection.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/8_EnergyInjection.py">Download full notebook here</a></p>
+</div>
+<section id="Energy-Injection-in-1D-Brown-Dwarf-Climate-Models">
+<h1>Energy Injection in 1D Brown Dwarf Climate Models<a class="headerlink" href="#Energy-Injection-in-1D-Brown-Dwarf-Climate-Models" title="Link to this heading"></a></h1>
+<p>In this tutorial you will learn how you can add in an arbitrary amount of energy into your climate model. This could be because you want to build an intuition on the impact of temperature inversions or see if there are hot spots in your object causing variability in the observations for example. For a more in depth look at the climate-cloud code check out <a href="#id1"><span class="problematic" id="id2">`Mang et al. 2026 &lt;&gt;`__</span></a> (note this should also be cited if using this code/tutorial).</p>
+<p>You should be comfortable with running climate models by now, the minimum requirement for this tutorial is <a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">One-Dimensional Climate Models: The Basics of Brown Dwarfs</a>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vj</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cldplt</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span><span class="p">,</span> <span class="n">figure</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="ae3e3792-3e4d-4f22-933f-ea51a3a283f1">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("ae3e3792-3e4d-4f22-933f-ea51a3a283f1");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("ae3e3792-3e4d-4f22-933f-ea51a3a283f1")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<section id="Analytical-Energy-Injection">
+<h2>Analytical Energy Injection<a class="headerlink" href="#Analytical-Energy-Injection" title="Link to this heading"></a></h2>
+<p>In this part of the tutorial we are going to be comparing our climate models with those from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2014ApJ...789L..14M/abstract">Morley et al. 2014</a>. We are going to test the case for a 600 K brown dwarf. To inject the energy into the atmosphere we are going to use the Chapman function to describe the profile of the energy deposition. The Chapman function is selected because it is often used to represent heating by incident flux within molecular bands.</p>
+<p>We are going to initiate our profile just like any other basic climate model first</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># #1 ck tables from roxana</span>
+<span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;0.0&#39;</span><span class="c1">#&#39;+0.0&#39; #log metallicity</span>
+<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;0.46&#39;</span><span class="c1"># # CtoO absolute ratio</span>
+<span class="n">ck_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;sonora_2121grid_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.hdf5&#39;</span><span class="p">)</span>
+
+<span class="c1">#sonora bobcat cloud free structures file</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="c1">#note you need to put the climate keyword to be True in order to do so</span>
+<span class="c1"># now you need to add these parameters to your calculation</span>
+
+<span class="n">teff</span><span class="o">=</span> <span class="mi">600</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+
+<span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">87</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_bobcat</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure_bobcat</span><span class="p">,</span>
+                      <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><strong>New PICASO code parameters</strong>:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">inject_energy</span></code> : (True/False) Turns on energy injection. Default = False</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">total_energy_injection</span></code> : (float) Desired total amount of energy to be deposited in units of ergs/cm^2/s</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">press_max_energy</span></code> : (float) Pressure for maximum energy injection in units of bars for chapman function</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">injection_scaleheight</span></code> : (float) Scalar specifying the number of scale heights over which energy is deposited</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">energy_injection</span><span class="p">(</span><span class="n">inject_energy</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">total_energy_injection</span><span class="o">=</span> <span class="mf">3.67e6</span><span class="p">,</span>
+                      <span class="n">press_max_energy</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">injection_scalehight</span><span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Tidal Injection is Turned on. This is your new energy profile. Pressure, tidal (erg/cm3)/s:
+0.00017783 -11016635.2
+0.00020869 -11016635.2
+0.0002449 -11016635.16479053
+0.00028739 -11016635.116308352
+0.00033726 -11016635.049534524
+0.00039579 -11016634.95757007
+0.00046447 -11016634.830940602
+0.00054506 -11016634.656584442
+0.00063964 -11016634.41647697
+0.00075064 -11016634.085820347
+0.00088089 -11016633.630554166
+0.0010337 -11016633.003874063
+0.0012131 -11016632.140615804
+0.0014236 -11016630.952194683
+0.0016707 -11016629.315400075
+0.0019606 -11016627.062539682
+0.0023008 -11016623.961106015
+0.0027 -11016619.692065805
+0.0031685 -11016613.815335125
+0.0037184 -11016605.724870019
+0.0043636 -11016594.592368882
+0.0051208 -11016579.271865748
+0.0060094 -11016558.191598322
+0.0070521 -11016529.193889063
+0.0082758 -11016489.306155879
+0.0097119 -11016434.450728461
+0.011397 -11016359.043128863
+0.013375 -11016255.371497408
+0.015696 -11016112.943296656
+0.018419 -11015917.390981082
+0.021616 -11015648.80780688
+0.025366 -11015280.496131798
+0.029768 -11014775.346360369
+0.034933 -11014083.382290576
+0.040995 -11013136.073725007
+0.048109 -11011840.699471062
+0.056457 -11010071.691387154
+0.066254 -11007659.120912667
+0.07775 -11004374.923152417
+0.091242 -10999912.263406597
+0.10707 -10993865.228468958
+0.12565 -10985688.348085674
+0.14746 -10974666.93260457
+0.17305 -10959874.630320594
+0.20307 -10940113.452780463
+0.23831 -10913833.172533013
+0.27967 -10879102.29005384
+0.3282 -10833544.571971513
+0.38515 -10774278.83972285
+0.45198 -10697939.780643143
+0.53041 -10600734.843009515
+0.62245 -10478638.396416951
+0.73046 -10327708.872721534
+0.85721 -10144603.044652209
+1.006 -9927222.826918539
+1.1805 -9675961.684222143
+1.3854 -9393867.51457997
+1.6258 -9088463.910700906
+1.9079 -8771275.87613382
+2.2389 -8457608.523625622
+2.6274 -8164653.843385482
+3.0834 -7908889.705858232
+3.6184 -7702652.1528543
+4.2463 -7551050.114021437
+4.9831 -7451127.2368137855
+5.8478 -7393165.78670052
+6.8625 -7364230.840480819
+8.0533 -7352117.679296072
+9.4508 -7347993.48950058
+11.091 -7346891.808251239
+13.015 -7346670.368746274
+15.274 -7346638.49716256
+17.924 -7346635.397352671
+21.034 -7346635.206946654
+24.684 -7346635.200130616
+28.968 -7346635.200001175
+33.994 -7346635.200000005
+39.893 -7346635.2
+46.816 -7346635.2
+54.939 -7346635.2
+64.473 -7346635.2
+75.66 -7346635.2
+88.789 -7346635.2
+104.2 -7346635.2
+122.28 -7346635.2
+143.49 -7346635.2
+168.39 -7346635.2
+197.62 -7346635.2
+231.91 -7346635.2
+272.15 -7346635.2
+319.37 -7346635.2
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Iteration number  0 , min , max temp  178.05440326184774 2258.01935102453 , flux balance  -0.36371640839484026
+Iteration number  1 , min , max temp  182.23219867974717 2266.962509990343 , flux balance  -0.3500369843859732
+Iteration number  2 , min , max temp  186.25457418962415 2276.1607755996133 , flux balance  -0.3357375793822119
+Iteration number  3 , min , max temp  190.13982735717403 2285.607725955654 , flux balance  -0.32080704185131004
+Iteration number  4 , min , max temp  193.90372294349388 2295.2968448107345 , flux balance  -0.3052341877904854
+Iteration number  5 , min , max temp  197.55983134884804 2305.2215879008195 , flux balance  -0.2890077388408398
+Iteration number  6 , min , max temp  201.1198855343269 2315.3754268434377 , flux balance  -0.27211628714697234
+Iteration number  7 , min , max temp  204.59405443610072 2325.751883092252 , flux balance  -0.2545482682715949
+Iteration number  8 , min , max temp  207.99123041083956 2336.315826246886 , flux balance  -0.2362919459393604
+Iteration number  9 , min , max temp  211.31923340950496 2347.0738962653277 , flux balance  -0.2173353978394921
+Iterations exceeded it_max ! sorry
+Big iteration is  211.31923340950496 0
+Iteration number  0 , min , max temp  214.58499933911236 2358.0345879172914 , flux balance  -0.19766650718359915
+Iteration number  1 , min , max temp  217.79474184499009 2369.1917866492145 , flux balance  -0.17727295695767448
+Iteration number  2 , min , max temp  220.95408098523635 2380.5394570193116 , flux balance  -0.15614222869689676
+Iteration number  3 , min , max temp  224.0681484145246 2392.07160929132 , flux balance  -0.13426160580359808
+Iteration number  4 , min , max temp  227.1417468825321 2403.7822264751467 , flux balance  -0.11161819635683135
+Iteration number  5 , min , max temp  230.17950179133055 2415.6651206779834 , flux balance  -0.0881989775002811
+Iteration number  6 , min , max temp  233.18612527951302 2427.6887698868104 , flux balance  -0.06399090650972268
+Iteration number  7 , min , max temp  236.16700627545913 2439.8408710852314 , flux balance  -0.03898122121090535
+Iteration number  8 , min , max temp  239.1303286387749 2452.13716532128 , flux balance  -0.013158576362375572
+Iteration number  9 , min , max temp  240.6074930177224 2458.2904865210044 , flux balance  -1.7570441376894604e-05
+Iterations exceeded it_max ! sorry
+Big iteration is  240.6074930177224 1
+Iteration number  0 , min , max temp  240.6265521417385 2458.277158877199 , flux balance  -1.3253268439665553e-07
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  241.42120164192607 2493.4823704718106 , flux balance  -0.07477209342767703
+Iteration number  1 , min , max temp  242.2564257588249 2528.3352571007244 , flux balance  -0.06060806763396156
+Iteration number  2 , min , max temp  243.1335915079278 2562.7773112848836 , flux balance  -0.04580810063211896
+Iteration number  3 , min , max temp  244.0550383809508 2596.908850587526 , flux balance  -0.030349695632351285
+Iteration number  4 , min , max temp  245.02579119216608 2630.550480279093 , flux balance  -0.01418978455159858
+Iteration number  5 , min , max temp  245.89221275232055 2658.1738727139336 , flux balance  -1.6034103792100256e-05
+Iteration number  6 , min , max temp  245.90525427186097 2657.773456862984 , flux balance  -1.285071583553056e-07
+In t_start: Converged Solution in iterations  6
+Big iteration is  245.90525427186097 0
+ We are already at a root, tolf , test =  5e-05 ,  2.0395427072540126e-06
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  246.86089837310382 2370.235486100191 , flux balance  -2.6570557145221656e-05
+Iteration number  1 , min , max temp  246.87503808926112 2370.210261689973 , flux balance  -2.020825729511743e-07
+In t_start: Converged Solution in iterations  1
+Big iteration is  246.87503808926112 0
+ We are already at a root, tolf , test =  5e-05 ,  5.059718140823494e-07
+Profile converged before itmx
+Iteration number  0 , min , max temp  247.05782979106266 2328.595061259507 , flux balance  -1.113893360395449e-05
+In t_start: Converged Solution in iterations  0
+Big iteration is  247.05782979106266 0
+ We are already at a root, tolf , test =  5e-05 ,  1.4687060967086001e-05
+Profile converged before itmx
+Iteration number  0 , min , max temp  247.09059932354563 2315.207937441767 , flux balance  -1.8449651798759383e-06
+In t_start: Converged Solution in iterations  0
+Big iteration is  247.09059932354563 0
+ We are already at a root, tolf , test =  5e-05 ,  1.5865465009334767e-05
+Profile converged before itmx
+Iteration number  0 , min , max temp  247.09609310654784 2315.7873986962745 , flux balance  -2.6413844871284214e-07
+In t_start: Converged Solution in iterations  0
+Big iteration is  247.09609310654784 0
+ We are already at a root, tolf , test =  5e-05 ,  1.5516350549823215e-06
+Profile converged before itmx
+final [0, 82, 89, 0, 0, 0]
+ We are already at a root, tolf , test =  5e-05 ,  1.182409052181469e-05
+Big iteration is  247.09609310654784 0
+ We are already at a root, tolf , test =  5e-05 ,  1.182409052181469e-05
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Now let&#39;s read in our benchmark profile from Morley et. al 2014</span>
+<span class="n">benchmark</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;t600g1000nc-3.67e6-h1-1bar.dat&#39;</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+
+<span class="c1">#we only want to compare the P-T profile so we don&#39;t care about the other columns</span>
+<span class="n">benchmark</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="s1">&#39;pressure&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature&#39;</span><span class="p">,</span> <span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="s1">&#39;x3&#39;</span><span class="p">,</span> <span class="s1">&#39;x4&#39;</span><span class="p">,</span> <span class="s1">&#39;x5&#39;</span><span class="p">,</span> <span class="s1">&#39;x6&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">3e3</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_bobcat</span><span class="p">,</span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sonora Bobcat&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">benchmark</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">benchmark</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Morley 2014&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our PICASO Run&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_8_EnergyInjection_12_0.png" src="../../_images/notebooks_D_climate_8_EnergyInjection_12_0.png" />
+</div>
+</div>
+<p>When you generate these models, remember that because you artificially injected energy into the atmosphere, the profile will be <strong>warmer</strong> than the desired effective temperature that you set for the object. You might also notice here that there are the slightest difference in the PT profile between our model and the Morley 2014 model, we’re not worried about this since we ran a 91 level model compared to their 60 level model.</p>
+</section>
+<section id="Numerical-Energy-Injection">
+<h2>Numerical Energy Injection<a class="headerlink" href="#Numerical-Energy-Injection" title="Link to this heading"></a></h2>
+<p>Let’s say you don’t want to use something like the Chapman function because you have an actual profile of energy deposition you’d like to include in your model. We can add a couple of other inputs to do this.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="c1">#note you need to put the climate keyword to be True in order to do so</span>
+<span class="c1"># now you need to add these parameters to your calculation</span>
+
+<span class="n">teff</span><span class="o">=</span> <span class="mi">600</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+
+<span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">87</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<p>Here we’re going to generate a Gaussian distribution of energy that will be injected into the upper atmosphere of this climate model just as an example how you can use any energy profile you’d like</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
+
+<span class="c1"># Define the center and width of the Gaussian</span>
+<span class="n">center</span> <span class="o">=</span> <span class="mi">45</span>  <span class="c1"># Index for the peak of the Gaussian</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mi">10</span>    <span class="c1"># Standard deviation of the Gaussian</span>
+
+<span class="c1"># Create a Gaussian profile</span>
+<span class="n">beam_profile</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pressure_bobcat</span><span class="p">)),</span> <span class="n">loc</span><span class="o">=</span><span class="n">center</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">width</span><span class="p">)</span>
+
+<span class="c1"># Normalize the Gaussian to match the desired energy range</span>
+<span class="n">beam_profile</span> <span class="o">=</span> <span class="n">beam_profile</span> <span class="o">/</span> <span class="n">beam_profile</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mf">6e5</span>  <span class="c1"># Scale to the desired range</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">beam_profile</span><span class="p">,</span> <span class="n">pressure_bobcat</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Gaussian Energy Beam Profile&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Energy [ergs/cm^2/s]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Pressure [Bars]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_8_EnergyInjection_20_0.png" src="../../_images/notebooks_D_climate_8_EnergyInjection_20_0.png" />
+</div>
+</div>
+<p><strong>New PICASO code parameters</strong>:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">inject_beam</span></code> : (bool) Turns on using your own energy profile instead of the Chapman function</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beam_profile</span></code> : (array) Array of the energy profile. The shape of this array needs to be the same as the pressure grid.</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_bobcat</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure_bobcat</span><span class="p">,</span>
+                      <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+<span class="n">mh</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">cto_relative</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">mh</span><span class="o">=</span><span class="n">mh</span><span class="p">,</span> <span class="n">cto_relative</span><span class="o">=</span><span class="n">cto_relative</span><span class="p">,</span> <span class="n">chem_method</span><span class="o">=</span><span class="s1">&#39;visscher_1060&#39;</span><span class="p">)</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">energy_injection</span><span class="p">(</span><span class="n">inject_energy</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">inject_beam</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">beam_profile</span> <span class="o">=</span> <span class="n">beam_profile</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Tidal Injection is Turned on. This is your new energy profile. Pressure, tidal (erg/cm3)/s:
+0.00017783 -22386324.888751347
+0.00020869 -22386324.888751347
+0.0002449 -22386266.93246592
+0.00028739 -22386178.28308697
+0.00033726 -22386044.035061307
+0.00039579 -22385842.756660804
+0.00046447 -22385543.982185125
+0.00054506 -22385104.898936786
+0.00063964 -22384466.03658015
+0.00075064 -22383545.746406138
+0.00088089 -22382233.246363632
+0.0010337 -22380380.009534054
+0.0012131 -22377789.294926602
+0.0014236 -22374203.666514903
+0.0016707 -22369290.42579814
+0.0019606 -22362625.000595987
+0.0023008 -22353672.49231513
+0.0027 -22341767.786746792
+0.0031685 -22326094.87669082
+0.0037184 -22305666.32024327
+0.0043636 -22279304.052177873
+0.0051208 -22245623.056633104
+0.0060094 -22203019.67002887
+0.0070521 -22149666.48119768
+0.0082758 -22083515.895284258
+0.0097119 -22002314.39301353
+0.011397 -21903629.315184444
+0.013375 -21784889.60977505
+0.015696 -21643441.384944446
+0.018419 -21476618.32192529
+0.021616 -21281826.044295028
+0.025366 -21056638.463371813
+0.029768 -20798902.993626103
+0.034933 -20506850.4447833
+0.040995 -20179204.44786138
+0.048109 -19815284.56263963
+0.056457 -19415096.83829906
+0.066254 -18979405.63292628
+0.07775 -18509780.987975147
+0.091242 -18008616.810042318
+0.10707 -17479116.50143583
+0.12565 -16925244.426803183
+0.14746 -16351643.590159874
+0.17305 -15763521.979204029
+0.20307 -15166512.048339903
+0.23831 -14566509.592744056
+0.27967 -13969499.661879934
+0.3282 -13381378.050924085
+0.38515 -12807777.214280777
+0.45198 -12253905.139648128
+0.53041 -11724404.831041642
+0.62245 -11223240.653108813
+0.73046 -10753616.008157678
+0.85721 -10317924.802784901
+1.006 -9917737.078444332
+1.1805 -9553817.193222579
+1.3854 -9226171.19630066
+1.6258 -8934118.647457857
+1.9079 -8676383.177712146
+2.2389 -8451195.596788932
+2.6274 -8256403.3191586705
+3.0834 -8089580.256139514
+3.6184 -7948132.031308907
+4.2463 -7829392.325899516
+4.9831 -7730707.248070429
+5.8478 -7649505.745799703
+6.8625 -7583355.159886279
+8.0533 -7530001.971055091
+9.4508 -7487398.584450857
+11.091 -7453717.588906088
+13.015 -7427355.320840691
+15.274 -7406926.764393142
+17.924 -7391253.854337166
+21.034 -7379349.148768836
+24.684 -7370396.640487975
+28.968 -7363731.215285824
+33.994 -7358817.974569059
+39.893 -7355232.346157358
+46.816 -7352641.631549907
+54.939 -7350788.39472033
+64.473 -7349475.894677824
+75.66 -7348555.604503811
+88.789 -7347916.7421471765
+104.2 -7347477.658898835
+122.28 -7347178.884423156
+143.49 -7346977.606022653
+168.39 -7346843.357996992
+197.62 -7346754.70861804
+231.91 -7346696.752332614
+272.15 -7346659.239276822
+319.37 -7346635.2
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Iteration number  0 , min , max temp  180.02278133328147 2249.4489475307887 , flux balance  -0.6929809234344015
+Iteration number  1 , min , max temp  186.34822223122202 2249.5839074094833 , flux balance  -0.6926120012014338
+Iteration number  2 , min , max temp  192.6287872584764 2249.7355121290307 , flux balance  -0.6921972930637508
+Iteration number  3 , min , max temp  198.8346605500266 2249.9050802010984 , flux balance  -0.6917331163974603
+Iteration number  4 , min , max temp  204.9492701588066 2250.0938828535286 , flux balance  -0.6912159081390434
+Iteration number  5 , min , max temp  210.96504854930546 2250.3031483570553 , flux balance  -0.6906422126162899
+Iteration number  6 , min , max temp  216.88015708913818 2250.534065174805 , flux balance  -0.6900086724500001
+Iteration number  7 , min , max temp  222.69625726746503 2250.7877840538695 , flux balance  -0.6893120222272676
+Iteration number  8 , min , max temp  228.41701572157365 2251.0654195862135 , flux balance  -0.6885490835166963
+Iteration number  9 , min , max temp  234.0471979686329 2251.3680513661807 , flux balance  -0.6877167608985831
+Iterations exceeded it_max ! sorry
+Big iteration is  234.0471979686329 0
+Iteration number  0 , min , max temp  239.59207173364427 2251.6967251800156 , flux balance  -0.6868120378235983
+Iteration number  1 , min , max temp  245.0570695077836 2252.0524541674245 , flux balance  -0.685831972480807
+Iteration number  2 , min , max temp  250.4475765424282 2252.4362201474023 , flux balance  -0.6847736931536706
+Iteration number  3 , min , max temp  255.76882045360207 2252.8489750395183 , flux balance  -0.6836343932637762
+Iteration number  4 , min , max temp  261.02581119817273 2253.2912519381634 , flux balance  -0.6824113259786017
+Iteration number  5 , min , max temp  266.2233039870398 2253.7636931096918 , flux balance  -0.6811017983369195
+Iteration number  6 , min , max temp  271.36579856573957 2254.2677463281148 , flux balance  -0.6797031652522675
+Iteration number  7 , min , max temp  276.4575354323648 2254.8042588462936 , flux balance  -0.6782128231105088
+Iteration number  8 , min , max temp  281.5025093092014 2255.3740568987573 , flux balance  -0.6766282033148253
+Iteration number  9 , min , max temp  286.5044857218329 2255.9779476213566 , flux balance  -0.6749467657398908
+Iterations exceeded it_max ! sorry
+Big iteration is  286.5044857218329 1
+Iteration number  0 , min , max temp  291.4670057669792 2256.6167210640647 , flux balance  -0.6731659918952889
+Iteration number  1 , min , max temp  296.3934119814995 2257.2911520856806 , flux balance  -0.6712833783894174
+Iteration number  2 , min , max temp  301.2868540235243 2258.0020023454017 , flux balance  -0.6692964300865926
+Iteration number  3 , min , max temp  306.15030923210276 2258.750022171761 , flux balance  -0.6672026535713359
+Iteration number  4 , min , max temp  310.98659122990705 2259.535952464388 , flux balance  -0.6649995504784911
+Iteration number  5 , min , max temp  315.7983619375306 2260.3605265194687 , flux balance  -0.6626846109918797
+Iteration number  6 , min , max temp  320.58814368691964 2261.2244717882563 , flux balance  -0.6602553074806985
+Iteration number  7 , min , max temp  325.35832790947774 2262.1285115896258 , flux balance  -0.6577090882102423
+Iteration number  8 , min , max temp  330.11118218260503 2263.073366764027 , flux balance  -0.6550433711571515
+Iteration number  9 , min , max temp  334.84886036037807 2264.059757212997 , flux balance  -0.652255538082968
+Iterations exceeded it_max ! sorry
+Big iteration is  334.84886036037807 2
+Iteration number  0 , min , max temp  339.5734073184169 2265.0884034013816 , flux balance  -0.6493429286426649
+Iteration number  1 , min , max temp  344.28676549955827 2266.1600277532198 , flux balance  -0.6463028347194323
+Iteration number  2 , min , max temp  348.9907795533963 2267.275355970361 , flux balance  -0.6431324948991833
+Iteration number  3 , min , max temp  353.68720258189745 2268.435118241553 , flux balance  -0.6398290891723787
+Iteration number  4 , min , max temp  358.3776995493291 2269.640050375308 , flux balance  -0.6363897337648194
+Iteration number  5 , min , max temp  363.0638496221493 2270.890894852741 , flux balance  -0.6328114761035961
+Iteration number  6 , min , max temp  367.74715199160886 2272.188401739175 , flux balance  -0.6290912900926005
+Iteration number  7 , min , max temp  372.4290268938888 2273.5333295437995 , flux balance  -0.6252260714371323
+Iteration number  8 , min , max temp  377.1108187218259 2274.926445964127 , flux balance  -0.6212126331972697
+Iteration number  9 , min , max temp  381.7937999088011 2276.3685285081674 , flux balance  -0.6170477015900244
+Iterations exceeded it_max ! sorry
+Big iteration is  381.7937999088011 3
+Iteration number  0 , min , max temp  386.47917103925266 2277.860365071801 , flux balance  -0.6127279118131258
+Iteration number  1 , min , max temp  391.1680644368116 2279.4027543720854 , flux balance  -0.6082498041792984
+Iteration number  2 , min , max temp  395.8615449916507 2280.9965063143454 , flux balance  -0.6036098203319245
+Iteration number  3 , min , max temp  400.56061412180344 2282.6424422233113 , flux balance  -0.5988042997486314
+Iteration number  4 , min , max temp  405.2662094202691 2284.3413950394483 , flux balance  -0.5938294762353109
+Iteration number  5 , min , max temp  409.97920690915834 2286.0942093842605 , flux balance  -0.5886814746941551
+Iteration number  6 , min , max temp  414.7004240023871 2287.9017415285243 , flux balance  -0.5833563080684941
+Iteration number  7 , min , max temp  419.4306199291407 2289.7648593054564 , flux balance  -0.5778498743423246
+Iteration number  8 , min , max temp  424.17049776295755 2291.684441917755 , flux balance  -0.5721579537474203
+Iteration number  9 , min , max temp  428.9207060261344 2293.6613796684355 , flux balance  -0.5662762060940878
+Iterations exceeded it_max ! sorry
+Big iteration is  428.9207060261344 4
+Iteration number  0 , min , max temp  433.68184040282705 2295.696573613182 , flux balance  -0.5602001682346276
+Iteration number  1 , min , max temp  438.454446604925 2297.790935110814 , flux balance  -0.5539252517361202
+Iteration number  2 , min , max temp  443.23901976209527 2299.9453853677273 , flux balance  -0.5474467404774517
+Iteration number  3 , min , max temp  448.0360085137182 2302.16085482927 , flux balance  -0.5407597886187268
+Iteration number  4 , min , max temp  452.8458149165832 2304.438282581485 , flux balance  -0.5338594184575745
+Iteration number  5 , min , max temp  457.6687978469725 2306.7786156251855 , flux balance  -0.5267405185958158
+Iteration number  6 , min , max temp  462.50527462859776 2309.1828081308286 , flux balance  -0.5193978420958876
+Iteration number  7 , min , max temp  467.35552164175397 2311.651820656329 , flux balance  -0.5118260046849833
+Iteration number  8 , min , max temp  472.21977723683614 2314.1866192795956 , flux balance  -0.5040194831665931
+Iteration number  9 , min , max temp  477.0982432862157 2316.788174705705 , flux balance  -0.4959726138617968
+Iterations exceeded it_max ! sorry
+Big iteration is  477.0982432862157 5
+Iteration number  0 , min , max temp  481.9910870001874 2319.45746134295 , flux balance  -0.48767959111073433
+Iteration number  1 , min , max temp  486.8984438564668 2322.1954563113327 , flux balance  -0.4791344659526932
+Iteration number  2 , min , max temp  491.8204189224172 2325.003138466387 , flux balance  -0.4703311447436563
+Iteration number  3 , min , max temp  496.7570871233573 2327.881487424233 , flux balance  -0.46126338775633513
+Iteration number  4 , min , max temp  501.70849807758447 2330.8253851521004 , flux balance  -0.4519248081638173
+Iteration number  5 , min , max temp  506.6746759769887 2333.835605580255 , flux balance  -0.44230887069103275
+Iteration number  6 , min , max temp  511.65562233529926 2336.919107186799 , flux balance  -0.43240889052266085
+Iteration number  7 , min , max temp  516.651317272841 2340.076857003553 , flux balance  -0.42221803211118425
+Iteration number  8 , min , max temp  521.6617220653387 2343.309817620988 , flux balance  -0.4117293080950004
+Iteration number  9 , min , max temp  526.6867799326174 2346.6189462292054 , flux balance  -0.40093557807878816
+Iterations exceeded it_max ! sorry
+Big iteration is  526.6867799326174 6
+Not converged
+Iteration number  0 , min , max temp  531.8553096665111 2365.4484016175334 , flux balance  -0.3735390106484338
+Iteration number  1 , min , max temp  584.7895876866653 2555.133641566759 , flux balance  0.11710412027474348
+Iteration number  2 , min , max temp  579.8564548160366 2533.099303234426 , flux balance  0.006648101552233551
+Iteration number  3 , min , max temp  579.8474830721907 2532.7156105672066 , flux balance  6.695543519824114e-05
+In t_start: Converged Solution in iterations  3
+Big iteration is  579.8474830721907 0
+Iteration number  0 , min , max temp  579.8484023737434 2532.714668259904 , flux balance  3.9113035033525043e-07
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  577.5749342793941 2366.1494186562654 , flux balance  0.00011184663700658382
+Iteration number  1 , min , max temp  577.3464837347578 2367.531764135102 , flux balance  8.899169134180645e-06
+In t_start: Converged Solution in iterations  1
+Big iteration is  577.3464837347578 0
+ We are already at a root, tolf , test =  5e-05 ,  2.3890709934746546e-05
+Profile converged before itmx
+Iteration number  0 , min , max temp  580.7832457367583 2330.2836180319837 , flux balance  2.1083037062562408e-05
+ We are already at a root, tolf , test =  5e-05 ,  2.318867502117102e-05
+Big iteration is  580.7832457367583 0
+ We are already at a root, tolf , test =  5e-05 ,  2.318867502117102e-05
+Profile converged before itmx
+Iteration number  0 , min , max temp  578.9123835006712 2317.30507482273 , flux balance  1.2388023082947608e-07
+In t_start: Converged Solution in iterations  0
+Big iteration is  578.9123835006712 0
+ We are already at a root, tolf , test =  5e-05 ,  7.795086496158718e-06
+Profile converged before itmx
+Iteration number  0 , min , max temp  579.751777462235 2318.132170551263 , flux balance  -1.6041577874011742e-07
+In t_start: Converged Solution in iterations  0
+Big iteration is  579.751777462235 0
+ We are already at a root, tolf , test =  5e-05 ,  1.0185425748314464e-06
+Profile converged before itmx
+final [0, 82, 89, 0, 0, 0]
+ We are already at a root, tolf , test =  5e-05 ,  3.666060099430754e-05
+Big iteration is  579.751777462235 0
+ We are already at a root, tolf , test =  5e-05 ,  3.666060099430754e-05
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">3e3</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_bobcat</span><span class="p">,</span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sonora Bobcat&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our PICASO Run&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_8_EnergyInjection_24_0.png" src="../../_images/notebooks_D_climate_8_EnergyInjection_24_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="7_CreateModelGrid.html" class="btn btn-neutral float-left" title="Creating a Grid of Models to use with GridFitter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../E_3dmodeling/1_SphericalIntegration.html" class="btn btn-neutral float-right" title="Spherical Integration in PICASO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

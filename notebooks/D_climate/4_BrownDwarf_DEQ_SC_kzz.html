@@ -1,0 +1,702 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Constant Kzz (~Elf Owl)" href="4b_BrownDwarf_DEQ_const_kzz.html" />
+    <link rel="prev" title="Self Consistent Photochemistry and Climate with Photochem" href="3_Exoplanet-Photochemistry.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_BrownDwarf_PreW.html">Brown Dwarfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_Exoplanet_PreW.html">Planet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_Exoplanet-Photochemistry.html">Planet w/ Photochemistry</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder">First, check that you have downloaded and placed the correlated-k files in the correct folder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Setting-K_{zz}">Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="4b_BrownDwarf_DEQ_const_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="5_CloudyBrownDwarf_PreW.html">Brown Dwarfs w/ Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_CloudyBrownDwarf_DEQ.html">Brown Dwarfs w/ Clouds and Disequilibrium Chemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="7_CreateModelGrid.html">Creating a grid of models to use with PICASO's fitting tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="8_EnergyInjection.html">Brown Dwarfs w/ Energy Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/4_BrownDwarf_DEQ_SC_kzz.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/4_BrownDwarf_DEQ_SC_kzz.py">Download full notebook here</a></p>
+</div>
+<section id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-with-Self-Consistent-Kzz">
+<h1>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-with-Self-Consistent-Kzz" title="Link to this heading"></a></h1>
+<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2024arXiv240200756M/abstract">Mukherjee et al. 2024</a> (note this should also be cited along with <a href="#id1"><span class="problematic" id="id2">`PICASO 4.0 &lt;&gt;`__</span></a> if using this code/tutorial).</p>
+<p>What you should already be familiar with:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission">basics of running/analyzing thermal spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html">how to analyze thermal emission spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">how to run a basic 1d brown dwarf tutorial</a></p></li>
+</ul>
+<p>What you should have downloaded:</p>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="https://doi.org/10.5281/zenodo.18644980">Download</a> New 1460, 661 wno Correlated-k Tables to be used by the climate code for opacity by individual molecule</p></li>
+</ol>
+<p>You can easily do this with the <code class="docutils literal notranslate"><span class="pre">get_data</span></code> function:</p>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">data.get_data</span></code> helper function to get resortrebin files and add them to the default picaso location: <code class="docutils literal notranslate"><span class="pre">reference/opaities/resortrebin</span></code> &gt;&gt; import picaso.data as d</p>
+<blockquote>
+<div><p>d.get_data(category_download=’ck_tables’,target_download=’by-molecule’)</p>
+</div></blockquote>
+<section id="First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder">
+<h2>First, check that you have downloaded and placed the correlated-k files in the correct folder<a class="headerlink" href="#First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">))</span> <span class="c1">#should show you a list of files</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;readme&#39;,
+ &#39;O2_1460.hdf5&#39;,
+ &#39;PH3_1460.hdf5&#39;,
+ &#39;Rb_1460.hdf5&#39;,
+ &#39;TiH_1460.hdf5&#39;,
+ &#39;TiO_1460.hdf5&#39;,
+ &#39;npy&#39;,
+ &#39;AlH_1460.hdf5&#39;,
+ &#39;C2H2_1460.hdf5&#39;,
+ &#39;C2H4_1460.hdf5&#39;,
+ &#39;C2H6_1460.hdf5&#39;,
+ &#39;CaH_1460.hdf5&#39;,
+ &#39;CH4_1460.hdf5&#39;,
+ &#39;CO_1460.hdf5&#39;,
+ &#39;CO2_1460.hdf5&#39;,
+ &#39;CrH_1460.hdf5&#39;,
+ &#39;Cs_1460.hdf5&#39;,
+ &#39;Fe_1460.hdf5&#39;,
+ &#39;FeH_1460.hdf5&#39;,
+ &#39;H2_1460.hdf5&#39;,
+ &#39;H2O_1460.hdf5&#39;,
+ &#39;H2S_1460.hdf5&#39;,
+ &#39;H3+_1460.hdf5&#39;,
+ &#39;HCN_1460.hdf5&#39;,
+ &#39;K_1460.hdf5&#39;,
+ &#39;Li_1460.hdf5&#39;,
+ &#39;LiCl_1460.hdf5&#39;,
+ &#39;LiF_1460.hdf5&#39;,
+ &#39;LiH_1460.hdf5&#39;,
+ &#39;MgH_1460.hdf5&#39;,
+ &#39;N2_1460.hdf5&#39;,
+ &#39;Na_1460.hdf5&#39;,
+ &#39;NH3_1460.hdf5&#39;,
+ &#39;O3_1460.hdf5&#39;,
+ &#39;OCS_1460.hdf5&#39;,
+ &#39;SiO_1460.hdf5&#39;,
+ &#39;SO2_1460.hdf5&#39;,
+ &#39;VO_1460.hdf5&#39;,
+ &#39;196&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="c1">#%matplotlib inline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">constants</span> <span class="k">as</span> <span class="n">const</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+</pre></div>
+</div>
+</div>
+<section id="Setting-up-Initial-Run-(highlighting-main-differences-for-disequilibrium)">
+<h3>Setting up Initial Run (highlighting main differences for disequilibrium)<a class="headerlink" href="#Setting-up-Initial-Run-(highlighting-main-differences-for-disequilibrium)" title="Link to this heading"></a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># sonora_profile_db = &#39;/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0&#39; #recommended download #2 above</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+
+<span class="n">gases_fly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;N2&#39;</span><span class="p">,</span><span class="s1">&#39;HCN&#39;</span><span class="p">,</span><span class="s1">&#39;H2&#39;</span><span class="p">,</span><span class="s1">&#39;He&#39;</span><span class="p">,</span><span class="s1">&#39;PH3&#39;</span><span class="p">,</span><span class="s1">&#39;C2H2&#39;</span><span class="p">,</span><span class="s1">&#39;Na&#39;</span><span class="p">,</span><span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;TiO&#39;</span><span class="p">,</span><span class="s1">&#39;VO&#39;</span><span class="p">,</span><span class="s1">&#39;FeH&#39;</span><span class="p">]</span>
+
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">,</span><span class="n">preload_gases</span><span class="o">=</span><span class="n">gases_fly</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+
+<span class="n">tint</span><span class="o">=</span> <span class="mi">700</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">316</span> <span class="c1"># Gravity of your Planet in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">tint</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span>
+</pre></div>
+</div>
+</div>
+<p>We recommend starting with Sonora-Bobcat models as an initial guess.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure</span><span class="p">,</span><span class="n">temp_guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">tint</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">79</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Setting-K_{zz}">
+<h2>Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span><a class="headerlink" href="#Setting-K_{zz}" title="Link to this heading"></a></h2>
+<p>We will add one more concept which is the addition of K<span class="math notranslate nohighlight">\(_{zz}\)</span> [cm<span class="math notranslate nohighlight">\(^2\)</span>/s]. K<span class="math notranslate nohighlight">\(_{zz}\)</span> is the eddy diffusion constant, which sets the strength of vertical mixing. In <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> we have two options for K<span class="math notranslate nohighlight">\(_{zz}\)</span>:</p>
+<ol class="arabic simple">
+<li><p>Constant value: sets a constant at every atmospheric layer</p></li>
+<li><p>Self consistent (see Eqn. 27 and 28 in <a class="reference external" href="https://arxiv.org/pdf/2208.07836.pdf">Mukherjee et al 2022</a>)</p></li>
+</ol>
+<p><strong>New code parameters</strong>:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">diseq_chem=True</span></code> : Turns on disequilibrium chemistry</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span></code> : (True/False) This solves self consistently for</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_all_kzz</span></code> : (True/False) Similar to <code class="docutils literal notranslate"><span class="pre">save_all_profiles</span></code> this saves your intermediate k_zz values if you are trying to solve for a <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kz</span></code> : constant value if <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=False</span></code></p></li>
+</ol>
+<p><strong>Which of those 6 do I need change change</strong></p>
+<p>Likely you will only be changing <code class="docutils literal notranslate"><span class="pre">kz</span></code> and/or, for example, playing around with a <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span></code> vs a <code class="docutils literal notranslate"><span class="pre">constant</span> <span class="pre">profile</span></code>. Unless you are certain, we recommend the following set of <code class="docutils literal notranslate"><span class="pre">gases_fly</span></code> to remain unchanged.</p>
+<p>In this case, we are going to use a self-consistent kzz. Because of this we don’t need to define <code class="docutils literal notranslate"><span class="pre">kz</span></code>, we just need to make sure that <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span> <span class="pre">=</span> <span class="pre">True</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure</span><span class="p">,</span>
+                        <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+<span class="n">mh</span><span class="o">=</span><span class="mi">1</span><span class="c1">#NOT LOG</span>
+<span class="n">cto_relative</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1">#relative to solar</span>
+
+<span class="c1">#now that we are not using preweighted ck tables we need to tell picaso how to compute chemistry on the fly</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">mh</span><span class="o">=</span><span class="n">mh</span><span class="p">,</span> <span class="n">cto_relative</span><span class="o">=</span><span class="n">cto_relative</span><span class="p">,</span> <span class="n">chem_method</span><span class="o">=</span><span class="s1">&#39;visscher&#39;</span><span class="p">,</span> <span class="n">quench</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">save_all_kzz</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">self_consistent_kzz</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">diseq_chem</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench True
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Kzz for chem: Self Consistent Treatment
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(75)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  235.62271922088516 2707.920724731951 , flux balance  0.12265895313042115
+Iteration number  1 , min , max temp  239.64459781356913 2710.8677446347806 , flux balance  0.09094314095911757
+Iteration number  2 , min , max temp  243.25126229567127 2713.6784703273343 , flux balance  0.060282390965011354
+Iteration number  3 , min , max temp  246.50154138055348 2716.3425446478745 , flux balance  0.03070610491420926
+Iteration number  4 , min , max temp  249.42386362639218 2718.83829322524 , flux balance  0.002262725443493044
+Iteration number  5 , min , max temp  249.5965195078939 2718.9778911009244 , flux balance  2.0424181352221725e-05
+In t_start: Converged Solution in iterations  5
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.5965195078939 0
+Iteration number  0 , min , max temp  249.27094970432267 2717.6404269847544 , flux balance  0.010792075632602477
+Iteration number  1 , min , max temp  249.18782340074844 2717.2474766980504 , flux balance  0.00013276689693210173
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.60537836789186 2725.042061000884 , flux balance  0.0001557861020286915
+Iteration number  1 , min , max temp  248.58563712993097 2725.0089166567936 , flux balance  1.163891931097992e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.58563712993097 0
+Iteration number  0 , min , max temp  248.78398134133923 2724.2680121494664 , flux balance  3.433960604645322e-05
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+ convection zone status
+0 78 89 0 0 0
+1
+[0, 64, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.6825339855133 2724.3139441552 , flux balance  1.1020401452800717e-06
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.6825339855133 0
+Iteration number  0 , min , max temp  248.59327968146454 2724.294878645025 , flux balance  1.529558065376712e-05
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Grow Phase : Upper Zone
+[0, 63, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.69658225817605 2724.2305438986486 , flux balance  -4.943061304498978e-06
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.69658225817605 0
+Iteration number  0 , min , max temp  248.88338650452562 2716.3371311905244 , flux balance  0.0026105376301620927
+Iteration number  1 , min , max temp  248.89190718175294 2715.7751670533607 , flux balance  2.262051523047003e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 62, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.70416541135486 2722.9383239436897 , flux balance  -0.0082315107267431
+Iteration number  1 , min , max temp  248.6405291805248 2724.8872213094833 , flux balance  -3.092506636811071e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.6405291805248 0
+Iteration number  0 , min , max temp  248.95855262679038 2717.1199512314074 , flux balance  0.0066066852499824325
+Iteration number  1 , min , max temp  249.01467822357293 2715.587541246083 , flux balance  7.010759684525414e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 61, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.86435097294387 2722.4708856335496 , flux balance  -0.010085508076620536
+Iteration number  1 , min , max temp  248.80368874141232 2724.778837064784 , flux balance  -3.268171626552668e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.80368874141232 0
+Iteration number  0 , min , max temp  249.12984908390206 2717.085147740263 , flux balance  0.006798998015684969
+Iteration number  1 , min , max temp  249.19035754191026 2715.4833134331325 , flux balance  7.452446972427276e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 60, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  249.06701248103627 2722.119185388562 , flux balance  -0.01144132599499469
+Iteration number  1 , min , max temp  249.01149885187883 2724.662375438639 , flux balance  -3.428641479030797e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.01149885187883 0
+Iteration number  0 , min , max temp  249.34288903901705 2717.0714437095535 , flux balance  0.007083569915209617
+Iteration number  1 , min , max temp  249.40881906401634 2715.376206546928 , flux balance  8.051542687529488e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 59, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  249.3060903825976 2721.783044908591 , flux balance  -0.012784249144022793
+Iteration number  1 , min , max temp  249.25549564592995 2724.5518307150187 , flux balance  -3.7061922894608625e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.25549564592995 0
+Iteration number  0 , min , max temp  249.58441564054849 2717.09389744628 , flux balance  0.007493014528130769
+Iteration number  1 , min , max temp  249.65588384964573 2715.2746295714455 , flux balance  8.91854913328523e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 58, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  249.57349819301712 2721.4645483783797 , flux balance  -0.014131693136014234
+Iteration number  1 , min , max temp  249.52929836251653 2724.457142511097 , flux balance  -4.150304893033935e-05
+Iteration number  2 , min , max temp  249.53019792652685 2724.4600872529704 , flux balance  -4.981681216075661e-07
+In t_start: Converged Solution in iterations  2
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.53019792652685 0
+Iteration number  0 , min , max temp  249.85020420267574 2717.1595936936974 , flux balance  0.008035948329219278
+Iteration number  1 , min , max temp  249.92726596216346 2715.1859837560974 , flux balance  0.00010101323541854413
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 57, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  249.86544655396483 2721.201982616111 , flux balance  -0.01517620841821787
+Iteration number  1 , min , max temp  249.82995680293726 2724.3829556411447 , flux balance  -4.528360830610874e-05
+Iteration number  2 , min , max temp  249.83172755351623 2724.385344369182 , flux balance  -6.165297641740825e-07
+In t_start: Converged Solution in iterations  2
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.83172755351623 0
+Iteration number  0 , min , max temp  250.1266090875086 2717.277250195077 , flux balance  0.008725116353957684
+Iteration number  1 , min , max temp  250.2061865006998 2715.119203260371 , flux balance  0.00011530499719201258
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 56, 64, 64, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  250.11625574634664 2724.3908107041016 , flux balance  0.00045760562755193016
+Iteration number  1 , min , max temp  250.1174645531834 2724.3387538407273 , flux balance  4.728386789243219e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  250.1174645531834 0
+Iteration number  0 , min , max temp  250.46778538592912 2715.1891805395026 , flux balance  0.0009313808513743368
+Iteration number  1 , min , max temp  250.46146236196216 2715.0588740391013 , flux balance  1.008162449140382e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 56, 65, 65, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  250.50248439927103 2724.248935747201 , flux balance  0.0002770490827395984
+Iteration number  1 , min , max temp  250.50940217558102 2724.196079489764 , flux balance  2.251583970205378e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  250.50940217558102 0
+Iteration number  0 , min , max temp  250.8025969292328 2715.016221448609 , flux balance  0.0010113437720777776
+Iteration number  1 , min , max temp  250.791531460662 2714.887485443902 , flux balance  1.2334334602942442e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 55, 65, 65, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  250.64494744489943 2724.1191217249752 , flux balance  0.0003075147524339695
+Iteration number  1 , min , max temp  250.64904679213927 2724.065299129627 , flux balance  2.7270626302699056e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  250.64904679213927 0
+Iteration number  0 , min , max temp  250.9554615750629 2714.9480678875893 , flux balance  0.0009212758653619096
+Iteration number  1 , min , max temp  250.94564216766057 2714.820064363868 , flux balance  1.1437845710226886e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 55, 66, 66, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  251.0031018492615 2724.031788862462 , flux balance  0.00019893401015248075
+Iteration number  1 , min , max temp  251.01650856102242 2723.974808939412 , flux balance  7.917704411601961e-07
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  251.01650856102242 0
+Iteration number  0 , min , max temp  251.25916237539258 2714.8110416747977 , flux balance  0.0010599019931071458
+Iteration number  1 , min , max temp  251.24243785113703 2714.6859913872727 , flux balance  1.5375595544135976e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 55, 67, 67, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  251.17975736291135 2723.9802306082825 , flux balance  0.00011562496344858152
+Iteration number  1 , min , max temp  251.19528628256097 2723.9171730515573 , flux balance  -1.1556801840541808e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  251.19528628256097 0
+Iteration number  0 , min , max temp  251.30116811843715 2723.026920246875 , flux balance  7.721785161965728e-05
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+[0, 54, 67, 67, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  251.42619388032932 2723.098310458198 , flux balance  -8.243792136360093e-05
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  251.42619388032932 0
+Iteration number  0 , min , max temp  251.38999512253335 2723.1083168851055 , flux balance  9.761464189932357e-06
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+final [0, 54, 67, 67, 78, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  251.49253806180914 2723.1318970761863 , flux balance  -2.622585644445452e-05
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  251.49253806180914 0
+Iteration number  0 , min , max temp  251.41258670492712 2723.1223157510926 , flux balance  2.733990600121205e-05
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<section id="Compare-Diseq-and-Chemeq-Climate-Profile">
+<h3>Compare Diseq and Chemeq Climate Profile<a class="headerlink" href="#Compare-Diseq-and-Chemeq-Climate-Profile" title="Link to this heading"></a></h3>
+<p>For the case we chose to do a self-consistent kzz instead of a low, constant kzz. We also use the resort-rebin chemistry method compared to the pre-weighted CK tables. For more information about the difference between these, you can look at the <a href="#id1"><span class="problematic" id="id3">`Fun with Chem notebook &lt;&gt;`__</span></a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="mf">1.7e-4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Resort-Rebin, Chemical Disequilibrium, Self Consistent Kzz&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_guess</span><span class="p">,</span><span class="n">pressure</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Pre-weighted CK, Chemical Equilibrium&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&lt;matplotlib.lines.Line2D at 0x7f255a650190&gt;]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_4_BrownDwarf_DEQ_SC_kzz_12_1.png" src="../../_images/notebooks_D_climate_4_BrownDwarf_DEQ_SC_kzz_12_1.png" />
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="3_Exoplanet-Photochemistry.html" class="btn btn-neutral float-left" title="Self Consistent Photochemistry and Climate with Photochem" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="4b_BrownDwarf_DEQ_const_kzz.html" class="btn btn-neutral float-right" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Constant Kzz (~Elf Owl)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

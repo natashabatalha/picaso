@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="How do I load in target properties from Exo.Mast?" href="FAQs.html" />
+    <link rel="prev" title="Climate Model Common Issues" href="CommonClimateBDIssues.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ModelStorage.html">How to store and reuse models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ContributionFunctions.html">Spectral and Molecular Contribution Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CommonClimateBDIssues.html">Common Climate Issues</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Set-up-the-PICASO-connection-for-three-test-cases-(mono-and-correlated-k)">Set up the PICASO connection for three test cases (mono and correlated-k)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Grab-the-thermal-fluxes,-reflected-fluxes,-and-pressure-levels-from-the-ful-output">Grab the thermal fluxes, reflected fluxes, and pressure levels from the ful output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Plot-the-thermal-and-reflected-layer-fluxes">Plot the thermal and reflected layer fluxes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html">How do I load in target properties from Exo.Mast?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#I'm-confused-about-what-opacity-file-to-use">I’m confused about what opacity file to use</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html">Model Formatting Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Specifying-units">Specifying units</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Data-Types:-Using-xarray">Data Types: Using <code class="docutils literal notranslate"><span class="pre">xarray</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Storing-xarray-data">Storing <code class="docutils literal notranslate"><span class="pre">xarray</span></code> data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Reading/interpreting-an-xarray-file">Reading/interpreting an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/I_usefultools/Level_Fluxes.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/I_usefultools/Level_Fluxes.py">Download full notebook here</a></p>
+</div>
+<section id="Get-Integrated-Level-Fluxes-For-Solar-Reflected-and-Thermal-Radiation">
+<h1>Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation<a class="headerlink" href="#Get-Integrated-Level-Fluxes-For-Solar-Reflected-and-Thermal-Radiation" title="Link to this heading"></a></h1>
+<p>Here in this notebook we work on getting the pressure-dependent level fluxes and also comparing these level fluxes with our three methods of getting opacities (resort-rebin, resampled, and preweighted)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;0.0&#39;</span><span class="c1">#&#39;+0.0&#39; #log metallicity</span>
+<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;0.46&#39;</span><span class="c1"># # CtoO absolute ratio</span>
+<span class="n">ck_db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;sonora_2121grid_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.hdf5&#39;</span><span class="p">)</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Set-up-the-PICASO-connection-for-three-test-cases-(mono-and-correlated-k)">
+<h1>Set up the PICASO connection for three test cases (mono and correlated-k)<a class="headerlink" href="#Set-up-the-PICASO-connection-for-three-test-cases-(mono-and-correlated-k)" title="Link to this heading"></a></h1>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#monochromatic opacities pulling the default</span>
+<span class="n">opacity_mono</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">()</span>
+<span class="c1">#opacity datase with preweighted ck tables</span>
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db_path</span><span class="p">,</span>
+                             <span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">)</span>
+<span class="c1">#resort rebin method with pre-described molecules</span>
+<span class="n">gases_fly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span> <span class="s1">&#39;CH4&#39;</span><span class="p">,</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;CO&#39;</span><span class="p">,</span> <span class="s1">&#39;NH3&#39;</span><span class="p">,</span> <span class="s1">&#39;TiO&#39;</span><span class="p">,</span> <span class="s1">&#39;VO&#39;</span><span class="p">,</span> <span class="s1">&#39;Na&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;He&#39;</span><span class="p">]</span>
+<span class="n">opacity_resort</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">,</span>
+                                  <span class="n">preload_gases</span><span class="o">=</span><span class="n">gases_fly</span><span class="p">)</span>
+
+<span class="c1">#lets book-keep these to compare</span>
+<span class="n">calc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mono&#39;</span><span class="p">:</span>  <span class="n">opacity_mono</span><span class="p">,</span>
+        <span class="s1">&#39;ck&#39;</span><span class="p">:</span>    <span class="n">opacity_ck</span><span class="p">,</span>
+        <span class="s1">&#39;resort&#39;</span><span class="p">:</span> <span class="n">opacity_resort</span><span class="p">}</span>
+
+<span class="n">cases</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># Define some parameters for the simulation</span>
+<span class="n">stellar_temp</span>   <span class="o">=</span> <span class="mi">6000</span>
+<span class="n">stellar_met</span>    <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">stellar_logg</span>   <span class="o">=</span> <span class="mf">4.0</span>
+<span class="n">orbital_sep</span>    <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">stellar_radius</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">rsol</span> <span class="o">=</span> <span class="mf">6.957e8</span>
+<span class="n">au</span>   <span class="o">=</span> <span class="mf">1.496e11</span>
+<span class="n">blackbody_temp</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="c1">#run the get level-fluxes framework for these three different methods</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">,</span><span class="s1">&#39;ck&#39;</span><span class="p">,</span> <span class="s1">&#39;resort&#39;</span><span class="p">]:</span>
+    <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+
+    <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">get_lvl_flux</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Set common parameters: phase angle and gravity.</span>
+    <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span><span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span>
+
+    <span class="c1"># Set stellar parameters (same for both)</span>
+    <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                    <span class="n">stellar_temp</span><span class="p">,</span>
+                    <span class="n">stellar_met</span><span class="p">,</span>
+                    <span class="n">stellar_logg</span><span class="p">,</span>
+                    <span class="n">radius</span><span class="o">=</span><span class="n">stellar_radius</span><span class="p">,</span>
+                    <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">),</span>
+                    <span class="n">semi_major</span><span class="o">=</span><span class="n">orbital_sep</span><span class="p">,</span>
+                    <span class="n">semi_major_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;au&#39;</span><span class="p">))</span>
+    <span class="n">Teff</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">sonora</span><span class="p">(</span><span class="n">sonora_profile_db</span><span class="p">,</span> <span class="n">Teff</span><span class="p">,</span> <span class="n">chem</span><span class="o">=</span><span class="s1">&#39;grid&#39;</span><span class="p">)</span>
+    <span class="n">atm</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Hardcode a blackbody for testing</span>
+    <span class="n">atm</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">blackbody_temp</span>
+    <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">atm</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal+reflected&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/codes/picaso/picaso/opacity_factory.py:2321: UserWarning: Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of H will not be included unless you first create a CK table for it. Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of He will not be included unless you first create a CK table for it.
+  warnings.warn(&#39; &#39;.join(np.unique(msg)), UserWarning)
+</pre></div></div>
+</div>
+</section>
+<section id="Grab-the-thermal-fluxes,-reflected-fluxes,-and-pressure-levels-from-the-ful-output">
+<h1>Grab the thermal fluxes, reflected fluxes, and pressure levels from the ful output<a class="headerlink" href="#Grab-the-thermal-fluxes,-reflected-fluxes,-and-pressure-levels-from-the-ful-output" title="Link to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get the data out of the picaso run</span>
+<span class="n">thermal_plus</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;level&#39;</span><span class="p">][</span><span class="s1">&#39;thermal_fluxes&#39;</span><span class="p">][</span><span class="s1">&#39;flux_plus&#39;</span><span class="p">]</span>
+<span class="n">thermal_minus</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;level&#39;</span><span class="p">][</span><span class="s1">&#39;thermal_fluxes&#39;</span><span class="p">][</span><span class="s1">&#39;flux_minus&#39;</span><span class="p">]</span>
+<span class="n">reflected_plus</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;level&#39;</span><span class="p">][</span><span class="s1">&#39;reflected_fluxes&#39;</span><span class="p">][</span><span class="s1">&#39;flux_plus&#39;</span><span class="p">]</span>
+<span class="n">reflected_minus</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;level&#39;</span><span class="p">][</span><span class="s1">&#39;reflected_fluxes&#39;</span><span class="p">][</span><span class="s1">&#39;flux_minus&#39;</span><span class="p">]</span>
+<span class="n">pressures</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;level&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span>
+
+<span class="c1"># Sum the binned fluxes to get the bolometric values</span>
+<span class="n">integrated_thermal_plus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">thermal_plus</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">integrated_thermal_minus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">thermal_minus</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">integrated_reflected_plus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">reflected_plus</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">integrated_reflected_minus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">reflected_minus</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Plot-the-thermal-and-reflected-layer-fluxes">
+<h1>Plot the thermal and reflected layer fluxes<a class="headerlink" href="#Plot-the-thermal-and-reflected-layer-fluxes" title="Link to this heading"></a></h1>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compute incident flux</span>
+<span class="n">plt</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">plt</span>
+<span class="n">F0PI</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5.67e-5</span> <span class="o">*</span> <span class="n">stellar_temp</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="n">stellar_radius</span> <span class="o">*</span> <span class="n">rsol</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">orbital_sep</span> <span class="o">*</span> <span class="n">au</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Plot thermal and reflected fluxes, both up and down</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressures</span><span class="p">,</span> <span class="n">integrated_thermal_plus</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Thermal Plus&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressures</span><span class="p">,</span> <span class="n">integrated_thermal_minus</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Thermal Minus&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressures</span><span class="p">,</span> <span class="n">integrated_reflected_plus</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Reflected Plus&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressures</span><span class="p">,</span> <span class="n">integrated_reflected_minus</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Reflected Minus&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;purple&#39;</span><span class="p">)</span>
+
+<span class="c1"># Add reference flux lines for thermal and starlight</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pressures</span><span class="p">,</span>
+         <span class="p">[</span><span class="mf">5.67e-5</span> <span class="o">*</span> <span class="n">blackbody_temp</span> <span class="o">**</span> <span class="mi">4</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">pressures</span><span class="p">),</span>
+         <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Thermal Test (1000K)&#39;</span><span class="p">,</span>
+         <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span>
+         <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;dashed&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">F0PI</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">pressures</span><span class="p">),</span>
+         <span class="n">label</span><span class="o">=</span><span class="s1">&#39;F0PI&#39;</span><span class="p">,</span>
+         <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;dotted&#39;</span><span class="p">,</span>
+         <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+         <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">1e5</span><span class="p">,</span> <span class="mf">1e10</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;Layer Flux (erg/cm$^2$/s)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Pressure (bar)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x7f8fffeb12b0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_I_usefultools_Level_Fluxes_8_1.png" src="../../_images/notebooks_I_usefultools_Level_Fluxes_8_1.png" />
+</div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="CommonClimateBDIssues.html" class="btn btn-neutral float-left" title="Climate Model Common Issues" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="FAQs.html" class="btn btn-neutral float-right" title="How do I load in target properties from Exo.Mast?" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

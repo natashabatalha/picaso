@@ -1,0 +1,855 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brown Dwarf Climate Model with Moist Adiabat &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Brown Dwarf Climate Model with Moist Adiabat</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/9_BrownDwarf_Moistgrad.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/9_BrownDwarf_Moistgrad.py">Download full notebook here</a></p>
+</div>
+<section id="Brown-Dwarf-Climate-Model-with-Moist-Adiabat">
+<h1>Brown Dwarf Climate Model with Moist Adiabat<a class="headerlink" href="#Brown-Dwarf-Climate-Model-with-Moist-Adiabat" title="Link to this heading"></a></h1>
+<p>In this tutorial we will test another parameter space using a moist adiabat which takes into consideration water latent heat release. You can read more details about the effects of this in <a class="reference external" href="https://iopscience.iop.org/article/10.3847/1538-4357/ac1e90">Tang et al. 2021</a> for clear and partly cloudy atmospheres, and <a class="reference external" href="https://iopscience.iop.org/article/10.3847/1538-4357/ad6c4c">Mang et al. 2024</a> for fully cloudy atmospheres.</p>
+<p>Here we’re just going to test running the model for a clear atmosphere</p>
+<p>What you should already be familiar with: <a class="reference external" href="https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission">basics of running/analyzing thermal spectra</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="acd013b9-f2c0-4d33-bac4-e78f2c59f6be">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("acd013b9-f2c0-4d33-bac4-e78f2c59f6be");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("acd013b9-f2c0-4d33-bac4-e78f2c59f6be")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="c1">#note you need to put the climate keyword to be True in order to do so</span>
+<span class="c1"># now you need to add these parameters to your calculation</span>
+
+<span class="n">teff</span><span class="o">=</span> <span class="mi">350</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Here we&#39;re going to run a higher metallicity model since the effect of the latent heat is more pronounced at higher metallicities</span>
+
+<span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;1.0&#39;</span><span class="c1">#&#39;+1.0&#39; #log metallicity</span>
+<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;0.46&#39;</span><span class="c1"># # CtoO absolute ratio</span>
+<span class="n">ck_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;sonora_2121grid_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.hdf5&#39;</span><span class="p">)</span>
+
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+
+<span class="c1"># and not the line by line opacities</span>
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+
+<span class="c1"># let&#39;s start with a Sonora Bobcat profile</span>
+<span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">40</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<p>Now we would use the inputs_climate function to input everything together to our cl_run we started. Here we’ll make sure to set <code class="docutils literal notranslate"><span class="pre">moistgrad</span> <span class="pre">=</span> <span class="pre">True</span></code></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span><span class="n">temp_bobcat</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure_bobcat</span><span class="p">,</span>
+                      <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span><span class="o">=</span><span class="n">rfacv</span><span class="p">,</span> <span class="n">moistgrad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: True
+Iteration number  0 , min , max temp  91.99209440624465 1825.6031247626179 , flux balance  -0.7181164926065929
+Iteration number  1 , min , max temp  92.36987820011838 1854.4039689249219 , flux balance  -0.7060406017317666
+Iteration number  2 , min , max temp  92.74106048416043 1883.6815342242712 , flux balance  -0.693439910959913
+Iteration number  3 , min , max temp  93.09867664222536 1921.835132632508 , flux balance  -0.6769536158401885
+Iteration number  4 , min , max temp  93.45860919343873 1949.8639262885015 , flux balance  -0.6630115251996745
+Iteration number  5 , min , max temp  93.82367943922104 1978.1344163392282 , flux balance  -0.6484435595545779
+Iteration number  6 , min , max temp  94.18442737958047 2012.4206439992229 , flux balance  -0.6299403035901272
+Iteration number  7 , min , max temp  94.55663283740381 2039.9303101400433 , flux balance  -0.6138428186306507
+Iteration number  8 , min , max temp  94.93289787901433 2067.373950813431 , flux balance  -0.5969934100028719
+Iteration number  9 , min , max temp  95.31277906093065 2094.518152667063 , flux balance  -0.5793638005300101
+Iterations exceeded it_max ! sorry
+Big iteration is  95.31277906093065 0
+Iteration number  0 , min , max temp  95.69576821167006 2120.335808675403 , flux balance  -0.5609406510484501
+Iteration number  1 , min , max temp  96.08139897982535 2146.9146721991883 , flux balance  -0.5416031779074237
+Iteration number  2 , min , max temp  96.46892373776471 2173.1290435535398 , flux balance  -0.5213302239768876
+Iteration number  3 , min , max temp  96.85754734478058 2198.9112899070496 , flux balance  -0.5000721195029304
+Iteration number  4 , min , max temp  97.24634670088386 2224.5576115035387 , flux balance  -0.47777306445170603
+Iteration number  5 , min , max temp  97.63422253398376 2250.5426103666364 , flux balance  -0.45427677753681195
+Iteration number  6 , min , max temp  98.01960335706366 2276.351805877694 , flux balance  -0.42953925128422465
+Iteration number  7 , min , max temp  98.40070466271763 2301.6539694396083 , flux balance  -0.40349818428304424
+Iteration number  8 , min , max temp  98.77542406018819 2327.461222887703 , flux balance  -0.3759811121865196
+Iteration number  9 , min , max temp  99.06750714305103 2353.3295260116224 , flux balance  -0.3467997974786884
+Iterations exceeded it_max ! sorry
+Big iteration is  99.06750714305103 1
+Iteration number  0 , min , max temp  99.07556090188426 2379.2978831418623 , flux balance  -0.31581996243507493
+Iteration number  1 , min , max temp  99.04291931494087 2405.095604161834 , flux balance  -0.2828953228832644
+Iteration number  2 , min , max temp  98.95846295420459 2429.8683722305423 , flux balance  -0.24793551920866963
+Iteration number  3 , min , max temp  98.80795789133172 2456.0769438237353 , flux balance  -0.21027395428050402
+Iteration number  4 , min , max temp  98.56445494513262 2482.528797509665 , flux balance  -0.16969942332633492
+Iteration number  5 , min , max temp  98.18772502382025 2508.5814113030633 , flux balance  -0.12603020490750225
+Iteration number  6 , min , max temp  97.60998966550369 2535.7858676727237 , flux balance  -0.07846165705091393
+Iteration number  7 , min , max temp  96.6714133290487 2563.2032292252793 , flux balance  -0.02745526364097348
+Iteration number  8 , min , max temp  95.32673282177763 2580.7504888722283 , flux balance  0.006874608275903636
+Iteration number  9 , min , max temp  95.04410197646378 2576.733355106615 , flux balance  -0.0014257145191580805
+In t_start: Converged Solution in iterations  9
+Big iteration is  95.04410197646378 2
+Iteration number  0 , min , max temp  95.09789902327144 2577.574504458492 , flux balance  0.0003025341853837638
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  95.3065151012169 2572.0159959531393 , flux balance  -0.3864433026446367
+Iteration number  1 , min , max temp  95.50300735248398 2599.526268148084 , flux balance  -0.3581746455837848
+Iteration number  2 , min , max temp  95.68400741409734 2627.7038207751916 , flux balance  -0.3284591142631461
+Iteration number  3 , min , max temp  95.84592881384776 2655.728132378057 , flux balance  -0.29722508425052524
+Iteration number  4 , min , max temp  95.98426421197478 2683.5405628823796 , flux balance  -0.264318789224207
+Iteration number  5 , min , max temp  96.09265841004671 2710.2539810937888 , flux balance  -0.22974814223610618
+Iteration number  6 , min , max temp  96.16321743852247 2737.8860837132593 , flux balance  -0.1932693322789819
+Iterations exceeded it_max ! sorry
+Big iteration is  96.16321743852247 0
+Iteration number  0 , min , max temp  96.18330909529661 2765.3393737943006 , flux balance  -0.15478478831113834
+Iteration number  1 , min , max temp  96.1331575341838 2792.604648202768 , flux balance  -0.11425049152490699
+Iteration number  2 , min , max temp  95.9794014823341 2818.658155505196 , flux balance  -0.0719108375927954
+Iteration number  3 , min , max temp  95.65749839903431 2845.0578447287203 , flux balance  -0.02816518790263915
+Iteration number  4 , min , max temp  95.08538622597823 2863.991638151773 , flux balance  0.004553890897215992
+Iteration number  5 , min , max temp  94.89002198990808 2861.212086335409 , flux balance  -0.0005988902181637496
+In t_start: Converged Solution in iterations  5
+Big iteration is  94.89002198990808 1
+Iteration number  0 , min , max temp  94.91708679700284 2861.5813876117786 , flux balance  8.104149576414916e-05
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  95.6030010168678 2556.9086609300784 , flux balance  -0.37011005602382896
+Iteration number  1 , min , max temp  96.302750943142 2584.8614609821034 , flux balance  -0.34250014247021204
+Iteration number  2 , min , max temp  97.00988803603512 2611.9606961348386 , flux balance  -0.31342162187480777
+Iteration number  3 , min , max temp  97.72349638485089 2639.8260249734203 , flux balance  -0.2827574334553755
+Iteration number  4 , min , max temp  98.44242901601156 2667.7896200347714 , flux balance  -0.250238350361605
+Iteration number  5 , min , max temp  99.16474915534408 2695.5859776795683 , flux balance  -0.21568307151325583
+Iteration number  6 , min , max temp  99.88751877170156 2723.1420881249014 , flux balance  -0.17882668389851392
+Iteration number  7 , min , max temp  100.60582115060528 2752.1005408381106 , flux balance  -0.13897205874152596
+Iterations exceeded it_max ! sorry
+Big iteration is  100.60582115060528 0
+Iteration number  0 , min , max temp  101.30929159085612 2781.890997661354 , flux balance  -0.09527794580475418
+Iteration number  1 , min , max temp  101.97086093184366 2812.710413504829 , flux balance  -0.04583254843277306
+Iteration number  2 , min , max temp  102.39623027232814 2846.9325360535236 , flux balance  0.010802938389925982
+Iteration number  3 , min , max temp  101.90703291145913 2839.8453408439905 , flux balance  -0.0019636892926308087
+In t_start: Converged Solution in iterations  3
+Big iteration is  101.90703291145913 1
+Iteration number  0 , min , max temp  102.00478213058906 2841.147716482632 , flux balance  0.00037213185176769863
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  102.68722870072885 2539.8591103568383 , flux balance  -0.36813109168248825
+Iteration number  1 , min , max temp  103.38167873690946 2569.759088080621 , flux balance  -0.33826252843244464
+Iteration number  2 , min , max temp  104.0792294951319 2598.6545689342784 , flux balance  -0.30662106050003457
+Iteration number  3 , min , max temp  104.77763742079122 2628.4849603607686 , flux balance  -0.27299579143911823
+Iteration number  4 , min , max temp  105.47374195397124 2658.5550761067866 , flux balance  -0.23709582008556232
+Iteration number  5 , min , max temp  106.16260290250135 2688.9192202557597 , flux balance  -0.1984434099155908
+Iteration number  6 , min , max temp  106.83547500317489 2719.0993567204428 , flux balance  -0.1565120251514325
+Iteration number  7 , min , max temp  107.4755895549191 2751.617510840887 , flux balance  -0.10990367158033822
+Iterations exceeded it_max ! sorry
+Big iteration is  107.4755895549191 0
+Iteration number  0 , min , max temp  108.03640514971543 2786.6528850674376 , flux balance  -0.05593766755163985
+Iteration number  1 , min , max temp  108.26755050050014 2828.7728406057545 , flux balance  0.015513413538985573
+Iteration number  2 , min , max temp  107.47617178187173 2818.0765998632182 , flux balance  -0.003617229716686399
+Iteration number  3 , min , max temp  107.66318635162618 2820.616437024412 , flux balance  0.0008848974968470343
+In t_start: Converged Solution in iterations  3
+Big iteration is  107.66318635162618 1
+Iteration number  0 , min , max temp  107.61851329861568 2819.9993121708476 , flux balance  -0.00021197931588640842
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  108.3544234203004 2515.6006918697576 , flux balance  -0.3752071630113745
+Iteration number  1 , min , max temp  109.10900364853376 2559.479811949227 , flux balance  -0.3318090435372678
+Iteration number  2 , min , max temp  109.84907309491754 2593.945951669013 , flux balance  -0.29389602867207987
+Iteration number  3 , min , max temp  110.5824132852069 2629.0960412166596 , flux balance  -0.25270406162858905
+Iteration number  4 , min , max temp  111.30037836412228 2665.530435917413 , flux balance  -0.20738081589572513
+Iteration number  5 , min , max temp  111.98600578686404 2702.5709212265306 , flux balance  -0.15642172959568315
+Iteration number  6 , min , max temp  112.59640277809663 2743.911157382284 , flux balance  -0.09657111793460668
+Iteration number  7 , min , max temp  112.94597817415811 2793.394917484839 , flux balance  -0.01785820915799889
+Iterations exceeded it_max ! sorry
+Big iteration is  112.94597817415811 0
+Iteration number  0 , min , max temp  112.04475155199756 2807.7857648662703 , flux balance  0.006438771515172555
+Iteration number  1 , min , max temp  111.69757379002861 2803.253260001074 , flux balance  -0.001977525315809783
+In t_start: Converged Solution in iterations  1
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  112.51789891735537 2499.580467929177 , flux balance  -0.3820053904136567
+Iteration number  1 , min , max temp  113.34808458684009 2534.1054660992677 , flux balance  -0.3478135000685353
+Iteration number  2 , min , max temp  114.18197107161104 2580.789323305114 , flux balance  -0.2989155227496121
+Iteration number  3 , min , max temp  115.0070391561149 2615.9620812319176 , flux balance  -0.2571839572706717
+Iteration number  4 , min , max temp  115.82373813227852 2665.0983497978655 , flux balance  -0.1960925990545549
+Iteration number  5 , min , max temp  116.59414247184259 2704.8283985193516 , flux balance  -0.14015280299173394
+Iteration number  6 , min , max temp  117.2692218511625 2751.3877449918746 , flux balance  -0.07046065894701417
+Iteration number  7 , min , max temp  117.04835731081195 2810.9768455855137 , flux balance  0.030077064895376045
+Iterations exceeded it_max ! sorry
+Big iteration is  117.04835731081195 0
+Iteration number  0 , min , max temp  116.02236321805157 2796.9536695727356 , flux balance  0.0034823744792052995
+Iteration number  1 , min , max temp  115.82533019542396 2794.218245549559 , flux balance  -0.0013602225253168045
+In t_start: Converged Solution in iterations  1
+Big iteration is  115.82533019542396 1
+Iteration number  0 , min , max temp  115.89712369350791 2795.299835394407 , flux balance  0.0005410550850380501
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  116.82429221357692 2479.3869561842025 , flux balance  -0.39090137736992553
+Iteration number  1 , min , max temp  117.68492886192385 2515.280678571004 , flux balance  -0.3548239263660731
+Iteration number  2 , min , max temp  118.54873478320498 2564.389166079681 , flux balance  -0.3036756088850091
+Iteration number  3 , min , max temp  119.39988645257341 2602.657311672226 , flux balance  -0.258295834510598
+Iteration number  4 , min , max temp  120.2387678008406 2643.4052049353263 , flux balance  -0.20719923299616758
+Iteration number  5 , min , max temp  121.04475944284019 2699.0905052879807 , flux balance  -0.13081165220028418
+Iteration number  6 , min , max temp  121.58088493686485 2759.1817069126196 , flux balance  -0.03675530338249593
+Iteration number  7 , min , max temp  120.52718915862991 2799.599285667947 , flux balance  0.031842786683240275
+Iterations exceeded it_max ! sorry
+Big iteration is  120.52718915862991 0
+Iteration number  0 , min , max temp  119.50091161843461 2785.4324467865426 , flux balance  0.006335461021694001
+Iteration number  1 , min , max temp  119.05912177977139 2780.140556569611 , flux balance  -0.002993137696571434
+In t_start: Converged Solution in iterations  1
+Big iteration is  119.05912177977139 1
+Iteration number  0 , min , max temp  119.21694283873242 2782.6863374031973 , flux balance  0.0014552687017256058
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  120.22998552198135 2528.1293515997477 , flux balance  -0.3559141765419546
+Iteration number  1 , min , max temp  121.12027162590692 2577.948375603284 , flux balance  -0.3043172300217625
+Iteration number  2 , min , max temp  121.99947586883705 2617.1702705790303 , flux balance  -0.25797532425653924
+Iteration number  3 , min , max temp  122.86776142401013 2671.162929972753 , flux balance  -0.19057050487143887
+Iteration number  4 , min , max temp  123.65696882887151 2720.2008784628065 , flux balance  -0.12037373733560226
+Iteration number  5 , min , max temp  124.16933947190758 2798.9078979587043 , flux balance  0.004693813105228742
+Iteration number  6 , min , max temp  123.09718716183924 2797.499231514398 , flux balance  0.001886740071068674
+Iteration number  7 , min , max temp  122.04335599625126 2796.6249745523332 , flux balance  3.3865920352709945e-05
+Iterations exceeded it_max ! sorry
+Big iteration is  122.04335599625126 0
+Iteration number  0 , min , max temp  121.6139753482103 2796.720758057845 , flux balance  6.122868412692993e-05
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  122.73678535496909 2560.7652902747864 , flux balance  -0.3301219578596893
+Iteration number  1 , min , max temp  123.63474935835691 2598.495887393066 , flux balance  -0.2875992859516106
+Iteration number  2 , min , max temp  124.53008448174687 2638.1843912002632 , flux balance  -0.24042423064146143
+Iteration number  3 , min , max temp  125.41385805841837 2691.8522905944624 , flux balance  -0.17134453122143467
+Iteration number  4 , min , max temp  126.20474351896947 2742.758323720844 , flux balance  -0.09669639047986274
+Iteration number  5 , min , max temp  126.50986610404146 2829.382666732379 , flux balance  0.04844779916406683
+Iteration number  6 , min , max temp  125.45895798602577 2816.418646169059 , flux balance  0.02486441121429527
+Iteration number  7 , min , max temp  124.42037548041094 2805.319338695563 , flux balance  0.004000334431101728
+Iterations exceeded it_max ! sorry
+Big iteration is  124.42037548041094 0
+Iteration number  0 , min , max temp  123.92214609958701 2801.9474444189973 , flux balance  -0.0021400115929883896
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  125.10474324459153 2566.1704990820854 , flux balance  -0.32989850436277246
+Iteration number  1 , min , max temp  126.00047565539859 2605.0456140618694 , flux balance  -0.28605692905401814
+Iteration number  2 , min , max temp  126.89179079617094 2646.0227228001477 , flux balance  -0.23717334660017883
+Iteration number  3 , min , max temp  127.76812665428652 2700.4185007475503 , flux balance  -0.16562836518065752
+Iteration number  4 , min , max temp  128.5260007786861 2755.8555995428815 , flux balance  -0.08461784910159015
+Iteration number  5 , min , max temp  128.42370755696533 2848.9781059466277 , flux balance  0.07483101232557621
+Iteration number  6 , min , max temp  127.38989226164702 2831.444712322485 , flux balance  0.04239945498688013
+Iteration number  7 , min , max temp  126.36930465250171 2814.141270545772 , flux balance  0.01142522507418803
+Iterations exceeded it_max ! sorry
+Big iteration is  126.36930465250171 0
+Iteration number  0 , min , max temp  125.75644145104201 2804.4868105105575 , flux balance  -0.006546409822848594
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  126.84591703395978 2583.081755109796 , flux balance  -0.32201432130660523
+Iteration number  1 , min , max temp  127.75533437519972 2619.9368439053624 , flux balance  -0.27998642368731697
+Iteration number  2 , min , max temp  128.66345029795613 2670.6977278436652 , flux balance  -0.2194194362809995
+Iteration number  3 , min , max temp  129.54200911859078 2713.053155139162 , flux balance  -0.16164579595257714
+Iteration number  4 , min , max temp  130.3667362313807 2775.137853333283 , flux balance  -0.07076766357903369
+Iteration number  5 , min , max temp  129.85406567160038 2846.65986650911 , flux balance  0.052075481675967275
+Iteration number  6 , min , max temp  128.83062133470673 2828.2480936526313 , flux balance  0.01898594641908073
+Iteration number  7 , min , max temp  127.8653113303003 2810.6940410009943 , flux balance  -0.011532890774651803
+Iterations exceeded it_max ! sorry
+Big iteration is  127.8653113303003 0
+Iteration number  0 , min , max temp  128.48233081176593 2821.6327085544212 , flux balance  0.007391785409944762
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  129.6875587666617 2630.201106127271 , flux balance  -0.2821998710045131
+Iteration number  1 , min , max temp  130.60622625188165 2679.3797937894265 , flux balance  -0.22399018281706443
+Iteration number  2 , min , max temp  131.50568500781804 2719.337777970278 , flux balance  -0.1701176139028297
+Iteration number  3 , min , max temp  132.3754022604595 2777.0673049691036 , flux balance  -0.08729612228520013
+Iteration number  4 , min , max temp  132.6556288092057 2858.12080463078 , flux balance  0.049936713508707264
+Iteration number  5 , min , max temp  131.62513312440507 2841.9260967053074 , flux balance  0.02089220615047561
+Iteration number  6 , min , max temp  130.60382496824246 2827.1026180263934 , flux balance  -0.004864219029690001
+Iteration number  7 , min , max temp  130.7742262259962 2831.8681842735573 , flux balance  0.003311260617187888
+In t_start: Converged Solution in iterations  7
+Big iteration is  130.7742262259962 0
+Iteration number  0 , min , max temp  130.59928991952071 2828.6579576179192 , flux balance  -0.0022137408067112686
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  131.7826432121868 2690.190261024979 , flux balance  -0.23087029234980547
+Iteration number  1 , min , max temp  132.70980506305423 2724.30021012681 , flux balance  -0.18587345404714362
+Iteration number  2 , min , max temp  133.63156865832272 2773.2466937137997 , flux balance  -0.11826830862376173
+Iteration number  3 , min , max temp  134.48180607912968 2819.548652059034 , flux balance  -0.04518615905479838
+Iteration number  4 , min , max temp  134.40741593548904 2838.139570428207 , flux balance  -0.014559139439268896
+In t_start: Converged Solution in iterations  4
+Big iteration is  134.40741593548904 0
+Iteration number  0 , min , max temp  133.59321540216789 2853.0289455611182 , flux balance  0.010708429927043498
+Iteration number  1 , min , max temp  133.00059931140962 2842.451804498636 , flux balance  -0.007421385671664002
+In t_start: Converged Solution in iterations  1
+Profile converged before itmx
+final [0, 24, 89, 0, 0, 0]
+Iteration number  0 , min , max temp  134.23102039901127 2749.5153604618895 , flux balance  -0.16885973792795947
+Iteration number  1 , min , max temp  135.15921350917503 2798.0721829931263 , flux balance  -0.09985010802024577
+Iteration number  2 , min , max temp  135.98669473695443 2847.996334459699 , flux balance  -0.01955796718560842
+Iteration number  3 , min , max temp  135.7774051084359 2852.7660126890355 , flux balance  -0.011619682143436163
+In t_start: Converged Solution in iterations  3
+Big iteration is  135.7774051084359 0
+Iteration number  0 , min , max temp  135.6583911005036 2854.4012422605992 , flux balance  -0.008868979047365777
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<p>Now let’s compare the PT profile with the one generated in Tang et al. 2021 to benchmark our model</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure_tang</span><span class="p">,</span> <span class="n">temp_tang</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;t350g100nc_m1.0.cmp.gz&quot;</span><span class="p">,</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="mf">1e-4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3000</span><span class="p">)</span>
+
+<span class="c1"># plt.semilogy(temp_bobcat,pressure_bobcat,color=&quot;k&quot;,linestyle=&quot;--&quot;,linewidth=3,label=&quot;Sonora Bobcat, Dry Adiabat &quot;)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_tang</span><span class="p">,</span><span class="n">pressure_tang</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Tang et al. 2021 Model, Moist Adiabat&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our Run&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;major&#39;</span><span class="p">,</span><span class="n">length</span> <span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">,</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span><span class="n">length</span> <span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">,</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;T$_{\rm eff}$= 350 K, log(g)=4.0&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;T$_{\\rm eff}$= 350 K, log(g)=4.0&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_9_BrownDwarf_Moistgrad_10_1.png" src="../../_images/notebooks_D_climate_9_BrownDwarf_Moistgrad_10_1.png" />
+</div>
+</div>
+<p>Overall it looks pretty good! Slight differences are likely due to the difference in the number of layers used (Tang 2021 models use 68 layers and we have 91) as well as the fact that we’re using updated ck tables.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

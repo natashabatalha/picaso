@@ -1,13 +1,18 @@
 Installation
 ============
 
-Python Version
---------------
+There are a few avenues for installing PICASO (git, pip, or conda). To help determine which is best for you, we have a few questions to help you decide:
+1. Are you a researcher who wants to stay up-to-date with the latest beta changes and contribute to the code base? Please follow the git clone instructions below.
+2. Are you a student or researcher who just wants to get started with PICASO quickly and use it for science? Please follow the pip or conda install instructions below.
+3. Do you want to use PICASO for an school assignment or workshop? `Jump to the picaso-lite section of the Quickstart Notebook </notebooks/Quickstart.py>`_
 
-Python >= 3.8 
 
-Install with Git (recommended)
-------------------------------
+Python >= 3.11 is recommended. It is also recommended you use environments (either conda or pip). Please check out `our conda environment tutorial <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_.  
+
+Users can 1) install from source or 2) install from pip or 3) conda 
+
+Install from source via git
+---------------------------
 
 The Github repository contains the reference folder and helpful tutorials.  
 
@@ -15,7 +20,8 @@ The Github repository contains the reference folder and helpful tutorials.
 
 	git clone https://github.com/natashabatalha/picaso.git
 	cd picaso
-	python setup.py install 
+	pip install .
+
 
 Install with Pip
 ----------------
@@ -24,27 +30,94 @@ Install with Pip
 
 	pip install picaso
 
-With a pip install you will need to download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ (explained below). This can simply be done by downloading a zip of the ``PICASO`` code from Github (which does not require git setup if that is not available to you). 
+Install with conda 
+-------------------
+
+.. code-block:: bash 
+
+	conda install conda-forge::picaso
 
 
-Download PICASO Reference Data
-------------------------------
+Reference Data 
+==============
 
-.. note::
-	`PICASO` 3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0 
+PICASO has the ability to injest lots of different kinds of data. But not all are required. **Only two are required: 1) The `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ and 2) the resampled opacity file which will let you do some basic spectral modeling.**
 
-1) Download the `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. You should already this if you did a Git clone. **Make sure that your reference folder matches the version number of ``PICASO``**. Check the version number in the file ``reference/version.md``. 
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
+| Data Type                        | Req? | What it is primarily used for | Where it should go                                          |
++==================================+======+===============================+=============================================================+
+| Reference                        | Yes  | everything                    | $picaso_refdata                                             |
+| Resampled Opacities              | Yes  | Spectroscopic modeling        | $picaso_refdata/opacities/opacities*.db                     |
+| Stellar Database                 | No   | Exoplanet modeling            | $PYSYN_CDBS/grid                                            |
+| Preweighted correlatedK Tables   | No   | Chemical equilibrium climate  | Your choice (default=$picaso_refdata/opacities/preweighted) |
+| By molecule correlatedK Tables   | No   | Disequilibrium climate        | Your choice (default=$picaso_refdata/opacities/resortrebin) |
+| Sonora grid models               | No   | Initial guess/grid fitting    | Your choice (default=$picaso_refdata/sonora_grids)          |
+| Virga Mieff files                | No   | Virga cloud modeling          | Your choice (default=$picaso_refdata/virga)                 |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 
-2) Download a `Resampled Opacity File from Zenodo <https://doi.org/10.5281/zenodo.3759675>`_. Note that there are a few different versions. Any is acceptable depending on your resolution and wavelength needs. Put this db file in the `Opacities reference Folder you downloaded from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_. **You may need to rename it opacities.db and place into `reference/opacities` folder**. The file placed into reference/opacities will serve as your default file. You can point to other opacity files using justdoit.opannection. 
+Get Required Data 
+-----------------
+
+.. code-block:: python
+
+    #using python
+	import picaso.data as d
+	#where do you want to store your reference data? This should be the path to the reference folder you downloaded from github.
+	path_to_reference = "/path/to/picaso/reference/"
+	d.os.environ['picaso_refdata'] = path_to_reference #only needed if you are using python to set your environmnet variables otherwise you do not need this
+	#get required data 1) reference data 
+	d.get_reference(d.os.environ['picaso_refdata'])
+	#get required data 2) resampled opacities
+	d.get_data(category_download='resampled_opacity', target_download='default') #7Gb -- ENSURE STABLE WIFI! 
+
+Check it's all good:
+
+.. code-block:: python
+
+	d.check_environ()
+
+where the printout in a terminal will look something like this: 
+
+.. code-block:: python
+
+	--- PICASO Environment Check ---
+	[INFO] Found picaso_refdata environment variable: /Users/nbatalh1/Documents/codes/PICASO/picaso/reference
+	[SUCCESS] Basic picaso reference data seems to be in place.
+	[INFO] Reference data version: 4.0
+	[INFO] Files in reference directory:
+	- input_tomls
+	- references
+	- stellar_grids
+	- config.json
+	- chemistry
+	- sonora_grids
+	- opacities
+	- version.md
+	- evolution
+	- scripts
+	- base_cases
+	- virga
+	- climate_INPUTS
 
 
-Create Environment Variable 
----------------------------
+Permanently Set Environment Variables
+-------------------------------------
 
-There are several ways to create environment variables. Below are the three most popular methods. You only need to choose one that works best for you. 
+Setting environment variables help packages find data wihtout having to set a path everytime you run the code. 
+Above we set the environment using `python`'s `os.environ` which is a temporary way to set environment variables. 
 
-Method 1: ``bash_profile`` or ``zshrc`` file
-````````````````````````````````````````````
+You can feel free to continue using this non-permanent. If so, whenever you install picaso you would need to add this line to your code **before** you import picaso.
+
+.. code-block:: python
+
+	import os
+	os.environ['picaso_refdata'] = 'your_path/picaso/reference/' #THIS MUST GO BEFORE YOUR IMPORT STATEMENT
+	import picaso.justdoit as jdi
+
+While this is the easiest way to set things up, it can become tedious to have to define this before every single notebook. If you want to **permanently** set your environment variables, see the next to subsections for some options that may suit your needs. 
+
+Permanent Method 1: ``bash_profile`` or ``zshrc`` file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As you might guess ``~/.bash_profile`` is used for the ``Bash`` command line shell. ``~/.zshrc`` is used for the ``Zsh`` command line shell. The steps below are identical.
 
@@ -64,7 +137,7 @@ Once you edit a bash profile file, you must source it. Alternatively you can ope
 
 	source ~/.bash_profile
 
-Now you can check that your variable has been defined properly: 
+If you have already downloaded reference data you can check that your variable has been defined properly: 
 
 .. code-block:: bash
 
@@ -74,22 +147,9 @@ Now you can check that your variable has been defined properly:
 	ls
 	base_cases chemistry config.json evolution opacities version.md
 
-Your opacities folder shown above should include the file ``opacities.db`` `file downloaded from zenodo <https://doi.org/10.5281/zenodo.3759675>`_. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don't have to constantly specify a folder path when running the code. 
 
-Method 2: Add directly to python code
-````````````````````````````````````````
-
-Sometimes it is too troublesome to go through bash settings and you may prefer to set it directly in your python code. 
-
-.. code-block:: python
-
-	import os
-	os.environ['picaso_refdata'] = 'your_path' #THIS MUST GO BEFORE YOUR IMPORT STATEMENT
-	os.environ['PYSYN_CDBS'] = 'your_path' #this is for the stellar data discussed below.
-	import picaso.justdoit as jdi
-
-Method 3: Add it to your conda enviornment
-````````````````````````````````````````````
+Permanent Method 2: Add it to your conda enviornment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is my method of choice! It involves creating conda environment specific variables. If you are interested in learning more about environment variables, you can `read more about them here <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_
 
@@ -136,34 +196,54 @@ Notice here that I do **not** have a tilda (~) in front of ``./etc``. The full p
 	pwd
 	/Users/nbatalh1/.conda/envs/picaso/etc/conda/activate.d
 
+Getting Optional Reference Data 
+-------------------------------
 
-Download and Link Pysynphot Stellar Data
-----------------------------------------
+You can continue using `get_data` to get all additional data that you might need (see `Quickstart Notebook </notebooks/Quickstart.py>`_ for more examples). The most common one is the stellar grids for exoplanet modeling. The stellar grids are handled by another package called `stsynphot` and require the setting of an additional environment variable. Below we provide additional details on setting that up if needed. 
 
-In order to get stellar spectra you will have to download the stellar spectra here from PySynphot: 
 
-1) PICASO uses the `Pysynphot package <https://pysynphot.readthedocs.io/en/latest/appendixa.html>`_ which has several download options for stellar spectra. The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_. 
+Getting ``stsynphot`` Optional Stellar Data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can download them by doing this: 
+In order to get stellar spectra needed for many exoplanet PICASO has already isntalled for you the `stsynphot package <https://stsynphot.readthedocs.io/en/latest/>`_ which has several download options for stellar spectra. This package also requires setting an environment variable called ``$PYSYN_CDBS``. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data). 
+
+The Default for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_ but we recommend ``pheonix`` models for climate modeling. 
+
+Here is how you would do it with PICASO:
+
+.. code-block:: python
+
+	import picaso.data as d
+	d.os.environ['PYSYN_CDBS'] = d.os.path.join(d.os.environ['picaso_refdata'],'stellar_grids') #this is a path of your choosing
+	d.get_data(category_download='stellar_grids') #recommend downloading both ck04models and phoenix
+
+As the default this will store your stellar grids in ``$picaso_refdata/stellar_grids``. However, you can always choose a different path.
+
+If you do not like that you can always use `wget` or just downloading the link below. 
 
 .. code-block:: bash
 
 	wget http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 
-When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``. Some other people have reported a directory structure that looks like this ``<path>/grp/hst/cdbs/grid/ck04models``. **The full directory structure does not matter**. Only the last portion ``grid/ck04models``. You will need to create an enviornment variable that points to where ``grid/`` is located. See below.
+When you untar this you should get a directory structure that looks like this ``<path>/grp/redcat/trds/grid/ck04models``.  **The full directory structure does not matter**. Only the last file ``grid`` is needed. You will need to create an enviornment variable that points to where ``grid/`` is located. We have a nice placeholder location in the picaso reference data file for these grids ``$picaso_refdata/stellar_grids``. So you can imagine something like: ``$picaso_refdata/stellar_grids/grid/ck04models``. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where ``grid`` is. 
 
 
-2) Create environment variable via bash 
+Help Permanently Setting Stellar Data Environment Variable
+``````````````````````````````````````````````````````````
+
+Similar to PICASO's environment variable instructions, follow the same steps to create an environment variable for ``PYSYN_CDBS``. PICASO recommends the path: ``PYSYN_CDBS=$picaso_refdata/stellar_grids`` but you might have this elsewhere.
+
+We've gone over how to set permanent paths before but here is a quick refresher using the bash_profile method:
 
 .. code-block:: bash
 
 	vi ~/.bash_profile
 
-Add add this line:
+Add this line:
 
 .. code-block:: bash
 
-	export PYSYN_CDBS="<your_path>/grp/redcat/trds"
+	export PYSYN_CDBS="/your/path/to/picaso_refdata/stellar_grids"
 
 Then always make sure to source your bash profile after you make changes. 
 
@@ -179,9 +259,17 @@ Now you should be able to check the path:
 	ls
 	grid
 
-Where the folder ``grid/`` contains whatever ``pysynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
+Where the folder ``grid/`` contains whatever ``stsynphot`` data files you have downloaded (e.g. a folder called ``ck04models/``). 
 
-.. note::
 
-	1. STScI serves these files in a few different places, with a few different file structures. **PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.** 
+Using Quickstart Notebook
+=========================
+
+If you are already very familiar with package installs, environment variables **OR you are a student using PICASO for classwork you can jump straight** to our `Quickstart Notebook </notebooks/Quickstart.py>`_.
+
+.. toctree::
+   :maxdepth: 1
+	Simple Install </notebooks/Quickstart.py>
+
+
 

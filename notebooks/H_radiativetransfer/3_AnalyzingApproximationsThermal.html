@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Model Storage: Preservation and Reuse" href="../I_usefultools/ModelStorage.html" />
+    <link rel="prev" title="Approximations for Spherical Harmonics Radiative Transfer in Reflected Light" href="2_AnalyzingApproximationsReflectedLightSH.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_AnalyzingApproximationsReflectedLightToon.html">Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light</a></li>
+<li class="toctree-l3"><a class="reference internal" href="1_AnalyzingApproximationsReflectedLightToon.html#Benchmark-Toon89-w/-Dlugach-&amp;-Yanovitskij-(1974)">Benchmark Toon89 w/ Dlugach &amp; Yanovitskij (1974)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_AnalyzingApproximationsReflectedLightSH.html">Spherical Harmonics Radiative Transfer in Reflected Light</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Setting-up-Brown-Dwarf-Comparison">Setting up Brown Dwarf Comparison</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Setting-up-Jupiter-like-Case">Setting up Jupiter-like Case</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Dependence-of-Radiative-Transfer-Method-on-Scattering-Parameters">Dependence of Radiative Transfer Method on Scattering Parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Plot-heatmap-comparing-radiative-transfer-methods">Plot heatmap comparing radiative transfer methods</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/H_radiativetransfer/3_AnalyzingApproximationsThermal.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/H_radiativetransfer/3_AnalyzingApproximationsThermal.py">Download full notebook here</a></p>
+</div>
+<section id="Approximations-for-Spherical-Harmonics-Radiative-Transfer-in-Thermal-Emission">
+<h1>Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission<a class="headerlink" href="#Approximations-for-Spherical-Harmonics-Radiative-Transfer-in-Thermal-Emission" title="Link to this heading"></a></h1>
+<p>In <a class="reference external" href="add-link">Rooney et al 2023</a> we rigorously derive the spherical harmonics method for thermal emission and benchmark the 2-term and 4-term method (SH4) against <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1989JGR....9416287T/abstract">Toon et al. 1989</a> and CDISORT. Here, we provide the code to reproduce the analysis that compares Toon89 with the higher fidelity 4-term spherical harmonics method for thermal emission spectroscopy.</p>
+<p>Note that all comparisons with <code class="docutils literal notranslate"><span class="pre">CDISORT</span></code> are precomputed following Rooney et al’s calculations, which used <a class="reference external" href="https://zenodo.org/record/3759675#.Y_aJROzMI8Y">V1 opacities</a>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+
+<span class="c1">#picaso</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="daf760db-1d61-4d67-8be5-655cca4faa22">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("daf760db-1d61-4d67-8be5-655cca4faa22");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("daf760db-1d61-4d67-8be5-655cca4faa22")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<section id="Setting-up-Brown-Dwarf-Comparison">
+<h2>Setting up Brown Dwarf Comparison<a class="headerlink" href="#Setting-up-Brown-Dwarf-Comparison" title="Link to this heading"></a></h2>
+<p>Within the PICASO repository there exists a simple benchmark brown dwarf case that we used in the paper to compare the code. We will start by setting that up.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mf">.7</span><span class="p">,</span><span class="mi">14</span><span class="p">]</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">)</span><span class="c1">#, resample=100)</span>
+<span class="n">bd</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;browndwarf&#39;</span><span class="p">)</span>
+
+<span class="n">bd</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span> <span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/s**2&#39;</span><span class="p">))</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">surface_reflect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">opa</span><span class="o">.</span><span class="n">wno</span><span class="p">)</span>
+
+<span class="c1">#brown dwarf PT and CLD provide a pressure-temperature profile and cloud profile</span>
+<span class="c1">#from a standard brown dwarf case with Teff~1270 K and fsed = 1 courtesy of C. Morley @ UT Austin</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">brown_dwarf_pt</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">brown_dwarf_cld</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="Using-the-jdi.approx-function-to-setup-different-test-cases">
+<h3>Using the <code class="docutils literal notranslate"><span class="pre">jdi.approx</span></code> function to setup different test cases<a class="headerlink" href="#Using-the-jdi.approx-function-to-setup-different-test-cases" title="Link to this heading"></a></h3>
+<p>Similar to the reflected light problem, we can use the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key to setup different methods of computing the thermal radiative transfer</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dfs</span> <span class="o">=</span> <span class="p">[];</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">[];</span>
+<span class="c1"># PICASO Original Methodology using Toon source function technique</span>
+<span class="n">dfs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">bd</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+       <span class="p">];</span> <span class="n">labels</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;PICASO Toon89&quot;</span><span class="p">]</span>
+
+<span class="c1"># 2-term Spherical harmonics</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span> <span class="o">=</span> <span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">two_lin</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                      <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+<span class="n">dfs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">two_lin</span><span class="p">];</span> <span class="n">labels</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;SH2&quot;</span><span class="p">]</span>
+
+<span class="c1"># 4-term Spherical Harmonics</span>
+<span class="n">bd</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span> <span class="o">=</span> <span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">four_lin</span> <span class="o">=</span> <span class="n">bd</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+<span class="n">dfs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">four_lin</span><span class="p">];</span> <span class="n">labels</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;SH4&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Simple regridding and plotting, as we normally do</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">xs</span> <span class="o">=</span> <span class="p">[];</span> <span class="n">ys</span> <span class="o">=</span> <span class="p">[];</span> <span class="n">labs</span> <span class="o">=</span> <span class="p">[];</span>
+<span class="k">for</span> <span class="n">df</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dfs</span><span class="p">))):</span>
+    <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;thermal&#39;</span><span class="p">]</span> <span class="c1">#units of erg/cm2/s/cm</span>
+    <span class="n">xflux</span><span class="p">,</span><span class="n">yflux</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+    <span class="n">xs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">xflux</span><span class="p">]</span>
+    <span class="n">ys</span> <span class="o">+=</span> <span class="p">[</span><span class="n">yflux</span><span class="p">]</span>
+    <span class="n">labs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="External-Testing-with-CDISROT-for-Validation">
+<h3>External Testing with <code class="docutils literal notranslate"><span class="pre">CDISROT</span></code> for Validation<a class="headerlink" href="#External-Testing-with-CDISROT-for-Validation" title="Link to this heading"></a></h3>
+<p>Reproduction of Figure 2b, Rooney et al.</p>
+<p>In Rooney et al., we tested <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> against a higher order code, <code class="docutils literal notranslate"><span class="pre">CDISORT</span></code>. Here is a code snippet to grab it from the code base</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># # read in my disort profile</span>
+<span class="n">disort_output</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">__refdata__</span><span class="p">,</span> <span class="s1">&#39;base_cases&#39;</span><span class="p">,</span><span class="s1">&#39;testing&#39;</span><span class="p">,</span><span class="s1">&#39;cdisort_output_1270_cloudy.spec&#39;</span><span class="p">)</span>
+<span class="n">son</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">disort_output</span><span class="p">,</span>
+                    <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="s1">&#39;2&#39;</span><span class="p">,</span><span class="s1">&#39;3&#39;</span><span class="p">])</span>
+<span class="n">sonx</span><span class="p">,</span> <span class="n">sony</span><span class="p">,</span> <span class="n">flx</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;2&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;3&#39;</span><span class="p">])</span>
+<span class="n">sonx_</span><span class="p">,</span><span class="n">sony_</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">sonx</span><span class="p">,</span> <span class="n">sony</span><span class="o">*</span><span class="mf">1e1</span><span class="p">,</span> <span class="n">newx</span><span class="o">=</span><span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">xs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sonx_</span><span class="p">];</span> <span class="n">ys</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sony_</span><span class="p">];</span> <span class="n">labs</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;DISORT16&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span><span class="n">ys</span><span class="p">,</span><span class="n">legend</span><span class="o">=</span><span class="n">labs</span>
+                  <span class="p">,</span><span class="n">plot_width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span><span class="n">x_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">,</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="ffdd5f1b-3fab-4583-a3b4-72146d928967" data-root-id="p1001" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"e945b268-b3c9-460e-b5ef-342742d482f1":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1001","attributes":{"width":800,"height":345,"x_range":{"type":"object","name":"Range1d","id":"p1010","attributes":{"start":0.7,"end":14}},"y_range":{"type":"object","name":"DataRange1d","id":"p1003"},"x_scale":{"type":"object","name":"LogScale","id":"p1011"},"y_scale":{"type":"object","name":"LinearScale","id":"p1012"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1040","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1034","attributes":{"selected":{"type":"object","name":"Selection","id":"p1035","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1036"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1041","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1042"}}},"glyph":{"type":"object","name":"Line","id":"p1037","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1038","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1039","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1049","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1043","attributes":{"selected":{"type":"object","name":"Selection","id":"p1044","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1045"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1050","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1051"}}},"glyph":{"type":"object","name":"Line","id":"p1046","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1047","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1048","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1058","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1052","attributes":{"selected":{"type":"object","name":"Selection","id":"p1053","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1054"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1059","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1060"}}},"glyph":{"type":"object","name":"Line","id":"p1055","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1056","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1057","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1067","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1061","attributes":{"selected":{"type":"object","name":"Selection","id":"p1062","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1063"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[450],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1068","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1069"}}},"glyph":{"type":"object","name":"Line","id":"p1064","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#009E73","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1065","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#009E73","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1066","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#009E73","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1009","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1023"},{"type":"object","name":"WheelZoomTool","id":"p1024","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1025","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1026","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1031"},{"type":"object","name":"ResetTool","id":"p1032"},{"type":"object","name":"HelpTool","id":"p1033"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1018","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1019","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1020"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1021"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1070","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1071","attributes":{"label":{"type":"value","value":"PICASO Toon89"},"renderers":[{"id":"p1040"}]}},{"type":"object","name":"LegendItem","id":"p1072","attributes":{"label":{"type":"value","value":"SH2"},"renderers":[{"id":"p1049"}]}},{"type":"object","name":"LegendItem","id":"p1073","attributes":{"label":{"type":"value","value":"SH4"},"renderers":[{"id":"p1058"}]}},{"type":"object","name":"LegendItem","id":"p1074","attributes":{"label":{"type":"value","value":"DISORT16"},"renderers":[{"id":"p1067"}]}}]}}],"below":[{"type":"object","name":"LogAxis","id":"p1013","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1014","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1015"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1016"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1017","attributes":{"axis":{"id":"p1013"}}},{"type":"object","name":"Grid","id":"p1022","attributes":{"dimension":1,"axis":{"id":"p1018"}}}]}}]}};
+  const render_items = [{"docid":"e945b268-b3c9-460e-b5ef-342742d482f1","roots":{"p1001":"ffdd5f1b-3fab-4583-a3b4-72146d928967"},"root_ids":["p1001"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</section>
+</section>
+<section id="Setting-up-Jupiter-like-Case">
+<h2>Setting up Jupiter-like Case<a class="headerlink" href="#Setting-up-Jupiter-like-Case" title="Link to this heading"></a></h2>
+<p>Within the PICASO repository there exists a simple benchmark code jupiter-like case that we used in the paper to compare the code. We will start by setting that up.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">14</span><span class="p">]</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">)</span><span class="c1">#, resample=100)</span>
+<span class="n">planet</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+
+<span class="n">planet</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="n">planet</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span> <span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/s**2&#39;</span><span class="p">))</span>
+<span class="c1"># bd.surface_reflect(0,opa.wno)</span>
+<span class="n">planet</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">)</span> <span class="c1">#opacity db, pysynphot database, temp, metallicity, logg</span>
+
+<span class="n">planet</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+
+<span class="n">planet</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span> <span class="n">filename</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="id1">
+<h3>Using the <code class="docutils literal notranslate"><span class="pre">jdi.approx</span></code> function to setup different test cases<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Similar to the reflected light problem, we can use the <code class="docutils literal notranslate"><span class="pre">approx</span></code> key to setup different methods of computing the thermal radiative transfer</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dfs</span> <span class="o">=</span> <span class="p">[];</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">[];</span>
+<span class="c1"># PICASO</span>
+<span class="n">dfs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">planet</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+                        <span class="p">];</span> <span class="n">labels</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;PICASO&quot;</span><span class="p">]</span>
+
+<span class="c1"># 2-stream</span>
+<span class="n">planet</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span> <span class="o">=</span> <span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">two_lin</span> <span class="o">=</span> <span class="n">planet</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+<span class="n">dfs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">two_lin</span><span class="p">];</span> <span class="n">labels</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;SH2&quot;</span><span class="p">]</span>
+
+<span class="c1"># 4-stream</span>
+<span class="n">planet</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span> <span class="o">=</span> <span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">four_lin</span> <span class="o">=</span> <span class="n">planet</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+<span class="n">dfs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">four_lin</span><span class="p">];</span> <span class="n">labels</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;SH4&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">xs</span> <span class="o">=</span> <span class="p">[];</span> <span class="n">ys</span> <span class="o">=</span> <span class="p">[];</span> <span class="n">labs</span> <span class="o">=</span> <span class="p">[];</span>
+<span class="k">for</span> <span class="n">df</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dfs</span><span class="p">))):</span>
+    <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;thermal&#39;</span><span class="p">]</span> <span class="c1">#units of erg/cm2/s/cm</span>
+    <span class="n">xflux</span><span class="p">,</span><span class="n">yflux</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+    <span class="n">xs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">xflux</span><span class="p">]</span>
+    <span class="n">ys</span> <span class="o">+=</span> <span class="p">[</span><span class="n">yflux</span><span class="p">]</span>
+    <span class="n">labs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id2">
+<h3>External Testing with <code class="docutils literal notranslate"><span class="pre">CDISROT</span></code> for Validation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Reproduction of Figure bb, Rooney et al.</p>
+<p>In Rooney et al., we tested <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> against a higher order code, <code class="docutils literal notranslate"><span class="pre">CDISORT</span></code>. Here is a code snippet to grab it from the code base</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># # read in my disort profile</span>
+<span class="n">disort_output</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">__refdata__</span><span class="p">,</span> <span class="s1">&#39;base_cases&#39;</span><span class="p">,</span><span class="s1">&#39;testing&#39;</span><span class="p">,</span><span class="s1">&#39;cdisort_output_jupiter_cloudy.spec&#39;</span><span class="p">)</span>
+<span class="n">son</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">disort_output</span><span class="p">,</span>
+                    <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="s1">&#39;2&#39;</span><span class="p">,</span><span class="s1">&#39;3&#39;</span><span class="p">])</span>
+<span class="n">sonx</span><span class="p">,</span> <span class="n">sony</span><span class="p">,</span> <span class="n">flx</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;2&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">son</span><span class="p">[</span><span class="s1">&#39;3&#39;</span><span class="p">])</span>
+<span class="n">sonx_</span><span class="p">,</span><span class="n">sony_</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">sonx</span><span class="p">,</span> <span class="n">sony</span><span class="o">*</span><span class="mf">1e1</span><span class="p">,</span> <span class="n">newx</span><span class="o">=</span><span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">xs</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sonx_</span><span class="p">];</span> <span class="n">ys</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sony_</span><span class="p">];</span> <span class="n">labs</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;DISORT16&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span><span class="n">ys</span><span class="p">,</span><span class="n">legend</span><span class="o">=</span><span class="n">labs</span>
+                  <span class="p">,</span><span class="n">plot_width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span><span class="n">x_range</span><span class="o">=</span><span class="n">wave_range</span><span class="p">,</span><span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="f31fae46-e45f-48d3-bc10-6aae75c7cef8" data-root-id="p1083" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"127c8c92-6b36-4818-a432-9db5b36720e5":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1083","attributes":{"width":800,"height":345,"x_range":{"type":"object","name":"Range1d","id":"p1092","attributes":{"start":5,"end":14}},"y_range":{"type":"object","name":"DataRange1d","id":"p1085"},"x_scale":{"type":"object","name":"LogScale","id":"p1093"},"y_scale":{"type":"object","name":"LinearScale","id":"p1094"},"title":{"type":"object","name":"Title","id":"p1090"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1122","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1116","attributes":{"selected":{"type":"object","name":"Selection","id":"p1117","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1118"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"0NRreM4CLECdOMvzKNMrQAyrGnvUoytA0P99hNB0K0BxigOHHEYrQHqPovq3FytANLg5WKLpKkANiY0Z27sqQKPaRrlhjipAXFXxsjVhKkCU7/mCVjQqQGpurabDBypAAOk2nHzbKUBdTp7igK8pQL3txvnPgylAbAFuYmlYKUAZPCmeTC0pQJ1YZS95AilAOaxkme7XKEA9uz1grK0oQBzQ2QiygyhA5JTzGP9ZKEAdrxUXkzAoQAJemYptByhADBul+43eJ0DiPCvz87UnQJWc6PqejSdAJD1jnY5lJ0BL9ehlwj0nQKIbjuA5FidA9zQsmvTuJkDgpGAg8scmQJhgiwEyoSZA/qPNzLN6JkDbqAgSd1QmQEtg3GF7LiZAUy6mTcAIJkCjp39nReMlQHlRPUIKviVApGNtcQ6ZJUCojFaJUXQlQPK39h7TTyVAMtYByJIrJUCyp+AakAclQNCIr67K4yRAdkA9G0LAJECe0An59ZwkQNpIReHleSRA3prObRFXJEAEcTI5eDQkQM4Gqt4ZEiRAXAMa+vXvI0DWVREoDM4jQMcTyAVcrCNAY1keMeWKI0C4K5tIp2kjQMFca+uhSCNAZnFgudQnI0BQie9SPwcjQJ1IMFnh5iJAdMPbbbrGIkBma0szyqYiQK3+d0wQhyJAKHn4XIxnIkA8BwEJPkgiQG76YfUkKSJAyL+Gx0AKIkAG2HQlkeshQHzRyrUVzSFAwkO/H86uIUAXzR8LupAhQHkRUCDZciFAdLtICCtVIUCrfpZsrzchQAYcWfdlGiFAiWdCU079IEDhT5UraOAgQJfnJCyzwyBA1W9TAS+nIEDiZBFY24ogQDCM3N23biBABgS/QMRSIEDLVE4vADcgQNyDqlhrGyBA+yd9bAUAIECi/vA1nMkfQPMNrSmKkx9AOiiwFtRdH0Ae3YdgeSgfQPPZy2t58x5ACyUcntO+HkAUXB9eh4oeQGj1gBOUVh5AXYTvJvkiHkCDABsCtu8dQNIPsw/KvB1AwVNluzSKHUBBudtx9VcdQJfLuqALJh1ABAqgtnb0HEBjQCAjNsMcQGjixVZJkhxA1mkPw69hHEBgt23aaDEcQF92QhB0ARxAL4Pe2NDRG0BjVICpfqIbQIpmUvh8cxtAv6ppPMtEG0Dc98PtaBYbQEx+RoVV6BpAhT68fJC6GkAlgtROGY0aQJtXIXfvXxpAbhAWchIzGkATwgW9gQYaQEzJIdY82hlAClB4PEOuGUDh1fJvlIIZQPK6VPEvVxlARM05QhUsGUCo2BTlQwEZQAc5Ll271hhAFG+iLnusGEB9t2DegoIYQGikKfLRWBhAbbmN8GcvGEDXCexgRAYYQEzZcMtm3RdAxD4Uuc60F0DUyZize4wXQEwqikVtZBdAEto7+qI8F0BRycddHBUXQN4MDf3Y7RZA6I6uZdjGFkDVwREmGqAWQGJVXc2deRZA6O1362JTFkDe3QYRaS0WQH7hbM+vBxZAl9zIuDbiFUB+mvRf/bwVQByQg1gDmBVAKqDBNkhzFUBw4bGPy04VQCtnDfmMKhVAegtCCYwGFUDiO3FXyOIUQNHHbntBvxRAOrG/DfebFEAl/5in6HgUQEmS3uIVVhRAoPshWn4zFED1VKGoIREUQA=="},"shape":[155],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"oJrla00JWEGfKgT2dDpYQRrZT03edVhBrEopmmetWEGp7ZON0uRYQd2ExW4AG1lBf6FuOpZCWUEcSH0iYGFZQcNyNn9ff1lByS1IkEKcWUEGJNYayqdZQaBanN42qFlBX8Ca2penWUFP7C2eVqVZQXHkZHkSlVlBXXLnzfF+WUG3ml0V1mdZQbzShMXTT1lBbjeX8J03WUHN6HoSjh5ZQdHMPC13BFlBDM6DuLvuWEEoAn4M0OVYQTt7sNZO3FhBuzTpvpTSWEH0rG4FWNdYQc6k6+E65FhBGr1enDjvWEEute6I4PpYQcm3ZPCgD1lBSU26giEjWUFzOGRY/jNZQanevOlrQ1lBOgVpX2RQWUEKb1gRH1pZQaMd1cOwX1lBNiSN7dVfWUHOpTG4tVxZQaCB2z+sVVlBpHMKBupGWUEtCiWgSDRZQftWyJ7wEVlBPc7yYIjcWEF7TdFvUKNYQSYMRM31Z1hBDuASeHQlWEGIV/1Vzt1XQc9yy43flFdBHE9HNPxFV0E41qNkzvBWQQPmRj8imFZBaK/a2Hw5VkEBrFl3lNVVQVFSw6gocVVBqQobSWoMVUFt/JjZiqdUQdKfzI+tRFRBFuF7DCnwU0F34G86MJ9TQeWgyHaVTFNB5DyurE7/UkFfxlI3469SQboj2LazYFJB6CTB2tsNUkGUXiVgJr9RQVFJbteyalFByKSyafQNUUH03K9GIcRQQUNjXd3kRVBBVq0Pel0QUEHOe4PNbN5OQWWzp7hynE5B01P3I8W3TEGWfzZtlrlMQcqm4Z/8HUpB4BGXuU96SkEFWFJWoc9IQWZGFsLh3UZBHwtzHOkDQ0FmSEnwI95CQSYLIOhqcjtBz1KVM7xnNUF7n5Qlc5YqQeGURb4x+RNB31T/JJMqDEEX6HOm7NL+QBK6HatoY/ZAUt6a1RO09UB29IJ9iGL0QFZkVr+E5/RArCKyQtBz+EBh2qOW6BHxQMiV1ZPApu1AsqqGmIpi50ABSwg1gkXvQFhr474EM/FA0RAR7I9170APLvw92pIEQQE3LUB4pB1Buzv9iS5eKkGPw3rKr2gyQbQII38H3C9BbcoXyXm4L0GDwQSKVGkwQZOuLcYFmy5BtmyUTenCKEHKLxwuUBoqQUxDlQmNISZBxAEni0ZpJ0GOMjaUrJ8lQWr2VmZBFShBM3GaKuygKEH6Id/g24EoQVJlNEQGvCpBeDw7DREfKkEs/109rQQDQfLSiVyp0RpB0vwhS2V9I0Et/liiKrojQbJhSdvjFiFBTN+Vjh5EHkE0Qus6QpAcQQD7fMzsUhlBpn/PCIsvGkEts51YOjsZQZeXQZaa+hdBal9RDJ66GEFq0vgNywEZQbefN0bU7xhBzQ6ey25aGEHWdAuTYdUWQa/eXKmU3hZBHU3q62zmFUGBNQPh9bcUQQ7DzYyWyRNBhPbRSfolE0F61wasu+URQc8i19k2hRFBzGoaB+yBEEEtvFBH+7sPQf2LgKMCWQ5Bra5zpBd2DEGSSGY4phALQc9AqjdqKgpBlyDqqHiFCEGW+RjyrpcHQXJcgqdROAZB8S+Mi+skBUECGAAOANMDQQE3yvQgygJB+dilsF+qAUHfAk9KqKwAQeG8HZcaRv9AA+fYcUBm/UA6YVZMM4H7QA=="},"shape":[155],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1123","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1124"}}},"glyph":{"type":"object","name":"Line","id":"p1119","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1120","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1121","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1131","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1125","attributes":{"selected":{"type":"object","name":"Selection","id":"p1126","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1127"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"0NRreM4CLECdOMvzKNMrQAyrGnvUoytA0P99hNB0K0BxigOHHEYrQHqPovq3FytANLg5WKLpKkANiY0Z27sqQKPaRrlhjipAXFXxsjVhKkCU7/mCVjQqQGpurabDBypAAOk2nHzbKUBdTp7igK8pQL3txvnPgylAbAFuYmlYKUAZPCmeTC0pQJ1YZS95AilAOaxkme7XKEA9uz1grK0oQBzQ2QiygyhA5JTzGP9ZKEAdrxUXkzAoQAJemYptByhADBul+43eJ0DiPCvz87UnQJWc6PqejSdAJD1jnY5lJ0BL9ehlwj0nQKIbjuA5FidA9zQsmvTuJkDgpGAg8scmQJhgiwEyoSZA/qPNzLN6JkDbqAgSd1QmQEtg3GF7LiZAUy6mTcAIJkCjp39nReMlQHlRPUIKviVApGNtcQ6ZJUCojFaJUXQlQPK39h7TTyVAMtYByJIrJUCyp+AakAclQNCIr67K4yRAdkA9G0LAJECe0An59ZwkQNpIReHleSRA3prObRFXJEAEcTI5eDQkQM4Gqt4ZEiRAXAMa+vXvI0DWVREoDM4jQMcTyAVcrCNAY1keMeWKI0C4K5tIp2kjQMFca+uhSCNAZnFgudQnI0BQie9SPwcjQJ1IMFnh5iJAdMPbbbrGIkBma0szyqYiQK3+d0wQhyJAKHn4XIxnIkA8BwEJPkgiQG76YfUkKSJAyL+Gx0AKIkAG2HQlkeshQHzRyrUVzSFAwkO/H86uIUAXzR8LupAhQHkRUCDZciFAdLtICCtVIUCrfpZsrzchQAYcWfdlGiFAiWdCU079IEDhT5UraOAgQJfnJCyzwyBA1W9TAS+nIEDiZBFY24ogQDCM3N23biBABgS/QMRSIEDLVE4vADcgQNyDqlhrGyBA+yd9bAUAIECi/vA1nMkfQPMNrSmKkx9AOiiwFtRdH0Ae3YdgeSgfQPPZy2t58x5ACyUcntO+HkAUXB9eh4oeQGj1gBOUVh5AXYTvJvkiHkCDABsCtu8dQNIPsw/KvB1AwVNluzSKHUBBudtx9VcdQJfLuqALJh1ABAqgtnb0HEBjQCAjNsMcQGjixVZJkhxA1mkPw69hHEBgt23aaDEcQF92QhB0ARxAL4Pe2NDRG0BjVICpfqIbQIpmUvh8cxtAv6ppPMtEG0Dc98PtaBYbQEx+RoVV6BpAhT68fJC6GkAlgtROGY0aQJtXIXfvXxpAbhAWchIzGkATwgW9gQYaQEzJIdY82hlAClB4PEOuGUDh1fJvlIIZQPK6VPEvVxlARM05QhUsGUCo2BTlQwEZQAc5Ll271hhAFG+iLnusGEB9t2DegoIYQGikKfLRWBhAbbmN8GcvGEDXCexgRAYYQEzZcMtm3RdAxD4Uuc60F0DUyZize4wXQEwqikVtZBdAEto7+qI8F0BRycddHBUXQN4MDf3Y7RZA6I6uZdjGFkDVwREmGqAWQGJVXc2deRZA6O1362JTFkDe3QYRaS0WQH7hbM+vBxZAl9zIuDbiFUB+mvRf/bwVQByQg1gDmBVAKqDBNkhzFUBw4bGPy04VQCtnDfmMKhVAegtCCYwGFUDiO3FXyOIUQNHHbntBvxRAOrG/DfebFEAl/5in6HgUQEmS3uIVVhRAoPshWn4zFED1VKGoIREUQA=="},"shape":[155],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"1jGPs+W2WEH9PVie8O5YQQ3L9TB2M1lBNP9/LAd0WUFUbnmsqLRZQd2EVEkZ9FlBwdQO/PkjWkGdnZjYjEpaQdZ1bN9ocFpBERQmfzWVWkHxK2gddKdaQaowMKDXrVpBwBhfITGzWkHADbkG3bZaQcYyNax+q1pBO3dArc6ZWkGuTQ8tGYdaQYM7EKF3c1pBKYZourJfWkFDpwvfDEtaQQwu+bJSNVpBkcDB1GAkWkExwvshSiFaQZO6G1GhHVpBaD2kOW0ZWkHYkhHwxCRaQS0WvefzOFpBgSu9IhlLWkH9nOsK/F1aQbLpwcTGelpBfXMCMziWWkGaHcaOy65aQV9xMHrGxVpBoQLdbC7ZWkH9HGz8i+haQaPOZ2xJ81pBUfEkqwL4WkHFNBc2EflaQbTB9i3O9VpBXB4sg/vpWkFylC1w19laQXvXDEnFvVpB5GHy/iySWkEoeh2BfGJaQU/M/gt9MFpBgZl9F6L2WUEb77slF7dZQa8+TVo+dllBO7ooZmEuWUEM66ZTW99YQRR4GifDhlhBsTUWR8IlWEEo0fuw375XQSSjDH5PV1dBjSsHAEjvVkFy1jobCIdWQdhy4S+jIFZBbDkUNRrJVUGBp8GYU3VVQZyNgdyOH1VBSZDuLMHPVEGcdpOFC31UQWj/ZDZLKlRBezokUirTU0EuLlUE7YBTQbxEusfxJ1NBOIN18VjFUkGBeDIxvHlSQac2Ndgj8lFBOrlefFy+UUH1oZeWlg9RQeNmYrxp8VBBPxAntaLNT0ENlshzBdhPQTtkbb9a8kxBXx6kBa9iTUGpVOtM7ohLQX/eGtUgR0lBli1o3vbwREE2bem6AsFEQdZISNDP7z1Bqn/tWZUbN0FkgBIO1GgsQa6NJGz+qhRB0e6iE/vxDEGYwTyJhhH/QCy4HFNfdfZAZdeTv1/U9UASx9IqdHT0QIqVmjoM8PRA20VZv3Z8+ECu1KMVDijxQP+M0YtquO1AbzEwEVpr50ClQ7CZWWjvQIv+hAy2QvFAbwULezys70B/8r81aGUFQQ48sh749R9BYE3bGD0mLUFyiiNDR700Qe4/Gq6TATJBPkoTfqvqMUFxz/lCAYYyQZhGlN7LUDFB8dn+T87kK0EcaKfpIZ8tQRpbVf169ihB3NW8A02iKkHNTjPC66EoQbFEQ0U0cStBUot/scoSLEF0vUFfGcYrQZjQ+MxAfS5BzQOHKTzlLUFfnCt7QFEFQdEDaCUfdx5Bcgp9ajkbJkF3DgbpprEmQXGQ6pU82iNBKeNQVxapIUE8cqk2kqEgQfNXQhS4eB1BcSI944cVHkEjjx6Y/QUdQQj1pY4poRtByElBgR2LHEGfTtoBVwsdQRbJ5usaDB1BGJXTqLBSHEEXiSfddmYaQb0r4eHA0xpB3e7an/DQGUGDu3h1fWsYQZEDu6bPXRdBO1y6JKvRFkHgfXsPhUMVQXN8zgYcDRVB6DpWO/bWE0Gfb2s3HzMTQQxWkXLneBJB75IprNdEEUHAZf9R+HwQQbNTfIC9GBBBb170rPsWDkE999QUbDsNQWD+JKW0gwtBpg5AOzhUCkFvzHbAqaoIQW71VwyRfQdB7flflE8cBkET3p2bg/kEQZ9jBPMdsgNBbjlx3JKUAkGiOs3MjGQBQQ=="},"shape":[155],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1132","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1133"}}},"glyph":{"type":"object","name":"Line","id":"p1128","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1129","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1130","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1140","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1134","attributes":{"selected":{"type":"object","name":"Selection","id":"p1135","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1136"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"0NRreM4CLECdOMvzKNMrQAyrGnvUoytA0P99hNB0K0BxigOHHEYrQHqPovq3FytANLg5WKLpKkANiY0Z27sqQKPaRrlhjipAXFXxsjVhKkCU7/mCVjQqQGpurabDBypAAOk2nHzbKUBdTp7igK8pQL3txvnPgylAbAFuYmlYKUAZPCmeTC0pQJ1YZS95AilAOaxkme7XKEA9uz1grK0oQBzQ2QiygyhA5JTzGP9ZKEAdrxUXkzAoQAJemYptByhADBul+43eJ0DiPCvz87UnQJWc6PqejSdAJD1jnY5lJ0BL9ehlwj0nQKIbjuA5FidA9zQsmvTuJkDgpGAg8scmQJhgiwEyoSZA/qPNzLN6JkDbqAgSd1QmQEtg3GF7LiZAUy6mTcAIJkCjp39nReMlQHlRPUIKviVApGNtcQ6ZJUCojFaJUXQlQPK39h7TTyVAMtYByJIrJUCyp+AakAclQNCIr67K4yRAdkA9G0LAJECe0An59ZwkQNpIReHleSRA3prObRFXJEAEcTI5eDQkQM4Gqt4ZEiRAXAMa+vXvI0DWVREoDM4jQMcTyAVcrCNAY1keMeWKI0C4K5tIp2kjQMFca+uhSCNAZnFgudQnI0BQie9SPwcjQJ1IMFnh5iJAdMPbbbrGIkBma0szyqYiQK3+d0wQhyJAKHn4XIxnIkA8BwEJPkgiQG76YfUkKSJAyL+Gx0AKIkAG2HQlkeshQHzRyrUVzSFAwkO/H86uIUAXzR8LupAhQHkRUCDZciFAdLtICCtVIUCrfpZsrzchQAYcWfdlGiFAiWdCU079IEDhT5UraOAgQJfnJCyzwyBA1W9TAS+nIEDiZBFY24ogQDCM3N23biBABgS/QMRSIEDLVE4vADcgQNyDqlhrGyBA+yd9bAUAIECi/vA1nMkfQPMNrSmKkx9AOiiwFtRdH0Ae3YdgeSgfQPPZy2t58x5ACyUcntO+HkAUXB9eh4oeQGj1gBOUVh5AXYTvJvkiHkCDABsCtu8dQNIPsw/KvB1AwVNluzSKHUBBudtx9VcdQJfLuqALJh1ABAqgtnb0HEBjQCAjNsMcQGjixVZJkhxA1mkPw69hHEBgt23aaDEcQF92QhB0ARxAL4Pe2NDRG0BjVICpfqIbQIpmUvh8cxtAv6ppPMtEG0Dc98PtaBYbQEx+RoVV6BpAhT68fJC6GkAlgtROGY0aQJtXIXfvXxpAbhAWchIzGkATwgW9gQYaQEzJIdY82hlAClB4PEOuGUDh1fJvlIIZQPK6VPEvVxlARM05QhUsGUCo2BTlQwEZQAc5Ll271hhAFG+iLnusGEB9t2DegoIYQGikKfLRWBhAbbmN8GcvGEDXCexgRAYYQEzZcMtm3RdAxD4Uuc60F0DUyZize4wXQEwqikVtZBdAEto7+qI8F0BRycddHBUXQN4MDf3Y7RZA6I6uZdjGFkDVwREmGqAWQGJVXc2deRZA6O1362JTFkDe3QYRaS0WQH7hbM+vBxZAl9zIuDbiFUB+mvRf/bwVQByQg1gDmBVAKqDBNkhzFUBw4bGPy04VQCtnDfmMKhVAegtCCYwGFUDiO3FXyOIUQNHHbntBvxRAOrG/DfebFEAl/5in6HgUQEmS3uIVVhRAoPshWn4zFED1VKGoIREUQA=="},"shape":[155],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"lDLXTgCuWEF3A/OLqOVYQZPLeHCnKVlBbebD265pWUH4qG+AwKlZQUjoeket6FlB35KP/SgYWkEbHjOHXD5aQdJXg7rWY1pBalsSPz+IWkGoQ2XZKppaQcCuDBJGoFpB0as4hValWkFFPvpduahaQWxunr4inVpBSEhlgEKLWkGFstT9XXhaQQ22WfKNZFpBGoUEYZtQWkER9N1NyDtaQXH+SPTiJVpBSSV4lrcUWkHxENPIYxFaQV1mjeR4DVpBTDpOzhUJWkG2wU/kNhRaQWBqcrklKFpBHTqG2g86WkHXB5houUxaQcgYq0hAaVpBnJ7CA3OEWkER+4T+zpxaQU77mWSZs1pBc2nz7vPGWkF8y+CBXdZaQciYxBI14VpBJluvdRnmWkFcckYEY+daQc0P+7td5FpBlPUR4ODYWkExJfQ/H8laQUDNNnYsrVpBg7XdcmyBWkGgKC4HhFFaQdyVsIBHH1pBdysWtyzlWUHKYoEgXKVZQVRSkJYuZFlB6rDyHAMcWUGBtFDsrsxYQWVIZw0kdFhB1r+brUwTWEHuGOZHkaxXQd/xNuodRVdByfFMAS/dVkE37y+79XRWQdi4L3F0DlZBYObnpUK2VUGoT33uv2FVQXK4Bi9EC1VBBoxVPra6VEGhE+f36mdUQdP00NIsFlRBE8aMAAfAU0Exy+x8oW5TQUvZcWp0FlNBCE4P/7u0UkHJgSxLAGlSQTnCSuBs4VFBayduUvSsUUHauXLgbv5QQWi0Cmlr31BBWGTbCHyrT0ED/5TRZLRPQbPuKEy30kxBbM3tcL5ATUHAJ1nROmlLQRSqKyONKklBP9IQlp7aREHghE6dY6pEQeE679Ua0z1BRgUf/+MHN0HShohyEVYsQZhANZTWpRRBbYH90pjsDEHFvWuUrg3/QET42Lxoc/ZA2yglxwnS9UBxibWD8XL0QB2ePe+B7vRA0ziNzPd7+EBQCfZBxCbxQDuITBNgte1AVngrdmpp50B9GvC55WbvQInRAb7eQfFAMf6z6nWp70BacJ1wTWAFQcozxQa14R9BtlRZfIUPLUHqD2Y2dak0QRhgqnbY8TFBZEl/O23bMUFVe+va4nQyQaWGDs12QTFBY6wTO3DNK0GS9ezA5oQtQdLYNRoc4ShB2gy/wxSLKkEWapfIBYwoQQmUbqcWVytBQBSjRVr3K0FPjEWxxKkrQSH7dhUCXS5BNxeqSbjFLUEKlCfsTEIFQUHIwnmJXx5Blxz7DCMGJkFXyngFXJwmQbq8tJ8JySNBIy0l1CCbIUGhJd3jepQgQS6Q4LJOYh1B+CZb3LX9HUGUdtnlJ+8cQc2lzrL+ixtBBWVWBtZzHEH38HPNwfIcQYbKcZme8RxBPR+/KWA2HEEtcdsl20kaQYbA8c19thpBzTkVoDu0GUHqDdfby04YQdQE/xWrQBdBSKx/mTO1FkFE8H6/FycVQanNQE+m8BRBJa0gMNG6E0EPl4x7fxcTQSkkZ4YVXhJBOHxO5bcpEUGfUZxxfGIQQTtZcdYz/g9BTo1CvGvjDUE/5tmyygoNQfdZYA4xUwtBkV6acvYlCkGOjLg2m30IQSxgfFT/UgdBiaSueVbzBUFGWJiHeNMEQcJVyS3NjQNBSkOSbZ5yAkFKjhfp70MBQQ=="},"shape":[155],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1141","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1142"}}},"glyph":{"type":"object","name":"Line","id":"p1137","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1138","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1139","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1149","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1143","attributes":{"selected":{"type":"object","name":"Selection","id":"p1144","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1145"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"0NRreM4CLED/9d2wFNMrQGtapFrAoytAXQFEhrx0K0AZosuqCEYrQDbkMkCkFytAZNNYv47pKkDQVQKix7sqQDCl2GJOjipAXMpnfSJhKkCEGx1uQzQqQO28RbKwBypASSQNyGnbKUCEnnsubq8pQCXYdGW9gylAJmi27VZYKUA/XdZIOi0pQL7NQflmAilAt2k7gtzXKEC2D9pnmq0oQM9jBy+ggyhAGWl+Xe1ZKECPHcp5gTAoQEIYRAtcByhA9SkTmnzeJ0ABACqv4rUnQJLJRdSNjSdAMt/sk31lJ0CYbG15sT0nQMcc3BApFidAYsgS5+PuJkBPJq+J4ccmQIJ+EYchoSZADV9bbqN6JkBdU27PZlQmQKed6jprLiZAgfItQrAIJkCiNlJ3NeMlQMY+LG36vSVAtZFKt/6YJUBhLPTpQXQlQCdIJ5rDTyVAGiOYXYMrJUBryq/KgAclQNfmini74yRAJ4v4/jLAJECzBHn25pwkQOutPPjWeSRA4MIingJXJEDNN7iCaTQkQJaRNkELEiRAP8CCdefvI0Bb+yu8/c0jQGOgarJNrCNA/RIf9taKI0Awn9AlmWkjQH9drOCTSCNA1RiExsYnI0BvNs13MQcjQIqfn5XT5iJA76y0wazGIkBlFGaevKYiQODXrM4ChyJAjTYg9n5nIkCmn/S4MEgiQBen+rsXKSJA4/udpDMKIkBGYOQYhOshQKyjbL8IzSFAU55tP8GuIUC2LrVArZAhQJw4p2vMciFA8qU8aR5VIUBPaQLjojchQCCCGINZGiFAiQIx9EH9IEDuFo/hW+AgQCAPBvemwyBALmn44CKnIEDZ3VZMz4ogQKlun+arbiBAlHXcXbhSIEBItqNg9DYgQAlxFZ5fGyBALO62i/P/H0BugVAQhckfQIAJbCtzkx9AYaOLP71dH0ClUD2wYigfQMsvGeJi8x5Ajre/Or2+HkBF9dcgcYoeQDjODfx9Vh5A7EMQNeMiHkBlu481oO8dQFVHPGi0vB1ANvXDOB+KHUBBHdET4FcdQEy1CGf2JR1AfaYIoWH0HEDOJWYxIcMcQHIPrIg0khxA7ERZGJthHEAJDt9SVDEcQIF8n6tfARxAbdLrlrzRG0Bk6wKKaqIbQFioD/tocxtAFV4nYbdEG0B+Rkg0VRYbQGD0V+1B6BpA7skhBn26GkDWcVX5BY0aQPhahULcXxpApDYlXv8yGkB4eYjJbgYaQLre4AIq2hlAQe48iTCuGUDphIbcgYIZQHVfgX0dVxlA9qfJ7QIsGUCthdKvMQEZQFCv5Eap1hhAzf8cN2msGEBpDWsFcYIYQFTDjzfAWBhAkP0bVFYvGEBAJ2/iMgYYQEzbtWpV3RdAWIfodb20F0AUEcqNaowXQNR95jxcZBdAdpyRDpI8F0CJseWOCxUXQLklwkrI7RZAezbKz8fGFkDvqGOsCaAWQP1+tW+NeRZAn66mqVJTFkBk29zqWC0WQA8Su8SfBxZAdoZgySbiFUBkU6eL7bwVQLk8I5/zlxVAm3MgmDhzFUC5XKILvE4VQLRYYo99KhVAjI7OuXwGFUAfuAgiueIUQLzw5F8yvxRArIXoC+ibFEDTyEi/2XgUQELl6RMHVhRAzrVdpG8zFED1VKGoIREUQA=="},"shape":[155],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"gnZytViDWEFyg7Y3qOZYQQoYtZ+NO1hBgAlCtCWzWEFk1RFgqrNYQYCz/Q9Sf1hBUKhr/mL9VkFdFlsLcPVXQQH+TgMAL1hBPv5hwNppV0GpFVA8g6VWQaWgynbAKVRBQk8ZSe+zVUH2Cj5EXvZRQY7AQvuyalVBNSXPbncdT0Hn8v7ohvdOQeONNXOnH1RBC6PAW+D6UEF8tGwCA3RIQd10GGEQGEVBtmTP0s26VEH2J7vHHxtIQfTek9thOjxBryAXuwV3UUFMrWuhiklQQV6LbmPNuzpBR5NnJui+QEFMS6ZaeztPQaYFcJ0LXkJB2XwL9JiHOkFnaKGcyrFPQd5jhwQa8UZBEuIE7nh4NEENCZr5TIdCQUwTP4zTO0lBHEYx5CPNNUE9a0ErIYhDQQuvdLe2Zz1Bagk4nS8sMEEmuxAITh4yQUa32P0pjDhB+BGvl5qSN0Fm6AD1O88qQRX9rXjCtjRBQumPYLRjLkGvpGpZNpMoQdDdgEwSJjlB7hv8yQNsQEEG5Uo9dnQqQad/ZZ7M3DBBrgRlyi8sMEFlwBa6ShkhQYBLIJgZpTFBJUun90JNLkFUIpMouTcgQSnxy9F5nyxBPnmOYnDQI0GgyU44ypEcQRHcXI0v4DBBLlHWVO5NIUH8k2PdAYUgQexLtCYUhzBBITpIqNIOIkFU/GkskbkqQaLA6BkbwzBBdoIMW+wRNkHKPn1Xr+I1QZSUxH8P5jRB4AmZao8FREE7NogKjcI3Qb3EwwBF/UhBADwh3680RUGqV7wsxvFDQbhOitp/GEpBjSB82hteRkH/AAmRJy5KQfJvMvGU0ERBEc5aDjFrREFIKpSOaBhDQVIeO9oNczxBBTyuTizeNkHNFVRWI0AsQZCzchoRDxVBcjQeISiBDUH1voXMcTT/QLGfgc0Um/VA51APENrH9UCOcxIFA4XyQD0eFpg1p/ZAm3YkmRrI/ECNmGesagXwQGMEZE4qwexAenUwd0AD6UBtnB0VJtPwQMXHXvUVIvBAQ7iyAiCW70CEjveFtBcFQbEZ9WZhFSBBRUIzBGzSLEF1QPh2s1o0QarBAtjDrjFBZ6JLZ6FaMUFdWBM9eJwwQaJbCdY4sDBBKoX1CV/AJ0HoJAF195kqQdDDPGTnVSNBdzKHWcDUHEEBZXhRtn8gQeU4rm5kexhBqQQhFr+QB0Edd/okXJIRQfFCtSztt/pAFHFdhn9B9UBIxFChjgjYQEH8mBM36eRAAMKU5N+z4UBlxWEPJhzoQOHsHbn0vuZA9SLFTDol5EC0O+GK99boQKBJucg4gtdAsOD2wgKuxUDbpL+RyE/EQKcVwEDMjMVA9a+wfqJ12UDEsnpXZojXQBUnC3YkqM9A9fu/0rrr40AuYBpM7z3KQDwfy9PyBMtAbtatIkTK0EDn7+Iv7grfQIRw7IspkN1AJ50MBdWE7EB8/n53sIbtQO47+iUDt/ZAUa0Pj+ci+kD99CzCgbcCQVsCyw3BjwNBpFEkbfuTC0E+lS6eY9EIQWCuiAmCnA5BHHfzkRtkCkGJ9KbJ6yIFQUNh5EX4tApBUIew+bTpCUGkUqKOwbIHQQaknxcINQdB56f+hgOxBUHqcan6WbkEQW4W1IUyggNBUgbsjlhrAkFuuFSHaDEBQQ=="},"shape":[155],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1150","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1151"}}},"glyph":{"type":"object","name":"Line","id":"p1146","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#009E73","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1147","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#009E73","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1148","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#009E73","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1091","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1105"},{"type":"object","name":"WheelZoomTool","id":"p1106","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1107","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1108","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1113"},{"type":"object","name":"ResetTool","id":"p1114"},{"type":"object","name":"HelpTool","id":"p1115"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1100","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1101","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1102"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1103"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1152","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1153","attributes":{"label":{"type":"value","value":"PICASO"},"renderers":[{"id":"p1122"}]}},{"type":"object","name":"LegendItem","id":"p1154","attributes":{"label":{"type":"value","value":"SH2"},"renderers":[{"id":"p1131"}]}},{"type":"object","name":"LegendItem","id":"p1155","attributes":{"label":{"type":"value","value":"SH4"},"renderers":[{"id":"p1140"}]}},{"type":"object","name":"LegendItem","id":"p1156","attributes":{"label":{"type":"value","value":"DISORT16"},"renderers":[{"id":"p1149"}]}}]}}],"below":[{"type":"object","name":"LogAxis","id":"p1095","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1096","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1097"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1098"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1099","attributes":{"axis":{"id":"p1095"}}},{"type":"object","name":"Grid","id":"p1104","attributes":{"dimension":1,"axis":{"id":"p1100"}}}]}}]}};
+  const render_items = [{"docid":"127c8c92-6b36-4818-a432-9db5b36720e5","roots":{"p1083":"f31fae46-e45f-48d3-bc10-6aae75c7cef8"},"root_ids":["p1083"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<p>We can directly compare all of them. Interestingly enough, this figure shows better agreement between the methods (compared to the Brown Dwarf case). As we explain in Rooney, this is because the Toon89 methodology is better suited for scattering regimes in the limit of single scattering -&gt; 1 and -&gt; 0. We will explore this further below.</p>
+</section>
+</section>
+</section>
+<section id="Dependence-of-Radiative-Transfer-Method-on-Scattering-Parameters">
+<h1>Dependence of Radiative Transfer Method on Scattering Parameters<a class="headerlink" href="#Dependence-of-Radiative-Transfer-Method-on-Scattering-Parameters" title="Link to this heading"></a></h1>
+<p>As we alluded to above, there is a large accuracy dependence on single scattering and on single scattering and asymmetry. We can run <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> Toon89 methodology, along with SH2 and SH4 and compare with a precomputed cdisort 32-stream calculation.</p>
+<p>For this we will use a pre-built test function included in <code class="docutils literal notranslate"><span class="pre">picaso.test</span></code> (this will take some time as it is computing many radiative transfer calculations.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">picaso.model_compare</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ptest</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Toon quadrature</span>
+<span class="n">Toon_quad</span> <span class="o">=</span> <span class="n">ptest</span><span class="o">.</span><span class="n">thermal_sh_test</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;toon&quot;</span><span class="p">,</span>
+                                  <span class="n">tau</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="c1"># SH 2-term</span>
+<span class="n">SH2</span> <span class="o">=</span> <span class="n">ptest</span><span class="o">.</span><span class="n">thermal_sh_test</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;SH&quot;</span><span class="p">,</span>
+                            <span class="n">stream</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+<span class="c1"># SH 4-term</span>
+<span class="n">SH4</span> <span class="o">=</span> <span class="n">ptest</span><span class="o">.</span><span class="n">thermal_sh_test</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;SH&#39;</span><span class="p">,</span>
+                            <span class="n">stream</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s load the cdisort pre computed test file that we have in the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> reference files. Note that since this is precomputed, minor differences might occur based on what it is in the Rooney paper.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_disort32</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">__refdata__</span><span class="p">,</span> <span class="s1">&#39;base_cases&#39;</span><span class="p">,</span><span class="s1">&#39;testing&#39;</span><span class="p">,</span>
+                                         <span class="s1">&#39;cdisort32str_1270K_tau02.csv&#39;</span><span class="p">),</span><span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">compare_picaso_disort32</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_disort32</span><span class="o">-</span><span class="n">Toon_quad</span><span class="p">)</span><span class="o">/</span><span class="n">data_disort32</span><span class="o">*</span><span class="mi">100</span>
+<span class="n">compare_SH4_disort32</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_disort32</span><span class="o">-</span><span class="n">SH4</span><span class="p">)</span><span class="o">/</span><span class="n">data_disort32</span><span class="o">*</span><span class="mi">100</span>
+<span class="n">compare_SH2_disort32</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_disort32</span><span class="o">-</span><span class="n">SH2</span><span class="p">)</span><span class="o">/</span><span class="n">data_disort32</span><span class="o">*</span><span class="mi">100</span>
+</pre></div>
+</div>
+</div>
+<section id="Plot-heatmap-comparing-radiative-transfer-methods">
+<h2>Plot heatmap comparing radiative transfer methods<a class="headerlink" href="#Plot-heatmap-comparing-radiative-transfer-methods" title="Link to this heading"></a></h2>
+<p>Reproduce Figure 6 in Rooney et al. 2023 Part II Thermal.</p>
+<p>The efficacy of Toon large depends on the strength of the scattering. When single scattering approaches 1 or 0, Toon89 can be a very effective RT method. However, for intermediate values large errors (&gt;10%) are visible when compared to DISORT 32 stream.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">toon89_fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">rt_heatmap</span><span class="p">(</span>
+    <span class="n">compare_picaso_disort32</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">14</span><span class="p">]],</span>
+    <span class="n">cmap_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;palette&#39;</span><span class="p">:</span><span class="n">jpi</span><span class="o">.</span><span class="n">pals</span><span class="o">.</span><span class="n">plasma</span><span class="p">(</span><span class="mi">11</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;low&#39;</span><span class="p">:</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="s1">&#39;high&#39;</span><span class="p">:</span><span class="mi">60</span><span class="p">},</span>
+    <span class="n">figure_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;title&#39;</span><span class="p">:</span><span class="s1">&#39;Toon89&#39;</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">sh4_fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">rt_heatmap</span><span class="p">(</span>
+    <span class="n">compare_SH4_disort32</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">14</span><span class="p">]],</span>
+    <span class="n">cmap_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;palette&#39;</span><span class="p">:</span><span class="n">jpi</span><span class="o">.</span><span class="n">pals</span><span class="o">.</span><span class="n">viridis</span><span class="p">(</span><span class="mi">11</span><span class="p">),</span> <span class="s1">&#39;low&#39;</span><span class="p">:</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="s1">&#39;high&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">},</span>
+    <span class="n">figure_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;title&#39;</span><span class="p">:</span><span class="s1">&#39;SH4&#39;</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">diff_fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">rt_heatmap</span><span class="p">((</span><span class="n">compare_picaso_disort32</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">14</span><span class="p">]]</span> <span class="o">-</span>
+                    <span class="n">compare_SH4_disort32</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">14</span><span class="p">]]</span>
+                           <span class="p">),</span>
+    <span class="n">cmap_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;palette&#39;</span><span class="p">:</span><span class="n">jpi</span><span class="o">.</span><span class="n">pals</span><span class="o">.</span><span class="n">RdBu</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="s1">&#39;low&#39;</span><span class="p">:</span><span class="o">-</span><span class="mi">60</span><span class="p">,</span><span class="s1">&#39;high&#39;</span><span class="p">:</span><span class="mi">60</span><span class="p">},</span>
+    <span class="n">figure_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;title&#39;</span><span class="p">:</span><span class="s1">&#39;Diff between Toon89 and SH4&#39;</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">row</span><span class="p">([</span><span class="n">toon89_fig</span><span class="p">,</span> <span class="n">sh4_fig</span><span class="p">,</span> <span class="n">diff_fig</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="bdc2fb57-1618-4bbe-b2d1-48c1c32ae8f3" data-root-id="p1318" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"48f1bb30-3813-4d81-871e-ed7d64f07d64":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Row","id":"p1318","attributes":{"children":[{"type":"object","name":"Figure","id":"p1166","attributes":{"width":300,"height":400,"x_range":{"type":"object","name":"FactorRange","id":"p1176","attributes":{"factors":["0.0","0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9"]}},"y_range":{"type":"object","name":"FactorRange","id":"p1177","attributes":{"factors":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.90","0.950","0.990","0.999","1.0"]}},"x_scale":{"type":"object","name":"CategoricalScale","id":"p1178"},"y_scale":{"type":"object","name":"CategoricalScale","id":"p1179"},"title":{"type":"object","name":"Title","id":"p1169","attributes":{"text":"Toon89"}},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1210","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1201","attributes":{"selected":{"type":"object","name":"Selection","id":"p1202","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1203"},"data":{"type":"map","entries":[["index",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAAFQAAABYAAAAXAAAAGAAAABkAAAAaAAAAGwAAABwAAAAdAAAAHgAAAB8AAAAgAAAAIQAAACIAAAAjAAAAJAAAACUAAAAmAAAAJwAAACgAAAApAAAAKgAAACsAAAAsAAAALQAAAC4AAAAvAAAAMAAAADEAAAAyAAAAMwAAADQAAAA1AAAANgAAADcAAAA4AAAAOQAAADoAAAA7AAAAPAAAAD0AAAA+AAAAPwAAAEAAAABBAAAAQgAAAEMAAABEAAAARQAAAEYAAABHAAAASAAAAEkAAABKAAAASwAAAEwAAABNAAAATgAAAE8AAABQAAAAUQAAAFIAAABTAAAAVAAAAFUAAABWAAAAVwAAAFgAAABZAAAAWgAAAFsAAABcAAAAXQAAAF4AAABfAAAAYAAAAGEAAABiAAAAYwAAAGQAAABlAAAAZgAAAGcAAABoAAAAaQAAAGoAAABrAAAAbAAAAG0AAABuAAAAbwAAAHAAAABxAAAAcgAAAHMAAAB0AAAAdQAAAHYAAAB3AAAAeAAAAHkAAAB6AAAAewAAAHwAAAB9AAAAfgAAAH8AAACAAAAAgQAAAA=="},"shape":[130],"dtype":"int32","order":"little"}],["g0",{"type":"ndarray","array":["0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9"],"shape":[130],"dtype":"object","order":"little"}],["w0",{"type":"ndarray","array":["1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1"],"shape":[130],"dtype":"object","order":"little"}],["albedo",{"type":"ndarray","array":[-4.887184534090196,-2.9711622286660138,8.54023999369505,26.84778566106797,32.84405890648818,28.42278746152776,19.159082430711944,11.727391604703866,6.584251220039324,3.0415520678183197,0.5193979550192473,-1.3495049368265788,-2.7873944754651205,-3.022478377053995,-1.3263102270706157,9.195685205666178,27.112000717574187,34.05369651643948,31.755593799170512,22.847247014585072,14.709077022863982,8.71679144760803,4.474257891482971,1.4258084759002898,-0.8330158021383816,-2.563294287473449,-1.2165999640960146,0.2656414757053363,9.780179683290593,27.239059372450292,35.105203033758734,35.216136667389634,27.104374233081792,18.36237028465339,11.3931033856622,6.275074176110154,2.551922136988728,-0.20357307507910652,-2.296554663639072,0.5078188490282792,1.7822420767521348,10.269105880963835,27.188764706625285,35.94658802523707,38.68760358678258,31.884717504750036,22.76059306124604,14.71821548032674,8.52390161665366,3.9426102981225517,0.5578809180872666,-1.9821376185162738,2.1146384767587696,3.1876070355385693,10.62516521399353,26.910335660893235,36.52564551804757,42.04823391057836,37.09305069096687,27.951334463160325,18.807362649288727,11.319138227895968,5.654859367794462,1.4752671493189224,-1.6140332860965445,3.5427143097525313,4.42100408991398,10.787588005784238,26.333062370265893,36.784831875169914,45.18460183026373,42.584403982200705,33.93419306160784,23.775600660412564,14.779098623876566,7.760877449846075,2.5787573325000364,-1.1850177756959053,4.68011251177765,5.371244459626152,10.648293980048104,25.34832285027949,36.652259997818334,48.006711365960456,48.1791315303902,40.63808676765684,29.718836326396257,19.04089397096273,10.351780507055317,3.9066365711144253,-0.6863449235047882,5.297940840408902,5.811043581820204,9.99135791892395,23.7687048365743,36.02298484470368,50.46255503190502,53.69505707954233,47.90678888852332,36.683731264153124,24.253561381365333,13.541412865266675,5.507728963249146,-0.10734434990029797,4.844483341069681,5.192945467333794,8.306698291293337,21.21329123767887,34.7091299117634,52.54777600974228,58.989735040755285,55.50209906853779,44.62548258549286,30.559391512851658,17.468821403330708,7.44441172449562,0.5650816487181533,1.5874620125462608,1.8006357715028196,4.02827395747136,16.68096024381091,32.255316631223444,54.283202066036395,63.98588876628865,63.12147712689765,53.35305551732385,38.05172475141357,22.29509675293447,9.795913749800905,1.3470763280350737],"shape":[130],"dtype":"object","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1211","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1212"}}},"glyph":{"type":"object","name":"Rect","id":"p1207","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"fill_color":{"type":"field","field":"albedo","transform":{"type":"object","name":"LinearColorMapper","id":"p1165","attributes":{"palette":["#EFF821","#FCCC25","#FCA635","#F1824C","#E06461","#CA4678","#B02A8F","#8F0DA3","#6A00A7","#40039C","#0C0786"],"low":-5,"high":60}}}}},"nonselection_glyph":{"type":"object","name":"Rect","id":"p1208","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"line_alpha":{"type":"value","value":0.1},"fill_color":{"type":"field","field":"albedo","transform":{"id":"p1165"}},"fill_alpha":{"type":"value","value":0.1},"hatch_alpha":{"type":"value","value":0.1}}},"muted_glyph":{"type":"object","name":"Rect","id":"p1209","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"line_alpha":{"type":"value","value":0.2},"fill_color":{"type":"field","field":"albedo","transform":{"id":"p1165"}},"fill_alpha":{"type":"value","value":0.2},"hatch_alpha":{"type":"value","value":0.2}}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1175","attributes":{"tools":[{"type":"object","name":"HoverTool","id":"p1190","attributes":{"renderers":"auto"}},{"type":"object","name":"SaveTool","id":"p1191"},{"type":"object","name":"PanTool","id":"p1192"},{"type":"object","name":"BoxZoomTool","id":"p1193","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1194","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"ResetTool","id":"p1199"},{"type":"object","name":"WheelZoomTool","id":"p1200","attributes":{"renderers":"auto"}}]}},"toolbar_location":"below","left":[{"type":"object","name":"CategoricalAxis","id":"p1185","attributes":{"ticker":{"type":"object","name":"CategoricalTicker","id":"p1186"},"formatter":{"type":"object","name":"CategoricalTickFormatter","id":"p1187"},"axis_label":"Single Scattering Albedo","major_label_standoff":0,"major_label_policy":{"type":"object","name":"AllLabels","id":"p1188"},"major_label_text_font_size":"12px","axis_line_color":null,"major_tick_line_color":null}}],"above":[{"type":"object","name":"CategoricalAxis","id":"p1180","attributes":{"ticker":{"type":"object","name":"CategoricalTicker","id":"p1181"},"formatter":{"type":"object","name":"CategoricalTickFormatter","id":"p1182"},"axis_label":"Asymmetry","major_label_standoff":0,"major_label_orientation":1.0471975511965976,"major_label_policy":{"type":"object","name":"AllLabels","id":"p1183"},"major_label_text_font_size":"12px","axis_line_color":null,"major_tick_line_color":null}}],"below":[{"type":"object","name":"ColorBar","id":"p1214","attributes":{"location":[0,0],"ticker":{"type":"object","name":"BasicTicker","id":"p1213","attributes":{"desired_num_ticks":11,"mantissas":[1,2,5]}},"major_label_policy":{"type":"object","name":"NoOverlap","id":"p1215"},"major_label_text_font_size":"12px","label_standoff":6,"color_mapper":{"id":"p1165"}}}],"center":[{"type":"object","name":"Grid","id":"p1184","attributes":{"axis":{"id":"p1180"},"grid_line_color":null}},{"type":"object","name":"Grid","id":"p1189","attributes":{"dimension":1,"axis":{"id":"p1185"},"grid_line_color":null}}]}},{"type":"object","name":"Figure","id":"p1217","attributes":{"width":300,"height":400,"x_range":{"type":"object","name":"FactorRange","id":"p1227","attributes":{"factors":["0.0","0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9"]}},"y_range":{"type":"object","name":"FactorRange","id":"p1228","attributes":{"factors":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.90","0.950","0.990","0.999","1.0"]}},"x_scale":{"type":"object","name":"CategoricalScale","id":"p1229"},"y_scale":{"type":"object","name":"CategoricalScale","id":"p1230"},"title":{"type":"object","name":"Title","id":"p1220","attributes":{"text":"SH4"}},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1261","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1252","attributes":{"selected":{"type":"object","name":"Selection","id":"p1253","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1254"},"data":{"type":"map","entries":[["index",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAAFQAAABYAAAAXAAAAGAAAABkAAAAaAAAAGwAAABwAAAAdAAAAHgAAAB8AAAAgAAAAIQAAACIAAAAjAAAAJAAAACUAAAAmAAAAJwAAACgAAAApAAAAKgAAACsAAAAsAAAALQAAAC4AAAAvAAAAMAAAADEAAAAyAAAAMwAAADQAAAA1AAAANgAAADcAAAA4AAAAOQAAADoAAAA7AAAAPAAAAD0AAAA+AAAAPwAAAEAAAABBAAAAQgAAAEMAAABEAAAARQAAAEYAAABHAAAASAAAAEkAAABKAAAASwAAAEwAAABNAAAATgAAAE8AAABQAAAAUQAAAFIAAABTAAAAVAAAAFUAAABWAAAAVwAAAFgAAABZAAAAWgAAAFsAAABcAAAAXQAAAF4AAABfAAAAYAAAAGEAAABiAAAAYwAAAGQAAABlAAAAZgAAAGcAAABoAAAAaQAAAGoAAABrAAAAbAAAAG0AAABuAAAAbwAAAHAAAABxAAAAcgAAAHMAAAB0AAAAdQAAAHYAAAB3AAAAeAAAAHkAAAB6AAAAewAAAHwAAAB9AAAAfgAAAH8AAACAAAAAgQAAAA=="},"shape":[130],"dtype":"int32","order":"little"}],["g0",{"type":"ndarray","array":["0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9"],"shape":[130],"dtype":"object","order":"little"}],["w0",{"type":"ndarray","array":["1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1"],"shape":[130],"dtype":"object","order":"little"}],["albedo",{"type":"ndarray","array":[-6.390200201169879,-6.321072795226383,-5.706861056902407,-3.3955173434484864,-1.2491737405726175,1.3227360672977448,2.224212689066024,2.2777171176905093,1.999190048197684,1.6124010206099242,1.2043502141138436,0.8076281471141987,0.43355319244407986,-6.418434526258751,-6.357628945131235,-5.814446489246232,-3.7468895241761357,-1.8101398724932507,0.635128501684536,1.6588234516048506,1.8634015147926515,1.7016203848082518,1.401042670323811,1.0597686473279417,0.7179399166039653,0.39123143943189714,-6.454254698716482,-6.401524330833966,-5.9273822192710135,-4.094444290831483,-2.35776989537932,-0.06255833893938609,1.0591816279722623,1.4191925182319036,1.3865085570553353,1.1818349458740263,0.9129753300502218,0.6285794437398962,0.3497273875235432,-6.49752995588934,-6.4526371830319365,-6.045610497920176,-4.438604808166058,-2.8908557949812943,-0.7596050839459588,0.4315351578349592,0.9450430680449349,1.052537805686725,0.9540438731765928,0.7637454814449324,0.5394759956852654,0.3089711975186955,-6.54822542321636,-6.510951845654271,-6.169262099464554,-4.780740976470164,-3.4112132874721914,-1.4498703949768437,-0.21940429302390016,0.43908013292102205,0.6963668507176853,0.7156134338846518,0.6112343471020927,0.4503206079153414,0.2688075858708897,-6.60704065800502,-6.577193204267175,-6.299313082456893,-5.123694850947459,-3.9240708180105663,-2.13446263646013,-0.8940280615300231,-0.10532620490780638,0.31008748330031866,0.4614650657606607,0.4531338607912166,0.3602533104892872,0.22893344876905442,-6.6763947937038965,-6.653817844248952,-6.438477918231604,-5.471925910038156,-4.437247755142506,-2.821984849101165,-1.6002032774393395,-0.7019627215473131,-0.12127681134614487,0.18165667782683548,0.28478111303035486,0.2675668072004126,0.18883486248955367,-6.762444731919618,-6.7470001914086914,-6.592898605661773,-5.8309035988215285,-4.958202122613239,-3.5256594577586315,-2.353912585316621,-1.3732390651799578,-0.6217126523179404,-0.14026125872095088,0.09840635424359699,0.16948764550046894,0.14774588398191893,-6.879712575423513,-6.871200807340242,-6.77536359177871,-6.199757857096334,-5.477046711236922,-4.245401102827174,-3.169641621633305,-2.144322979363811,-1.2202839712461775,-0.5253968141571754,-0.11606734276023291,0.062421789067352663,0.10466179074163726,-7.064107819614638,-7.062809271682004,-7.0165572605987405,-6.513158758716596,-5.843418518587621,-4.840861733424982,-3.9707836944767703,-2.9757997893868726,-1.901677379397121,-0.972081968914173,-0.36047613063047307,-0.05555750635966811,0.05855491216301041],"shape":[130],"dtype":"object","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1262","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1263"}}},"glyph":{"type":"object","name":"Rect","id":"p1258","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"fill_color":{"type":"field","field":"albedo","transform":{"type":"object","name":"LinearColorMapper","id":"p1216","attributes":{"palette":["#440154","#482374","#404387","#345E8D","#29788E","#208F8C","#22A784","#42BE71","#79D151","#BADE27","#FDE724"],"low":-6,"high":2}}}}},"nonselection_glyph":{"type":"object","name":"Rect","id":"p1259","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"line_alpha":{"type":"value","value":0.1},"fill_color":{"type":"field","field":"albedo","transform":{"id":"p1216"}},"fill_alpha":{"type":"value","value":0.1},"hatch_alpha":{"type":"value","value":0.1}}},"muted_glyph":{"type":"object","name":"Rect","id":"p1260","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"line_alpha":{"type":"value","value":0.2},"fill_color":{"type":"field","field":"albedo","transform":{"id":"p1216"}},"fill_alpha":{"type":"value","value":0.2},"hatch_alpha":{"type":"value","value":0.2}}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1226","attributes":{"tools":[{"type":"object","name":"HoverTool","id":"p1241","attributes":{"renderers":"auto"}},{"type":"object","name":"SaveTool","id":"p1242"},{"type":"object","name":"PanTool","id":"p1243"},{"type":"object","name":"BoxZoomTool","id":"p1244","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1245","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"ResetTool","id":"p1250"},{"type":"object","name":"WheelZoomTool","id":"p1251","attributes":{"renderers":"auto"}}]}},"toolbar_location":"below","left":[{"type":"object","name":"CategoricalAxis","id":"p1236","attributes":{"ticker":{"type":"object","name":"CategoricalTicker","id":"p1237"},"formatter":{"type":"object","name":"CategoricalTickFormatter","id":"p1238"},"axis_label":"Single Scattering Albedo","major_label_standoff":0,"major_label_policy":{"type":"object","name":"AllLabels","id":"p1239"},"major_label_text_font_size":"12px","axis_line_color":null,"major_tick_line_color":null}}],"above":[{"type":"object","name":"CategoricalAxis","id":"p1231","attributes":{"ticker":{"type":"object","name":"CategoricalTicker","id":"p1232"},"formatter":{"type":"object","name":"CategoricalTickFormatter","id":"p1233"},"axis_label":"Asymmetry","major_label_standoff":0,"major_label_orientation":1.0471975511965976,"major_label_policy":{"type":"object","name":"AllLabels","id":"p1234"},"major_label_text_font_size":"12px","axis_line_color":null,"major_tick_line_color":null}}],"below":[{"type":"object","name":"ColorBar","id":"p1265","attributes":{"location":[0,0],"ticker":{"type":"object","name":"BasicTicker","id":"p1264","attributes":{"desired_num_ticks":11,"mantissas":[1,2,5]}},"major_label_policy":{"type":"object","name":"NoOverlap","id":"p1266"},"major_label_text_font_size":"12px","label_standoff":6,"color_mapper":{"id":"p1216"}}}],"center":[{"type":"object","name":"Grid","id":"p1235","attributes":{"axis":{"id":"p1231"},"grid_line_color":null}},{"type":"object","name":"Grid","id":"p1240","attributes":{"dimension":1,"axis":{"id":"p1236"},"grid_line_color":null}}]}},{"type":"object","name":"Figure","id":"p1268","attributes":{"width":300,"height":400,"x_range":{"type":"object","name":"FactorRange","id":"p1278","attributes":{"factors":["0.0","0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9"]}},"y_range":{"type":"object","name":"FactorRange","id":"p1279","attributes":{"factors":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.90","0.950","0.990","0.999","1.0"]}},"x_scale":{"type":"object","name":"CategoricalScale","id":"p1280"},"y_scale":{"type":"object","name":"CategoricalScale","id":"p1281"},"title":{"type":"object","name":"Title","id":"p1271","attributes":{"text":"Diff between Toon89 and SH4"}},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1312","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1303","attributes":{"selected":{"type":"object","name":"Selection","id":"p1304","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1305"},"data":{"type":"map","entries":[["index",{"type":"ndarray","array":{"type":"bytes","data":"AAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAAFQAAABYAAAAXAAAAGAAAABkAAAAaAAAAGwAAABwAAAAdAAAAHgAAAB8AAAAgAAAAIQAAACIAAAAjAAAAJAAAACUAAAAmAAAAJwAAACgAAAApAAAAKgAAACsAAAAsAAAALQAAAC4AAAAvAAAAMAAAADEAAAAyAAAAMwAAADQAAAA1AAAANgAAADcAAAA4AAAAOQAAADoAAAA7AAAAPAAAAD0AAAA+AAAAPwAAAEAAAABBAAAAQgAAAEMAAABEAAAARQAAAEYAAABHAAAASAAAAEkAAABKAAAASwAAAEwAAABNAAAATgAAAE8AAABQAAAAUQAAAFIAAABTAAAAVAAAAFUAAABWAAAAVwAAAFgAAABZAAAAWgAAAFsAAABcAAAAXQAAAF4AAABfAAAAYAAAAGEAAABiAAAAYwAAAGQAAABlAAAAZgAAAGcAAABoAAAAaQAAAGoAAABrAAAAbAAAAG0AAABuAAAAbwAAAHAAAABxAAAAcgAAAHMAAAB0AAAAdQAAAHYAAAB3AAAAeAAAAHkAAAB6AAAAewAAAHwAAAB9AAAAfgAAAH8AAACAAAAAgQAAAA=="},"shape":[130],"dtype":"int32","order":"little"}],["g0",{"type":"ndarray","array":["0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.1","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.2","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.3","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.4","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.5","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.6","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.7","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.8","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9","0.9"],"shape":[130],"dtype":"object","order":"little"}],["w0",{"type":"ndarray","array":["1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","1.0","0.999","0.990","0.950","0.90","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1"],"shape":[130],"dtype":"object","order":"little"}],["albedo",{"type":"ndarray","array":[1.5030156670796835,3.3499105665603697,14.247101050597458,30.243303004516456,34.093232647060795,27.100051394230018,16.93486974164592,9.449674487013358,4.585061171841639,1.4291510472083955,-0.6849522590945962,-2.1571330839407774,-3.2209476679092006,3.3959561492047556,5.031318718060619,15.01013169491241,30.858890241750323,35.86383638893273,31.120465297485975,21.188423562980223,12.84567550807133,7.015171062799777,3.0732152211591597,0.36603982857234807,-1.5509557187423468,-2.954525726905346,5.237654734620467,6.667165806539302,15.707561902561606,31.333503663281775,37.462972929138054,35.27869500632902,26.04519260510953,16.94317776642149,10.006594828606865,5.093239230236128,1.6389468069385065,-0.8321525188190027,-2.6462820511626153,7.005348804917619,8.234879259784071,16.31471637888401,31.627369514791344,38.83744382021836,39.447208670728536,31.453182346915078,21.815549993201106,13.665677674640015,7.569857743477067,3.178864816677619,0.0184049224020012,-2.2911088160349693,8.662863899975129,9.698558881192842,16.794427313458083,31.6910766373634,39.93685880551976,43.4981043055552,37.31245498399077,27.512254330239305,18.110995798571043,10.603524794011316,5.043625020692369,1.024946541403581,-1.882840871967434,10.149754967757552,10.998197294181155,17.08690108824113,31.45675722121335,40.70890269318048,47.31906446672386,43.47843204373073,34.03951926651565,23.465513177112246,14.317633558115904,7.3077435890548585,2.218504022010749,-1.4139512244649597,11.356507305481546,12.025062303875103,17.086771898279707,30.820248760317646,41.08950775296084,50.82869621506162,49.77933480782954,41.34004948920415,29.840113137742403,18.859237293135894,10.066999394024961,3.6390697639140126,-0.8751797859943418,12.06038557232852,12.558043773228896,16.584256524585722,29.59960843539583,40.981186967316916,53.98821448966365,56.04896966485895,49.28002795370328,37.30544391647106,24.393822640086285,13.443006511023079,5.338241317748677,-0.2550902338822169,11.724195916493194,12.064146274674036,15.082061883072047,27.413049094775204,40.18617662300032,56.79317711256945,62.15937666238859,57.6464220479016,45.845766556739036,31.084788327008834,17.58488874609094,7.381989935428267,0.46041985797651597,8.651569832160899,8.863445043184823,11.044831218070101,23.194119002527508,38.09873514981106,59.124063799461375,67.95667246076542,66.09727691628453,55.254732896720974,39.02380672032775,22.655572883564943,9.851471256160572,1.2885214158720633],"shape":[130],"dtype":"object","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1313","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1314"}}},"glyph":{"type":"object","name":"Rect","id":"p1309","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"fill_color":{"type":"field","field":"albedo","transform":{"type":"object","name":"LinearColorMapper","id":"p1267","attributes":{"palette":["#053061","#2166ac","#4393c3","#92c5de","#d1e5f0","#f7f7f7","#fddbc7","#f4a582","#d6604d","#b2182b","#67001f"],"low":-60,"high":60}}}}},"nonselection_glyph":{"type":"object","name":"Rect","id":"p1310","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"line_alpha":{"type":"value","value":0.1},"fill_color":{"type":"field","field":"albedo","transform":{"id":"p1267"}},"fill_alpha":{"type":"value","value":0.1},"hatch_alpha":{"type":"value","value":0.1}}},"muted_glyph":{"type":"object","name":"Rect","id":"p1311","attributes":{"x":{"type":"field","field":"g0"},"y":{"type":"field","field":"w0"},"width":{"type":"value","value":1},"height":{"type":"value","value":1},"line_color":{"type":"value","value":null},"line_alpha":{"type":"value","value":0.2},"fill_color":{"type":"field","field":"albedo","transform":{"id":"p1267"}},"fill_alpha":{"type":"value","value":0.2},"hatch_alpha":{"type":"value","value":0.2}}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1277","attributes":{"tools":[{"type":"object","name":"HoverTool","id":"p1292","attributes":{"renderers":"auto"}},{"type":"object","name":"SaveTool","id":"p1293"},{"type":"object","name":"PanTool","id":"p1294"},{"type":"object","name":"BoxZoomTool","id":"p1295","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1296","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"ResetTool","id":"p1301"},{"type":"object","name":"WheelZoomTool","id":"p1302","attributes":{"renderers":"auto"}}]}},"toolbar_location":"below","left":[{"type":"object","name":"CategoricalAxis","id":"p1287","attributes":{"ticker":{"type":"object","name":"CategoricalTicker","id":"p1288"},"formatter":{"type":"object","name":"CategoricalTickFormatter","id":"p1289"},"axis_label":"Single Scattering Albedo","major_label_standoff":0,"major_label_policy":{"type":"object","name":"AllLabels","id":"p1290"},"major_label_text_font_size":"12px","axis_line_color":null,"major_tick_line_color":null}}],"above":[{"type":"object","name":"CategoricalAxis","id":"p1282","attributes":{"ticker":{"type":"object","name":"CategoricalTicker","id":"p1283"},"formatter":{"type":"object","name":"CategoricalTickFormatter","id":"p1284"},"axis_label":"Asymmetry","major_label_standoff":0,"major_label_orientation":1.0471975511965976,"major_label_policy":{"type":"object","name":"AllLabels","id":"p1285"},"major_label_text_font_size":"12px","axis_line_color":null,"major_tick_line_color":null}}],"below":[{"type":"object","name":"ColorBar","id":"p1316","attributes":{"location":[0,0],"ticker":{"type":"object","name":"BasicTicker","id":"p1315","attributes":{"desired_num_ticks":11,"mantissas":[1,2,5]}},"major_label_policy":{"type":"object","name":"NoOverlap","id":"p1317"},"major_label_text_font_size":"12px","label_standoff":6,"color_mapper":{"id":"p1267"}}}],"center":[{"type":"object","name":"Grid","id":"p1286","attributes":{"axis":{"id":"p1282"},"grid_line_color":null}},{"type":"object","name":"Grid","id":"p1291","attributes":{"dimension":1,"axis":{"id":"p1287"},"grid_line_color":null}}]}}]}}]}};
+  const render_items = [{"docid":"48f1bb30-3813-4d81-871e-ed7d64f07d64","roots":{"p1318":"bdc2fb57-1618-4bbe-b2d1-48c1c32ae8f3"},"root_ids":["p1318"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="2_AnalyzingApproximationsReflectedLightSH.html" class="btn btn-neutral float-left" title="Approximations for Spherical Harmonics Radiative Transfer in Reflected Light" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../I_usefultools/ModelStorage.html" class="btn btn-neutral float-right" title="Model Storage: Preservation and Reuse" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

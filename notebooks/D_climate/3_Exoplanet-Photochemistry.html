@@ -1,0 +1,989 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Self Consistent Photochemistry and Climate with Photochem &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz" href="4_BrownDwarf_DEQ_SC_kzz.html" />
+    <link rel="prev" title="One-Dimensional Climate Models: The Basics of Planets" href="2_Exoplanet_PreW.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_BrownDwarf_PreW.html">Brown Dwarfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_Exoplanet_PreW.html">Planet</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Planet w/ Photochemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4_BrownDwarf_DEQ_SC_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4b_BrownDwarf_DEQ_const_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="5_CloudyBrownDwarf_PreW.html">Brown Dwarfs w/ Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_CloudyBrownDwarf_DEQ.html">Brown Dwarfs w/ Clouds and Disequilibrium Chemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="7_CreateModelGrid.html">Creating a grid of models to use with PICASO's fitting tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="8_EnergyInjection.html">Brown Dwarfs w/ Energy Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Self Consistent Photochemistry and Climate with <code class="docutils literal notranslate"><span class="pre">Photochem</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/3_Exoplanet-Photochemistry.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/3_Exoplanet-Photochemistry.py">Download full notebook here</a></p>
+</div>
+<section id="Self-Consistent-Photochemistry-and-Climate-with-Photochem">
+<h1>Self Consistent Photochemistry and Climate with <code class="docutils literal notranslate"><span class="pre">Photochem</span></code><a class="headerlink" href="#Self-Consistent-Photochemistry-and-Climate-with-Photochem" title="Link to this heading"></a></h1>
+<p>This notebook will take us through how to run a self-consistent radiative-convective-photochemical-equilibrium (RCPE) model with PICASO and Photochem.</p>
+<p>For a more in depth look at the photochem code check out <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2025PSJ.....6..256W/abstract">Wogan et al. 2025</a> (note this should also be cited along with <a href="#id1"><span class="problematic" id="id2">`PICASO 4.0 &lt;&gt;`__</span></a> if using this code/tutorial).</p>
+<p>Here, we will use WASP-39 b as an example. We will begin by importing several packages required for the run.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.photochem</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">picasochem</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">constants</span> <span class="k">as</span> <span class="n">const</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+</pre></div>
+</div>
+</div>
+<p>The following cell generates a reaction network, thermodynamic file and UV spectrum required for running photochem.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate files needed for Photochem</span>
+
+<span class="c1"># Reaction and Thermodynamic files</span>
+<span class="n">picasochem</span><span class="o">.</span><span class="n">generate_photochem_rx_and_thermo_files</span><span class="p">(</span>
+    <span class="n">atoms_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;H&#39;</span><span class="p">,</span><span class="s1">&#39;He&#39;</span><span class="p">,</span><span class="s1">&#39;N&#39;</span><span class="p">,</span><span class="s1">&#39;O&#39;</span><span class="p">,</span><span class="s1">&#39;C&#39;</span><span class="p">,</span><span class="s1">&#39;S&#39;</span><span class="p">],</span> <span class="c1"># Atoms to include</span>
+    <span class="n">rxns_filename</span><span class="o">=</span><span class="s1">&#39;photochem_rxns.yaml&#39;</span><span class="p">,</span>
+    <span class="n">thermo_filename</span><span class="o">=</span><span class="s1">&#39;photochem_thermo.yaml&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Stellar Spectrum. Here we choose TOI-193, a sensible</span>
+<span class="c1"># Proxy for WASP-39 b. We have to set the Teq so that the</span>
+<span class="c1"># Spectrum is scale to the planet.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">photochem.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">stars</span>
+<span class="n">wv</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">stars</span><span class="o">.</span><span class="n">muscles_spectrum</span><span class="p">(</span>
+    <span class="s1">&#39;TOI-193&#39;</span><span class="p">,</span>
+    <span class="n">outputfile</span><span class="o">=</span><span class="s1">&#39;TOI-193.txt&#39;</span><span class="p">,</span>
+    <span class="n">Teq</span><span class="o">=</span><span class="mi">1166</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Downloading the spectrum at the following URL: https://mast.stsci.edu/api/v0.1/Download/file?uri=mast:HLSP/muscles/v23-v24/toi-193/hlsp_muscles_multi_multi_toi-193_broadband_v24_adapt-const-res-sed.fits
+</pre></div></div>
+</div>
+<p>Initialize an opacity class, specifying the molecules you want to include opacities for.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span>
+    <span class="n">method</span><span class="o">=</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">,</span>
+    <span class="n">preload_gases</span><span class="o">=</span><span class="s1">&#39;all&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Initialize a calculation, specifying WASP-39 b parameters.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">make_inputs</span><span class="p">(</span><span class="n">kz</span><span class="o">=</span><span class="mf">1e8</span><span class="p">,</span> <span class="n">filename_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="c1"># Start a calculation</span>
+    <span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;planet&quot;</span><span class="p">,</span> <span class="n">climate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+    <span class="c1"># Gravity</span>
+    <span class="n">r_planet</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.332</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">R_jup</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">cm</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">m_planet</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.28</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">M_jup</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span>
+        <span class="n">radius</span><span class="o">=</span><span class="n">r_planet</span><span class="p">,</span>
+        <span class="n">radius_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">cm</span><span class="p">,</span>
+        <span class="n">mass</span><span class="o">=</span><span class="n">m_planet</span><span class="p">,</span>
+        <span class="n">mass_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">g</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Effective Temp</span>
+    <span class="n">tint</span> <span class="o">=</span> <span class="mi">200</span> <span class="c1"># Intrinsic Temperature of your Planet in K</span>
+    <span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">tint</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+    <span class="c1"># Star</span>
+    <span class="n">T_star</span> <span class="o">=</span> <span class="mi">5485</span> <span class="c1"># K, star effective temperature</span>
+    <span class="n">logg</span> <span class="o">=</span> <span class="mf">4.45</span> <span class="c1"># logg , cgs</span>
+    <span class="n">metal</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="c1"># metallicity of star</span>
+    <span class="n">r_star</span> <span class="o">=</span> <span class="mf">0.92</span> <span class="c1"># solar radius</span>
+    <span class="n">semi_major</span> <span class="o">=</span> <span class="mf">0.049</span> <span class="c1"># star planet distance, AU</span>
+    <span class="n">cl_run</span><span class="o">.</span><span class="n">star</span><span class="p">(</span>
+        <span class="n">opacity_ck</span><span class="p">,</span>
+        <span class="n">temp</span><span class="o">=</span><span class="n">T_star</span><span class="p">,</span>
+        <span class="n">metal</span><span class="o">=</span><span class="n">metal</span><span class="p">,</span>
+        <span class="n">logg</span><span class="o">=</span><span class="n">logg</span><span class="p">,</span>
+        <span class="n">radius</span><span class="o">=</span><span class="n">r_star</span><span class="p">,</span>
+        <span class="n">radius_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">R_sun</span><span class="p">,</span>
+        <span class="n">semi_major</span><span class="o">=</span><span class="n">semi_major</span><span class="p">,</span>
+        <span class="n">semi_major_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">,</span>
+        <span class="n">database</span><span class="o">=</span><span class="s2">&quot;phoenix&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Guess the initial P-T profile</span>
+    <span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+    <span class="k">if</span> <span class="n">filename_guess</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Teq</span> <span class="o">=</span> <span class="n">T_star</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">r_star</span><span class="o">*</span><span class="mf">0.00465047</span><span class="o">/</span><span class="n">semi_major</span><span class="p">)</span>
+        <span class="n">pt</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">guillot_pt</span><span class="p">(</span>
+            <span class="n">Teq</span><span class="p">,</span>
+            <span class="n">nlevel</span><span class="o">=</span><span class="n">nlevel</span><span class="p">,</span>
+            <span class="n">T_int</span><span class="o">=</span><span class="n">tint</span><span class="p">,</span>
+            <span class="n">p_bottom</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
+            <span class="n">p_top</span><span class="o">=-</span><span class="mi">7</span>
+        <span class="p">)</span>
+        <span class="n">temp_guess</span> <span class="o">=</span> <span class="n">pt</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">pt</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">df1</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;W39b_+1.0_0.3_kzz8&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">temp_guess</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">78</span>
+    <span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="c1"># Heat-redistribution</span>
+
+    <span class="c1"># Set climate inputs</span>
+    <span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span>
+        <span class="n">temp_guess</span><span class="o">=</span><span class="n">temp_guess</span><span class="p">,</span>
+        <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span>
+        <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span>
+        <span class="n">rfacv</span><span class="o">=</span><span class="n">rfacv</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Below, we will provide the inputs required to run photochem.</span>
+    <span class="c1"># The key things to change are planet mass, planet radius,</span>
+    <span class="c1"># stellar XUV flux file.</span>
+    <span class="n">photochem_init_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;mechanism_file&#39;</span><span class="p">:</span> <span class="s2">&quot;photochem_rxns.yaml&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;thermo_file&#39;</span><span class="p">:</span> <span class="s2">&quot;photochem_thermo.yaml&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;stellar_flux_file&#39;</span><span class="p">:</span> <span class="s2">&quot;TOI-193.txt&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;P_ref&#39;</span><span class="p">:</span> <span class="mf">1e6</span><span class="p">,</span> <span class="c1"># dynes/cm^2</span>
+        <span class="s1">&#39;TOA_pressure&#39;</span><span class="p">:</span> <span class="mf">1e-8</span><span class="o">*</span><span class="mf">1e6</span> <span class="c1">#dynes/cm^2</span>
+    <span class="p">}</span>
+    <span class="n">cl_run</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span>
+        <span class="n">mh</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">cto_relative</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">chem_method</span><span class="o">=</span><span class="s1">&#39;photochem+visscher&#39;</span><span class="p">,</span>
+        <span class="n">photochem_init_args</span><span class="o">=</span><span class="n">photochem_init_args</span>
+    <span class="p">)</span>
+    <span class="c1"># Grab the Photochem object and adjust any settings if needed</span>
+    <span class="n">pc</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;climate&#39;</span><span class="p">][</span><span class="s1">&#39;pc&#39;</span><span class="p">]</span>
+    <span class="n">pc</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">conv_longdy</span> <span class="o">=</span> <span class="mf">0.05</span> <span class="c1"># relax convergence criteria for photochem.</span>
+
+    <span class="c1"># Set the Kzz profile.</span>
+    <span class="n">cl_run</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kz</span> <span class="c1"># cm^2/s</span>
+
+    <span class="k">return</span> <span class="n">cl_run</span>
+
+<span class="n">cl_run</span> <span class="o">=</span> <span class="n">make_inputs</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>Now run the model. This might take a looongg time. So please be patient.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span>
+    <span class="n">opacity_ck</span><span class="p">,</span>
+    <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_all_kzz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">self_consistent_kzz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">diseq_chem</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(52), &#39;CO2&#39;: np.int64(35), &#39;NH3-N2&#39;: np.int64(54), &#39;HCN&#39;: np.int64(51), &#39;PH3&#39;: np.int64(44)}
+Running photochem
+nsteps = 100  longdy = 2.2e+01  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.1e-08
+nsteps = 200  longdy = 3.0e+01  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.1e-08
+nsteps = 300  longdy = 8.4e+01  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 2.6e+01  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 500  longdy = 1.5e+01  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 600  longdy = 2.3e+02  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 700  longdy = 6.9e+01  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.5e-08
+nsteps = 800  longdy = 6.0e+00  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 2.3e-08
+nsteps = 900  longdy = 2.7e+02  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 3.8e-08
+nsteps = 1000  longdy = 2.3e+06  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 5.3e-08
+nsteps = 1100  longdy = 2.9e+01  max_dT = 8.0e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 3.6e-08
+nsteps = 1200  longdy = 5.7e+03  max_dT = 8.1e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 5.6e-08
+nsteps = 1300  longdy = 1.4e+05  max_dT = 8.1e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 7.4e-08
+nsteps = 1400  longdy = 1.1e+05  max_dT = 8.2e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 8.8e-08
+nsteps = 1500  longdy = 1.9e+00  max_dT = 8.5e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 9.4e-08
+nsteps = 1600  longdy = 2.5e+00  max_dT = 8.8e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 9.6e-08
+nsteps = 1700  longdy = 2.3e+00  max_dT = 8.9e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 9.7e-08
+nsteps = 1800  longdy = 3.5e+00  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.0e-07
+nsteps = 1900  longdy = 7.5e+02  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.0e-07
+nsteps = 2000  longdy = 1.8e+02  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.5e-08
+nsteps = 2100  longdy = 5.8e-01  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 8.3e-09
+nsteps = 2200  longdy = 7.2e-01  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 8.3e-09
+nsteps = 2300  longdy = 9.6e-01  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 8.3e-09
+nsteps = 2400  longdy = 6.4e+00  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 8.3e-09
+nsteps = 2500  longdy = 1.9e+00  max_dT = 1.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 8.3e-09
+nsteps = 2600  longdy = 2.2e+01  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 8.9e-09
+nsteps = 2700  longdy = 3.1e+00  max_dT = 4.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.9e-09
+nsteps = 2800  longdy = 2.1e+00  max_dT = 5.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.9e-09
+nsteps = 2900  longdy = 1.0e+00  max_dT = 5.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.9e-09
+nsteps = 3000  longdy = 4.9e-01  max_dT = 5.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.9e-09
+nsteps = 3100  longdy = 9.2e-02  max_dT = 1.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.3e-09
+nsteps = 3200  longdy = 1.0e+00  max_dT = 1.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.3e-09
+nsteps = 3300  longdy = 8.5e-02  max_dT = 1.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.3e-09
+nsteps = 3391  longdy = 4.9e-02  max_dT = 1.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Iteration number  0 , min , max temp  975.4867131316165 3933.1515032863867 , flux balance  158.51792510745994
+Iteration number  1 , min , max temp  800.429469893055 5001.373338709356 , flux balance  16.75029881354142
+Iteration number  2 , min , max temp  749.5115428663905 4655.663896484371 , flux balance  0.4763038760385598
+Iteration number  3 , min , max temp  744.6727489252805 4590.735967816623 , flux balance  0.0034717947444686537
+Iteration number  4 , min , max temp  744.6069406764617 4588.3731981041155 , flux balance  1.727037212226963e-05
+In t_start: Converged Solution in iterations  4
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(53), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(56), &#39;HCN&#39;: np.int64(52), &#39;PH3&#39;: np.int64(44)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 9.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 8.5e-01  max_dT = 8.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 1.5e+00  max_dT = 8.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 6.1e+02  max_dT = 1.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 500  longdy = 2.4e+01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 600  longdy = 2.3e+01  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 700  longdy = 6.9e+00  max_dT = 6.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.1e-08
+nsteps = 786  longdy = 3.3e-02  max_dT = 6.7e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.1e-08
+nsteps = 886  longdy = 4.4e-01  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.0e-09
+nsteps = 986  longdy = 9.8e-01  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.0e-09
+nsteps = 1086  longdy = 3.0e-03  max_dT = 1.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1087  longdy = 1.3e-03  max_dT = 1.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+Big iteration is  744.6069406764617 0
+Iteration number  0 , min , max temp  745.5749169489219 4696.881427052109 , flux balance  42.66108596571129
+Iteration number  1 , min , max temp  762.7456713900208 5199.9 , flux balance  1.9876532152264947
+Iteration number  2 , min , max temp  762.3721577737911 5199.9 , flux balance  0.017155636772502907
+Iteration number  3 , min , max temp  762.370112159913 5199.9 , flux balance  8.85852300745389e-05
+Iteration number  4 , min , max temp  762.3701019410645 5199.9 , flux balance  4.433228532084037e-07
+In t_start: Converged Solution in iterations  4
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 4.8e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 4.4e+00  max_dT = 1.2e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 3.3e+01  max_dT = 1.8e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 5.4e+02  max_dT = 2.3e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 500  longdy = 3.0e+00  max_dT = 2.6e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 1.3e+01  max_dT = 1.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.5e-08
+nsteps = 700  longdy = 1.7e+01  max_dT = 8.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 800  longdy = 1.3e+00  max_dT = 8.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 837  longdy = 2.0e-02  max_dT = 8.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 937  longdy = 2.1e-01  max_dT = 2.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1037  longdy = 4.1e+00  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1137  longdy = 4.2e+00  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1237  longdy = 4.0e+00  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1337  longdy = 4.1e+00  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1437  longdy = 4.3e+00  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1537  longdy = 1.4e+00  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1571  longdy = 4.6e-02  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Big iteration is  762.3701019410645 1
+Iteration number  0 , min , max temp  762.5708645714935 5199.9 , flux balance  9.010052820314266
+Iteration number  1 , min , max temp  764.2106983048512 5199.9 , flux balance  0.14952743660281978
+Iteration number  2 , min , max temp  764.2142945340595 5199.9 , flux balance  0.000780480759826938
+Iteration number  3 , min , max temp  764.2143110169908 5199.9 , flux balance  3.803166918146784e-06
+In t_start: Converged Solution in iterations  3
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 2.6e+00  max_dT = 1.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 1.2e+02  max_dT = 1.9e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 2.5e+00  max_dT = 2.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 1.4e+01  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 1.7e+01  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 2.0e+01  max_dT = 1.9e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 700  longdy = 1.3e+01  max_dT = 6.7e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 800  longdy = 1.0e+00  max_dT = 4.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 861  longdy = 1.9e-02  max_dT = 4.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+Big iteration is  764.2143110169908 2
+Iteration number  0 , min , max temp  764.1582491015118 5199.9 , flux balance  1.8836561385952226
+Iteration number  1 , min , max temp  763.862786188351 5199.9 , flux balance  0.01643617643701852
+Iteration number  2 , min , max temp  763.8611440320734 5199.9 , flux balance  8.213300076085941e-05
+In t_start: Converged Solution in iterations  2
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 1.2e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 1.4e+02  max_dT = 2.2e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 9.9e-01  max_dT = 2.9e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 400  longdy = 2.1e+01  max_dT = 1.6e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 2.3e+00  max_dT = 7.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 536  longdy = 4.2e-02  max_dT = 7.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 636  longdy = 2.5e-01  max_dT = 2.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 736  longdy = 1.1e+00  max_dT = 2.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 836  longdy = 1.2e-03  max_dT = 2.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 837  longdy = 9.2e-04  max_dT = 2.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Big iteration is  763.8611440320734 3
+Iteration number  0 , min , max temp  763.8344471488829 5199.9 , flux balance  0.7426850665415892
+Iteration number  1 , min , max temp  763.7259909650937 5199.9 , flux balance  0.004573882122882748
+Iteration number  2 , min , max temp  763.7257584720907 5199.9 , flux balance  2.2248295308745584e-05
+In t_start: Converged Solution in iterations  2
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.4e+02  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 1.3e+00  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 2.8e+01  max_dT = 1.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 1.2e+01  max_dT = 5.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 574  longdy = 4.4e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 674  longdy = 2.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 774  longdy = 2.5e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 874  longdy = 4.7e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 879  longdy = 4.2e-02  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Profile converged before itmx
+Move up two levels
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(55), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.9e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 1.1e+02  max_dT = 1.9e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 9.2e-01  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 2.9e+01  max_dT = 1.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 7.2e+00  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 600  longdy = 1.7e-01  max_dT = 5.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 624  longdy = 3.8e-02  max_dT = 5.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 724  longdy = 5.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 824  longdy = 5.6e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 924  longdy = 6.1e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1024  longdy = 5.9e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1124  longdy = 3.6e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1224  longdy = 1.4e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1314  longdy = 4.8e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Iteration number  0 , min , max temp  763.2022053212278 5199.9 , flux balance  0.001809185284319555
+Iteration number  1 , min , max temp  763.1990110542214 5199.9 , flux balance  8.662998592740322e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.3e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 1.3e+01  max_dT = 1.6e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 1.7e+02  max_dT = 2.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 2.2e+01  max_dT = 1.8e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 1.5e+01  max_dT = 6.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 8.5e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 604  longdy = 4.1e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 704  longdy = 4.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 804  longdy = 1.4e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 904  longdy = 3.7e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1004  longdy = 3.7e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1104  longdy = 3.9e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1204  longdy = 4.0e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1304  longdy = 4.0e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1404  longdy = 2.1e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1504  longdy = 1.5e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1604  longdy = 9.3e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1704  longdy = 1.8e-01  max_dT = 8.8e-01  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1804  longdy = 1.0e-03  max_dT = 1.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1904  longdy = 3.0e-03  max_dT = 1.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1905  longdy = 2.3e-03  max_dT = 1.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+Big iteration is  763.1990110542214 0
+Iteration number  0 , min , max temp  763.913682881202 5199.9 , flux balance  0.0004426477932733899
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.0e+02  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 1.9e+00  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 400  longdy = 1.4e+01  max_dT = 1.2e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 8.3e+00  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 1.5e+01  max_dT = 7.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 700  longdy = 9.1e-01  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 724  longdy = 4.5e-02  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 824  longdy = 4.8e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 924  longdy = 5.7e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1024  longdy = 6.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1124  longdy = 3.3e+00  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1224  longdy = 4.3e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1248  longdy = 4.4e-02  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Profile converged before itmx
+Move up two levels
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(55), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.5e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.1e+02  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 1.8e+00  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 6.0e+00  max_dT = 2.3e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 1.2e+01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 7.0e+00  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 665  longdy = 3.2e-02  max_dT = 5.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 765  longdy = 3.2e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 865  longdy = 2.6e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 965  longdy = 1.3e-03  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 966  longdy = 1.0e-03  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Iteration number  0 , min , max temp  763.6021101555534 4902.24485561845 , flux balance  -1.7332963071455286e-05
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.9e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.3e+02  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 1.1e+00  max_dT = 2.6e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 1.7e+01  max_dT = 1.3e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 2.5e+00  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 531  longdy = 3.2e-02  max_dT = 5.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 631  longdy = 1.6e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 731  longdy = 4.2e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 831  longdy = 3.9e-02  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 832  longdy = 4.5e-02  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Big iteration is  763.6021101555534 0
+Iteration number  0 , min , max temp  763.2977259191866 4902.301939093591 , flux balance  1.9745321571675018e-05
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.9e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 1.9e+02  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 8.7e-01  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 2.1e+01  max_dT = 1.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 8.2e+00  max_dT = 5.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 600  longdy = 8.8e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 618  longdy = 4.8e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 718  longdy = 4.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 818  longdy = 2.6e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 918  longdy = 3.3e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1018  longdy = 3.9e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1118  longdy = 4.0e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1206  longdy = 4.6e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(55), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.5e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 5.2e+02  max_dT = 2.2e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 3.7e+00  max_dT = 2.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 400  longdy = 1.8e+01  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 2.0e+01  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 1.9e+01  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 700  longdy = 1.8e+01  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 800  longdy = 1.7e+01  max_dT = 1.3e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 900  longdy = 1.4e+01  max_dT = 5.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 1000  longdy = 6.6e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 1100  longdy = 5.2e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1200  longdy = 1.4e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1300  longdy = 1.8e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1400  longdy = 2.0e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1500  longdy = 2.3e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1600  longdy = 2.5e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1700  longdy = 2.8e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1800  longdy = 2.2e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1900  longdy = 1.0e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1913  longdy = 3.9e-02  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Iteration number  0 , min , max temp  763.195255142694 4807.130421595328 , flux balance  0.0001972808937183828
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.5e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.0e+02  max_dT = 2.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 8.4e-01  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 2.3e+01  max_dT = 1.7e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 9.2e+00  max_dT = 7.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 1.1e+01  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 700  longdy = 9.1e-01  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 787  longdy = 4.1e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 887  longdy = 4.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 987  longdy = 3.2e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1087  longdy = 1.0e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1187  longdy = 1.7e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1224  longdy = 4.3e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Big iteration is  763.195255142694 0
+Iteration number  0 , min , max temp  763.2078938566353 4807.128856052119 , flux balance  7.292850779193177e-05
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.5e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.8e+02  max_dT = 2.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 1.4e+00  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 2.4e+01  max_dT = 1.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 1.6e+01  max_dT = 5.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 600  longdy = 5.0e-01  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 688  longdy = 4.5e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 788  longdy = 4.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 888  longdy = 1.9e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 988  longdy = 2.0e+00  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 1088  longdy = 2.8e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1128  longdy = 4.9e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Profile converged before itmx
+final [0, 73, 89, 0, 0, 0]
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(55), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.5e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.8e+02  max_dT = 2.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 1.4e+00  max_dT = 2.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 2.6e+01  max_dT = 1.5e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 1.1e+01  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 600  longdy = 6.2e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 606  longdy = 4.8e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 706  longdy = 3.2e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 806  longdy = 3.5e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 906  longdy = 3.6e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1006  longdy = 3.1e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1106  longdy = 3.1e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1206  longdy = 3.2e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 1297  longdy = 3.8e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Iteration number  0 , min , max temp  763.2029758384973 4807.12799435839 , flux balance  0.00021789814081935166
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 6.0e+00  max_dT = 1.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 5.7e+02  max_dT = 2.3e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 400  longdy = 1.0e+01  max_dT = 2.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 4.8e+00  max_dT = 9.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 600  longdy = 2.4e+00  max_dT = 5.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 637  longdy = 2.5e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 737  longdy = 3.2e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 837  longdy = 1.6e-01  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 937  longdy = 4.8e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 938  longdy = 4.8e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Big iteration is  763.2029758384973 0
+Iteration number  0 , min , max temp  763.2063573193138 4807.128594200814 , flux balance  -0.00011355150134482176
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(54), &#39;CO2&#39;: np.int64(37), &#39;NH3-N2&#39;: np.int64(57), &#39;HCN&#39;: np.int64(53), &#39;PH3&#39;: np.int64(45)}
+Running photochem
+nsteps = 100  longdy = 7.5e-01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 4.7e+02  max_dT = 2.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 2.4e+00  max_dT = 2.4e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 400  longdy = 1.1e+01  max_dT = 1.1e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 500  longdy = 1.1e+01  max_dT = 5.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 600  longdy = 2.4e-01  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 633  longdy = 4.8e-02  max_dT = 5.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 733  longdy = 4.0e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.1e-09
+nsteps = 833  longdy = 5.3e-01  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 933  longdy = 1.3e-03  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+nsteps = 934  longdy = 1.1e-03  max_dT = 2.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 6.2e-09
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<p>Plot the results</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># P-T profile</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Temp.&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">1e-7</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Pressure (bar)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature (K)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.01</span><span class="p">,</span><span class="mf">1.0</span><span class="p">),</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">)</span>
+
+<span class="c1"># Composition</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twiny</span><span class="p">()</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">sp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;SO2&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">]):</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="n">sp</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Volume Mixing Ratio&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.01</span><span class="p">,</span><span class="mf">0.0</span><span class="p">),</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_3_Exoplanet-Photochemistry_12_0.png" src="../../_images/notebooks_D_climate_3_Exoplanet-Photochemistry_12_0.png" />
+</div>
+</div>
+<p>Save the atmosphere to a file.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;W39b_+1.0_0.3_kzz8&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now lets use this model as a guess and run a model with <span class="math notranslate nohighlight">\(K_{zz}\)</span> = 1e11 cm<span class="math notranslate nohighlight">\(^2\)</span>/s instead.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Make new inputs object with kz set to 1e11</span>
+<span class="n">cl_run</span> <span class="o">=</span> <span class="n">make_inputs</span><span class="p">(</span><span class="n">kz</span><span class="o">=</span><span class="mf">1e11</span><span class="p">,</span> <span class="n">filename_guess</span><span class="o">=</span><span class="s2">&quot;W39b_+1.0_0.3_kzz8&quot;</span><span class="p">)</span>
+
+<span class="c1"># Run climate model</span>
+<span class="n">out2</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span>
+    <span class="n">opacity_ck</span><span class="p">,</span>
+    <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_all_kzz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">self_consistent_kzz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">diseq_chem</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Save results</span>
+<span class="n">out2</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;W39b_+1.0_0.3_kzz11&quot;</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(53)}
+Running photochem
+nsteps = 100  longdy = 6.7e-01  max_dT = 4.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.9e+01  max_dT = 4.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 1.1e+01  max_dT = 5.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 2.3e+02  max_dT = 5.7e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 500  longdy = 5.4e+02  max_dT = 6.7e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 600  longdy = 2.6e+02  max_dT = 8.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 700  longdy = 2.5e+00  max_dT = 1.3e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 1.8e-08
+nsteps = 790  longdy = 4.2e-02  max_dT = 2.0e+01  max_dlog10edd = 0.0e+00  TOA_pressure = 2.1e-08
+nsteps = 890  longdy = 3.4e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.1e-09
+nsteps = 990  longdy = 6.1e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.4e-09
+nsteps = 1090  longdy = 6.3e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.6e-09
+nsteps = 1190  longdy = 6.2e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 9.7e-09
+nsteps = 1285  longdy = 4.5e-02  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.0e-08
+Iteration number  0 , min , max temp  766.7696341495327 4920.0776548723525 , flux balance  8.421285065828268
+Iteration number  1 , min , max temp  814.8941936242356 5199.9 , flux balance  0.297660374713523
+Iteration number  2 , min , max temp  813.5507929293042 5199.9 , flux balance  0.002230100931681027
+Iteration number  3 , min , max temp  813.5372208524825 5199.9 , flux balance  1.0856939235767006e-05
+Iteration number  4 , min , max temp  813.5371318535562 5199.9 , flux balance  5.2375365656743295e-08
+In t_start: Converged Solution in iterations  4
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 6.3e-01  max_dT = 2.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.4e-01  max_dT = 1.7e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 1.2e-02  max_dT = 1.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 301  longdy = 2.3e-02  max_dT = 1.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Big iteration is  813.5371318535562 0
+Iteration number  0 , min , max temp  812.6827723700732 5199.9 , flux balance  2.0112424238202973
+Iteration number  1 , min , max temp  806.7910473623203 5199.9 , flux balance  0.01888577891696237
+Iteration number  2 , min , max temp  806.6596213504574 5199.9 , flux balance  9.13190736291607e-05
+Iteration number  3 , min , max temp  806.6577734771465 5199.9 , flux balance  4.3040703049713023e-07
+In t_start: Converged Solution in iterations  3
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 6.0e-01  max_dT = 3.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.1e-01  max_dT = 1.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 300  longdy = 2.2e-03  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 301  longdy = 5.0e-04  max_dT = 2.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Big iteration is  806.6577734771465 1
+Iteration number  0 , min , max temp  805.8863351558773 5199.9 , flux balance  0.30781373581035715
+Iteration number  1 , min , max temp  801.7731805757377 5199.9 , flux balance  0.002031718004273932
+Iteration number  2 , min , max temp  801.6888014479504 5199.9 , flux balance  9.157844069873663e-06
+In t_start: Converged Solution in iterations  2
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.6e-01  max_dT = 3.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 4.6e-01  max_dT = 3.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 3.7e-01  max_dT = 2.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 385  longdy = 4.2e-02  max_dT = 2.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Profile converged before itmx
+Move up two levels
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(53)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.7e-01  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 3.0e-01  max_dT = 2.7e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 3.2e-01  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 500  longdy = 3.8e-01  max_dT = 2.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 554  longdy = 5.0e-02  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Iteration number  0 , min , max temp  800.8308583775795 5199.9 , flux balance  -8.089764919921002e-05
+Iteration number  1 , min , max temp  800.8166441113069 5199.9 , flux balance  -6.187251307731051e-07
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.3e-01  max_dT = 3.3e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.4e-01  max_dT = 3.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 2.7e-01  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 3.2e-01  max_dT = 2.7e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 488  longdy = 5.0e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Big iteration is  800.8166441113069 0
+Iteration number  0 , min , max temp  801.4877450376924 5199.9 , flux balance  0.00020010988605158756
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.6e-01  max_dT = 3.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.2e-01  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 2.6e-03  max_dT = 3.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 301  longdy = 6.2e-04  max_dT = 3.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Profile converged before itmx
+Move up two levels
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(53)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.2e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 300  longdy = 1.6e-04  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 301  longdy = 2.7e-04  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Iteration number  0 , min , max temp  802.2888037518749 4902.070332765349 , flux balance  -0.00020882922309652682
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.2e-01  max_dT = 2.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 3.5e-01  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 385  longdy = 4.3e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Big iteration is  802.2888037518749 0
+Iteration number  0 , min , max temp  802.6537417105748 4902.292350442837 , flux balance  0.00026600836597171076
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.1e-01  max_dT = 2.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 3.4e-01  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 3.5e-01  max_dT = 2.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 500  longdy = 3.6e-01  max_dT = 2.5e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 600  longdy = 3.7e-01  max_dT = 2.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 700  longdy = 3.7e-01  max_dT = 2.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 777  longdy = 4.6e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(53)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.2e-01  max_dT = 2.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 3.4e-01  max_dT = 2.6e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 378  longdy = 5.0e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Iteration number  0 , min , max temp  802.7315818883598 4807.204028577414 , flux balance  -0.00018371421960937078
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.5e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.5e-01  max_dT = 3.1e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 2.8e-01  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 400  longdy = 7.6e-02  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 407  longdy = 4.9e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Big iteration is  802.7315818883598 0
+Iteration number  0 , min , max temp  802.7237699536007 4807.197144974496 , flux balance  0.00023377555699599553
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.4e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 300  longdy = 2.0e-04  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 301  longdy = 1.9e-03  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Profile converged before itmx
+final [0, 73, 89, 0, 0, 0]
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(53)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.8e-01  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 6.6e-02  max_dT = 2.9e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 306  longdy = 4.7e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Iteration number  0 , min , max temp  802.703402238569 4807.205019296953 , flux balance  -0.00021717237584267468
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 3.1e-01  max_dT = 2.8e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 3.3e-01  max_dT = 2.2e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.3e-08
+nsteps = 346  longdy = 4.8e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Big iteration is  802.703402238569 0
+Iteration number  0 , min , max temp  802.6840809684926 4807.197612364182 , flux balance  0.00022017861673522947
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(61), &#39;CO2&#39;: np.int64(46), &#39;NH3-N2&#39;: np.int64(67), &#39;HCN&#39;: np.int64(61), &#39;PH3&#39;: np.int64(52)}
+Running photochem
+nsteps = 100  longdy = 7.7e-01  max_dT = 3.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 200  longdy = 2.7e-01  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.2e-08
+nsteps = 300  longdy = 2.7e-01  max_dT = 2.4e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+nsteps = 321  longdy = 4.7e-02  max_dT = 3.0e+00  max_dlog10edd = 0.0e+00  TOA_pressure = 1.4e-08
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<p>Compare the TP profiles between the two Kzz values</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># P-T profile</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Temp.&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">out2</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span> <span class="n">out2</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">1e3</span><span class="p">,</span> <span class="mf">1e-7</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Pressure (bar)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature (K)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.01</span><span class="p">,</span><span class="mf">1.0</span><span class="p">),</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">)</span>
+
+<span class="c1"># Composition</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twiny</span><span class="p">()</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">sp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;SO2&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">]):</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="n">sp</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">sp</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">out2</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="n">sp</span><span class="p">],</span> <span class="n">out2</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Volume Mixing Ratio&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">1.01</span><span class="p">,</span><span class="mf">0.0</span><span class="p">),</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower left&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_3_Exoplanet-Photochemistry_18_0.png" src="../../_images/notebooks_D_climate_3_Exoplanet-Photochemistry_18_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="2_Exoplanet_PreW.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: The Basics of Planets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="4_BrownDwarf_DEQ_SC_kzz.html" class="btn btn-neutral float-right" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

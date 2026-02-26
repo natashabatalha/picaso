@@ -1,0 +1,1004 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Climate Model Common Issues &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation" href="Level_Fluxes.html" />
+    <link rel="prev" title="Contribution Functions" href="ContributionFunctions.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ModelStorage.html">How to store and reuse models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ContributionFunctions.html">Spectral and Molecular Contribution Functions</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Common Climate Issues</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Starting-Too-High-of-Radiative-Convective-Boundary-Guess">Starting Too High of Radiative-Convective Boundary Guess</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html">Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html#Set-up-the-PICASO-connection-for-three-test-cases-(mono-and-correlated-k)">Set up the PICASO connection for three test cases (mono and correlated-k)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html#Grab-the-thermal-fluxes,-reflected-fluxes,-and-pressure-levels-from-the-ful-output">Grab the thermal fluxes, reflected fluxes, and pressure levels from the ful output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html#Plot-the-thermal-and-reflected-layer-fluxes">Plot the thermal and reflected layer fluxes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html">How do I load in target properties from Exo.Mast?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#I'm-confused-about-what-opacity-file-to-use">I’m confused about what opacity file to use</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html">Model Formatting Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Specifying-units">Specifying units</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Data-Types:-Using-xarray">Data Types: Using <code class="docutils literal notranslate"><span class="pre">xarray</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Storing-xarray-data">Storing <code class="docutils literal notranslate"><span class="pre">xarray</span></code> data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Reading/interpreting-an-xarray-file">Reading/interpreting an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Climate Model Common Issues</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/I_usefultools/CommonClimateBDIssues.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/I_usefultools/CommonClimateBDIssues.py">Download full notebook here</a></p>
+</div>
+<section id="Climate-Model-Common-Issues">
+<h1>Climate Model Common Issues<a class="headerlink" href="#Climate-Model-Common-Issues" title="Link to this heading"></a></h1>
+<p>In this tutorial, we’re going to highlight some of the most common issues that you could potentially encounter when running 1D climate models and what are the general recommendations to fix it! <strong>You don’t necessarily need to rerun this notebook</strong>, this is more for you to look at to see what issues might look like in your profiles and diagnostic plots.</p>
+<p>Now let’s take a look at what weird things might happen in your climate models!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vj</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cldplt</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span><span class="p">,</span> <span class="n">figure</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="c0aba8ac-18b4-41b6-ada5-d3bbfb313fb8">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("c0aba8ac-18b4-41b6-ada5-d3bbfb313fb8");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("c0aba8ac-18b4-41b6-ada5-d3bbfb313fb8")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<section id="Starting-Too-High-of-Radiative-Convective-Boundary-Guess">
+<h2>Starting Too High of Radiative-Convective Boundary Guess<a class="headerlink" href="#Starting-Too-High-of-Radiative-Convective-Boundary-Guess" title="Link to this heading"></a></h2>
+<p>Now let’s say you tried starting with a rc boundary guess higher up in the profile since you don’t want it to be too deep in the atmosphere. If you start with a guess too high up in the atmosphere you’ll notice some odd behaviours as well. This is very common in both clear and cloudy models but fortunately it’s very easy to visually catch this issue majority of the time. Let’s look at this with a clear atmospheric model.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#1 ck tables from roxana</span>
+<span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;0.0&#39;</span><span class="c1">#&#39;+0.0&#39; #log metallicity</span>
+<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;0.46&#39;</span><span class="c1"># # CtoO absolute ratio</span>
+<span class="n">ck_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;sonora_2121grid_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.hdf5&#39;</span><span class="p">)</span>
+
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="n">teff</span><span class="o">=</span> <span class="mi">200</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+
+<span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Maybe you didn’t want to wait forever for your model to run so you didn’t want to start with a very deep <code class="docutils literal notranslate"><span class="pre">nstr_upper</span></code>, what happens if we start with a guess at let’s say layer 45 (reminder in these tutorials we have 91 layers in our atmosphere)</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">45</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_bobcat</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure_bobcat</span><span class="p">,</span>
+                      <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Iteration number  0 , min , max temp  74.36971515045234 1449.040908995524 , flux balance  1.2214583439589515
+Iteration number  1 , min , max temp  73.84317082797789 1445.696306939193 , flux balance  1.192057573739551
+Iteration number  2 , min , max temp  73.32021946223387 1442.351589465984 , flux balance  1.1629850770235994
+Iteration number  3 , min , max temp  72.80071999902044 1439.0033538314244 , flux balance  1.1342356813093126
+Iteration number  4 , min , max temp  72.28453550147024 1435.6538052957849 , flux balance  1.1058047239262279
+Iteration number  5 , min , max temp  71.77153539050538 1432.3081645022633 , flux balance  1.0777124761799521
+Iteration number  6 , min , max temp  71.26159853557773 1428.9575464758193 , flux balance  1.0499298371279895
+Iteration number  7 , min , max temp  70.75460754225564 1425.6041875768212 , flux balance  1.0224382253210875
+Iteration number  8 , min , max temp  70.25045264446808 1422.2470194353114 , flux balance  0.9952381959337488
+Iteration number  9 , min , max temp  69.74902559453986 1418.888799307327 , flux balance  0.9683385829839051
+Iterations exceeded it_max ! sorry
+Big iteration is  69.74902559453986 0
+Iteration number  0 , min , max temp  69.25022636182105 1415.5266133971043 , flux balance  0.9417160245613219
+Iteration number  1 , min , max temp  68.7539558473728 1412.160741162069 , flux balance  0.9153703945465204
+Iteration number  2 , min , max temp  68.26012251203377 1408.79103779548 , flux balance  0.8893153931412473
+Iteration number  3 , min , max temp  67.76863827188598 1405.4146008226762 , flux balance  0.8635291531191123
+Iteration number  4 , min , max temp  67.27942020385444 1402.0325418967368 , flux balance  0.838005114606626
+Iteration number  5 , min , max temp  66.79238950785697 1398.6455212205842 , flux balance  0.8127428749615836
+Iteration number  6 , min , max temp  66.30747181804367 1395.2492860715697 , flux balance  0.7877081076097023
+Iteration number  7 , min , max temp  65.8245961591584 1391.8424355199547 , flux balance  0.7628889458143286
+Iteration number  8 , min , max temp  65.34369632558902 1388.4125482949216 , flux balance  0.7382370668523867
+Iteration number  9 , min , max temp  64.86470824827424 1384.9673250614064 , flux balance  0.7137959643637839
+Iterations exceeded it_max ! sorry
+Big iteration is  64.86470824827424 1
+Iteration number  0 , min , max temp  64.38757233709673 1381.5179206385635 , flux balance  0.6896188108437613
+Iteration number  1 , min , max temp  63.91222988975165 1378.067625587152 , flux balance  0.6657160722128395
+Iteration number  2 , min , max temp  63.43862936151107 1374.6124090780493 , flux balance  0.6420708415359337
+Iteration number  3 , min , max temp  62.96671706194077 1371.1484119911845 , flux balance  0.6186812297099689
+Iteration number  4 , min , max temp  62.49644586187267 1367.6806199213338 , flux balance  0.5955502783283436
+Iteration number  5 , min , max temp  62.02776445511865 1364.2101499710432 , flux balance  0.5726860399698139
+Iteration number  6 , min , max temp  61.56063527329869 1360.7319293951634 , flux balance  0.5500713308884085
+Iteration number  7 , min , max temp  61.09501302651396 1357.2486258512918 , flux balance  0.5277049784391107
+Iteration number  8 , min , max temp  60.63085751217955 1353.7620436873697 , flux balance  0.5056004785037761
+Iteration number  9 , min , max temp  60.16813146715404 1350.2711566627047 , flux balance  0.4837430738628724
+Iterations exceeded it_max ! sorry
+Big iteration is  60.16813146715404 2
+Iteration number  0 , min , max temp  59.70679709652989 1346.7749700442932 , flux balance  0.4621274435101231
+Iteration number  1 , min , max temp  59.24681954079435 1343.2747670386063 , flux balance  0.44076625240747563
+Iteration number  2 , min , max temp  58.788164843573675 1339.7665800242014 , flux balance  0.41964438703060086
+Iteration number  3 , min , max temp  58.33080210429522 1336.251647194339 , flux balance  0.39875578600929174
+Iteration number  4 , min , max temp  57.87469781090733 1332.7307102412888 , flux balance  0.3780991018517525
+Iteration number  5 , min , max temp  57.419821997815355 1329.1996826974062 , flux balance  0.3576470387300021
+Iteration number  6 , min , max temp  56.96614300623714 1325.6532609887731 , flux balance  0.3373784781376541
+Iteration number  7 , min , max temp  56.51363189937905 1322.0804171390241 , flux balance  0.31725484319793396
+Iteration number  8 , min , max temp  56.062256604011374 1318.4830836395454 , flux balance  0.2972730602151534
+Iteration number  9 , min , max temp  55.6119824776213 1314.881514087386 , flux balance  0.277524872165925
+Iterations exceeded it_max ! sorry
+Big iteration is  55.6119824776213 3
+Iteration number  0 , min , max temp  55.162778699764345 1311.2803490312926 , flux balance  0.2580358941533521
+Iteration number  1 , min , max temp  54.7146138043884 1307.6746567924247 , flux balance  0.2387966431732156
+Iteration number  2 , min , max temp  54.26745662449857 1304.0652578370828 , flux balance  0.2198027343306504
+Iteration number  3 , min , max temp  53.821274794750344 1300.4573367994872 , flux balance  0.20106276093103204
+Iteration number  4 , min , max temp  53.376037445346896 1296.8422264773421 , flux balance  0.18255552788449575
+Iteration number  5 , min , max temp  52.93170826462843 1293.222422398687 , flux balance  0.16427440029563267
+Iteration number  6 , min , max temp  52.48824605367395 1289.598630780604 , flux balance  0.14622173292045812
+Iteration number  7 , min , max temp  52.04562083536518 1285.9652760063075 , flux balance  0.1283655284828942
+Iteration number  8 , min , max temp  51.60378183799441 1282.3203059305508 , flux balance  0.11069554436411988
+Iteration number  9 , min , max temp  51.1626698952845 1278.6602610643279 , flux balance  0.09320534580567225
+Iterations exceeded it_max ! sorry
+Big iteration is  51.1626698952845 4
+Iteration number  0 , min , max temp  50.72221375136998 1274.978409439989 , flux balance  0.07586635483005846
+Iteration number  1 , min , max temp  50.28231209266816 1271.2707783988167 , flux balance  0.058649716251124515
+Iteration number  2 , min , max temp  49.8428151171417 1267.5246902150313 , flux balance  0.04149971037380213
+Iteration number  3 , min , max temp  49.40346565006785 1263.719189246155 , flux balance  0.024322420893917777
+Iteration number  4 , min , max temp  48.96369411241415 1259.7959365012662 , flux balance  0.006896915973326318
+Iteration number  5 , min , max temp  48.81700659674346 1258.380412141197 , flux balance  0.0006657773633195882
+In t_start: Converged Solution in iterations  5
+Profile converged before itmx
+Iteration number  0 , min , max temp  48.805240894773526 1251.9403625903706 , flux balance  0.22741059930595994
+Iteration number  1 , min , max temp  48.78742375360929 1245.541363344787 , flux balance  0.1915816271223012
+Iteration number  2 , min , max temp  48.76337536232073 1239.1815481835197 , flux balance  0.1568972692069205
+Iteration number  3 , min , max temp  48.7327610717504 1232.859932224555 , flux balance  0.12332584307313837
+Iteration number  4 , min , max temp  48.69499228679748 1226.582983403082 , flux balance  0.09084619727427451
+Iteration number  5 , min , max temp  48.648961919301385 1220.3537697577372 , flux balance  0.05942805434835935
+Iteration number  6 , min , max temp  48.592333467358756 1214.171638944584 , flux balance  0.029068452218509115
+Iterations exceeded it_max ! sorry
+Big iteration is  48.592333467358756 0
+Iteration number  0 , min , max temp  48.526719594168455 1208.7841109593232 , flux balance  0.003246341782548603
+Iteration number  1 , min , max temp  48.50746812729062 1208.1682283558785 , flux balance  0.0003311505578651232
+In t_start: Converged Solution in iterations  1
+Profile converged before itmx
+final [0, 45, 89, 0, 0, 0]
+Iteration number  0 , min , max temp  48.61681944685473 1196.9179775678735 , flux balance  0.007620026438632589
+Iteration number  1 , min , max temp  48.584442557608526 1195.4951530825451 , flux balance  0.0007266065406982025
+In t_start: Converged Solution in iterations  1
+Big iteration is  48.584442557608526 0
+Iteration number  0 , min , max temp  48.57898465762646 1195.3589555051499 , flux balance  6.745565399212898e-05
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">3e3</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_bobcat</span><span class="p">,</span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sonora Bobcat&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our Climate Run&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_10_0.png" src="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_10_0.png" />
+</div>
+</div>
+<p>So as you can see here there’s this large jump in the PT profile where the profile is following the adiabat too far up. This is a clear visual clue that you need to start with a deeper <code class="docutils literal notranslate"><span class="pre">nstr_upper</span></code> initial guess, even though it says this climate model ended up converging.</p>
+<p>Sometimes it’s not as visually noticeable as this so a good way to tell if these models are good or not is by looking at dT/dP</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cp</span><span class="p">,</span> <span class="n">grad</span><span class="p">,</span> <span class="n">dtdp</span><span class="p">,</span> <span class="n">layer_p</span><span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">pt_adiabat</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="n">cl_run</span><span class="p">,</span><span class="n">opacity_ck</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_12_0.png" src="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_12_0.png" />
+</div>
+</div>
+<p>So here in this case, you can see that dT/dP actually goes super negative. Anytime you see these going really far negative, it usually points to a poorly converged model.</p>
+<p>Sometimes if you start way too high, the convective zone will reach the top of the atmosphere, PICASO will send you an error and the run will fail if that occurs.</p>
+<p><strong>Recommendation</strong>: Generally, a conservative starting rc boundary guess is 83 (if doing 91 levels). The actual layer of where the rc boundary is going to vary depending on the surface gravity, whether there are clouds or not, the temperature of the object, etc.</p>
+<section id="Solution:">
+<h3>Solution:<a class="headerlink" href="#Solution:" title="Link to this heading"></a></h3>
+<p>Now let’s fix this by running a case where we have a better rc boundary guess that isn’t too high and we can see what good diagnostic plots should look like</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#1 ck tables from roxana</span>
+<span class="n">mh</span> <span class="o">=</span> <span class="s1">&#39;0.0&#39;</span><span class="c1">#&#39;+0.0&#39; #log metallicity</span>
+<span class="n">CtoO</span> <span class="o">=</span> <span class="s1">&#39;0.46&#39;</span><span class="c1"># # CtoO absolute ratio</span>
+<span class="n">ck_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;sonora_2121grid_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.hdf5&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="n">teff</span><span class="o">=</span> <span class="mi">200</span> <span class="c1"># Effective Temperature of your Brown Dwarf in K</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># Gravity of your brown dwarf in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">teff</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ck_db</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of plane-parallel levels in your code</span>
+
+<span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">60</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_bobcat</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure_bobcat</span><span class="p">,</span>
+                      <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Iteration number  0 , min , max temp  74.19745294899792 1165.1815323227827 , flux balance  -0.03198158238890853
+Iteration number  1 , min , max temp  73.50018998211978 1166.4451064621196 , flux balance  -0.031048848360079703
+Iteration number  2 , min , max temp  72.80783649038005 1167.6840928675692 , flux balance  -0.030126662414299562
+Iteration number  3 , min , max temp  72.12003394156734 1168.8992214785933 , flux balance  -0.029214750362719425
+Iteration number  4 , min , max temp  71.43644041609366 1170.0911805737765 , flux balance  -0.02831285248562798
+Iteration number  5 , min , max temp  70.75673020995596 1171.2606188860989 , flux balance  -0.027420723025076373
+Iteration number  6 , min , max temp  70.08059130858058 1172.4081474947645 , flux balance  -0.026538129755082438
+Iteration number  7 , min , max temp  69.40772629035747 1173.5358917672775 , flux balance  -0.025660661211094473
+Iteration number  8 , min , max temp  68.73785334722194 1174.6421224686558 , flux balance  -0.02479182139759127
+Iteration number  9 , min , max temp  68.0707042033802 1175.7280500484019 , flux balance  -0.02393173873986052
+Iterations exceeded it_max ! sorry
+Big iteration is  68.0707042033802 0
+Iteration number  0 , min , max temp  67.40602411091515 1176.7943252214932 , flux balance  -0.023080222088063634
+Iteration number  1 , min , max temp  66.74357024110479 1177.8413074580012 , flux balance  -0.0222371566117834
+Iteration number  2 , min , max temp  66.0831100131618 1178.8693601253183 , flux balance  -0.02140242728437849
+Iteration number  3 , min , max temp  65.42442492089528 1179.8788696116026 , flux balance  -0.02057591296679159
+Iteration number  4 , min , max temp  64.76730067055422 1180.869595444586 , flux balance  -0.019757501780778244
+Iteration number  5 , min , max temp  64.11153637651977 1181.8418073889702 , flux balance  -0.01894709051119125
+Iteration number  6 , min , max temp  63.456937959659804 1182.7965104390855 , flux balance  -0.01814458408534685
+Iteration number  7 , min , max temp  62.80331881697247 1183.7350964988275 , flux balance  -0.017346941037603602
+Iteration number  8 , min , max temp  62.15050088151728 1184.6570140668919 , flux balance  -0.016556315486128327
+Iteration number  9 , min , max temp  61.498310362210546 1185.5621612591353 , flux balance  -0.01577359780148853
+Iterations exceeded it_max ! sorry
+Profile converged before itmx
+Iteration number  0 , min , max temp  60.83877266331602 1186.7840759701219 , flux balance  -0.035690956744818376
+Iteration number  1 , min , max temp  60.17991540881012 1187.9829250443177 , flux balance  -0.03376771613992736
+Iteration number  2 , min , max temp  59.521591264297335 1189.1581379098254 , flux balance  -0.03186704812171792
+Iteration number  3 , min , max temp  58.86365052032166 1190.3106195357718 , flux balance  -0.029988844898814565
+Iteration number  4 , min , max temp  58.20595515428277 1191.441077740793 , flux balance  -0.028133015258969437
+Iteration number  5 , min , max temp  57.54836365715419 1192.54983513919 , flux balance  -0.026299484126899274
+Iteration number  6 , min , max temp  56.89073857409348 1193.6371580917723 , flux balance  -0.02448818853786776
+Iterations exceeded it_max ! sorry
+Big iteration is  56.89073857409348 0
+Iteration number  0 , min , max temp  56.23294274655143 1194.7032873441087 , flux balance  -0.022699073787707198
+Iteration number  1 , min , max temp  55.574834221657625 1195.74954146315 , flux balance  -0.020929325836251247
+Iteration number  2 , min , max temp  54.91627470172721 1196.775141155045 , flux balance  -0.01918140279820896
+Iteration number  3 , min , max temp  54.25711642349664 1197.7800195825198 , flux balance  -0.017455857497934265
+Iteration number  4 , min , max temp  53.597201925199656 1198.7643138076805 , flux balance  -0.015752633717906136
+Iteration number  5 , min , max temp  52.936365395975685 1199.7281327743117 , flux balance  -0.014071651883858829
+Iteration number  6 , min , max temp  52.27442102116803 1200.6715546263995 , flux balance  -0.01241279337790353
+Iterations exceeded it_max ! sorry
+Profile converged before itmx
+Move up two levels
+Iteration number  0 , min , max temp  51.76754484294408 1137.4416565301754 , flux balance  -0.12490786252485016
+Iteration number  1 , min , max temp  51.25273339602567 1143.470148413673 , flux balance  -0.1026179520571798
+Iteration number  2 , min , max temp  50.73041716273602 1149.3205210082579 , flux balance  -0.08035139436799175
+Iteration number  3 , min , max temp  50.20103487095991 1155.0024794693843 , flux balance  -0.05811555819734882
+Iteration number  4 , min , max temp  49.66490117281755 1160.5183304386464 , flux balance  -0.03593053464642449
+Iteration number  5 , min , max temp  49.122364083640775 1165.8722120445718 , flux balance  -0.013764985077540244
+Iteration number  6 , min , max temp  48.7992899621209 1168.9420454021601 , flux balance  -0.0006879944493032829
+Iteration number  7 , min , max temp  48.78795287518454 1169.0771039468168 , flux balance  -3.62354125852377e-05
+In t_start: Converged Solution in iterations  7
+Big iteration is  48.78795287518454 0
+ We are already at a root, tolf , test =  5e-05 ,  3.626759290205485e-05
+Profile converged before itmx
+Iteration number  0 , min , max temp  49.12582219565443 1153.7217082520758 , flux balance  -0.05333297110938835
+Iteration number  1 , min , max temp  49.473436919036786 1165.8875926371138 , flux balance  -0.005878150001585175
+Iteration number  2 , min , max temp  49.52526666783054 1167.1864808868852 , flux balance  -0.0003423128753104067
+In t_start: Converged Solution in iterations  2
+Big iteration is  49.52526666783054 0
+Iteration number  0 , min , max temp  49.52922857359663 1167.254837497021 , flux balance  -1.9692177821696946e-05
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  49.65769619868203 1162.4387491730888 , flux balance  -0.01667653233865671
+Iteration number  1 , min , max temp  49.7073925871236 1166.263219669773 , flux balance  -0.0010047694675522974
+In t_start: Converged Solution in iterations  1
+Big iteration is  49.7073925871236 0
+Iteration number  0 , min , max temp  49.71557395697705 1166.4658729836128 , flux balance  -6.338542883366948e-05
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Iteration number  0 , min , max temp  49.808590886304806 1167.6048376903411 , flux balance  -0.002242280871789008
+Iteration number  1 , min , max temp  49.82682408513122 1168.0485723699655 , flux balance  -0.0001519605051500073
+In t_start: Converged Solution in iterations  1
+Big iteration is  49.82682408513122 0
+Iteration number  0 , min , max temp  49.82839680589347 1168.078043720006 , flux balance  -1.0313064982433454e-05
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+final [0, 55, 89, 0, 0, 0]
+Iteration number  0 , min , max temp  49.887232613459474 1170.515700079692 , flux balance  -0.000768054283240918
+In t_start: Converged Solution in iterations  0
+Big iteration is  49.887232613459474 0
+Iteration number  0 , min , max temp  49.89393505676823 1170.665697627374 , flux balance  -5.160922422199994e-05
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">temp_bobcat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">teff</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [Bars]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">3e3</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_bobcat</span><span class="p">,</span><span class="n">pressure_bobcat</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Sonora Bobcat&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Our Climate Run&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_21_0.png" src="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_21_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cp</span><span class="p">,</span> <span class="n">grad</span><span class="p">,</span> <span class="n">dtdp</span><span class="p">,</span> <span class="n">layer_p</span><span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">pt_adiabat</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="n">cl_run</span><span class="p">,</span><span class="n">opacity_ck</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_22_0.png" src="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_22_0.png" />
+</div>
+</div>
+</section>
+<section id="Checking-if-You-Reached-Radiative-Convective-Equilibrium-(RCE)">
+<h3>Checking if You Reached Radiative-Convective Equilibrium (RCE)<a class="headerlink" href="#Checking-if-You-Reached-Radiative-Convective-Equilibrium-(RCE)" title="Link to this heading"></a></h3>
+<p>Another indicator, on top of the lapse rate figure, that indicates your model isn’t well converged even though it says <code class="docutils literal notranslate"><span class="pre">YAY</span> <span class="pre">ENDING</span> <span class="pre">WITH</span> <span class="pre">CONVERGENCE</span></code> is to look at the F_{net}/F_{IR} output. This will indicate to us that your model might not be in radiative-convective equilibrium (RCE).</p>
+<p>Let’s check whether we achieved RCE in this case. In the convective regions for these climate models, the flux coming out of the convective layers should be in the IR. This isn’t the case for the radiative layers. So when we look at the Fnet/F_IR plot, you should see a chair like behaviour where at the top of the atmosphere, there are low values of Fnet/F_IR (~1e-3 to 1e-5). Then, near the rc boundary, it should sharply increase since this is the beginning of the region where convection
+dominates.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Pressure [bar]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;F$_{\rm net}$/F$_{\rm net IR}$&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mf">1e4</span><span class="p">,</span><span class="mf">1e-4</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;fnet/fnetir&#39;</span><span class="p">]),</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Our Climate Run&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">pressure_bobcat</span><span class="p">[</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;cvz_locs&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]],</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;RC Boundary&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_24_0.png" src="../../_images/notebooks_I_usefultools_CommonClimateBDIssues_24_0.png" />
+</div>
+</div>
+<p>So here we see the really nice behavior we expected in a well converged model in the Fnet/Fnet-IR diagnostic plots. Keep these two diagnostic plots in mind when running models for a sanity check!</p>
+<p>Since you can see there’s still some interesting behaviour at the top of the atmosphere both in the PT profile and the adiabat, sometimes you might have to restart with the resultant profile and start with an rc boundary guess a couple layers deeper in the atmosphere to reconverge the profile. Other things to tune within the code include the <code class="docutils literal notranslate"><span class="pre">egp_stepmax</span></code> temperature threshold, but consult with your Sonora team member to discuss this further.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ContributionFunctions.html" class="btn btn-neutral float-left" title="Contribution Functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Level_Fluxes.html" class="btn btn-neutral float-right" title="Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

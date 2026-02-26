@@ -26,16 +26,31 @@ Retrievals
 Phase curves
 ------------
 
-`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <http://arxiv.org/abs/2204.03545>`_
+`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022ApJ...930...93R/abstract>`_
 
-- Phase curves 
+- Thermal phase curves 
+
+`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022ApJ...930...93R/abstract>`_
+
+- Reflected phase curves 
+
+`Hamill C.~D., Johnson A.~V., Batalha N., Nag R., Gao P., Adams D., Kataria T., 2024, ApJ, 976, 181. doi:10.3847/1538-4357/ad7de6 <https://ui.adsabs.harvard.edu/abs/2024ApJ...976..181H/abstract>`_
 
 1D Climate Models
 -----------------
 `Mukherjee, et al. "PICASO 3.0: A One-Dimensional Climate Model for Giant Planets and Brown Dwarfs." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
 
-- 1d climate models of brown dwarfs 
-- 1d climate models of exoplanets 
+- 1D climate models of substellar atmospheres
+
+`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets"`_
+
+- 1D disequilibrium models of substellar atmospheres
+- 1D cloudy models of substellar atmospheres 
+- 1D photochemical models of substellar atmospheres
+- 1D climate models with energy injection
+
+`Wogan, et al. "The Open-source Photochem Code: A General Chemical and Climate Model for Interpreting (Exo)Planet Observations" <https://ui.adsabs.harvard.edu/abs/2025PSJ.....6..256W/abstract>`_
+- 1D photochemical models of substellar atmospheres
 
 Grid fits
 ---------
@@ -49,4 +64,4 @@ Chemistry
 
 `Marley, Mark S.,Saumon, Didier, Visscher, Channon et al. "The Sonora Brown Dwarf Atmosphere and Evolution Models. I. Model Description and Application to Cloudless Atmospheres in Rainout Chemical Equilibrium" ApJ (2021). <https://ui.adsabs.harvard.edu/abs/2021ApJ...920...85M/abstract>`_
 
-- Use of the `chemeq_visscher()` function
+- Use of the `chemeq_visscher` functions 

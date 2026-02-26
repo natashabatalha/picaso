@@ -1,0 +1,800 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Using Correlated-K Tables vs. Monochromatic Opacities &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light" href="../H_radiativetransfer/1_AnalyzingApproximationsReflectedLightToon.html" />
+    <link rel="prev" title="What Resampling Do I Need for My Data??" href="3_ResamplingOpacities.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_QueryOpacities.html">Query Opacites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_CreatingOpacityDb.html">Opacity Factory: Creating Custom Databases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_ResamplingOpacities.html">What Resampling do I Need?</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Using Correlated-K Tables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#What-are-correlated-k-tables-vs.-monochromatic-opacities">What are correlated-k tables vs. monochromatic opacities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Call-opannection-and-supply-a-correlated-k-table">Call <code class="docutils literal notranslate"><span class="pre">opannection</span></code> and supply a correlated-k table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Compare-the-optical-depth-for-various-layers">Compare the optical depth for various layers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Compare-Chemistry">Compare Chemistry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Reading-Correlated-K-Tables-directly-from-the-file">Reading Correlated-K Tables directly from the file</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Using Correlated-K Tables vs. Monochromatic Opacities</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/G_opacities/4_CorrelatedKTables.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/G_opacities/4_CorrelatedKTables.py">Download full notebook here</a></p>
+</div>
+<section id="Using-Correlated-K-Tables-vs.-Monochromatic-Opacities">
+<h1>Using Correlated-K Tables vs. Monochromatic Opacities<a class="headerlink" href="#Using-Correlated-K-Tables-vs.-Monochromatic-Opacities" title="Link to this heading"></a></h1>
+<p>Throughout the tutorials, we have always used monochromatic opacities. If you are interested in switching to correlated-K tables versus using the currently provided opacities on Zenodo, that is possible. Here you will learn:</p>
+<ol class="arabic simple">
+<li><p>Running forward model with pre-weighted tables vs resort rebin vs resampled monochromatic opacities</p></li>
+</ol>
+<p>Before completing this notebook you will have to:</p>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="https://doi.org/10.5281/zenodo.18636725">Download at least one or multiple of the k-table folder</a> File should be of the format <code class="docutils literal notranslate"><span class="pre">sonora_2121grid_feh+XXX_co_YYY</span></code>, where XXX defines the Fe/H and YYY describes the C/O ratio</p></li>
+<li><p><a class="reference external" href="https://zenodo.org/record/1309035#.Y1MHYezMLvW">Download Sonora PT profiles</a> (if this is unfamiliar please see <a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/6_BrownDwarfs.html">Brown Dwarf Tutorial</a>)</p></li>
+<li><p><a class="reference external" href="https://doi.org/10.5281/zenodo.18644980">Download PICASO Correlated-K’s for On-the-Fly Disequilibrium Climate Calculations</a> (see <a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">Brown Dwarf Tutorial</a>)</p></li>
+</ol>
+<p>These are all easily retrieved through the <code class="docutils literal notranslate"><span class="pre">data.get_data</span></code> function:</p>
+<blockquote>
+<div><p>import picaso.data as d</p>
+</div></blockquote>
+<blockquote>
+<div><p>d.get_data(category_download=’sonora_grids’,target_download=’bobcat’)</p>
+<p>d.get_data(category_download=’ck_tables’,target_download=’pre-weighted’)</p>
+</div></blockquote>
+<blockquote>
+<div><p>d.get_data(category_download=’ck_tables’,target_download=’by-molecule’)</p>
+</div></blockquote>
+<section id="What-are-correlated-k-tables-vs.-monochromatic-opacities">
+<h2>What are correlated-k tables vs. monochromatic opacities<a class="headerlink" href="#What-are-correlated-k-tables-vs.-monochromatic-opacities" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Pre-weighted correlated k tables : these are preweighted on chemical equilibrium tables and as such you will get on table per M/H and C/O point</p></li>
+<li><p>Resort Rebin correlated k tables : these are the ones downloaded for on-the-fly disequilibrium and are mixed “on the fly” based on your chemistry. Therefore you will see they are on a per molecule basis.</p></li>
+<li><p>Monochromatic opacities: these are resampled from line by line calculations and you will notice they are usually very large (10-30 Gb)</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">ck_db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span><span class="s1">&#39;sonora_2121grid_feh1.0_co0.46.hdf5&#39;</span><span class="p">)</span>
+<span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cycle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.lines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Line2D</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="e34cbbb2-12a6-4e89-95b2-4adad3eade4f">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("e34cbbb2-12a6-4e89-95b2-4adad3eade4f");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("e34cbbb2-12a6-4e89-95b2-4adad3eade4f")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opacity_mono</span>         <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">()</span> <span class="c1">#defaults, method=&#39;resampled, and default opacities db file</span>
+<span class="n">opacity_ck</span>           <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">,</span>
+                                       <span class="n">ck_db</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">ck_db_path</span><span class="p">)</span>
+                                       <span class="p">)</span>
+
+<span class="c1"># This requires the climate_INPUTS directory, and associated data</span>
+<span class="c1"># See https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html</span>
+<span class="c1"># They should be in the references dir</span>
+<span class="n">gases_fly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;N2&#39;</span><span class="p">,</span><span class="s1">&#39;HCN&#39;</span><span class="p">,</span><span class="s1">&#39;H2&#39;</span><span class="p">,</span><span class="s1">&#39;PH3&#39;</span><span class="p">,</span><span class="s1">&#39;C2H2&#39;</span><span class="p">,</span><span class="s1">&#39;Na&#39;</span><span class="p">,</span><span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;TiO&#39;</span><span class="p">,</span><span class="s1">&#39;VO&#39;</span><span class="p">,</span><span class="s1">&#39;FeH&#39;</span><span class="p">]</span>
+<span class="n">opacity_resortrebin</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">,</span>
+                                       <span class="n">preload_gases</span><span class="o">=</span><span class="n">gases_fly</span><span class="p">)</span><span class="c1">#you can also supply &quot;all&quot; to preload_gas and it will load every file you have downloaded</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Call-opannection-and-supply-a-correlated-k-table">
+<h2>Call <code class="docutils literal notranslate"><span class="pre">opannection</span></code> and supply a correlated-k table<a class="headerlink" href="#Call-opannection-and-supply-a-correlated-k-table" title="Link to this heading"></a></h2>
+<p>Notice that when we call the <code class="docutils literal notranslate"><span class="pre">opannection</span></code> with the <code class="docutils literal notranslate"><span class="pre">ck=True</span></code>, we must also pass it one of the directories from Zenodo. The directory name describes the chemistry that this has been calculated for. The <code class="docutils literal notranslate"><span class="pre">ck_db</span></code> we have defined is for 1xSolar, Solar C/O.</p>
+<p>You should already be familiar with the following code block. Here we are loading the input class, setting the gravity, stellar parameters, and sonora profile.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a dictionary that contains all the different calc types</span>
+<span class="n">calc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ck&#39;</span><span class="p">:</span><span class="n">opacity_ck</span><span class="p">,</span>
+        <span class="s1">&#39;mono&#39;</span><span class="p">:</span><span class="n">opacity_mono</span><span class="p">,</span>
+        <span class="s1">&#39;resort&#39;</span><span class="p">:</span><span class="n">opacity_resortrebin</span><span class="p">}</span>
+<span class="n">cases</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+<span class="c1"># Phase angle</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span> <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
+
+<span class="c1"># Define gravity</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span> <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+                                    <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span>
+
+<span class="c1"># Define star</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span> <span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                    <span class="mi">5000</span><span class="p">,</span>
+                                    <span class="mi">0</span><span class="p">,</span>
+                                    <span class="mf">4.0</span><span class="p">,</span>
+                                    <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">),</span>
+                                    <span class="n">semi_major</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                                    <span class="n">semi_major_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;au&#39;</span><span class="p">))</span>
+
+
+<span class="c1"># Just grabbing any Teff so we can use a sonora pressure-temperature profile</span>
+<span class="n">Teff</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span><span class="n">cases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sonora</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sonora_profile_db</span><span class="p">),</span> <span class="n">Teff</span><span class="p">,</span> <span class="n">chem</span><span class="o">=</span><span class="s1">&#39;grid&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>The differences between the two procedures comes in when we specify the chemistry. Here we introduce a new function called <code class="docutils literal notranslate"><span class="pre">premix_atmosphere</span></code>. This is going to pull the precomputed chemistry that was used to compute the correlated k tables.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure out here from fun with chem</span>
+<span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">premix_atmosphere</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">])</span>
+
+<span class="c1"># Now let&#39;s pass that to the monochromatic opacities for consistency</span>
+<span class="n">cases</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">])</span>
+
+<span class="c1"># Set identical atmosphere for the resorted ck, if desired.</span>
+<span class="n">cases</span><span class="p">[</span><span class="s1">&#39;resort&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># Run picaso with each of the cases</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">],</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">],</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;resort&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="s1">&#39;resort&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">calc</span><span class="p">[</span><span class="s1">&#39;resort&#39;</span><span class="p">],</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Compare-the-optical-depth-for-various-layers">
+<h2>Compare the optical depth for various layers<a class="headerlink" href="#Compare-the-optical-depth-for-various-layers" title="Link to this heading"></a></h2>
+<p>One big difference you will notice between <code class="docutils literal notranslate"><span class="pre">taugas</span></code> for a monochromatic opacity calculation and a correlated-k calculation, is that <code class="docutils literal notranslate"><span class="pre">taugas</span></code> will have an extra dimension for CK. Those correspond to each of the gauss points. Now, be careful not to confuse the gauss points that we use for the disk integration and these gauss points. They are different!</p>
+<p>Below is an example of summing the <code class="docutils literal notranslate"><span class="pre">tau</span></code>’s in order to compare with the monochromatic opacities.</p>
+<p>This compares the mono case, the premixed correlated-k case, and the disequilibrium chemistry correlated-k case</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><br/><span></span><span class="n">cm1_to_micron</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">wn</span><span class="p">:</span> <span class="mf">1e4</span> <span class="o">/</span> <span class="n">wn</span>
+
+<span class="c1"># Num gauss points is based on the opacities that you&#39;re using</span>
+<span class="n">num_gauss_points</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">gauss_to_plot</span>    <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_gauss_points</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">cmap</span>             <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis</span>
+<span class="n">colors</span>           <span class="o">=</span> <span class="n">cmap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">gauss_to_plot</span><span class="p">)))</span>
+
+<span class="n">wl_mono</span>  <span class="o">=</span> <span class="n">cm1_to_micron</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">])</span>
+<span class="n">wl_ck</span>    <span class="o">=</span> <span class="n">cm1_to_micron</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">])</span>
+<span class="n">wl_resort</span> <span class="o">=</span> <span class="n">cm1_to_micron</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;resort&#39;</span><span class="p">][</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">])</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wl_mono</span><span class="p">,</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;mono&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;taugas&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;mono&#39;</span><span class="p">)</span>
+
+<span class="c1"># CK = solid, resort = dashed; color varies per Gauss index</span>
+<span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gauss_to_plot</span><span class="p">):</span>
+    <span class="n">clr</span> <span class="o">=</span> <span class="n">colors</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wl_ck</span><span class="p">,</span>    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ck&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;taugas&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clr</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wl_resort</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;resort&#39;</span><span class="p">][</span><span class="s1">&#39;full_output&#39;</span><span class="p">][</span><span class="s1">&#39;taugas&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">clr</span><span class="p">)</span>
+
+<span class="c1"># axes formatting</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xscale</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="n">yscale</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
+       <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>
+       <span class="n">xlabel</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;Wavelength ($\mu$m)&#39;</span><span class="p">,</span>
+       <span class="n">ylabel</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;Gas optical depth $\tau$&#39;</span><span class="p">)</span>
+
+<span class="c1"># legend with uniform linewidth</span>
+<span class="n">leg_lw</span> <span class="o">=</span> <span class="mf">1.5</span>
+<span class="n">legend_handles</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">Line2D</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>  <span class="n">lw</span><span class="o">=</span><span class="n">leg_lw</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span>  <span class="n">label</span><span class="o">=</span><span class="s1">&#39;mono&#39;</span><span class="p">),</span>
+    <span class="n">Line2D</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="n">leg_lw</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span>  <span class="n">label</span><span class="o">=</span><span class="s1">&#39;ck bins&#39;</span><span class="p">),</span>
+    <span class="n">Line2D</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="n">leg_lw</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;resort bins&#39;</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="n">legend_handles</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_G_opacities_4_CorrelatedKTables_12_0.png" src="../../_images/notebooks_G_opacities_4_CorrelatedKTables_12_0.png" />
+</div>
+</div>
+</section>
+<section id="Compare-Chemistry">
+<h2>Compare Chemistry<a class="headerlink" href="#Compare-Chemistry" title="Link to this heading"></a></h2>
+<p>In this case we supplied it the same chemistry. However, there may be cases where you want to extract the chemistry from the pre-computed files. This is how you would go about doing so.</p>
+<p>For the below code snippet, I am pulling out the abundances that are higher than 0.1 ppm.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">styles</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mono&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;ck&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;resort&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">}</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="n">cycle</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">tab10</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xscale</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="n">yscale</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mf">1e-10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">),</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Mixing Ratio (v/v)&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Pressure (bar)&#39;</span><span class="p">)</span>
+
+<span class="n">species</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">styles</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature&#39;</span><span class="p">)}</span>
+
+<span class="k">for</span> <span class="n">clr</span><span class="p">,</span> <span class="n">sp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">colors</span><span class="p">,</span> <span class="n">species</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">case</span><span class="p">,</span> <span class="n">ls</span> <span class="ow">in</span> <span class="n">styles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">cases</span><span class="p">[</span><span class="n">case</span><span class="p">]</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">clr</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="n">ls</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="n">Line2D</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="n">ls</span><span class="p">)</span> <span class="k">for</span> <span class="n">ls</span> <span class="ow">in</span> <span class="n">styles</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span> <span class="n">styles</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_G_opacities_4_CorrelatedKTables_14_0.png" src="../../_images/notebooks_G_opacities_4_CorrelatedKTables_14_0.png" />
+</div>
+</div>
+</section>
+<section id="Reading-Correlated-K-Tables-directly-from-the-file">
+<h2>Reading Correlated-K Tables directly from the file<a class="headerlink" href="#Reading-Correlated-K-Tables-directly-from-the-file" title="Link to this heading"></a></h2>
+<p>If you want to subvert opannection you can also use opacity_factory to get out the info from our correlated-k tables.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">picaso.opacity_factory</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">opaf</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ck_db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span><span class="s1">&#39;sonora_2121grid_feh1.0_co0.46.hdf5&#39;</span><span class="p">)</span>
+
+<span class="n">output_preweighted</span> <span class="o">=</span> <span class="n">opaf</span><span class="o">.</span><span class="n">get_ck_tables</span><span class="p">(</span><span class="n">ck_db_path</span><span class="p">)</span>
+
+<span class="n">directory_to_resortrebin</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;resortrebin&#39;</span><span class="p">)</span>
+
+<span class="c1">#read data for just H2O and CH4  (you could also just say &quot;all&quot; to load in all molecules)</span>
+<span class="n">output_by_molecule</span> <span class="o">=</span> <span class="n">opaf</span><span class="o">.</span><span class="n">get_ck_tables</span><span class="p">(</span><span class="n">directory_to_resortrebin</span><span class="p">,</span> <span class="n">preload_gases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">])</span>
+<br/><br/></pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">output_by_molecule</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+dict_keys([&#39;kappas&#39;, &#39;wno&#39;, &#39;nwno&#39;, &#39;delta_wno&#39;, &#39;pressures&#39;, &#39;temps&#39;, &#39;gauss_pts&#39;, &#39;gauss_wts&#39;, &#39;nc_p&#39;, &#39;ngauss&#39;, &#39;molecules&#39;])
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="3_ResamplingOpacities.html" class="btn btn-neutral float-left" title="What Resampling Do I Need for My Data??" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../H_radiativetransfer/1_AnalyzingApproximationsReflectedLightToon.html" class="btn btn-neutral float-right" title="Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

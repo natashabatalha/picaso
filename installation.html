@@ -1,26 +1,26 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installation &mdash; picaso 3.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b76e3c8a" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>Installation &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/documentation_options.js?v=26f62d79"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorials" href="tutorials.html" />
+    <link rel="next" title="Tutorial &amp; Notebook Workflow" href="notebook_workflow.html" />
     <link rel="prev" title="PICASO" href="index.html" /> 
 </head>
 
@@ -35,9 +35,6 @@
           <a href="index.html" class="icon icon-home">
             picaso
           </a>
-              <div class="version">
-                3.3
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -48,19 +45,29 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#python-version">Python Version</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install-with-git-recommended">Install with Git (recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-from-source-via-git">Install from source via git</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#install-with-pip">Install with Pip</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#download-picaso-reference-data">Download PICASO Reference Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#create-environment-variable">Create Environment Variable</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#method-1-bash-profile-or-zshrc-file">Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#method-2-add-directly-to-python-code">Method 2: Add directly to python code</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#method-3-add-it-to-your-conda-enviornment">Method 3: Add it to your conda enviornment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-with-conda">Install with conda</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#download-and-link-pysynphot-stellar-data">Download and Link Pysynphot Stellar Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#reference-data">Reference Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#get-required-data">Get Required Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#permanently-set-environment-variables">Permanently Set Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#permanent-method-1-bash-profile-or-zshrc-file">Permanent Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#permanent-method-2-add-it-to-your-conda-enviornment">Permanent Method 2: Add it to your conda enviornment</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-optional-reference-data">Getting Optional Reference Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#getting-stsynphot-optional-stellar-data">Getting <code class="docutils literal notranslate"><span class="pre">stsynphot</span></code> Optional Stellar Data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#help-permanently-setting-stellar-data-environment-variable">Help Permanently Setting Stellar Data Environment Variable</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebook_workflow.html">Tutorial Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
@@ -95,43 +102,130 @@
            <div itemprop="articleBody">
              
   <section id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
-<section id="python-version">
-<h2>Python Version<a class="headerlink" href="#python-version" title="Link to this heading">¶</a></h2>
-<p>Python &gt;= 3.8</p>
-</section>
-<section id="install-with-git-recommended">
-<h2>Install with Git (recommended)<a class="headerlink" href="#install-with-git-recommended" title="Link to this heading">¶</a></h2>
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<p>There are a few avenues for installing PICASO (git, pip, or conda). To help determine which is best for you, we have a few questions to help you decide:
+1. Are you a researcher who wants to stay up-to-date with the latest beta changes and contribute to the code base? Please follow the git clone instructions below.
+2. Are you a student or researcher who just wants to get started with PICASO quickly and use it for science? Please follow the pip or conda install instructions below.
+3. Do you want to use PICASO for an school assignment or workshop? <a class="reference external" href="/notebooks/Quickstart.py">Jump to the picaso-lite section of the Quickstart Notebook</a></p>
+<p>Python &gt;= 3.11 is recommended. It is also recommended you use environments (either conda or pip). Please check out <a class="reference external" href="https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments">our conda environment tutorial</a>.</p>
+<p>Users can 1) install from source or 2) install from pip or 3) conda</p>
+<section id="install-from-source-via-git">
+<h2>Install from source via git<a class="headerlink" href="#install-from-source-via-git" title="Link to this heading"></a></h2>
 <p>The Github repository contains the reference folder and helpful tutorials.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/natashabatalha/picaso.git
 <span class="nb">cd</span><span class="w"> </span>picaso
-python<span class="w"> </span>setup.py<span class="w"> </span>install
+pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
 </section>
 <section id="install-with-pip">
-<h2>Install with Pip<a class="headerlink" href="#install-with-pip" title="Link to this heading">¶</a></h2>
+<h2>Install with Pip<a class="headerlink" href="#install-with-pip" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>picaso
 </pre></div>
 </div>
-<p>With a pip install you will need to download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a> (explained below). This can simply be done by downloading a zip of the <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> code from Github (which does not require git setup if that is not available to you).</p>
 </section>
-<section id="download-picaso-reference-data">
-<h2>Download PICASO Reference Data<a class="headerlink" href="#download-picaso-reference-data" title="Link to this heading">¶</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><cite>PICASO</cite> 3.0 will not work with PICASO 2.3 reference folder. Please download the new reference folder if you are using PICASO 3.0</p>
+<section id="install-with-conda">
+<h2>Install with conda<a class="headerlink" href="#install-with-conda" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>conda-forge::picaso
+</pre></div>
 </div>
-<ol class="arabic simple">
-<li><p>Download the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a>. You should already this if you did a Git clone. <strong>Make sure that your reference folder matches the version number of ``PICASO``</strong>. Check the version number in the file <code class="docutils literal notranslate"><span class="pre">reference/version.md</span></code>.</p></li>
-<li><p>Download a <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">Resampled Opacity File from Zenodo</a>. Note that there are a few different versions. Any is acceptable depending on your resolution and wavelength needs. Put this db file in the <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Opacities reference Folder you downloaded from Github</a>. <strong>You may need to rename it opacities.db and place into `reference/opacities` folder</strong>. The file placed into reference/opacities will serve as your default file. You can point to other opacity files using justdoit.opannection.</p></li>
-</ol>
 </section>
-<section id="create-environment-variable">
-<h2>Create Environment Variable<a class="headerlink" href="#create-environment-variable" title="Link to this heading">¶</a></h2>
-<p>There are several ways to create environment variables. Below are the three most popular methods. You only need to choose one that works best for you.</p>
-<section id="method-1-bash-profile-or-zshrc-file">
-<h3>Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file<a class="headerlink" href="#method-1-bash-profile-or-zshrc-file" title="Link to this heading">¶</a></h3>
+</section>
+<section id="reference-data">
+<h1>Reference Data<a class="headerlink" href="#reference-data" title="Link to this heading"></a></h1>
+<p>PICASO has the ability to injest lots of different kinds of data. But not all are required. <strong>Only two are required: 1) The `Reference Folder from Github &lt;https://github.com/natashabatalha/picaso/tree/master/reference&gt;`_ and 2) the resampled opacity file which will let you do some basic spectral modeling.</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Data Type</p></th>
+<th class="head"><p>Req?</p></th>
+<th class="head"><p>What it is primarily used for</p></th>
+<th class="head"><p>Where it should go</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Reference
+Resampled Opacities
+Stellar Database
+Preweighted correlatedK Tables
+By molecule correlatedK Tables
+Sonora grid models
+Virga Mieff files</p></td>
+<td><p>Yes
+Yes
+No
+No
+No
+No
+No</p></td>
+<td><p>everything
+Spectroscopic modeling
+Exoplanet modeling
+Chemical equilibrium climate
+Disequilibrium climate
+Initial guess/grid fitting
+Virga cloud modeling</p></td>
+<td><p>$picaso_refdata
+$picaso_refdata/opacities/opacities*.db
+$PYSYN_CDBS/grid
+Your choice (default=$picaso_refdata/opacities/preweighted)
+Your choice (default=$picaso_refdata/opacities/resortrebin)
+Your choice (default=$picaso_refdata/sonora_grids)
+Your choice (default=$picaso_refdata/virga)</p></td>
+</tr>
+</tbody>
+</table>
+<section id="get-required-data">
+<h2>Get Required Data<a class="headerlink" href="#get-required-data" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#using python</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">picaso.data</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">d</span>
+    <span class="c1">#where do you want to store your reference data? This should be the path to the reference folder you downloaded from github.</span>
+    <span class="n">path_to_reference</span> <span class="o">=</span> <span class="s2">&quot;/path/to/picaso/reference/&quot;</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_to_reference</span> <span class="c1">#only needed if you are using python to set your environmnet variables otherwise you do not need this</span>
+    <span class="c1">#get required data 1) reference data</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">get_reference</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">])</span>
+    <span class="c1">#get required data 2) resampled opacities</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">category_download</span><span class="o">=</span><span class="s1">&#39;resampled_opacity&#39;</span><span class="p">,</span> <span class="n">target_download</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">)</span> <span class="c1">#7Gb -- ENSURE STABLE WIFI!</span>
+</pre></div>
+</div>
+<p>Check it’s all good:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">d</span><span class="o">.</span><span class="n">check_environ</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>where the printout in a terminal will look something like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">---</span> <span class="n">PICASO</span> <span class="n">Environment</span> <span class="n">Check</span> <span class="o">---</span>
+<span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Found</span> <span class="n">picaso_refdata</span> <span class="n">environment</span> <span class="n">variable</span><span class="p">:</span> <span class="o">/</span><span class="n">Users</span><span class="o">/</span><span class="n">nbatalh1</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">codes</span><span class="o">/</span><span class="n">PICASO</span><span class="o">/</span><span class="n">picaso</span><span class="o">/</span><span class="n">reference</span>
+<span class="p">[</span><span class="n">SUCCESS</span><span class="p">]</span> <span class="n">Basic</span> <span class="n">picaso</span> <span class="n">reference</span> <span class="n">data</span> <span class="n">seems</span> <span class="n">to</span> <span class="n">be</span> <span class="ow">in</span> <span class="n">place</span><span class="o">.</span>
+<span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Reference</span> <span class="n">data</span> <span class="n">version</span><span class="p">:</span> <span class="mf">4.0</span>
+<span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Files</span> <span class="ow">in</span> <span class="n">reference</span> <span class="n">directory</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">input_tomls</span>
+<span class="o">-</span> <span class="n">references</span>
+<span class="o">-</span> <span class="n">stellar_grids</span>
+<span class="o">-</span> <span class="n">config</span><span class="o">.</span><span class="n">json</span>
+<span class="o">-</span> <span class="n">chemistry</span>
+<span class="o">-</span> <span class="n">sonora_grids</span>
+<span class="o">-</span> <span class="n">opacities</span>
+<span class="o">-</span> <span class="n">version</span><span class="o">.</span><span class="n">md</span>
+<span class="o">-</span> <span class="n">evolution</span>
+<span class="o">-</span> <span class="n">scripts</span>
+<span class="o">-</span> <span class="n">base_cases</span>
+<span class="o">-</span> <span class="n">virga</span>
+<span class="o">-</span> <span class="n">climate_INPUTS</span>
+</pre></div>
+</div>
+</section>
+<section id="permanently-set-environment-variables">
+<h2>Permanently Set Environment Variables<a class="headerlink" href="#permanently-set-environment-variables" title="Link to this heading"></a></h2>
+<p>Setting environment variables help packages find data wihtout having to set a path everytime you run the code.
+Above we set the environment using <cite>python</cite>’s <cite>os.environ</cite> which is a temporary way to set environment variables.</p>
+<p>You can feel free to continue using this non-permanent. If so, whenever you install picaso you would need to add this line to your code <strong>before</strong> you import picaso.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;your_path/picaso/reference/&#39;</span> <span class="c1">#THIS MUST GO BEFORE YOUR IMPORT STATEMENT</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+</pre></div>
+</div>
+<p>While this is the easiest way to set things up, it can become tedious to have to define this before every single notebook. If you want to <strong>permanently</strong> set your environment variables, see the next to subsections for some options that may suit your needs.</p>
+<section id="permanent-method-1-bash-profile-or-zshrc-file">
+<h3>Permanent Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file<a class="headerlink" href="#permanent-method-1-bash-profile-or-zshrc-file" title="Link to this heading"></a></h3>
 <p>As you might guess <code class="docutils literal notranslate"><span class="pre">~/.bash_profile</span></code> is used for the <code class="docutils literal notranslate"><span class="pre">Bash</span></code> command line shell. <code class="docutils literal notranslate"><span class="pre">~/.zshrc</span></code> is used for the <code class="docutils literal notranslate"><span class="pre">Zsh</span></code> command line shell. The steps below are identical.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi<span class="w"> </span>~/.bash_profile
 </pre></div>
@@ -144,7 +238,7 @@ python<span class="w"> </span>setup.py<span class="w"> </span>install
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>~/.bash_profile
 </pre></div>
 </div>
-<p>Now you can check that your variable has been defined properly:</p>
+<p>If you have already downloaded reference data you can check that your variable has been defined properly:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="nv">$picaso_refdata</span>
 /Users/nbatalh1/Documents/codes/PICASO/picaso/reference
 <span class="nb">cd</span><span class="w"> </span><span class="nv">$picaso_refdata</span>
@@ -152,20 +246,9 @@ ls
 base_cases<span class="w"> </span>chemistry<span class="w"> </span>config.json<span class="w"> </span>evolution<span class="w"> </span>opacities<span class="w"> </span>version.md
 </pre></div>
 </div>
-<p>Your opacities folder shown above should include the file <code class="docutils literal notranslate"><span class="pre">opacities.db</span></code> <a class="reference external" href="https://doi.org/10.5281/zenodo.3759675">file downloaded from zenodo</a>. This is mostly a matter of preference, as PICASO allows you to point to an opacity directory. Personally, I like to store something with the reference data so that I don’t have to constantly specify a folder path when running the code.</p>
 </section>
-<section id="method-2-add-directly-to-python-code">
-<h3>Method 2: Add directly to python code<a class="headerlink" href="#method-2-add-directly-to-python-code" title="Link to this heading">¶</a></h3>
-<p>Sometimes it is too troublesome to go through bash settings and you may prefer to set it directly in your python code.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;your_path&#39;</span> <span class="c1">#THIS MUST GO BEFORE YOUR IMPORT STATEMENT</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYSYN_CDBS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;your_path&#39;</span> <span class="c1">#this is for the stellar data discussed below.</span>
-<span class="kn">import</span> <span class="nn">picaso.justdoit</span> <span class="k">as</span> <span class="nn">jdi</span>
-</pre></div>
-</div>
-</section>
-<section id="method-3-add-it-to-your-conda-enviornment">
-<h3>Method 3: Add it to your conda enviornment<a class="headerlink" href="#method-3-add-it-to-your-conda-enviornment" title="Link to this heading">¶</a></h3>
+<section id="permanent-method-2-add-it-to-your-conda-enviornment">
+<h3>Permanent Method 2: Add it to your conda enviornment<a class="headerlink" href="#permanent-method-2-add-it-to-your-conda-enviornment" title="Link to this heading"></a></h3>
 <p>This is my method of choice! It involves creating conda environment specific variables. If you are interested in learning more about environment variables, you can <a class="reference external" href="https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments">read more about them here</a></p>
 <p>If you already an evironment setup, you can do the following – which mimics the <cite>bash_profile/method 1</cite> example.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>your_env_name
@@ -201,25 +284,34 @@ touch<span class="w"> </span>./etc/conda/deactivate.d/env_vars.sh
 </div>
 </section>
 </section>
-<section id="download-and-link-pysynphot-stellar-data">
-<h2>Download and Link Pysynphot Stellar Data<a class="headerlink" href="#download-and-link-pysynphot-stellar-data" title="Link to this heading">¶</a></h2>
-<p>In order to get stellar spectra you will have to download the stellar spectra here from PySynphot:</p>
-<ol class="arabic simple">
-<li><p>PICASO uses the <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixa.html">Pysynphot package</a> which has several download options for stellar spectra. The Defulat for <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a>.</p></li>
-</ol>
-<p>You can download them by doing this:</p>
+<section id="getting-optional-reference-data">
+<h2>Getting Optional Reference Data<a class="headerlink" href="#getting-optional-reference-data" title="Link to this heading"></a></h2>
+<p>You can continue using <cite>get_data</cite> to get all additional data that you might need (see <a class="reference external" href="/notebooks/Quickstart.py">Quickstart Notebook</a> for more examples). The most common one is the stellar grids for exoplanet modeling. The stellar grids are handled by another package called <cite>stsynphot</cite> and require the setting of an additional environment variable. Below we provide additional details on setting that up if needed.</p>
+<section id="getting-stsynphot-optional-stellar-data">
+<h3>Getting <code class="docutils literal notranslate"><span class="pre">stsynphot</span></code> Optional Stellar Data<a class="headerlink" href="#getting-stsynphot-optional-stellar-data" title="Link to this heading"></a></h3>
+<p>In order to get stellar spectra needed for many exoplanet PICASO has already isntalled for you the <a class="reference external" href="https://stsynphot.readthedocs.io/en/latest/">stsynphot package</a> which has several download options for stellar spectra. This package also requires setting an environment variable called <code class="docutils literal notranslate"><span class="pre">$PYSYN_CDBS</span></code>. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data).</p>
+<p>The Default for <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a> but we recommend <code class="docutils literal notranslate"><span class="pre">pheonix</span></code> models for climate modeling.</p>
+<p>Here is how you would do it with PICASO:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">picaso.data</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">d</span>
+<span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYSYN_CDBS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">],</span><span class="s1">&#39;stellar_grids&#39;</span><span class="p">)</span> <span class="c1">#this is a path of your choosing</span>
+<span class="n">d</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">category_download</span><span class="o">=</span><span class="s1">&#39;stellar_grids&#39;</span><span class="p">)</span> <span class="c1">#recommend downloading both ck04models and phoenix</span>
+</pre></div>
+</div>
+<p>As the default this will store your stellar grids in <code class="docutils literal notranslate"><span class="pre">$picaso_refdata/stellar_grids</span></code>. However, you can always choose a different path.</p>
+<p>If you do not like that you can always use <cite>wget</cite> or just downloading the link below.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 </pre></div>
 </div>
-<p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>. Some other people have reported a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/hst/cdbs/grid/ck04models</span></code>. <strong>The full directory structure does not matter</strong>. Only the last portion <code class="docutils literal notranslate"><span class="pre">grid/ck04models</span></code>. You will need to create an enviornment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. See below.</p>
-<ol class="arabic simple" start="2">
-<li><p>Create environment variable via bash</p></li>
-</ol>
+<p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>.  <strong>The full directory structure does not matter</strong>. Only the last file <code class="docutils literal notranslate"><span class="pre">grid</span></code> is needed. You will need to create an enviornment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. We have a nice placeholder location in the picaso reference data file for these grids <code class="docutils literal notranslate"><span class="pre">$picaso_refdata/stellar_grids</span></code>. So you can imagine something like: <code class="docutils literal notranslate"><span class="pre">$picaso_refdata/stellar_grids/grid/ck04models</span></code>. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where <code class="docutils literal notranslate"><span class="pre">grid</span></code> is.</p>
+<section id="help-permanently-setting-stellar-data-environment-variable">
+<h4>Help Permanently Setting Stellar Data Environment Variable<a class="headerlink" href="#help-permanently-setting-stellar-data-environment-variable" title="Link to this heading"></a></h4>
+<p>Similar to PICASO’s environment variable instructions, follow the same steps to create an environment variable for <code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS</span></code>. PICASO recommends the path: <code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS=$picaso_refdata/stellar_grids</span></code> but you might have this elsewhere.</p>
+<p>We’ve gone over how to set permanent paths before but here is a quick refresher using the bash_profile method:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vi<span class="w"> </span>~/.bash_profile
 </pre></div>
 </div>
-<p>Add add this line:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PYSYN_CDBS</span><span class="o">=</span><span class="s2">&quot;&lt;your_path&gt;/grp/redcat/trds&quot;</span>
+<p>Add this line:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PYSYN_CDBS</span><span class="o">=</span><span class="s2">&quot;/your/path/to/picaso_refdata/stellar_grids&quot;</span>
 </pre></div>
 </div>
 <p>Then always make sure to source your bash profile after you make changes.</p>
@@ -232,14 +324,14 @@ ls
 grid
 </pre></div>
 </div>
-<p>Where the folder <code class="docutils literal notranslate"><span class="pre">grid/</span></code> contains whatever <code class="docutils literal notranslate"><span class="pre">pysynphot</span></code> data files you have downloaded (e.g. a folder called <code class="docutils literal notranslate"><span class="pre">ck04models/</span></code>).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<ol class="arabic simple">
-<li><p>STScI serves these files in a few different places, with a few different file structures. <strong>PySynphot only cares that the environment variable points to a path with a folder called `grid`. So do not worry if `grp/hst/cdbs` appears different.</strong></p></li>
-</ol>
-</div>
+<p>Where the folder <code class="docutils literal notranslate"><span class="pre">grid/</span></code> contains whatever <code class="docutils literal notranslate"><span class="pre">stsynphot</span></code> data files you have downloaded (e.g. a folder called <code class="docutils literal notranslate"><span class="pre">ck04models/</span></code>).</p>
 </section>
+</section>
+</section>
+</section>
+<section id="using-quickstart-notebook">
+<h1>Using Quickstart Notebook<a class="headerlink" href="#using-quickstart-notebook" title="Link to this heading"></a></h1>
+<p>If you are already very familiar with package installs, environment variables <strong>OR you are a student using PICASO for classwork you can jump straight</strong> to our <a class="reference external" href="/notebooks/Quickstart.py">Quickstart Notebook</a>.</p>
 </section>
 
 
@@ -247,7 +339,7 @@ grid
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="PICASO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="notebook_workflow.html" class="btn btn-neutral float-right" title="Tutorial &amp; Notebook Workflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

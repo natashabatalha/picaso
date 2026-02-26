@@ -61,19 +61,26 @@ We generally follow `PEP 8 <https://www.python.org/dev/peps/pep-0008/#descriptiv
 	gama  = (g1-lamda)/g2							  #eqn 22
 
 
-Github Workflow
----------------
+Github Workflow for Contributions
+---------------------------------
 
 Before contributing, consider submitting an issue request. Sometimes we may already be aware of an issue and can help you fix something faster. 
 
-1) Clone the repository
+1) Fork the repository
+^^^^^^^^^^^^^^^^^^^^^^
+- [ ] Go to https://github.com/natashabatalha/picaso
+- [ ] Click "Fork" on the main page. 
+- [ ] Name your forked repository 
+- [ ] (Recommended): Uncheck "Copy the master branch only" to get all PICASO branches
+
+2) Clone the repository
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Clone the repository that you are interested in working on.
+Go to your forked repository page and clone it:
 
 .. code-block:: bash
 
-	git clone https://github.com/natashabatalha/picaso.git
+	git clone https://github.com/YOURACCOUNT/picaso.git
 
 This will download a copy of the code to your computer. You will automatically be in the ``master`` branch upon downloading. You can track the dev branch like so:
 
@@ -88,7 +95,7 @@ This will download a copy of the code to your computer. You will automatically b
 .. image:: github_flow.jpg
 
 
-2) Create a branch off of ``dev`` with a useful name
+3) Create a branch off of ``dev`` with a useful name
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It's likely you will be working on a specific subset of a bigger code project. Any changes you make on a new branch will not affect ``master`` or ``dev``, so you can feel free to beat up the code without damaging anything that is fully tested.
@@ -98,7 +105,7 @@ It's likely you will be working on a specific subset of a bigger code project. A
 	git checkout -b myfeature dev
 
 
-3) Work work work work...
+4) Work work work work...
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 Let's pretend that ``myfeature`` entails working on ``file1.py`` and ``file2.py``. After you are happy with an initial change, commit and push your changes.
 
@@ -123,9 +130,54 @@ Let's pretend that ``myfeature`` entails working on ``file1.py`` and ``file2.py`
 
 Many people ask: "How often should I commit??". Choose something that works for you and stick to it. I try and work on smaller, individual tasks and commit when I feel I have finished something. If you try and do too much at once, your commit comments won't make too much sense with what you have actually done. Remember, eventually someone will have to review your commits. If they are hard to parse, it will delay the merge of your work.
 
-4) Final merge to ``master``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``master`` is generally a protected branch, so talk to the admin or the team before proceeding. In general, merges to master are easiest done through `Github Online <https://github.com/natashabatalha/picaso>`_. Near where the branches are listed, go to "New Pull Request". Write a description of the new dev capability, and request a merge to master. And if all good then, done!!! 
+4) Final merge to base branch ``dev``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Now you need to get your work back to the base branch. 
+
+- [ ] Go to main branch and click on "New pull request"
+- [ ] Select natashabatalha:dev <- yourfork:dev (for example)
+- [ ] Click create pull request 
+
+Pull Request Best Practices
+---------------------------
+
+A high-quality and self-contained pull request (PR) makes it much easier for maintainers to review and merge your work. 
+
+**What to include in a PR:**
+
+1. **A clear and descriptive title.** 
+2. **A summary of the changes** and the motivation behind them. 
+3. **Reference any related issues** (e.g., "Closes #123").
+4. **Verification of changes**: Mention if you've added new tests or ran existing ones. Include screenshots if your changes affect plots or UI.
+
+**What NOT to include in a PR:**
+
+1. **Multiple fixes** are difficult for maintainers to parse and test. 
+2. **GitHub tracked scripts/notebooks/data** that do not specifically address a problem. For example, if you have a test script this should not be added to the repo itself but instead be attached to the PR. 
+
+**Example PR Description:**
+
+.. code-block:: markdown
+
+   ### Summary
+   This PR adds functionality to interpolate on the visscher_chemeq grid. 
+
+   ### Motivation
+   Currently, PICASO calls the nearest neighbor chemical equilibrium point in visscher_chemeq rather than interpolating.
+
+   ### Changes
+   - Added interpolation function in `picaso/justdoit.py`.
+   - Updated chemeq_visscher_2121 to... 
+   - Added tests in `tests/test_x.py`.
+
+   ### Verification
+   - Ran `pytest tests/test_x.py` and all tests passed.
+   - Verified output against ... 
+
+**Note on AI-Generated Contributions:**
+
+AI tools are great and the PICASO team uses them as well. However, if you use an AI tool (such as ChatGPT, GitHub Copilot, Jules, or others) to assist in generating your code or PR description, you **must** carefully vet every line of code. We will not accept PRs that look like bulk AI changes or contain unverified AI-generated code. The contributor is responsible for the correctness, style, and quality of the submitted code.
+
 
 Using Conda Enviornments
 ------------------------
@@ -138,7 +190,7 @@ To create your own environment with a specific name and python package:
 
 .. code-block:: bash
 
-	conda create --name your_env_name python=3.7 -y
+	conda create --name your_env_name python=3.13 -y
 
 
 If you have specific environment variables that need to be tied to here, then you can specify them. For example, in PICASO there is the environment variable ``picaso_refdata`` and ``PYSYN_CDBS``: 

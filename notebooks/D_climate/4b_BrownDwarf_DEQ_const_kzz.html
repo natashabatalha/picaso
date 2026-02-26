@@ -1,0 +1,2219 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Constant Kzz (~Elf Owl) &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Equilibrium" href="5_CloudyBrownDwarf_PreW.html" />
+    <link rel="prev" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz" href="4_BrownDwarf_DEQ_SC_kzz.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_BrownDwarf_PreW.html">Brown Dwarfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_Exoplanet_PreW.html">Planet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_Exoplanet-Photochemistry.html">Planet w/ Photochemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4_BrownDwarf_DEQ_SC_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder">First, check that you have downloaded and placed the correlated-k files in the correct folder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Setting-K_{zz}">Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="5_CloudyBrownDwarf_PreW.html">Brown Dwarfs w/ Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_CloudyBrownDwarf_DEQ.html">Brown Dwarfs w/ Clouds and Disequilibrium Chemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="7_CreateModelGrid.html">Creating a grid of models to use with PICASO's fitting tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="8_EnergyInjection.html">Brown Dwarfs w/ Energy Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Constant Kzz (~Elf Owl)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/4b_BrownDwarf_DEQ_const_kzz.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/4b_BrownDwarf_DEQ_const_kzz.py">Download full notebook here</a></p>
+</div>
+<section id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-with-Constant-Kzz-(~Elf-Owl)">
+<h1>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Constant Kzz (~Elf Owl)<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-with-Constant-Kzz-(~Elf-Owl)" title="Link to this heading"></a></h1>
+<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2024arXiv240200756M/abstract">Mukherjee et al. 2024</a> (note this should also be cited along with <a href="#id1"><span class="problematic" id="id2">`PICASO 4.0 &lt;&gt;`__</span></a> if using this code/tutorial).</p>
+<p>What you should already be familiar with:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission">basics of running/analyzing thermal spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html">how to analyze thermal emission spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">how to run a basic 1d brown dwarf tutorial</a></p></li>
+</ul>
+<p>What you should have downloaded:</p>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="https://doi.org/10.5281/zenodo.18644980">Download</a> New 1460, 661 wno Correlated-k Tables to be used by the climate code for opacity by individual molecule</p></li>
+</ol>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">data.get_data</span></code> helper function to get resortrebin files and add them to the default picaso location: <code class="docutils literal notranslate"><span class="pre">reference/opaities/resortrebin</span></code> &gt;&gt; import picaso.data as d</p>
+<blockquote>
+<div><p>d.get_data(category_download=’ck_tables’,target_download=’by-molecule’)</p>
+</div></blockquote>
+<section id="First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder">
+<h2>First, check that you have downloaded and placed the correlated-k files in the correct folder<a class="headerlink" href="#First,-check-that-you-have-downloaded-and-placed-the-correlated-k-files-in-the-correct-folder" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="p">;</span><span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">))</span> <span class="c1">#should show you a list of files</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;readme&#39;,
+ &#39;O2_1460.hdf5&#39;,
+ &#39;PH3_1460.hdf5&#39;,
+ &#39;Rb_1460.hdf5&#39;,
+ &#39;TiH_1460.hdf5&#39;,
+ &#39;TiO_1460.hdf5&#39;,
+ &#39;npy&#39;,
+ &#39;AlH_1460.hdf5&#39;,
+ &#39;C2H2_1460.hdf5&#39;,
+ &#39;C2H4_1460.hdf5&#39;,
+ &#39;C2H6_1460.hdf5&#39;,
+ &#39;CaH_1460.hdf5&#39;,
+ &#39;CH4_1460.hdf5&#39;,
+ &#39;CO_1460.hdf5&#39;,
+ &#39;CO2_1460.hdf5&#39;,
+ &#39;CrH_1460.hdf5&#39;,
+ &#39;Cs_1460.hdf5&#39;,
+ &#39;Fe_1460.hdf5&#39;,
+ &#39;FeH_1460.hdf5&#39;,
+ &#39;H2_1460.hdf5&#39;,
+ &#39;H2O_1460.hdf5&#39;,
+ &#39;H2S_1460.hdf5&#39;,
+ &#39;H3+_1460.hdf5&#39;,
+ &#39;HCN_1460.hdf5&#39;,
+ &#39;K_1460.hdf5&#39;,
+ &#39;Li_1460.hdf5&#39;,
+ &#39;LiCl_1460.hdf5&#39;,
+ &#39;LiF_1460.hdf5&#39;,
+ &#39;LiH_1460.hdf5&#39;,
+ &#39;MgH_1460.hdf5&#39;,
+ &#39;N2_1460.hdf5&#39;,
+ &#39;Na_1460.hdf5&#39;,
+ &#39;NH3_1460.hdf5&#39;,
+ &#39;O3_1460.hdf5&#39;,
+ &#39;OCS_1460.hdf5&#39;,
+ &#39;SiO_1460.hdf5&#39;,
+ &#39;SO2_1460.hdf5&#39;,
+ &#39;VO_1460.hdf5&#39;,
+ &#39;196&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="c1">#%matplotlib inline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">constants</span> <span class="k">as</span> <span class="n">const</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+</pre></div>
+</div>
+</div>
+<section id="Setting-up-Initial-Run-(highlighting-main-differences-for-disequilibrium)">
+<h3>Setting up Initial Run (highlighting main differences for disequilibrium)<a class="headerlink" href="#Setting-up-Initial-Run-(highlighting-main-differences-for-disequilibrium)" title="Link to this heading"></a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gases_fly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;N2&#39;</span><span class="p">,</span><span class="s1">&#39;HCN&#39;</span><span class="p">,</span><span class="s1">&#39;H2&#39;</span><span class="p">,</span><span class="s1">&#39;He&#39;</span><span class="p">,</span><span class="s1">&#39;PH3&#39;</span><span class="p">,</span><span class="s1">&#39;C2H2&#39;</span><span class="p">,</span><span class="s1">&#39;Na&#39;</span><span class="p">,</span><span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;TiO&#39;</span><span class="p">,</span><span class="s1">&#39;VO&#39;</span><span class="p">,</span><span class="s1">&#39;FeH&#39;</span><span class="p">]</span>
+
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">,</span><span class="n">preload_gases</span><span class="o">=</span><span class="n">gases_fly</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">elf</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">xr</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="s1">&#39;spectra_logzz_9.0_teff_950.0_grav_56.0_mh_0.7_co_1.0.nc&#39;</span><span class="p">)</span>
+<span class="n">elf</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewBox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewBox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in notebooks */
+
+:root {
+  --xr-font-color0: var(
+    --jp-content-font-color0,
+    var(--pst-color-text-base rgba(0, 0, 0, 1))
+  );
+  --xr-font-color2: var(
+    --jp-content-font-color2,
+    var(--pst-color-text-base, rgba(0, 0, 0, 0.54))
+  );
+  --xr-font-color3: var(
+    --jp-content-font-color3,
+    var(--pst-color-text-base, rgba(0, 0, 0, 0.38))
+  );
+  --xr-border-color: var(
+    --jp-border-color2,
+    hsl(from var(--pst-color-on-background, white) h s calc(l - 10))
+  );
+  --xr-disabled-color: var(
+    --jp-layout-color3,
+    hsl(from var(--pst-color-on-background, white) h s calc(l - 40))
+  );
+  --xr-background-color: var(
+    --jp-layout-color0,
+    var(--pst-color-on-background, white)
+  );
+  --xr-background-color-row-even: var(
+    --jp-layout-color1,
+    hsl(from var(--pst-color-on-background, white) h s calc(l - 5))
+  );
+  --xr-background-color-row-odd: var(
+    --jp-layout-color2,
+    hsl(from var(--pst-color-on-background, white) h s calc(l - 15))
+  );
+}
+
+html[theme="dark"],
+html[data-theme="dark"],
+body[data-theme="dark"],
+body.vscode-dark {
+  --xr-font-color0: var(
+    --jp-content-font-color0,
+    var(--pst-color-text-base, rgba(255, 255, 255, 1))
+  );
+  --xr-font-color2: var(
+    --jp-content-font-color2,
+    var(--pst-color-text-base, rgba(255, 255, 255, 0.54))
+  );
+  --xr-font-color3: var(
+    --jp-content-font-color3,
+    var(--pst-color-text-base, rgba(255, 255, 255, 0.38))
+  );
+  --xr-border-color: var(
+    --jp-border-color2,
+    hsl(from var(--pst-color-on-background, #111111) h s calc(l + 10))
+  );
+  --xr-disabled-color: var(
+    --jp-layout-color3,
+    hsl(from var(--pst-color-on-background, #111111) h s calc(l + 40))
+  );
+  --xr-background-color: var(
+    --jp-layout-color0,
+    var(--pst-color-on-background, #111111)
+  );
+  --xr-background-color-row-even: var(
+    --jp-layout-color1,
+    hsl(from var(--pst-color-on-background, #111111) h s calc(l + 5))
+  );
+  --xr-background-color-row-odd: var(
+    --jp-layout-color2,
+    hsl(from var(--pst-color-on-background, #111111) h s calc(l + 15))
+  );
+}
+
+.xr-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+  line-height: 1.6;
+  padding-bottom: 4px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.xr-header {
+  border-bottom: solid 1px var(--xr-border-color);
+  margin-bottom: 4px;
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-obj-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type,
+.xr-group-box-contents > label {
+  color: var(--xr-font-color2);
+  display: block;
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 0 20px 0 20px;
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item > input,
+.xr-group-box-contents > input,
+.xr-array-wrap > input {
+  display: block;
+  opacity: 0;
+  height: 0;
+  margin: 0;
+}
+
+.xr-section-item > input + label,
+.xr-var-item > input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item > input:enabled + label,
+.xr-var-item > input:enabled + label,
+.xr-array-wrap > input:enabled + label,
+.xr-group-box-contents > input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item > input:focus-visible + label,
+.xr-var-item > input:focus-visible + label,
+.xr-array-wrap > input:focus-visible + label,
+.xr-group-box-contents > input:focus-visible + label {
+  outline: auto;
+}
+
+.xr-section-item > input:enabled + label:hover,
+.xr-var-item > input:enabled + label:hover,
+.xr-array-wrap > input:enabled + label:hover,
+.xr-group-box-contents > input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.xr-section-summary > em {
+  font-weight: normal;
+}
+
+.xr-span-grid {
+  grid-column-end: -1;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.3em;
+}
+
+.xr-group-box-contents > input:checked + label > span {
+  display: inline-block;
+  padding-left: 0.6em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: "►";
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: "▼";
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details,
+.xr-group-box-contents > label {
+  padding-top: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in ~ .xr-section-details {
+  display: none;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-children {
+  display: inline-grid;
+  grid-template-columns: 100%;
+  grid-column: 1 / -1;
+  padding-top: 4px;
+}
+
+.xr-group-box {
+  display: inline-grid;
+  grid-template-columns: 0px 30px auto;
+}
+
+.xr-group-box-vline {
+  grid-column-start: 1;
+  border-right: 0.2em solid;
+  border-color: var(--xr-border-color);
+  width: 0px;
+}
+
+.xr-group-box-hline {
+  grid-column-start: 2;
+  grid-row-start: 1;
+  height: 1em;
+  width: 26px;
+  border-bottom: 0.2em solid;
+  border-color: var(--xr-border-color);
+}
+
+.xr-group-box-contents {
+  grid-column-start: 3;
+  padding-bottom: 4px;
+}
+
+.xr-group-box-contents > label::before {
+  content: "📂";
+  padding-right: 0.3em;
+}
+
+.xr-group-box-contents > input:checked + label::before {
+  content: "📁";
+}
+
+.xr-group-box-contents > input:checked + label {
+  padding-bottom: 0px;
+}
+
+.xr-group-box-contents > input:checked ~ .xr-sections {
+  display: none;
+}
+
+.xr-group-box-contents > input + label > span {
+  display: none;
+}
+
+.xr-group-box-ellipsis {
+  font-size: 1.4em;
+  font-weight: 900;
+  color: var(--xr-font-color2);
+  letter-spacing: 0.15em;
+  cursor: default;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: "(";
+}
+
+.xr-dim-list:after {
+  content: ")";
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ",";
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  border-color: var(--xr-background-color-row-odd);
+  margin-bottom: 0;
+  padding-top: 2px;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+  border-color: var(--xr-background-color-row-even);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  display: none;
+  border-top: 2px dotted var(--xr-background-color);
+  padding-bottom: 20px !important;
+  padding-top: 10px !important;
+}
+
+.xr-var-attrs-in + label,
+.xr-var-data-in + label,
+.xr-index-data-in + label {
+  padding: 0 1px;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-data > pre,
+.xr-index-data > pre,
+.xr-var-data > table > tbody > tr {
+  background-color: transparent !important;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-index-name div,
+.xr-index-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2,
+.xr-no-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+
+.xr-var-attrs-in:checked + label > .xr-icon-file-text2,
+.xr-var-data-in:checked + label > .xr-icon-database,
+.xr-index-data-in:checked + label > .xr-icon-database {
+  color: var(--xr-font-color0);
+  filter: drop-shadow(1px 1px 5px var(--xr-font-color2));
+  stroke-width: 0.8px;
+}
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt; Size: 3MB
+Dimensions:      (wavelength: 193132, pressure: 91)
+Coordinates:
+  * wavelength   (wavelength) float64 2MB 15.0 15.0 15.0 15.0 ... 0.6 0.6 0.6
+  * pressure     (pressure) float64 728B 0.0001778 0.000205 ... 55.23 63.66
+Data variables: (12/40)
+    flux         (wavelength) float64 2MB 1.716e+09 1.722e+09 ... 3.777e+05
+    temperature  (pressure) float64 728B 309.6 310.7 ... 3.227e+03 3.306e+03
+    e-           (pressure) float64 728B 4.5e-38 4.5e-38 ... 9.713e-07 1.125e-06
+    H2           (pressure) float64 728B 0.8272 0.8272 0.8271 ... 0.7973 0.7927
+    H            (pressure) float64 728B 4.298e-33 5.412e-33 ... 0.03637 0.04143
+    H+           (pressure) float64 728B 4.5e-38 4.5e-38 ... 7.752e-17 2.247e-16
+    ...           ...
+    OCS          (pressure) float64 728B 1.032e-25 1.018e-25 ... 8.842e-09
+    Li           (pressure) float64 728B 4.5e-38 4.5e-38 ... 1.394e-08 1.379e-08
+    LiOH         (pressure) float64 728B 4.5e-38 4.5e-38 ... 6.835e-10 6.427e-10
+    LiH          (pressure) float64 728B 4.5e-38 4.5e-38 ... 2.646e-09 2.753e-09
+    LiCl         (pressure) float64 728B 4.5e-38 4.5e-38 ... 9.78e-12 8.207e-12
+    LiF          (pressure) float64 728B 4.5e-38 4.5e-38 ... 4.567e-13 3.971e-13
+Attributes:
+    author:         Batalha,Mukherjee
+    contact:        natasha.e.batalha@nasa.gov
+    code:           {&quot;spectra&quot;: &quot;PICASO&quot;, &quot;chemistry&quot;: &quot;visccher&quot;}
+    doi:            ELF OWL Paper
+    planet_params:  {&quot;logg&quot;: {&quot;value&quot;: 56.0, &quot;unit&quot;: &quot;m / s2&quot;}, &quot;teff&quot;: {&quot;val...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-234d1333-94a0-4312-9cb1-43bc5a8c2756' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-234d1333-94a0-4312-9cb1-43bc5a8c2756' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>wavelength</span>: 193132</li><li><span class='xr-has-index'>pressure</span>: 91</li></ul></div></li><li class='xr-section-item'><input id='section-6da80698-edbd-462d-97fa-a45f8e690549' class='xr-section-summary-in' type='checkbox' checked /><label for='section-6da80698-edbd-462d-97fa-a45f8e690549' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>wavelength</span></div><div class='xr-var-dims'>(wavelength)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>15.0 15.0 15.0 15.0 ... 0.6 0.6 0.6</div><input id='attrs-18d3b1a8-d93c-4ee6-895c-d7d7e2cae054' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-18d3b1a8-d93c-4ee6-895c-d7d7e2cae054' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-aec4ebc6-1e80-420b-b164-1624e8b647c3' class='xr-var-data-in' type='checkbox'><label for='data-aec4ebc6-1e80-420b-b164-1624e8b647c3' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>micron</dd></dl></div><div class='xr-var-data'><pre>array([14.999761, 14.999511, 14.999261, ...,  0.600022,  0.600012,  0.600002],
+      shape=(193132,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>pressure</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.0001778 0.000205 ... 55.23 63.66</div><input id='attrs-55ed6f7a-cb50-413a-98af-974fe407ab91' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-55ed6f7a-cb50-413a-98af-974fe407ab91' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c2e66add-8862-4aaa-81c6-f754643695ef' class='xr-var-data-in' type='checkbox'><label for='data-c2e66add-8862-4aaa-81c6-f754643695ef' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>bar</dd></dl></div><div class='xr-var-data'><pre>array([1.778000e-04, 2.050000e-04, 2.363000e-04, 2.724000e-04, 3.139000e-04,
+       3.619000e-04, 4.171000e-04, 4.808000e-04, 5.542000e-04, 6.388000e-04,
+       7.364000e-04, 8.488000e-04, 9.784000e-04, 1.127800e-03, 1.300000e-03,
+       1.498500e-03, 1.727300e-03, 1.991000e-03, 2.295000e-03, 2.645400e-03,
+       3.049300e-03, 3.514800e-03, 4.051500e-03, 4.670100e-03, 5.383100e-03,
+       6.205000e-03, 7.152400e-03, 8.244500e-03, 9.503200e-03, 1.095420e-02,
+       1.262670e-02, 1.455460e-02, 1.677690e-02, 1.933840e-02, 2.229100e-02,
+       2.569450e-02, 2.961760e-02, 3.413970e-02, 3.935220e-02, 4.536060e-02,
+       5.228640e-02, 6.026960e-02, 6.947170e-02, 8.007880e-02, 9.230540e-02,
+       1.063989e-01, 1.226441e-01, 1.413697e-01, 1.629544e-01, 1.878347e-01,
+       2.165138e-01, 2.495717e-01, 2.876769e-01, 3.316001e-01, 3.822297e-01,
+       4.405895e-01, 5.078598e-01, 5.854011e-01, 6.747816e-01, 7.778090e-01,
+       8.965668e-01, 1.033457e+00, 1.191248e+00, 1.373131e+00, 1.582783e+00,
+       1.824447e+00, 2.103008e+00, 2.424101e+00, 2.794218e+00, 3.220847e+00,
+       3.712614e+00, 4.279465e+00, 4.932865e+00, 5.686027e+00, 6.554184e+00,
+       7.554893e+00, 8.708393e+00, 1.003801e+01, 1.157064e+01, 1.333728e+01,
+       1.537365e+01, 1.772093e+01, 2.042661e+01, 2.354540e+01, 2.714037e+01,
+       3.128423e+01, 3.606078e+01, 4.156664e+01, 4.791313e+01, 5.522863e+01,
+       6.366108e+01])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-40578e5c-71c2-4728-9787-175d170531f7' class='xr-section-summary-in' type='checkbox' /><label for='section-40578e5c-71c2-4728-9787-175d170531f7' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(40)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>flux</span></div><div class='xr-var-dims'>(wavelength)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.716e+09 1.722e+09 ... 3.777e+05</div><input id='attrs-ce213ae0-f623-4308-8104-e7ababbef961' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-ce213ae0-f623-4308-8104-e7ababbef961' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2ded5dda-6018-450c-bc7a-5cf502de10ed' class='xr-var-data-in' type='checkbox'><label for='data-2ded5dda-6018-450c-bc7a-5cf502de10ed' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>erg/cm**2/s/cm</dd></dl></div><div class='xr-var-data'><pre>array([1.71618445e+09, 1.72203067e+09, 1.67820256e+09, ...,
+       3.80270977e+05, 3.80142762e+05, 3.77686559e+05], shape=(193132,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>temperature</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>309.6 310.7 ... 3.227e+03 3.306e+03</div><input id='attrs-6fe60781-2260-4b9c-bd29-28b7102fc108' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-6fe60781-2260-4b9c-bd29-28b7102fc108' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f6f2265e-d57d-4a89-884f-51d36042bc35' class='xr-var-data-in' type='checkbox'><label for='data-f6f2265e-d57d-4a89-884f-51d36042bc35' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([ 309.58620175,  310.69242283,  312.22686672,  314.08433142,
+        316.19179074,  318.5518839 ,  321.15023337,  323.99942964,
+        327.10620284,  330.49141521,  334.17365943,  338.14827506,
+        342.4040001 ,  346.93766827,  351.75006977,  356.7807671 ,
+        361.96016744,  367.23084591,  372.55323185,  377.86263019,
+        383.16150258,  388.55016346,  394.12105811,  399.96370223,
+        406.12867398,  412.63844631,  419.53056874,  426.8285411 ,
+        434.52417806,  442.59260836,  450.9909762 ,  459.68638955,
+        468.69139786,  478.01439045,  487.71487525,  497.91219881,
+        508.68892649,  520.04163809,  532.07608144,  545.06462402,
+        559.16828082,  574.77085571,  591.86073265,  610.4349384 ,
+        631.00060894,  653.85534006,  679.60830306,  708.86844948,
+        739.35275699,  771.08950103,  804.1276566 ,  838.50845752,
+        874.25932189,  911.43067369,  950.05152209,  990.15211999,
+       1031.78261594, 1074.95640254, 1119.70956449, 1166.09051753,
+       1214.10058569, 1263.78284855, 1315.17843035, 1368.28830714,
+       1423.15586771, 1479.81353488, 1538.25650314, 1598.52786979,
+       1660.64170974, 1724.54101035, 1790.2735735 , 1857.82834869,
+       1926.97949575, 1997.79041147, 2070.30443311, 2143.88828554,
+       2218.63515232, 2294.65505214, 2371.24195208, 2448.22098404,
+       2525.748552  , 2603.78903568, 2681.61681958, 2759.3866655 ,
+       2837.25766464, 2915.21375063, 2993.11101558, 3071.0272909 ,
+       3148.98404706, 3227.07779699, 3305.68488935])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>e-</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 1.125e-06</div><input id='attrs-1cecdfee-f47e-4d6d-8a74-7f197efb26c2' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-1cecdfee-f47e-4d6d-8a74-7f197efb26c2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-17440aba-32c1-4113-be02-0f5ee45edaff' class='xr-var-data-in' type='checkbox'><label for='data-17440aba-32c1-4113-be02-0f5ee45edaff' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 7.88121347e-38, 4.06715741e-37, 1.78794383e-36,
+       1.46212145e-35, 1.44953936e-34, 1.37589144e-33, 1.37907958e-32,
+       1.30713703e-31, 1.26632760e-30, 1.45770864e-29, 1.93158026e-28,
+       3.11533044e-27, 5.65695563e-26, 1.18893711e-24, 3.21437555e-23,
+       9.53440468e-22, 2.47167975e-20, 5.49909053e-19, 6.63760467e-18,
+       6.14386705e-17, 4.49715730e-16, 2.69628302e-15, 1.27110058e-14,
+       4.60889134e-14, 1.52144321e-13, 4.52815457e-13, 1.17185031e-12,
+       2.89534653e-12, 6.75954780e-12, 1.51895060e-11, 3.31003157e-11,
+       6.95925853e-11, 1.41250066e-10, 2.76558690e-10, 5.24161492e-10,
+       9.57528992e-10, 1.69281829e-09, 2.89831368e-09, 4.81416014e-09,
+       7.77672508e-09, 1.22382032e-08, 1.88063202e-08, 2.81561274e-08,
+       4.11746226e-08, 5.89572460e-08, 8.23163472e-08, 1.12355189e-07,
+       1.50316709e-07, 1.97413668e-07, 2.54059957e-07, 3.21266733e-07,
+       4.00100167e-07, 4.90799582e-07, 5.92252032e-07, 7.05878903e-07,
+       8.32107168e-07, 9.71303047e-07, 1.12463811e-06])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8272 0.8272 ... 0.7973 0.7927</div><input id='attrs-80adaec9-837b-4322-b9a5-64fe7a282069' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-80adaec9-837b-4322-b9a5-64fe7a282069' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b7e0e6e6-beba-4704-8b32-db0a21ec1c5c' class='xr-var-data-in' type='checkbox'><label for='data-b7e0e6e6-beba-4704-8b32-db0a21ec1c5c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([0.827202  , 0.82715499, 0.82711903, 0.82708226, 0.82706059,
+       0.82707636, 0.82709657, 0.82712124, 0.82713158, 0.82713155,
+       0.82715106, 0.82715778, 0.82717121, 0.82723516, 0.82730327,
+       0.82738083, 0.82743659, 0.82747226, 0.82748916, 0.82751628,
+       0.82756051, 0.82761826, 0.82766019, 0.82768945, 0.82773529,
+       0.82777762, 0.82781741, 0.82785738, 0.82790287, 0.82794878,
+       0.82799001, 0.82802948, 0.82806618, 0.82810082, 0.82813393,
+       0.82816743, 0.82819605, 0.82821985, 0.82824527, 0.82827253,
+       0.82829758, 0.82832404, 0.82834011, 0.82835879, 0.82838047,
+       0.82839941, 0.82840824, 0.82842132, 0.82843556, 0.82847418,
+       0.82852459, 0.82864681, 0.8288483 , 0.82925229, 0.82993606,
+       0.83095877, 0.83184959, 0.83243632, 0.83279446, 0.83319286,
+       0.83348106, 0.83364019, 0.83373153, 0.83377662, 0.83381909,
+       0.83384102, 0.83384394, 0.83383857, 0.83376998, 0.83361023,
+       0.83340794, 0.83277574, 0.83242319, 0.83197529, 0.83156703,
+       0.83107333, 0.83049553, 0.82985802, 0.82883347, 0.82756512,
+       0.82605915, 0.82433258, 0.82215887, 0.81971295, 0.81712416,
+       0.8142832 , 0.81063145, 0.80638244, 0.8019155 , 0.79732849,
+       0.79270241])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.298e-33 5.412e-33 ... 0.04143</div><input id='attrs-fce68233-0cdd-4d5f-94d2-db8ae51962e3' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-fce68233-0cdd-4d5f-94d2-db8ae51962e3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0944bac8-0955-455c-8faa-e302f6647a1f' class='xr-var-data-in' type='checkbox'><label for='data-0944bac8-0955-455c-8faa-e302f6647a1f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.29793457e-33, 5.41194382e-33, 7.63308727e-33, 1.16845078e-32,
+       1.89921191e-32, 3.27050720e-32, 5.93165760e-32, 1.13331969e-31,
+       2.27799758e-31, 4.82568982e-31, 1.07830107e-30, 2.52834424e-30,
+       6.18056699e-30, 1.56795655e-29, 4.11341536e-29, 1.09810384e-28,
+       2.93306440e-28, 7.74135582e-28, 2.00335322e-27, 5.02719436e-27,
+       1.22542795e-26, 2.95559899e-26, 7.16290625e-26, 1.76751512e-25,
+       4.46769144e-25, 1.15609374e-24, 3.06874806e-24, 8.35186584e-24,
+       2.31895213e-23, 6.51719446e-23, 1.83761049e-22, 5.16698409e-22,
+       1.44723593e-21, 4.03508518e-21, 1.12549950e-20, 3.17120166e-20,
+       9.07303223e-20, 2.62150378e-19, 7.69422589e-19, 2.33749673e-18,
+       7.38991601e-18, 2.48155265e-17, 8.72175954e-17, 3.16446179e-16,
+       1.21070825e-15, 4.88581556e-15, 2.11363159e-14, 9.84974915e-14,
+       4.29395042e-13, 1.75428056e-12, 6.73320184e-12, 2.43547787e-11,
+       8.31385709e-11, 2.68527864e-10, 8.22204993e-10, 2.39217503e-09,
+       6.62900045e-09, 1.75035366e-08, 4.41543221e-08, 1.06682753e-07,
+       2.47004200e-07, 5.49585830e-07, 1.17646761e-06, 2.42785099e-06,
+       4.83625400e-06, 9.31683307e-06, 1.73784015e-05, 3.14264587e-05,
+       5.52104775e-05, 9.42193264e-05, 1.56490449e-04, 2.53290259e-04,
+       3.99193542e-04, 6.13839607e-04, 9.22645906e-04, 1.35166831e-03,
+       1.93467036e-03, 2.71153367e-03, 3.71329458e-03, 4.97364844e-03,
+       6.53196117e-03, 8.42293543e-03, 1.06497582e-02, 1.32318789e-02,
+       1.61888604e-02, 1.95249475e-02, 2.32195130e-02, 2.72673791e-02,
+       3.16555432e-02, 3.63709290e-02, 4.14272712e-02])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H+</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 2.247e-16</div><input id='attrs-006d1a46-4fc1-4e5e-8e81-4766d71a04bc' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-006d1a46-4fc1-4e5e-8e81-4766d71a04bc' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-61985c93-8b78-4c49-b197-884c16768606' class='xr-var-data-in' type='checkbox'><label for='data-61985c93-8b78-4c49-b197-884c16768606' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50279590e-38,
+       4.50279575e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50279741e-38, 4.50278692e-38,
+       4.50275005e-38, 4.50272818e-38, 4.50277979e-38, 4.50271286e-38,
+       4.50270000e-38, 4.50270000e-38, 4.50270000e-38, 4.50270000e-38,
+       4.50270000e-38, 4.50270000e-38, 4.50270000e-38, 4.50270000e-38,
+       4.50270000e-38, 4.50270000e-38, 7.10426181e-38, 1.22065371e-37,
+       4.16445003e-36, 1.29567774e-34, 3.44451597e-33, 7.88192685e-32,
+       1.54033059e-30, 2.60259204e-29, 3.84234609e-28, 4.87048055e-27,
+       5.37758022e-26, 5.24089110e-25, 4.46383499e-24, 3.33629029e-23,
+       2.22091253e-22, 1.32750572e-21, 7.07275910e-21, 3.40107010e-20,
+       1.49295771e-19, 6.02891656e-19, 2.25226804e-18, 7.82337699e-18,
+       2.53944480e-17, 7.75156794e-17, 2.24704599e-16])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H-</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 3.725e-08 5e-08</div><input id='attrs-22aef904-c1d2-42a1-81c2-372399dfc653' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-22aef904-c1d2-42a1-81c2-372399dfc653' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4d4d9b2d-371e-40ed-8eb7-2903b9fd6743' class='xr-var-data-in' type='checkbox'><label for='data-4d4d9b2d-371e-40ed-8eb7-2903b9fd6743' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 8.73674011e-38,
+       2.77630327e-37, 1.31255141e-36, 7.51236208e-35, 5.77456157e-33,
+       4.65624884e-31, 3.14282651e-29, 1.74886204e-27, 5.07095040e-26,
+       1.08554584e-24, 1.77287761e-23, 2.29037271e-22, 2.24747535e-21,
+       1.64058434e-20, 1.05871848e-19, 5.97878780e-19, 2.85149391e-18,
+       1.26467835e-17, 5.15548138e-17, 1.97573038e-16, 7.16080738e-16,
+       2.44941251e-15, 7.91377649e-15, 2.41470927e-14, 7.00087260e-14,
+       1.91648957e-13, 4.99021064e-13, 1.23690870e-12, 2.92326770e-12,
+       6.61280931e-12, 1.43547999e-11, 2.99686472e-11, 6.00497610e-11,
+       1.15932116e-10, 2.16377005e-10, 3.88246018e-10, 6.72552190e-10,
+       1.12924313e-09, 1.84197026e-09, 2.91052606e-09, 4.47553059e-09,
+       6.72118687e-09, 9.86466124e-09, 1.41294677e-08, 1.98451878e-08,
+       2.73989867e-08, 3.72508748e-08, 5.00010061e-08])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2-</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 1.851e-10</div><input id='attrs-3590712b-8b16-490d-bba5-f2e36a71dadc' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-3590712b-8b16-490d-bba5-f2e36a71dadc' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3a6b1dcb-0b95-459f-a0af-340e2ce07180' class='xr-var-data-in' type='checkbox'><label for='data-3a6b1dcb-0b95-459f-a0af-340e2ce07180' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50279590e-38,
+       4.50279575e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 3.73526384e-37, 8.73687952e-36, 4.84927516e-34,
+       1.93724518e-32, 5.76346417e-31, 1.32522693e-29, 2.26325173e-28,
+       2.81438728e-27, 3.03065905e-26, 2.79990975e-25, 2.14389067e-24,
+       1.49899407e-23, 9.46774108e-23, 5.52977232e-22, 3.00646823e-21,
+       1.51962741e-20, 7.15194643e-20, 3.13518827e-19, 1.28885569e-18,
+       4.94101823e-18, 1.77976771e-17, 6.03294690e-17, 1.92846623e-16,
+       5.83442394e-16, 1.67625048e-15, 4.58758943e-15, 1.19213420e-14,
+       2.95577553e-14, 7.02294543e-14, 1.58834865e-13, 3.43599702e-13,
+       7.14507812e-13, 1.43231631e-12, 2.75820973e-12, 5.13105571e-12,
+       9.26210578e-12, 1.62411190e-11, 2.76229392e-11, 4.58174635e-11,
+       7.43425496e-11, 1.18272672e-10, 1.85099270e-10])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2+</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 8.7e-17</div><input id='attrs-68fc6b6f-64f3-4e79-bef4-ce1e5bbe1c4a' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-68fc6b6f-64f3-4e79-bef4-ce1e5bbe1c4a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4cbd1d8b-e88e-48f1-a1ab-57c1120f13b7' class='xr-var-data-in' type='checkbox'><label for='data-4cbd1d8b-e88e-48f1-a1ab-57c1120f13b7' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50279590e-38,
+       4.50279575e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50279741e-38, 4.50278692e-38,
+       4.50275005e-38, 4.50272818e-38, 4.50277979e-38, 4.50271286e-38,
+       4.50270000e-38, 4.50270000e-38, 4.50270000e-38, 4.50270000e-38,
+       4.50270000e-38, 4.50270000e-38, 4.50270000e-38, 4.50270000e-38,
+       4.50270000e-38, 4.50270000e-38, 4.95733420e-38, 5.36694308e-38,
+       1.71711877e-36, 5.08213999e-35, 1.29238435e-33, 2.84371445e-32,
+       5.37283672e-31, 8.82081559e-30, 1.27152543e-28, 1.58195258e-27,
+       1.72249921e-26, 1.66267483e-25, 1.40910254e-24, 1.05248648e-23,
+       7.02898909e-23, 4.23050883e-22, 2.27818417e-21, 1.11104850e-20,
+       4.96151360e-20, 2.04393175e-19, 7.80796458e-19, 2.77935748e-18,
+       9.26577698e-18, 2.91083592e-17, 8.69965630e-17])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H3+</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 1.218e-13</div><input id='attrs-ea09964b-097d-40b3-b2a9-3e66fcdb6df9' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-ea09964b-097d-40b3-b2a9-3e66fcdb6df9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0b7a2233-9ef8-4334-a6d7-ea33e322ec07' class='xr-var-data-in' type='checkbox'><label for='data-0b7a2233-9ef8-4334-a6d7-ea33e322ec07' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50279590e-38,
+       4.50279575e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50279741e-38, 4.50278692e-38,
+       4.50275005e-38, 4.50272818e-38, 4.50277979e-38, 4.50271286e-38,
+       4.50270000e-38, 4.50270000e-38, 4.50270000e-38, 4.50270000e-38,
+       1.17569246e-37, 2.93846464e-36, 6.66370006e-35, 1.42048780e-33,
+       2.66066450e-32, 4.42940435e-31, 6.57310812e-30, 8.68172725e-29,
+       1.03937948e-27, 1.11557876e-26, 1.08416617e-25, 9.58213232e-25,
+       7.63757487e-24, 5.53526850e-23, 3.67448882e-22, 2.20452826e-21,
+       1.20673966e-20, 6.07995238e-20, 2.80138402e-19, 1.18269835e-18,
+       4.62074234e-18, 1.67969042e-17, 5.65227326e-17, 1.77531579e-16,
+       5.24462219e-16, 1.46508112e-15, 3.88389796e-15, 9.79851036e-15,
+       2.36120066e-14, 5.45822172e-14, 1.21849513e-13])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>He</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1628 0.1628 ... 0.1587 0.1583</div><input id='attrs-e6a5a596-5a78-4587-b4bd-04d5759c79d8' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-e6a5a596-5a78-4587-b4bd-04d5759c79d8' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f41b32f8-288d-439e-b6fe-5a2d14812b17' class='xr-var-data-in' type='checkbox'><label for='data-f41b32f8-288d-439e-b6fe-5a2d14812b17' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([0.16275631, 0.16275864, 0.1627607 , 0.16276284, 0.16276449,
+       0.16276453, 0.16276376, 0.16276288, 0.16276317, 0.1627641 ,
+       0.16276134, 0.16275817, 0.1627544 , 0.16274972, 0.16274731,
+       0.16274617, 0.16274503, 0.16274396, 0.162743  , 0.16274085,
+       0.16273682, 0.16273236, 0.16272837, 0.16272475, 0.16272305,
+       0.16272059, 0.16271733, 0.16271389, 0.16271117, 0.16270841,
+       0.16270586, 0.16270488, 0.16270298, 0.16270074, 0.16269938,
+       0.16269798, 0.16269622, 0.16269426, 0.16269158, 0.16268877,
+       0.16268749, 0.16268585, 0.16268697, 0.16268634, 0.16268337,
+       0.16268052, 0.16268072, 0.16268   , 0.16268   , 0.16267627,
+       0.16267138, 0.16265968, 0.16263354, 0.16257962, 0.16249002,
+       0.16237711, 0.16228421, 0.16218963, 0.16211211, 0.16204691,
+       0.16198528, 0.16196517, 0.16195089, 0.16194077, 0.1619305 ,
+       0.16192756, 0.16192279, 0.1619182 , 0.16191274, 0.16190365,
+       0.16188792, 0.16186694, 0.16184087, 0.1618077 , 0.16176678,
+       0.1617209 , 0.16166626, 0.1616055 , 0.16151122, 0.1614001 ,
+       0.16126909, 0.16111475, 0.1609225 , 0.16070758, 0.16048273,
+       0.16023567, 0.15990866, 0.15953659, 0.15914234, 0.15873811,
+       0.15833061])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2O</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.001842 0.001842 ... 0.002334</div><input id='attrs-c8402c38-804d-410c-ad19-bfde7800419a' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-c8402c38-804d-410c-ad19-bfde7800419a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-6131751b-2ce7-4fb3-b60f-c67b425f6d05' class='xr-var-data-in' type='checkbox'><label for='data-6131751b-2ce7-4fb3-b60f-c67b425f6d05' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00184244, 0.00184244, 0.00184244, 0.00184244, 0.00184244,
+       0.00193379, 0.00206372, 0.00220871, 0.00240192, 0.00242884,
+       0.00243875, 0.00243661, 0.0024345 , 0.00243196, 0.00242867,
+       0.00242473, 0.0024202 , 0.00241447, 0.00240796, 0.00240098,
+       0.00239346, 0.00238411, 0.00237269, 0.00236041, 0.00234756,
+       0.00233443])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>CH4</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>3.245e-06 3.245e-06 ... 6.797e-07</div><input id='attrs-b165c1c5-86b9-47f1-a44a-9d87aa168175' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-b165c1c5-86b9-47f1-a44a-9d87aa168175' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-fc2bf61d-85ca-45e6-8dbe-50c944a0285a' class='xr-var-data-in' type='checkbox'><label for='data-fc2bf61d-85ca-45e6-8dbe-50c944a0285a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 3.24508403e-06, 3.24508403e-06,
+       3.24508403e-06, 3.24508403e-06, 2.31864075e-06, 1.67612959e-06,
+       1.24248081e-06, 9.30126555e-07, 7.68426949e-07, 6.56631210e-07,
+       5.77720759e-07, 5.19802821e-07, 4.78748057e-07, 4.50944734e-07,
+       4.33266189e-07, 4.24003645e-07, 4.23073619e-07, 4.29437596e-07,
+       4.42676806e-07, 4.62613683e-07, 4.88907019e-07, 5.22643172e-07,
+       5.64902356e-07, 6.16869370e-07, 6.79674294e-07])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>CO</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.002318 0.002318 ... 0.002268</div><input id='attrs-b8258a02-6d8d-4d44-8518-248c7477dc1e' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-b8258a02-6d8d-4d44-8518-248c7477dc1e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d193439d-ef3d-4f7d-a535-2c6c4fe28e53' class='xr-var-data-in' type='checkbox'><label for='data-d193439d-ef3d-4f7d-a535-2c6c4fe28e53' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231789, 0.00231789, 0.00231789, 0.00231789, 0.00231789,
+       0.00231797, 0.00231839, 0.00231913, 0.00231965, 0.00231951,
+       0.00231917, 0.00231864, 0.00231803, 0.00231648, 0.00231479,
+       0.00231288, 0.00231069, 0.00230787, 0.00230479, 0.0023015 ,
+       0.00229767, 0.00229248, 0.00228665, 0.00228064, 0.0022745 ,
+       0.00226829])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>NH3</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.565e-06 1.565e-06 ... 4.636e-06</div><input id='attrs-39a821dd-dd62-4bc6-9138-ef51e4e2a993' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-39a821dd-dd62-4bc6-9138-ef51e4e2a993' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b0552763-4294-4f2b-a07c-e4212ba27abc' class='xr-var-data-in' type='checkbox'><label for='data-b0552763-4294-4f2b-a07c-e4212ba27abc' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.56503684e-06,
+       1.56503684e-06, 1.56503684e-06, 1.56503684e-06, 1.57251668e-06,
+       1.59092172e-06, 1.61972643e-06, 1.65972897e-06, 1.71194517e-06,
+       1.77635178e-06, 1.85327886e-06, 1.94351809e-06, 2.04897035e-06,
+       2.17021479e-06, 2.30855907e-06, 2.46608361e-06, 2.64471611e-06,
+       2.84658302e-06, 3.07285254e-06, 3.32182147e-06, 3.59801481e-06,
+       3.90647326e-06, 4.25118799e-06, 4.63596625e-06])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>N2</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.0003416 0.0003416 ... 0.0003305</div><input id='attrs-75f012ec-c4cd-4494-91dd-ac3172b31167' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-75f012ec-c4cd-4494-91dd-ac3172b31167' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c13ec823-f383-49ed-a87f-7ccc8f952661' class='xr-var-data-in' type='checkbox'><label for='data-c13ec823-f383-49ed-a87f-7ccc8f952661' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034164, 0.00034164, 0.00034164, 0.00034164,
+       0.00034164, 0.00034155, 0.00034147, 0.0003414 , 0.00034129,
+       0.00034118, 0.00034105, 0.00034094, 0.00034056, 0.00034017,
+       0.00033975, 0.0003393 , 0.00033878, 0.00033821, 0.00033761,
+       0.00033685, 0.0003357 , 0.00033445, 0.00033316, 0.00033185,
+       0.00033053])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>PH3</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.456e-34 6.5e-34 ... 4.917e-08</div><input id='attrs-14191aa1-3da7-452e-a7cb-6f5de6ff44eb' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-14191aa1-3da7-452e-a7cb-6f5de6ff44eb' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c6f23afa-4a29-4d51-8fe3-7def274a0f09' class='xr-var-data-in' type='checkbox'><label for='data-c6f23afa-4a29-4d51-8fe3-7def274a0f09' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.45581104e-34, 6.49988735e-34, 1.04919147e-33, 1.82286961e-33,
+       3.34074207e-33, 6.45183194e-33, 1.30409515e-32, 2.76034442e-32,
+       6.11370375e-32, 1.41891106e-31, 3.44972855e-31, 8.75452341e-31,
+       2.30362379e-30, 6.26083462e-30, 1.75101048e-29, 4.96264496e-29,
+       1.40715955e-28, 3.94783475e-28, 1.08838740e-27, 2.91200522e-27,
+       7.57681559e-27, 1.95291277e-26, 5.05518312e-26, 1.32953250e-25,
+       3.55439648e-25, 9.70017562e-25, 2.70715448e-24, 7.71297663e-24,
+       2.22737004e-23, 6.50094378e-23, 1.90168248e-22, 5.52311257e-22,
+       1.59874599e-21, 4.60177623e-21, 1.32033260e-20, 3.82156610e-20,
+       1.11229008e-19, 3.25834439e-19, 9.67028634e-19, 2.95503896e-18,
+       9.33869547e-18, 3.10659855e-17, 1.05749840e-16, 3.69423661e-16,
+       1.34872139e-15, 5.13565188e-15, 2.04232767e-14, 8.63365084e-14,
+       3.43327854e-13, 1.28423232e-12, 4.57923697e-12, 1.59057619e-11,
+       5.10347442e-11, 1.64273077e-10, 5.55301415e-10, 1.71977731e-09,
+       5.22949765e-09, 1.53765780e-08, 4.21025748e-08, 1.09971006e-07,
+       2.64976516e-07, 5.24889234e-07, 8.31644310e-07, 8.35175668e-07,
+       8.03768843e-07, 7.21413730e-07, 6.48769831e-07, 5.87846824e-07,
+       5.28312668e-07, 4.70112617e-07, 4.13032172e-07, 3.60286451e-07,
+       3.15156514e-07, 2.75839884e-07, 2.38297249e-07, 2.10773257e-07,
+       1.83756507e-07, 1.63781817e-07, 1.40589348e-07, 1.23718996e-07,
+       1.08146613e-07, 9.68641284e-08, 8.64147247e-08, 7.92151500e-08,
+       7.32885780e-08, 6.77065978e-08, 6.26078926e-08, 5.75272593e-08,
+       5.38930992e-08, 5.15259844e-08, 4.91666115e-08])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>H2S</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.0001275 0.0001275 ... 6.636e-05</div><input id='attrs-7e640a25-7e55-4126-b914-4c83464fcf6a' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-7e640a25-7e55-4126-b914-4c83464fcf6a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-a442a4e6-e729-40f9-820a-e4bd13b3cd81' class='xr-var-data-in' type='checkbox'><label for='data-a442a4e6-e729-40f9-820a-e4bd13b3cd81' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([1.27520877e-04, 1.27522107e-04, 1.27522876e-04, 1.27523716e-04,
+       1.27524486e-04, 1.27524525e-04, 1.27524615e-04, 1.27525357e-04,
+       1.27526680e-04, 1.27528138e-04, 1.27527049e-04, 1.27526606e-04,
+       1.27524404e-04, 1.27518629e-04, 1.27514925e-04, 1.27512491e-04,
+       1.27510054e-04, 1.27507689e-04, 1.27505442e-04, 1.27504279e-04,
+       1.27503590e-04, 1.27502786e-04, 1.27501961e-04, 1.27501054e-04,
+       1.27498190e-04, 1.27494551e-04, 1.27490109e-04, 1.27486146e-04,
+       1.27485375e-04, 1.27484976e-04, 1.27483828e-04, 1.27482829e-04,
+       1.27481842e-04, 1.27484275e-04, 1.27492626e-04, 1.27498979e-04,
+       1.27503671e-04, 1.27508298e-04, 1.27520383e-04, 1.27536831e-04,
+       1.27554114e-04, 1.27572316e-04, 1.27594354e-04, 1.27614390e-04,
+       1.27632837e-04, 1.27650568e-04, 1.27659615e-04, 1.27669316e-04,
+       1.27677088e-04, 1.27678135e-04, 1.27676868e-04, 1.27680900e-04,
+       1.27719009e-04, 1.27849246e-04, 1.28141906e-04, 1.29691896e-04,
+       1.31991374e-04, 1.34735728e-04, 1.36326647e-04, 1.36263182e-04,
+       1.36196900e-04, 1.36152542e-04, 1.36103501e-04, 1.36034828e-04,
+       1.35925373e-04, 1.35776359e-04, 1.35410565e-04, 1.35032133e-04,
+       1.33252804e-04, 1.29629952e-04, 1.23413021e-04, 1.19969947e-04,
+       1.16796746e-04, 1.13884632e-04, 1.12429710e-04, 1.10917595e-04,
+       1.09343308e-04, 1.07557456e-04, 1.04781466e-04, 1.01773917e-04,
+       9.86211966e-05, 9.54145604e-05, 9.19625069e-05, 8.86317980e-05,
+       8.55738620e-05, 8.25235376e-05, 7.88419479e-05, 7.52129630e-05,
+       7.19126959e-05, 6.89650860e-05, 6.63630260e-05])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>TiO</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 5.304e-07</div><input id='attrs-036d6ea4-4a29-4d04-a709-0b7926eb34b9' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-036d6ea4-4a29-4d04-a709-0b7926eb34b9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-44a543ef-0761-4e5f-80d3-f8169e6cce7c' class='xr-var-data-in' type='checkbox'><label for='data-44a543ef-0761-4e5f-80d3-f8169e6cce7c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50022329e-38, 4.50165796e-38, 7.90533681e-38,
+       4.40688286e-37, 1.51417593e-35, 1.22237444e-33, 8.10297641e-32,
+       4.45542853e-30, 2.07127687e-28, 8.26213910e-27, 2.86119339e-25,
+       8.32476654e-24, 2.06719046e-22, 4.35044565e-21, 7.90319250e-20,
+       1.24663509e-18, 1.65724145e-17, 1.92674084e-16, 1.95878108e-15,
+       1.77967623e-14, 1.44037979e-13, 1.04440241e-12, 6.84943369e-12,
+       3.96841786e-11, 2.02069663e-10, 8.91279070e-10, 3.58608473e-09,
+       1.32816276e-08, 4.52233168e-08, 1.48292532e-07, 3.69173299e-07,
+       7.12122240e-07, 7.18508803e-07, 7.20741548e-07, 7.19734641e-07,
+       7.15757315e-07, 7.08935885e-07, 6.98309579e-07, 6.84873598e-07,
+       6.69060289e-07, 6.51044767e-07, 6.30486176e-07, 6.07200029e-07,
+       5.82574209e-07, 5.56917953e-07, 5.30425835e-07])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>VO</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 9.211e-09</div><input id='attrs-8ca2ca19-2715-4d13-872d-f232c8006802' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-8ca2ca19-2715-4d13-872d-f232c8006802' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f76a2a15-e540-4683-90c4-89f7c0360e54' class='xr-var-data-in' type='checkbox'><label for='data-f76a2a15-e540-4683-90c4-89f7c0360e54' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 7.64444128e-38, 2.07004112e-36, 7.97566822e-35,
+       5.50845195e-33, 3.13853501e-31, 1.49023269e-29, 5.93652811e-28,
+       2.00162041e-26, 5.79741897e-25, 1.45853345e-23, 3.21555734e-22,
+       6.08974289e-21, 1.00330697e-19, 1.43255009e-18, 1.79687163e-17,
+       1.99113009e-16, 1.91198693e-15, 1.63459732e-14, 1.24427222e-13,
+       8.57377901e-13, 5.34134514e-12, 3.02238011e-11, 1.56578183e-10,
+       7.38965141e-10, 3.18748134e-09, 1.25706678e-08, 2.15928438e-08,
+       3.09150842e-08, 3.35328539e-08, 3.56415638e-08, 3.66360773e-08,
+       3.64805493e-08, 3.51488723e-08, 3.28377090e-08, 3.02086179e-08,
+       2.74569776e-08, 2.47369312e-08, 2.21207881e-08, 1.97467066e-08,
+       1.76255013e-08, 1.57453068e-08, 1.40823324e-08, 1.26124895e-08,
+       1.13280252e-08, 1.02028108e-08, 9.21131220e-09])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Fe</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 0.0002583</div><input id='attrs-e0fbb9c0-4590-4911-b93b-77bd54f12ff7' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-e0fbb9c0-4590-4911-b93b-77bd54f12ff7' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c82184c6-58a0-48b9-94f8-9de1767aea84' class='xr-var-data-in' type='checkbox'><label for='data-c82184c6-58a0-48b9-94f8-9de1767aea84' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.29992046e-37, 3.35477556e-36, 7.97022801e-35,
+       7.26951043e-34, 5.37152623e-33, 4.08349001e-32, 3.31022952e-31,
+       2.88871058e-30, 2.82252902e-29, 2.99725636e-28, 3.37105307e-27,
+       4.18139946e-26, 5.72775887e-25, 8.88882887e-24, 1.58242405e-22,
+       2.47196696e-21, 3.40157626e-20, 4.14978895e-19, 4.50019324e-18,
+       4.35639040e-17, 3.78479480e-16, 2.96060750e-15, 2.08939419e-14,
+       1.33045538e-13, 7.72417027e-13, 4.09409594e-12, 1.98686274e-11,
+       8.89591826e-11, 3.67665483e-10, 1.41453298e-09, 5.06898147e-09,
+       1.70024214e-08, 5.35109861e-08, 1.58339204e-07, 4.42539903e-07,
+       1.16712670e-06, 2.91592464e-06, 6.91437813e-06, 1.51877587e-05,
+       3.16149422e-05, 6.28053655e-05, 1.11882934e-04, 1.83057663e-04,
+       2.71730575e-04, 2.71177976e-04, 2.68967634e-04, 2.70347208e-04,
+       2.69730060e-04, 2.69055818e-04, 2.68285244e-04, 2.67455996e-04,
+       2.66584957e-04, 2.65585555e-04, 2.64279224e-04, 2.62856056e-04,
+       2.61369649e-04, 2.59840357e-04, 2.58284616e-04])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>FeH</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 9.054e-06</div><input id='attrs-e2f00528-716c-4bb3-8e2a-d65600a616b3' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-e2f00528-716c-4bb3-8e2a-d65600a616b3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-912a1c2c-2990-4323-8deb-cb74e6d57232' class='xr-var-data-in' type='checkbox'><label for='data-912a1c2c-2990-4323-8deb-cb74e6d57232' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 1.20253195e-37, 6.44698694e-37,
+       5.57432636e-36, 7.06693346e-35, 9.80093854e-34, 1.44630028e-32,
+       2.37207835e-31, 4.33037004e-30, 9.04882231e-29, 2.19332132e-27,
+       4.62080820e-26, 8.49676564e-25, 1.37283953e-23, 1.95597049e-22,
+       2.46793079e-21, 2.77361398e-20, 2.78672275e-19, 2.50964316e-18,
+       2.02629571e-17, 1.48117835e-16, 9.82829408e-16, 5.94099813e-15,
+       3.29336538e-14, 1.67715285e-13, 7.90690196e-13, 3.45679808e-12,
+       1.40771580e-11, 5.35585624e-11, 1.90796740e-10, 6.39107600e-10,
+       2.01360853e-09, 5.98398918e-09, 1.68148797e-08, 4.36199698e-08,
+       1.06807211e-07, 2.48682389e-07, 5.17649029e-07, 9.85682902e-07,
+       1.69658594e-06, 1.95680598e-06, 2.23438444e-06, 2.57558869e-06,
+       2.93687981e-06, 3.33730016e-06, 3.77722827e-06, 4.26022790e-06,
+       4.79042928e-06, 5.36925349e-06, 5.99293536e-06, 6.66784244e-06,
+       7.39966986e-06, 8.19305314e-06, 9.05398574e-06])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>CrH</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 1.119e-07</div><input id='attrs-d4f9073f-1f54-46a0-9974-0efd853c2a34' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-d4f9073f-1f54-46a0-9974-0efd853c2a34' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e6d157e9-2b52-47ee-8508-24bf3a839af3' class='xr-var-data-in' type='checkbox'><label for='data-e6d157e9-2b52-47ee-8508-24bf3a839af3' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       7.72473251e-38, 1.43671744e-37, 6.66235476e-37, 6.53643066e-36,
+       6.92869965e-35, 8.27180821e-34, 1.07756320e-32, 1.49101747e-31,
+       2.28677902e-30, 3.89359713e-29, 7.55944618e-28, 1.69620268e-26,
+       3.31779788e-25, 5.68193576e-24, 8.57620964e-23, 1.14508014e-21,
+       1.35865711e-20, 1.44068719e-19, 1.37030311e-18, 1.17280102e-17,
+       6.07650967e-17, 2.57404358e-16, 1.38533448e-15, 1.01685721e-14,
+       6.65969828e-14, 3.80361698e-13, 1.97475948e-12, 9.17694373e-12,
+       3.91203151e-11, 1.52849360e-10, 5.51007988e-10, 1.85356455e-09,
+       4.06507064e-09, 7.33059590e-09, 8.99538099e-09, 1.08453598e-08,
+       1.28313620e-08, 1.50756835e-08, 1.75957307e-08, 2.04165785e-08,
+       2.35642446e-08, 2.70667077e-08, 3.09079366e-08, 3.51262084e-08,
+       3.97494361e-08, 4.48026600e-08, 5.02680659e-08, 5.61886224e-08,
+       6.26053241e-08, 6.95242302e-08, 7.68829035e-08, 8.47415027e-08,
+       9.31664854e-08, 1.02199142e-07, 1.11896764e-07])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Na</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 1.667e-05</div><input id='attrs-1e12191c-4978-465c-b6da-a765a3a0dc8a' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-1e12191c-4978-465c-b6da-a765a3a0dc8a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-30778e63-d34a-4301-8bb5-536d4c28f440' class='xr-var-data-in' type='checkbox'><label for='data-30778e63-d34a-4301-8bb5-536d4c28f440' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.14106509e-35, 3.63051193e-28, 1.20996607e-20,
+       1.05445039e-18, 3.80919484e-18, 1.40078642e-17, 5.37172592e-17,
+       2.16075618e-16, 9.36268743e-16, 4.27905949e-15, 2.02838966e-14,
+       1.02459919e-13, 5.52370586e-13, 3.22343757e-12, 2.05743031e-11,
+       1.20154015e-10, 6.44022681e-10, 3.18430390e-09, 1.45388028e-08,
+       6.15255163e-08, 2.42207831e-07, 8.88817043e-07, 3.03175127e-06,
+       6.15081146e-06, 1.16119524e-05, 1.72702875e-05, 1.72970599e-05,
+       1.73317579e-05, 1.73768054e-05, 1.74391311e-05, 1.75472353e-05,
+       1.76734981e-05, 1.78306752e-05, 1.79837912e-05, 1.81379201e-05,
+       1.82478925e-05, 1.83360756e-05, 1.83920535e-05, 1.84191664e-05,
+       1.84344484e-05, 1.84366143e-05, 1.84279021e-05, 1.84132951e-05,
+       1.83927185e-05, 1.83665477e-05, 1.83203565e-05, 1.82657098e-05,
+       1.82023954e-05, 1.81307476e-05, 1.80429354e-05, 1.79433165e-05,
+       1.78347365e-05, 1.77088593e-05, 1.75403231e-05, 1.73434341e-05,
+       1.71304024e-05, 1.69047212e-05, 1.66693019e-05])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>K</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 6.615e-07</div><input id='attrs-480daaf6-cd59-4776-a50b-da512c88c9d5' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-480daaf6-cd59-4776-a50b-da512c88c9d5' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4e316d66-78da-4302-adad-aecef5df4bf2' class='xr-var-data-in' type='checkbox'><label for='data-4e316d66-78da-4302-adad-aecef5df4bf2' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.20760995e-36, 3.23334940e-32, 7.97909299e-28,
+       3.01114998e-26, 2.33717931e-25, 1.91463076e-24, 1.70096617e-23,
+       1.69147726e-22, 1.92513603e-21, 2.55406630e-20, 3.75913212e-19,
+       6.39106541e-18, 1.22395166e-16, 2.89905336e-15, 8.09931990e-14,
+       1.97712851e-12, 3.67295710e-11, 5.41129871e-10, 3.19769838e-09,
+       1.45642680e-08, 5.20096122e-08, 1.50679478e-07, 3.18853189e-07,
+       4.62965254e-07, 6.21976701e-07, 7.61450999e-07, 7.90603509e-07,
+       8.20746711e-07, 8.47266709e-07, 8.76265958e-07, 9.12478244e-07,
+       9.52271836e-07, 9.97734090e-07, 1.04103110e-06, 1.08446654e-06,
+       1.11522668e-06, 1.14041119e-06, 1.15654996e-06, 1.16459528e-06,
+       1.16904023e-06, 1.16947346e-06, 1.16540725e-06, 1.15868787e-06,
+       1.14948031e-06, 1.13741525e-06, 1.11694002e-06, 1.09276422e-06,
+       1.06523580e-06, 1.03493120e-06, 9.99224920e-07, 9.61599850e-07,
+       9.24040754e-07, 8.84722321e-07, 8.37954526e-07, 7.89680609e-07,
+       7.43871816e-07, 7.01120073e-07, 6.61495503e-07])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Rb</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 9.73e-10</div><input id='attrs-2cfcff1b-5918-46b8-95ad-ae1c5ea2ae43' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-2cfcff1b-5918-46b8-95ad-ae1c5ea2ae43' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c900c9f7-43b0-4690-b34e-51fb81431cad' class='xr-var-data-in' type='checkbox'><label for='data-c900c9f7-43b0-4690-b34e-51fb81431cad' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.53352110e-36, 8.68213152e-32, 4.56176675e-27,
+       1.92536064e-25, 1.42292652e-24, 1.10915243e-23, 9.36203082e-23,
+       8.83002199e-22, 9.50706477e-21, 1.19082898e-19, 1.23893839e-18,
+       1.26465969e-17, 1.37831623e-16, 8.40663133e-16, 5.65268682e-15,
+       3.55986002e-14, 2.07175931e-13, 1.11206315e-12, 5.43466003e-12,
+       2.31137754e-11, 8.37711215e-11, 2.48465851e-10, 5.46843597e-10,
+       8.13794071e-10, 1.11923939e-09, 1.39063434e-09, 1.44407943e-09,
+       1.49988205e-09, 1.55250768e-09, 1.61103704e-09, 1.68607369e-09,
+       1.76911543e-09, 1.86528818e-09, 1.95765345e-09, 2.05108056e-09,
+       2.11686970e-09, 2.17023680e-09, 2.20308836e-09, 2.21566306e-09,
+       2.21891138e-09, 2.21199944e-09, 2.19051358e-09, 2.16127376e-09,
+       2.12517440e-09, 2.08103637e-09, 2.01316236e-09, 1.93722958e-09,
+       1.85533393e-09, 1.76976680e-09, 1.67545033e-09, 1.58181359e-09,
+       1.49260298e-09, 1.40333977e-09, 1.30405403e-09, 1.20800595e-09,
+       1.12102257e-09, 1.04299457e-09, 9.73010655e-10])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Cs</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 2.647e-11</div><input id='attrs-3f70bb31-0aae-478f-8938-97400c7d80e8' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-3f70bb31-0aae-478f-8938-97400c7d80e8' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-366a61af-d31b-4579-b012-28a604d0776b' class='xr-var-data-in' type='checkbox'><label for='data-366a61af-d31b-4579-b012-28a604d0776b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.40247193e-36, 6.00121451e-32, 2.37702951e-27,
+       9.58099010e-26, 7.17363526e-25, 4.60497281e-24, 2.98030787e-23,
+       1.47768472e-22, 6.44731132e-22, 2.91197131e-21, 1.41931464e-20,
+       7.63076061e-20, 4.40699932e-19, 2.97499611e-18, 2.21970530e-17,
+       1.54694769e-16, 9.92159102e-16, 5.84711475e-15, 3.13096794e-14,
+       1.46679861e-13, 5.94348389e-13, 2.02368496e-12, 5.63682967e-12,
+       1.04249726e-11, 1.79230692e-11, 2.62426616e-11, 2.95653985e-11,
+       3.32490839e-11, 3.71013773e-11, 4.15592802e-11, 4.73294921e-11,
+       5.42068215e-11, 6.27587236e-11, 7.18918277e-11, 8.19712276e-11,
+       8.97495362e-11, 9.63469995e-11, 1.00434923e-10, 1.01581198e-10,
+       1.01432353e-10, 9.99130942e-11, 9.65275665e-11, 9.25251798e-11,
+       8.80871660e-11, 8.31517463e-11, 7.67449373e-11, 7.05207436e-11,
+       6.46042215e-11, 5.90823361e-11, 5.37922920e-11, 4.90577270e-11,
+       4.48876950e-11, 4.10448261e-11, 3.72511963e-11, 3.38995742e-11,
+       3.10387492e-11, 2.85894792e-11, 2.64718958e-11])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>CO2</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>3.899e-06 3.899e-06 ... 8.38e-07</div><input id='attrs-8b9305d3-21dd-4488-9f93-a2ca0a91778a' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-8b9305d3-21dd-4488-9f93-a2ca0a91778a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-a9b2d321-6305-4802-ae9d-a7d9c6bc7016' class='xr-var-data-in' type='checkbox'><label for='data-a9b2d321-6305-4802-ae9d-a7d9c6bc7016' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.89916530e-06, 3.89916530e-06, 3.89916530e-06, 3.89916530e-06,
+       3.50177530e-06, 3.07053836e-06, 2.72118787e-06, 2.43134899e-06,
+       2.18598080e-06, 1.97723740e-06, 1.80162345e-06, 1.65040122e-06,
+       1.53512017e-06, 1.45790354e-06, 1.42367822e-06, 1.42078576e-06,
+       1.42817173e-06, 1.46450147e-06, 1.40181553e-06, 1.33746109e-06,
+       1.27420292e-06, 1.21793125e-06, 1.16799367e-06, 1.12349290e-06,
+       1.08355987e-06, 1.04756916e-06, 1.01526002e-06, 9.86050772e-07,
+       9.59477639e-07, 9.35168658e-07, 9.12713741e-07, 8.91905726e-07,
+       8.72612504e-07, 8.54683129e-07, 8.37955823e-07])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>HCN</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>3.944e-08 3.944e-08 ... 3.358e-07</div><input id='attrs-5a4dbab2-4aa1-4209-a61c-3b5f984f278e' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-5a4dbab2-4aa1-4209-a61c-3b5f984f278e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0ab1fe59-dc67-4132-a3bd-277b35571b00' class='xr-var-data-in' type='checkbox'><label for='data-0ab1fe59-dc67-4132-a3bd-277b35571b00' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 3.94400725e-08, 3.94400725e-08, 3.94400725e-08,
+       3.94400725e-08, 4.20124440e-08, 4.38549588e-08, 4.51987982e-08,
+       4.66107932e-08, 4.74351142e-08, 5.22237082e-08, 5.80870067e-08,
+       6.51179325e-08, 7.32308612e-08, 8.23806838e-08, 9.27954301e-08,
+       1.04634593e-07, 1.18090665e-07, 1.33196891e-07, 1.50259815e-07,
+       1.69656330e-07, 1.91427776e-07, 2.14707838e-07, 2.40106859e-07,
+       2.68375485e-07, 3.00045444e-07, 3.35754980e-07])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>C2H2</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 8.27e-09</div><input id='attrs-282905d3-940a-4999-b79c-a4c198af4bc5' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-282905d3-940a-4999-b79c-a4c198af4bc5' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-699dd7ec-25e2-4294-bffa-ef8a52ec68de' class='xr-var-data-in' type='checkbox'><label for='data-699dd7ec-25e2-4294-bffa-ef8a52ec68de' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.83016163e-37, 7.08199232e-34, 8.86421110e-31,
+       1.41346371e-29, 7.93352114e-29, 4.59151904e-28, 2.83099572e-27,
+       1.87940385e-26, 1.39164817e-25, 1.12308082e-24, 9.62914491e-24,
+       9.10592513e-23, 9.48729633e-22, 1.12789295e-20, 1.53534644e-19,
+       1.86193950e-18, 2.00201603e-17, 1.91751359e-16, 1.61643656e-15,
+       1.18779171e-14, 7.27334003e-14, 3.53005595e-13, 1.18967640e-12,
+       2.80623785e-12, 6.63585098e-12, 1.37006322e-11, 2.22431675e-11,
+       3.56790553e-11, 4.48366548e-11, 5.45010922e-11, 6.35434598e-11,
+       7.57916200e-11, 8.88958641e-11, 1.04002577e-10, 1.21736720e-10,
+       1.39851291e-10, 1.56036751e-10, 1.67150353e-10, 1.74379964e-10,
+       1.82041411e-10, 1.85077653e-10, 2.18991797e-10, 2.64341234e-10,
+       3.23960006e-10, 3.99044682e-10, 4.93624587e-10, 6.13612204e-10,
+       7.66004386e-10, 9.59971148e-10, 1.20756424e-09, 1.52429500e-09,
+       1.93041362e-09, 2.45035802e-09, 3.11184838e-09, 3.95997243e-09,
+       5.05072882e-09, 6.45626302e-09, 8.27004223e-09])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>C2H4</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 3.603e-11</div><input id='attrs-1ae1e183-979c-43cf-a6e6-accb4706aaa7' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-1ae1e183-979c-43cf-a6e6-accb4706aaa7' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4edd7e34-8afb-400a-92d4-edda1b32beaf' class='xr-var-data-in' type='checkbox'><label for='data-4edd7e34-8afb-400a-92d4-edda1b32beaf' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.02815984e-35, 2.35997678e-28, 5.65733351e-21,
+       3.48578707e-19, 8.84861560e-19, 2.28357795e-18, 6.09660286e-18,
+       1.69352590e-17, 4.98764072e-17, 1.53857472e-16, 4.90368916e-16,
+       1.64738287e-15, 5.82945146e-15, 2.21504889e-14, 9.04927093e-14,
+       3.47578083e-13, 1.24821527e-12, 4.20410169e-12, 1.30834719e-11,
+       3.72431661e-11, 9.25267576e-11, 1.90544715e-10, 2.84462854e-10,
+       3.09670042e-10, 3.51967421e-10, 3.63055929e-10, 3.05480323e-10,
+       2.63297324e-10, 1.83942964e-10, 1.28447429e-10, 8.88068881e-11,
+       6.47416540e-11, 4.77696583e-11, 3.61551825e-11, 2.81084965e-11,
+       2.20024881e-11, 1.71439378e-11, 1.31272872e-11, 1.00103872e-11,
+       7.81285009e-12, 6.06402386e-12, 5.58872392e-12, 5.36927619e-12,
+       5.34088646e-12, 5.43552218e-12, 5.66249228e-12, 6.03672645e-12,
+       6.56774647e-12, 7.28097770e-12, 8.23125165e-12, 9.46929477e-12,
+       1.10668224e-11, 1.31123568e-11, 1.57018723e-11, 1.90190506e-11,
+       2.32982511e-11, 2.88405638e-11, 3.60267073e-11])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>C2H6</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 3.58e-14</div><input id='attrs-e487f9ae-c0cb-4303-a13d-0cdcc5b235ea' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-e487f9ae-c0cb-4303-a13d-0cdcc5b235ea' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ad011efd-9d3e-4d19-8185-ddc97f227725' class='xr-var-data-in' type='checkbox'><label for='data-ad011efd-9d3e-4d19-8185-ddc97f227725' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 5.93340357e-35, 3.56603117e-25, 2.63710558e-15,
+       3.26292971e-13, 4.63784202e-13, 6.63045686e-13, 9.58798372e-13,
+       1.40526292e-12, 2.10008997e-12, 3.18921806e-12, 4.89874745e-12,
+       7.66059220e-12, 1.21902167e-11, 1.98890896e-11, 3.32444303e-11,
+       5.44762605e-11, 8.69736025e-11, 1.35527835e-10, 2.02657326e-10,
+       2.87718600e-10, 3.69516482e-10, 4.07289767e-10, 3.36505647e-10,
+       2.09305862e-10, 1.40249086e-10, 8.78815938e-11, 4.62186248e-11,
+       2.56036509e-11, 1.18051557e-11, 5.57997981e-12, 2.67681759e-12,
+       1.38608568e-12, 7.42904319e-13, 4.17435615e-13, 2.45873958e-13,
+       1.48775371e-13, 9.13233420e-14, 5.60896031e-14, 3.49131646e-14,
+       2.26338103e-14, 1.48303111e-14, 1.17216155e-14, 9.81970472e-15,
+       8.64693050e-15, 7.89881687e-15, 7.49532680e-15, 7.38043691e-15,
+       7.50830354e-15, 7.87253130e-15, 8.51970944e-15, 9.48314090e-15,
+       1.08261191e-14, 1.26386426e-14, 1.50260176e-14, 1.81980676e-14,
+       2.24420433e-14, 2.81419980e-14, 3.58017273e-14])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>SiO</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 0.0002988</div><input id='attrs-8d4456ff-fc2f-4a72-ad3d-e38f21363292' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-8d4456ff-fc2f-4a72-ad3d-e38f21363292' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-754072e5-d732-4391-ac55-44e7a259b166' class='xr-var-data-in' type='checkbox'><label for='data-754072e5-d732-4391-ac55-44e7a259b166' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       6.81963573e-38, 1.16456287e-37, 3.05186959e-36, 8.98238737e-35,
+       3.01925745e-33, 1.16223839e-31, 5.28659275e-30, 2.89950227e-28,
+       1.32491910e-26, 5.08459673e-25, 1.65420618e-23, 4.59972323e-22,
+       1.10380251e-20, 2.31821876e-19, 4.29725446e-18, 7.24097585e-17,
+       1.05847310e-15, 1.36299591e-14, 1.52892377e-13, 1.52608111e-12,
+       1.35824439e-11, 1.03285620e-10, 7.01722675e-10, 4.24864319e-09,
+       2.35951416e-08, 1.19439917e-07, 5.54407773e-07, 2.37728324e-06,
+       9.33718039e-06, 3.30832558e-05, 1.05304609e-04, 1.63051504e-04,
+       2.26459973e-04, 2.92684535e-04, 3.02984331e-04, 3.07527865e-04,
+       3.08102885e-04, 3.08645647e-04, 3.09138968e-04, 3.09532698e-04,
+       3.09817595e-04, 3.09980186e-04, 3.09935332e-04, 3.09697703e-04,
+       3.09273465e-04, 3.08611867e-04, 3.07515922e-04, 3.05956448e-04,
+       3.04001990e-04, 3.01630657e-04, 2.98813823e-04])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>MgH</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 6.399e-06</div><input id='attrs-dc96ae9b-3f31-4655-8513-02b078be380f' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-dc96ae9b-3f31-4655-8513-02b078be380f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b85b4dde-af6e-4c94-8ed5-0e4e13e4d261' class='xr-var-data-in' type='checkbox'><label for='data-b85b4dde-af6e-4c94-8ed5-0e4e13e4d261' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50035304e-38, 4.50145972e-38, 4.50257686e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50280000e-38,
+       4.50280000e-38, 4.50280000e-38, 4.50280000e-38, 4.50279590e-38,
+       4.50279575e-38, 6.70234267e-38, 8.14756122e-37, 1.78713920e-35,
+       1.17220526e-33, 6.39234793e-32, 2.92459457e-30, 1.13386790e-28,
+       3.76001659e-27, 1.09269721e-25, 2.84185181e-24, 6.64929080e-23,
+       1.33438997e-21, 2.33317274e-20, 3.51616430e-19, 4.66763524e-18,
+       5.48316105e-17, 5.47931618e-16, 4.86156665e-15, 3.83590007e-14,
+       2.75053405e-13, 1.78151899e-12, 1.04836055e-11, 5.65272819e-11,
+       2.76568367e-10, 1.23659064e-09, 5.04163140e-09, 2.58027991e-08,
+       9.59959591e-08, 2.65786100e-07, 3.64688054e-07, 4.72257729e-07,
+       5.91263775e-07, 7.34554014e-07, 9.04283844e-07, 1.10389464e-06,
+       1.33745540e-06, 1.60906869e-06, 1.92067783e-06, 2.27705282e-06,
+       2.68346814e-06, 3.14398195e-06, 3.65962730e-06, 4.23611812e-06,
+       4.88028770e-06, 5.59854995e-06, 6.39948481e-06])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>OCS</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.032e-25 1.018e-25 ... 8.842e-09</div><input id='attrs-60c6c75e-64cc-4b77-8593-3a6e0d25e4e2' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-60c6c75e-64cc-4b77-8593-3a6e0d25e4e2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-04e1b31c-224d-4dae-b556-efb425189028' class='xr-var-data-in' type='checkbox'><label for='data-04e1b31c-224d-4dae-b556-efb425189028' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([1.03215698e-25, 1.01837724e-25, 1.11339996e-25, 1.31017462e-25,
+       1.62807433e-25, 2.12924890e-25, 2.92109466e-25, 4.20244554e-25,
+       6.32944605e-25, 9.99822967e-25, 1.65962875e-24, 2.87804263e-24,
+       5.18819688e-24, 9.68056841e-24, 1.86472085e-23, 3.65849198e-23,
+       7.18147015e-23, 1.39451908e-22, 2.65976646e-22, 4.94702363e-22,
+       8.98195093e-22, 1.61509663e-21, 2.91689525e-21, 5.35580610e-21,
+       1.01065289e-20, 1.94872951e-20, 3.84646767e-20, 7.77942327e-20,
+       1.60955897e-19, 3.36774165e-19, 7.07265716e-19, 1.48887177e-18,
+       3.12278591e-18, 6.53309811e-18, 1.37236324e-17, 2.91005757e-17,
+       6.28636291e-17, 1.37210120e-16, 3.04859970e-16, 7.01286235e-16,
+       1.68083669e-15, 4.27405825e-15, 1.14103858e-14, 3.15370794e-14,
+       9.20344321e-14, 2.83156798e-13, 9.39710135e-13, 3.35961778e-12,
+       1.13304057e-11, 3.58657645e-11, 1.06748461e-10, 2.95918393e-10,
+       7.57647438e-10, 1.72936552e-09, 3.39389450e-09, 5.35908636e-09,
+       7.18706874e-09, 9.67965511e-09, 1.22619522e-08, 1.36006363e-08,
+       1.50048730e-08, 1.53310507e-08, 1.55490507e-08, 1.56059584e-08,
+       1.57314088e-08, 1.57733771e-08, 1.57776542e-08, 1.57666003e-08,
+       1.55842458e-08, 1.51796857e-08, 1.44764480e-08, 1.41136135e-08,
+       1.37889235e-08, 1.34989344e-08, 1.33853304e-08, 1.32668824e-08,
+       1.31434445e-08, 1.29988407e-08, 1.27357100e-08, 1.24458078e-08,
+       1.21377372e-08, 1.18210696e-08, 1.14753339e-08, 1.11412089e-08,
+       1.08374891e-08, 1.05310923e-08, 1.01423748e-08, 9.75863200e-09,
+       9.41235293e-09, 9.10689231e-09, 8.84202750e-09])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Li</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 1.379e-08</div><input id='attrs-b2627d07-5dfe-4a29-9e7a-e5a267bf3bb2' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-b2627d07-5dfe-4a29-9e7a-e5a267bf3bb2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-6c65d9fa-34b8-4572-b6e1-62caacd977e1' class='xr-var-data-in' type='checkbox'><label for='data-6c65d9fa-34b8-4572-b6e1-62caacd977e1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.81597560e-37, 1.28773155e-35, 8.01990806e-34,
+       1.18929678e-32, 1.28208026e-31, 1.42956892e-30, 1.72200316e-29,
+       2.26605814e-28, 3.41718622e-27, 5.69290017e-26, 1.01567912e-24,
+       2.03800713e-23, 4.60834268e-22, 1.20906810e-20, 3.73922426e-19,
+       9.85177114e-18, 2.15135713e-16, 3.80114956e-15, 3.70933727e-14,
+       2.43893187e-13, 1.14755054e-12, 3.82226516e-12, 1.09782226e-11,
+       2.57797230e-11, 5.68327044e-11, 1.10732293e-10, 1.86325308e-10,
+       3.03424288e-10, 4.50810430e-10, 6.56765372e-10, 9.41222032e-10,
+       1.35632949e-09, 1.96054111e-09, 2.81538305e-09, 3.99526572e-09,
+       5.39533577e-09, 6.96692966e-09, 8.48227805e-09, 9.68738541e-09,
+       1.07537924e-08, 1.15649937e-08, 1.22969395e-08, 1.29346307e-08,
+       1.34687395e-08, 1.38812602e-08, 1.40908235e-08, 1.42530242e-08,
+       1.43744089e-08, 1.44611112e-08, 1.45035967e-08, 1.45240358e-08,
+       1.45273438e-08, 1.44876070e-08, 1.43663458e-08, 1.42295790e-08,
+       1.40880099e-08, 1.39421995e-08, 1.37932363e-08])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>LiOH</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 6.427e-10</div><input id='attrs-77068564-f45c-4d79-bad0-063d76f06fa6' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-77068564-f45c-4d79-bad0-063d76f06fa6' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-97550b23-7fe8-45c2-a639-f226ce808be3' class='xr-var-data-in' type='checkbox'><label for='data-97550b23-7fe8-45c2-a639-f226ce808be3' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 2.98555124e-36, 1.42136065e-30, 6.81911373e-25,
+       3.55087835e-23, 1.94652834e-22, 1.09336061e-21, 6.48993708e-21,
+       4.10426110e-20, 2.86053400e-19, 2.14149074e-18, 1.68427402e-17,
+       1.44095511e-16, 1.34257284e-15, 1.39203320e-14, 1.62278539e-13,
+       1.68771912e-12, 1.51827671e-11, 1.15099121e-10, 4.98945989e-10,
+       1.50226162e-09, 3.28728380e-09, 5.10545756e-09, 6.78503835e-09,
+       7.70751791e-09, 8.51155064e-09, 8.71987900e-09, 7.95690143e-09,
+       7.25312248e-09, 6.49564489e-09, 5.92151304e-09, 5.51383663e-09,
+       5.26309515e-09, 5.18269854e-09, 5.19601591e-09, 5.26003324e-09,
+       5.22537978e-09, 5.14229306e-09, 4.96996931e-09, 4.65972499e-09,
+       4.33074130e-09, 4.02433984e-09, 3.48948788e-09, 3.01979430e-09,
+       2.61176720e-09, 2.26548884e-09, 1.96338382e-09, 1.71826005e-09,
+       1.51705258e-09, 1.35078905e-09, 1.21316668e-09, 1.09897882e-09,
+       1.00347889e-09, 9.21359579e-10, 8.47715045e-10, 7.84414145e-10,
+       7.30189428e-10, 6.83455398e-10, 6.42718179e-10])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>LiH</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 2.753e-09</div><input id='attrs-83ac623a-1dd8-4cfd-85dd-f5e4518f54e7' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-83ac623a-1dd8-4cfd-85dd-f5e4518f54e7' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-93d20db7-0fa7-420a-aecb-cc8225bd4185' class='xr-var-data-in' type='checkbox'><label for='data-93d20db7-0fa7-420a-aecb-cc8225bd4185' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.53967565e-37, 6.75418588e-36, 2.74090855e-34,
+       3.64809928e-33, 3.78886625e-32, 4.06312599e-31, 4.69077421e-30,
+       5.89272030e-29, 8.43311377e-28, 1.32695256e-26, 2.22881569e-25,
+       4.18824873e-24, 8.82288892e-23, 2.14126387e-21, 6.08107671e-20,
+       1.48051939e-18, 3.00617036e-17, 4.96858214e-16, 4.56179363e-15,
+       2.83816281e-14, 1.27055923e-13, 4.04809332e-13, 1.11799292e-12,
+       2.53666868e-12, 5.42903378e-12, 1.03164615e-11, 1.70046512e-11,
+       2.72410192e-11, 3.99768111e-11, 5.77462973e-11, 8.23661900e-11,
+       1.18551431e-10, 1.71746859e-10, 2.48000916e-10, 3.54965468e-10,
+       4.84965099e-10, 6.35341514e-10, 7.86889065e-10, 9.16574510e-10,
+       1.04040334e-09, 1.14682694e-09, 1.25294061e-09, 1.35745799e-09,
+       1.45916520e-09, 1.55562510e-09, 1.63671987e-09, 1.71939885e-09,
+       1.80399708e-09, 1.89107185e-09, 1.97942428e-09, 2.07158009e-09,
+       2.16839002e-09, 2.26565685e-09, 2.35543111e-09, 2.44780767e-09,
+       2.54470375e-09, 2.64644205e-09, 2.75332491e-09])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>LiCl</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 8.207e-12</div><input id='attrs-2476e9f5-efe9-4b02-bdc8-c141895ef052' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-2476e9f5-efe9-4b02-bdc8-c141895ef052' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-26138bc5-b04d-4843-8b3a-d000cd6bac33' class='xr-var-data-in' type='checkbox'><label for='data-26138bc5-b04d-4843-8b3a-d000cd6bac33' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 2.96465989e-35, 1.88837852e-26, 1.30352842e-17,
+       1.73349163e-15, 4.98407005e-15, 1.41883634e-14, 4.12571186e-14,
+       1.20461347e-13, 3.68307567e-13, 1.10098041e-12, 3.24468315e-12,
+       9.66741600e-12, 2.99609044e-11, 9.11496784e-11, 2.92241953e-10,
+       8.63666605e-10, 2.32219301e-09, 5.55127886e-09, 8.13026954e-09,
+       9.20805254e-09, 8.63116834e-09, 6.78449548e-09, 5.42009510e-09,
+       5.32392337e-09, 5.25650506e-09, 5.59288452e-09, 7.08195930e-09,
+       8.70975449e-09, 9.70699000e-09, 1.05029609e-08, 1.07457101e-08,
+       1.07181549e-08, 1.02532949e-08, 9.22883388e-09, 8.14600203e-09,
+       6.41491985e-09, 4.87632900e-09, 3.47791480e-09, 2.33640665e-09,
+       1.55948799e-09, 1.02739180e-09, 6.84037305e-10, 4.62972074e-10,
+       3.17938260e-10, 2.21016739e-10, 1.55067408e-10, 1.11140383e-10,
+       8.11868840e-11, 6.03849362e-11, 4.57632227e-11, 3.53098707e-11,
+       2.76909194e-11, 2.20011540e-11, 1.76392499e-11, 1.43188390e-11,
+       1.17675577e-11, 9.78047215e-12, 8.20721424e-12])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>LiF</span></div><div class='xr-var-dims'>(pressure)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.5e-38 4.5e-38 ... 3.971e-13</div><input id='attrs-711b5aae-7e22-4357-9cc7-15b0ec23efdf' class='xr-var-attrs-in' type='checkbox' ><label for='attrs-711b5aae-7e22-4357-9cc7-15b0ec23efdf' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-15650902-071f-4ba0-88b6-8f9d79e4c380' class='xr-var-data-in' type='checkbox'><label for='data-15650902-071f-4ba0-88b6-8f9d79e4c380' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'><dt><span>units :</span></dt><dd>Kelvin</dd></dl></div><div class='xr-var-data'><pre>array([4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 4.50000000e-38, 4.50000000e-38, 4.50000000e-38,
+       4.50000000e-38, 1.00152672e-35, 2.11727608e-28, 4.67097094e-21,
+       3.71996747e-19, 1.33092616e-18, 4.84778582e-18, 1.84113211e-17,
+       7.33368808e-17, 3.14559491e-16, 1.42303343e-15, 6.67664476e-15,
+       3.33730447e-14, 1.77970905e-13, 1.02698591e-12, 6.47827035e-12,
+       3.74078873e-11, 1.94088511e-10, 8.69335576e-10, 2.28926243e-09,
+       4.24197480e-09, 5.88750676e-09, 6.10522839e-09, 5.66358914e-09,
+       4.66187648e-09, 3.78457562e-09, 2.88300650e-09, 2.03868188e-09,
+       1.45104531e-09, 9.67891244e-10, 6.57547602e-10, 4.54435517e-10,
+       3.27282642e-10, 2.44442647e-10, 1.87458430e-10, 1.46600830e-10,
+       1.12429394e-10, 8.49205637e-11, 6.21821942e-11, 4.38688311e-11,
+       3.09085986e-11, 2.16342270e-11, 1.53292315e-11, 1.10275896e-11,
+       8.04051582e-12, 5.92828935e-12, 4.40660937e-12, 3.33743155e-12,
+       2.57031076e-12, 2.01106888e-12, 1.59983165e-12, 1.29288714e-12,
+       1.05973783e-12, 8.78443461e-13, 7.33920352e-13, 6.20045939e-13,
+       5.29525021e-13, 4.56677996e-13, 3.97133022e-13])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-493a3bee-1606-4051-a78b-75924db8d92a' class='xr-section-summary-in' type='checkbox' checked /><label for='section-493a3bee-1606-4051-a78b-75924db8d92a' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(5)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>author :</span></dt><dd>Batalha,Mukherjee</dd><dt><span>contact :</span></dt><dd>natasha.e.batalha@nasa.gov</dd><dt><span>code :</span></dt><dd>{&quot;spectra&quot;: &quot;PICASO&quot;, &quot;chemistry&quot;: &quot;visccher&quot;}</dd><dt><span>doi :</span></dt><dd>ELF OWL Paper</dd><dt><span>planet_params :</span></dt><dd>{&quot;logg&quot;: {&quot;value&quot;: 56.0, &quot;unit&quot;: &quot;m / s2&quot;}, &quot;teff&quot;: {&quot;value&quot;: 950.0, &quot;unit&quot;: &quot;K&quot;}, &quot;mh&quot;: 0.7, &quot;cto&quot;: 1.0, &quot;logkzz&quot;: 9.0, &quot;PH3&quot;: &quot;chemeq&quot;}</dd></dl></div></li></ul></div></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+<span class="n">tint</span><span class="o">=</span> <span class="mi">950</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">56</span> <span class="c1"># Gravity of your Planet in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">tint</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span>
+</pre></div>
+</div>
+</div>
+<p>In this case, let’s start with an Elf Owl profile since that’s the model we want to reproduce here</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure</span><span class="p">,</span><span class="n">temp_guess</span> <span class="o">=</span> <span class="n">elf</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">elf</span><span class="o">.</span><span class="n">data_vars</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">70</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<p><strong>New code parameter</strong>:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">quench</span></code>: This makes sure the do quench chemistry for disequilibrium runs. Default = False. This parameter should be included in the atmosphere function</p></li>
+</ol>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure</span><span class="p">,</span>
+                        <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+
+<span class="n">mh</span><span class="o">=</span><span class="mi">10</span><span class="o">**</span><span class="nb">eval</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;planet_params&#39;</span><span class="p">])[</span><span class="s1">&#39;mh&#39;</span><span class="p">]</span><span class="c1">#NOT LOG</span>
+<span class="n">cto_relative</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;planet_params&#39;</span><span class="p">])[</span><span class="s1">&#39;cto&#39;</span><span class="p">]</span> <span class="c1">#relative to solar</span>
+
+<span class="c1">#now that we are not using preweighted ck tables we need to tell picaso how to compute chemistry on the fly</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">mh</span><span class="o">=</span><span class="n">mh</span><span class="p">,</span> <span class="n">cto_relative</span><span class="o">=</span><span class="n">cto_relative</span><span class="p">,</span> <span class="n">chem_method</span><span class="o">=</span><span class="s1">&#39;visscher&#39;</span><span class="p">,</span> <span class="n">quench</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Setting-K_{zz}">
+<h2>Setting K<span class="math notranslate nohighlight">\(_{zz}\)</span><a class="headerlink" href="#Setting-K_{zz}" title="Link to this heading"></a></h2>
+<p>We will add one more concept which is the addition of K<span class="math notranslate nohighlight">\(_{zz}\)</span> [cm<span class="math notranslate nohighlight">\(^2\)</span>/s]. K<span class="math notranslate nohighlight">\(_{zz}\)</span> is the eddy diffusion constant, which sets the strength of vertical mixing. In <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> we have two options for K<span class="math notranslate nohighlight">\(_{zz}\)</span>:</p>
+<ol class="arabic simple">
+<li><p>Constant value: sets a constant at every atmospheric layer</p></li>
+<li><p>Self consistent (see Eqn. 27 and 28 in <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract">Mukherjee et al 2022</a>)</p></li>
+</ol>
+<p><strong>New code parameters</strong>:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">diseq_chem=True</span></code> : Turns on disequilibrium chemistry</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span></code> : (True/False) This solves self consistently for</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_all_kzz</span></code> : (True/False) Similar to <code class="docutils literal notranslate"><span class="pre">save_all_profiles</span></code> this saves your intermediate k_zz values if you are trying to solve for a <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kz</span></code> : constant value if <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz=False</span></code></p></li>
+</ol>
+<p><strong>Which of those 4 do I need change change</strong></p>
+<p>Likely you will only be changing <code class="docutils literal notranslate"><span class="pre">kz</span></code> and/or, for example, playing around with a <code class="docutils literal notranslate"><span class="pre">self_consistent_kzz</span></code> vs a <code class="docutils literal notranslate"><span class="pre">constant</span> <span class="pre">profile</span></code>. Unless you are certain, we recommend the following set of <code class="docutils literal notranslate"><span class="pre">gases_fly</span></code> to remain unchanged.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#following elf-owl lets use a constant value for all pressures</span>
+<span class="n">kzval</span> <span class="o">=</span> <span class="n">pressure</span><span class="o">*</span><span class="mi">0</span><span class="o">+</span><span class="mi">10</span><span class="o">**</span><span class="nb">eval</span><span class="p">(</span><span class="n">elf</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;planet_params&#39;</span><span class="p">])[</span><span class="s1">&#39;logkzz&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">kzval</span><span class="c1">#cm2/s</span>
+
+<span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">save_all_kzz</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">self_consistent_kzz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">diseq_chem</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench True
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Kzz for chem: [1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09 1.e+09
+ 1.e+09]
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  311.7888929819371 3339.924348469608 , flux balance  0.024581614358263067
+Iteration number  1 , min , max temp  317.19104010248685 3414.765288235701 , flux balance  0.0064723295145607315
+Iteration number  2 , min , max temp  317.1554340054866 3409.3164207425584 , flux balance  6.445705680005772e-05
+In t_start: Converged Solution in iterations  2
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  317.1554340054866 0
+Iteration number  0 , min , max temp  315.31219610597043 3443.4500157258617 , flux balance  0.01502619330672437
+Iteration number  1 , min , max temp  314.2456759764268 3458.851564624847 , flux balance  0.0003755462598890101
+Iteration number  2 , min , max temp  314.2210464173156 3458.646074543088 , flux balance  2.184600048546174e-06
+In t_start: Converged Solution in iterations  2
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(69), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  314.2210464173156 1
+Iteration number  0 , min , max temp  311.9263904584065 3483.1922595262245 , flux balance  0.0006326468705814281
+Iteration number  1 , min , max temp  311.852055457624 3482.6372252102087 , flux balance  3.5705730806533994e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(69), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  311.852055457624 2
+Iteration number  0 , min , max temp  311.65648340492726 3494.4743300179425 , flux balance  0.00014109688798530828
+Iteration number  1 , min , max temp  311.6512259229473 3494.3641556149655 , flux balance  7.067906279892352e-07
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(69), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Move up two levels
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  313.1559990213211 3371.4613706601885 , flux balance  0.000107272983346283
+Iteration number  1 , min , max temp  313.16965845246784 3371.2661459426463 , flux balance  1.2483426087631298e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  313.16965845246784 0
+Iteration number  0 , min , max temp  310.554210043683 3376.3654291126863 , flux balance  1.2906990115343876e-05
+ We are already at a root, tolf , test =  5e-05 ,  4.115969068308286e-05
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  316.4999229814992 3353.0029237328677 , flux balance  0.00010837813681962465
+Iteration number  1 , min , max temp  316.40878246538415 3352.898625217187 , flux balance  1.2897101754902632e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(67), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  316.40878246538415 0
+Iteration number  0 , min , max temp  315.307742160827 3356.329399956271 , flux balance  -2.2997130383507603e-05
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(67), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  320.4434357995544 3340.8991610989815 , flux balance  0.00015935359814091946
+Iteration number  1 , min , max temp  320.39118416803154 3340.7742938435463 , flux balance  2.5010628522865695e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  320.39118416803154 0
+Iteration number  0 , min , max temp  318.95721843945495 3343.944567049469 , flux balance  -3.4627907689209256e-05
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  324.3187597285869 3332.7047361092136 , flux balance  0.00021100777636911183
+Iteration number  1 , min , max temp  324.2628396434233 3332.566680038169 , flux balance  3.926445959505669e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  324.2628396434233 0
+Iteration number  0 , min , max temp  322.58475192300676 3335.839987729117 , flux balance  -5.539262537671197e-05
+Iteration number  1 , min , max temp  322.54489747228195 3335.866641980761 , flux balance  -7.72486965780538e-07
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(60), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  326.8574685223621 3326.1507169265687 , flux balance  8.884203543140832e-05
+Iteration number  1 , min , max temp  326.8452400728235 3326.051904337655 , flux balance  3.3028835669233685e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  326.8452400728235 0
+Iteration number  0 , min , max temp  324.2946503090344 3328.793550097379 , flux balance  -6.482959177693949e-05
+Iteration number  1 , min , max temp  324.22072317731653 3328.825195714874 , flux balance  -1.1693906597357378e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  322.24367984965426 3318.725945547681 , flux balance  -0.0001268247826505738
+Iteration number  1 , min , max temp  322.213643363538 3318.7006648080173 , flux balance  2.629284320390065e-07
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  322.213643363538 0
+Iteration number  0 , min , max temp  325.7245568634752 3322.0967964344472 , flux balance  -0.00013383631374573216
+Iteration number  1 , min , max temp  325.7213335261152 3322.144058982757 , flux balance  -2.4597214058851905e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  324.30495500007277 3312.2123192143013 , flux balance  -0.00025451321072521266
+Iteration number  1 , min , max temp  324.30273481540013 3312.2391913472225 , flux balance  -2.682611370094255e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  324.30273481540013 0
+Iteration number  0 , min , max temp  328.3433008938265 3317.11032348552 , flux balance  -0.00020817118429869447
+Iteration number  1 , min , max temp  328.33289583737064 3317.1834102821012 , flux balance  -4.5703539900279035e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  326.6199067374844 3307.752253295394 , flux balance  -0.0004193164445538154
+Iteration number  1 , min , max temp  326.61586203102223 3307.8465702692356 , flux balance  -7.893179107303743e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  326.61586203102223 0
+Iteration number  0 , min , max temp  324.1917920514233 3311.0959071138236 , flux balance  -0.00017817233366618026
+Iteration number  1 , min , max temp  324.12987721571676 3311.161615219682 , flux balance  -4.713047817138429e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(68), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  328.17206351402564 3302.801778575398 , flux balance  -0.0004919186124056691
+Iteration number  1 , min , max temp  328.20219557124636 3302.914659169533 , flux balance  -1.084481292634217e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  328.20219557124636 0
+Iteration number  0 , min , max temp  326.5361235223817 3306.7951044167366 , flux balance  -0.0002706896910578303
+Iteration number  1 , min , max temp  326.50858823802497 3306.8848040387334 , flux balance  -7.768443875041848e-06
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  330.1915731551984 3299.7402350073285 , flux balance  -0.0006485520227750371
+Iteration number  1 , min , max temp  330.23992633121725 3299.906235866049 , flux balance  -1.753466854731298e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  330.23992633121725 0
+Iteration number  0 , min , max temp  328.64510653330626 3303.6946411484673 , flux balance  -0.0003091062547174923
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(70), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  331.9343914643784 3297.247691431184 , flux balance  -0.0008275393619851546
+Iteration number  1 , min , max temp  332.00097221441956 3297.4728588183652 , flux balance  -2.603805833133398e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  332.00097221441956 0
+Iteration number  0 , min , max temp  329.9321522380218 3300.570406503708 , flux balance  -0.0002925807739775384
+Iteration number  1 , min , max temp  329.89157234679624 3300.6662799855453 , flux balance  -1.0641847449153232e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  333.4876555653655 3295.142601415301 , flux balance  -0.0009829868136370303
+Iteration number  1 , min , max temp  333.5601667527869 3295.414894296259 , flux balance  -3.455644210728815e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  333.5601667527869 0
+Iteration number  0 , min , max temp  331.5653630592743 3298.4449460262867 , flux balance  -0.0003209667028747991
+Iteration number  1 , min , max temp  331.5294278813195 3298.5480970431154 , flux balance  -1.2506829763959482e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(64)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  334.96866742447037 3293.4275455624443 , flux balance  -0.0011634126094739975
+Iteration number  1 , min , max temp  335.0559263083083 3293.756100821299 , flux balance  -4.535643442148033e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  335.0559263083083 0
+Iteration number  0 , min , max temp  333.08689665297356 3296.6769634541993 , flux balance  -0.0003468662410343225
+Iteration number  1 , min , max temp  333.0534980851388 3296.7868456065216 , flux balance  -1.4702276179745163e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  336.31740665528673 3291.9513946502207 , flux balance  -0.0013612211148513202
+Iteration number  1 , min , max temp  336.4185574630224 3292.3471949725476 , flux balance  -5.815468150071135e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  336.4185574630224 0
+Iteration number  0 , min , max temp  334.4926913612233 3295.208290603085 , flux balance  -0.0003742826674366006
+Iteration number  1 , min , max temp  334.4623999937042 3295.325446380945 , flux balance  -1.7224492210655206e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  337.5413145829779 3290.7341878211055 , flux balance  -0.0015170120702032058
+Iteration number  1 , min , max temp  337.6536934553082 3291.1785992389187 , flux balance  -6.978896041850468e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  337.6536934553082 0
+Iteration number  0 , min , max temp  335.78226025373874 3293.9800064354663 , flux balance  -0.00039230504590548885
+Iteration number  1 , min , max temp  335.75503215377665 3294.101531523687 , flux balance  -1.9179235760612293e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(69), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  338.6661276489147 3289.732505982988 , flux balance  -0.0016760629251536233
+Iteration number  1 , min , max temp  338.7880045320978 3290.2274891883026 , flux balance  -8.220472870179902e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  338.7880045320978 0
+Iteration number  0 , min , max temp  336.9671590983246 3292.9375066376183 , flux balance  -0.0004071813664790517
+Iteration number  1 , min , max temp  336.9424943823183 3293.064748672922 , flux balance  -2.1067777359952637e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(69), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  339.64199085474473 3288.9448684716654 , flux balance  -0.0018215847627092985
+Iteration number  1 , min , max temp  339.77085007989695 3289.4853900199946 , flux balance  -9.569314858822573e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  339.77085007989695 0
+Iteration number  0 , min , max temp  338.0412116544922 3292.081524952097 , flux balance  -0.00042029585271623427
+Iteration number  1 , min , max temp  338.02025269438485 3292.211868675319 , flux balance  -2.292061072945853e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  340.374579427303 3288.4665848327786 , flux balance  -0.0018553777452622673
+Iteration number  1 , min , max temp  340.5030338248879 3289.0192901823716 , flux balance  -0.00010236658279414693
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  340.5030338248879 0
+Iteration number  0 , min , max temp  338.9393352109197 3291.4335278264507 , flux balance  -0.0004133628089366754
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  340.86529775274846 3288.283685812108 , flux balance  -0.0018050696766934477
+Iteration number  1 , min , max temp  340.98599748510856 3288.8231788090284 , flux balance  -0.00010447402477122023
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  340.98599748510856 0
+Iteration number  0 , min , max temp  339.620562097592 3291.0111774534603 , flux balance  -0.000396321449931573
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  341.0188196458635 3288.497672622039 , flux balance  -0.001542584405353357
+Iteration number  1 , min , max temp  341.11863328421504 3288.959384790618 , flux balance  -9.349310979784567e-05
+In t_start: Converged Solution in iterations  1
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  341.11863328421504 0
+Iteration number  0 , min , max temp  340.04748205628954 3290.79349654454 , flux balance  -0.00035227631844297
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  340.71300028287106 3289.387358020674 , flux balance  -0.0010365607898504474
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  340.71300028287106 0
+Iteration number  0 , min , max temp  340.15003168155874 3290.774719111288 , flux balance  -0.00027918638208139377
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  340.00264118604116 3290.880407394941 , flux balance  -0.00019970525344663401
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  340.00264118604116 0
+Iteration number  0 , min , max temp  339.8660036520904 3291.12071898122 , flux balance  -5.1461686147197484e-05
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+final [0, 47, 89, 0, 0, 0]
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  339.8140850690643 3291.1815037406845 , flux balance  -1.3040994614532831e-05
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  339.8140850690643 0
+Iteration number  0 , min , max temp  339.79874162439637 3291.1974661243094 , flux balance  -3.4276185013034988e-06
+In t_start: Converged Solution in iterations  0
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(69), &#39;CO2&#39;: np.int64(59), &#39;NH3-N2&#39;: np.int64(71), &#39;HCN&#39;: np.int64(68), &#39;PH3&#39;: np.int64(65)}
+Quench=True; Adjusting quench chemistry
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">]:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">loglog</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;ptchem_df&#39;</span><span class="p">][</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span> <span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mi">200</span><span class="p">,</span><span class="mf">1e-4</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(200, 0.0001)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_4b_BrownDwarf_DEQ_const_kzz_15_1.png" src="../../_images/notebooks_D_climate_4b_BrownDwarf_DEQ_const_kzz_15_1.png" />
+</div>
+</div>
+<section id="Compare-Diseq-and-Elf-Owl-Climate-Profile">
+<h3>Compare Diseq and Elf Owl Climate Profile<a class="headerlink" href="#Compare-Diseq-and-Elf-Owl-Climate-Profile" title="Link to this heading"></a></h3>
+<p>For the case we chose with very low kzz, and solar M/H the disequilibrium profile and bobcat profiles are identical!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="mf">1.7e-4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Resort-Rebin, Chemical Equilibrium&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_guess</span><span class="p">,</span><span class="n">pressure</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Elf Owl, v1&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x7f0e28a59d10&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_4b_BrownDwarf_DEQ_const_kzz_17_1.png" src="../../_images/notebooks_D_climate_4b_BrownDwarf_DEQ_const_kzz_17_1.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="4_BrownDwarf_DEQ_SC_kzz.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="5_CloudyBrownDwarf_PreW.html" class="btn btn-neutral float-right" title="One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Equilibrium" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

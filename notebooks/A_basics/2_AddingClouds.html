@@ -1,0 +1,882 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adding Cloud Opacity, Scattering, Asymmetry &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Terrestrial Planets: Adding a Surface" href="3_AddingSurfaceReflectivity.html" />
+    <link rel="prev" title="Getting Started : Basic Inputs and Outputs" href="1_GetStarted.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_GetStarted.html">Getting Started</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Simple Clouds</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#User-Defined-Cloud-Input">User Defined Cloud Input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Cloud-Input-for-Using-Single-Parameter-Box-Model">Cloud Input for Using Single Parameter Box Model</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="3_AddingSurfaceReflectivity.html">Surface Reflectivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4_PlotDiagnostics.html">Plot Diagnostics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="5_AddingThermalFlux.html">Thermal Emission Spectroscopy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_AddingTransitSpectrum.html">Transmission Spectroscopy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="7_BrownDwarfs.html">Brown Dwarf Spectroscopy</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Adding Cloud Opacity, Scattering, Asymmetry</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/A_basics/2_AddingClouds.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/A_basics/2_AddingClouds.py">Download full notebook here</a></p>
+</div>
+<section id="Adding-Cloud-Opacity,-Scattering,-Asymmetry">
+<h1>Adding Cloud Opacity, Scattering, Asymmetry<a class="headerlink" href="#Adding-Cloud-Opacity,-Scattering,-Asymmetry" title="Link to this heading"></a></h1>
+<p>Clouds play a critical role in shaping your reflected light spectrum.</p>
+<p>Until it’s release, we will guide you through the file format of the cloud input.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1">#picaso</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="a5988c83-7230-46a1-9e97-5038b9d24776">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("a5988c83-7230-46a1-9e97-5038b9d24776");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("a5988c83-7230-46a1-9e97-5038b9d24776")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<p>Start with the same inputs as before</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">case1</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#phase</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
+
+<span class="c1">#gravity</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span>
+
+<span class="c1">#star</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span><span class="mf">0.0122</span><span class="p">,</span><span class="mf">4.437</span><span class="p">)</span> <span class="c1">#kelvin, log metal, log cgs</span>
+
+<span class="c1">#atmosphere</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="User-Defined-Cloud-Input">
+<h2>User Defined Cloud Input<a class="headerlink" href="#User-Defined-Cloud-Input" title="Link to this heading"></a></h2>
+<p>Just as with the Jupiter PT, we will use a Jupiter cloud profile as a demo. This should also be included in your base_cases reference file directory.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/data/reference_data/picaso/ref4/base_cases/jupiterf3.cld
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#set model clouds</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span> <span class="n">filename</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#run</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">fpfs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="e64ce909-d2b5-4b6b-905b-de57bcff7c42" data-root-id="p1001" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"b3894118-90ac-4ef6-aad6-3e3ead8d5164":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1001","attributes":{"width":500,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1002"},"y_range":{"type":"object","name":"DataRange1d","id":"p1003"},"x_scale":{"type":"object","name":"LinearScale","id":"p1010"},"y_scale":{"type":"object","name":"LinearScale","id":"p1011"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1039","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1033","attributes":{"selected":{"type":"object","name":"Selection","id":"p1034","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1035"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"cwI0zxN+2D8PZMcodf7VP1bi2S83Jdw/FS1Eu+Lt4D/U7ZqSgfDgP/odYkmPDOE/qisWszvn4T9TCiulgAXiP/zQAsqnwOE/27RbD2Dp4T8WDhFnMy3hP4jkBoTJKOM/ESao1oGd4z9YCmMQkR3jP5gSBNuhQOA/ar1rJyq/0D9oqXLx3/nDPzZtgdO5hcw/5tNwFnEy4T9Bn5402SriP8ODT/tNzeE/98yQNQS14j/SL0Xcp//iP9ITAZ8fg+I//K25gG6p4j/QfK6Ft3riP8tCgdXjwuI/xvmDVZVp4z8BfFYAZ8bjP1r18ZVXo+M/ZmRqzo5k4z+kg4bjZaPjP8EZcxMv/eM/hrHyvDQN5D/MLWb0OxDkP7p/yVPLDuQ/HcNp88Eb5D+bSyWHNRzkP7HJk0b3QeQ/VudYvHZZ5D9NyrGLGGjkP+xZZSNQcOQ/X34UvmR35D96N9/ZMXnkP4fKmBfPeOQ/7EMYq45m5D+e5OwwSFjkP1RMJhHzH+Q/8GaMu4fW4z/ifXoC3eXjP12H1gbJOuQ/WQWpaOl35D+KfacECnDkP8roxB7/YOQ/rw8S5f1l5D/2k00oSXPkP9YcvMLwwOQ/f7NyIM7O5D+b/jSly9rkP4hGbkC64OQ/QMJDrZnb5D/Y/AByV8nkP+8S5xM6tOQ/RRRMP4OQ5D+63QE9hpXkP04aZAmrg+Q/uteMCyLD5D/xjub569rkP5ZJrFjC5OQ/BcR/EGrt5D9qLR08LenkP/L363O8FOU/bkQSGeIa5T8U2h4+0RvlP0XKgTecE+U/2CLfiqH35D/pbGl7RNPkPxz3y53EquQ/MRZ1YPGR5D+bfQqj4oDkP4UXIxkj5eQ/jdvAVCcW5T/E5mNpsR3lP/FS+0GxEeU/v1GxZR4Y5T+gGA/U9DTlP0n2+bvaY+U/DokCw+Jr5T/NkIEsPHHlP+j3LmgjZuU/2hJyH1hT5T+SNj4d0UnlPx32XBD8UeU/GAXkIHGe5T9oU56CarXlP7K+z8DaueU/O8i2We/D5T8jd9Po1MflPxGiF9FJxuU/TEpQLn615T9foAnrt5DlP0mvfOg9WOU/FqPpXhRL5T+4dxnrakjlP9cL6e2preU//+jZhE3K5T+GMvMdbc3lP+PP87n90OU/hD3bdGbU5T/FjCokeuXlP40tc1ql7OU/rwvOrYXt5T8YASdtmurlP33LzGUK7OU/He3Nopf95T+zf4jabwzmP1KzIaCrE+Y/PyfMotUZ5j9m9BvCFB/mPygX40VPIuY/pH8Hwc8Z5j/PIHsR7wbmP4UIv9EICOY/ODWNEe015j9l10C1IEfmPyj7LM+ETuY/xciQm4hU5j/3dY2ETVrmP2N6PdzvX+Y/pAFvoqxm5j/74cAGEWvmP+m7+DiGbuY/plcflcl45j/j0Vylz3/mP3q3ncOyheY/2kLz/lSL5j8bBFqJX4/mP5eXIg+IjuY/Dt0wqiWP5j99x47cRKDmP4XdIlJcqeY/vZ91Ppav5j+PPKMwaLXmPwkx/QNkuuY/Gq+iaNq+5j843/ATdsPmP/fH1KmJx+Y/U9TQ5EzM5j8IQ7bnedDmP5HoqhmD1OY/dIAkW/HX5j/YaRHQ59nmP8RsqIOL3OY/M01WKIfi5j9NAkP4GubmPzoDduVm6eY/JEPZnYfs5j+2+zDAeO/mP7bWgLgQ8uY/RPlt1Lf05j+ofGc5HffmP5TAXeNd+eY/2NtxG3T75j/0EGy+//zmPw7y6UhS/uY/HXmPZbn/5j+0FiaunADnP/vN5+14Aec/7cuBDx4C5z9OC+hGrQLnPwAg9W0LA+c/dMXxS04D5z+G5j4jYwPnPy3ToetPA+c/mMNv9RMD5z8h/QW8/wLnP53PAenaAuc/BY1lnowC5z/b7Ge5GQLnP2RhZ2E/Aec/EqEE7Ob/5j8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1040","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1041"}}},"glyph":{"type":"object","name":"Line","id":"p1036","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1037","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1038","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1009","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1022"},{"type":"object","name":"WheelZoomTool","id":"p1023","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1024","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1025","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1030"},{"type":"object","name":"ResetTool","id":"p1031"},{"type":"object","name":"HelpTool","id":"p1032"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1017","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1018","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1019"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1020"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"below":[{"type":"object","name":"LinearAxis","id":"p1012","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1013","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1014"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1015"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1016","attributes":{"axis":{"id":"p1012"}}},{"type":"object","name":"Grid","id":"p1021","attributes":{"dimension":1,"axis":{"id":"p1017"}}}]}}]}};
+  const render_items = [{"docid":"b3894118-90ac-4ef6-aad6-3e3ead8d5164","roots":{"p1001":"e64ce909-d2b5-4b6b-905b-de57bcff7c42"},"root_ids":["p1001"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<p><strong>Huge</strong> difference from our cloud free cases. High altitude water clouds have increased the albedo dramatically. Let’s make sure we understand what is going on with the input file</p>
+<section id="File-format-for-user-defined-input">
+<h3>File format for user defined input<a class="headerlink" href="#File-format-for-user-defined-input" title="Link to this heading"></a></h3>
+<p>We define our cloud properties by :</p>
+<ol class="arabic simple">
+<li><p><strong>g0</strong> : Asymmetry factor of the cloud (value between 0 - 1)</p></li>
+<li><p><strong>w0</strong> : Single scattering albedo (value between 0 - 1)</p></li>
+<li><p><strong>opd</strong> : Total extinction (tau) of each layer (<strong>not</strong> cumulative)</p></li>
+</ol>
+<section id="Cloud-file-specifications-from-a-model-(such-as-virga)">
+<h4>Cloud file specifications from a model (such as <code class="docutils literal notranslate"><span class="pre">virga</span></code>)<a class="headerlink" href="#Cloud-file-specifications-from-a-model-(such-as-virga)" title="Link to this heading"></a></h4>
+<ol class="arabic">
+<li><p>Pressure and temperature are specified at the <strong>boundaries</strong> of each level. Cloud parameters are specified for each slab. Therefore, your cloud file should have <strong>(number of PT points -1) layers</strong>.</p></li>
+<li><p>Cloud files are pressure AND wavelength dependent. The file format could look something like this:</p>
+<p>nlayer nwave pressure wavenumber w0 g0 opd</p>
+<p>1 1 # # # # #</p>
+<p>1 2 # # # # #</p>
+<p>1 3 # # # # #</p>
+<p>… … .</p>
+<p>1 nwno …</p>
+<p>2 1 …</p>
+<p>2 2 …</p>
+<p>2 3 …</p>
+<p>… . .</p>
+<p>… . .</p>
+<p>… . .</p>
+<p>npt-1 nwno … . .</p>
+</li>
+<li><p>It’s assumed that these pressure grids correspond to your atmospheric grid. You will see errors through if #cld points != #atmo points - 1</p></li>
+<li><p>You only have to specify wavenumber grid if you aren’t using <code class="docutils literal notranslate"><span class="pre">eddysed</span></code></p></li>
+</ol>
+<p>Let’s look at the premade example to make sure we understand. Since this is from <code class="docutils literal notranslate"><span class="pre">eddysed</span></code>, and since i know my pressure grid is the same as my previous input, I don’t have to have columns for pressure and temperature</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Let&#39;s look at the premade example</span>
+<span class="n">cld</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span><span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+<span class="n">cld</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="c1">#note, it is not required that lvl wv and sigma be in there</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>lvl</th>
+      <th>wv</th>
+      <th>opd</th>
+      <th>g0</th>
+      <th>w0</th>
+      <th>sigma</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>2</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>3</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>4</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>5</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+</section>
+<section id="Plotting-Cloud-Input">
+<h3>Plotting Cloud Input<a class="headerlink" href="#Plotting-Cloud-Input" title="Link to this heading"></a></h3>
+<p>It’s always good to make sure you intuitievly understand what is going on in your input before you create your spectrum.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nwno</span> <span class="o">=</span> <span class="mi">196</span> <span class="c1">#this is the default number for A&amp;M cloud code (see below if your wave grid is different)</span>
+<span class="n">nlayer</span> <span class="o">=</span> <span class="mi">60</span> <span class="c1">#one less than the number of PT points in your input</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plot_cld_input</span><span class="p">(</span> <span class="n">nwno</span><span class="p">,</span> <span class="n">nlayer</span><span class="p">,</span><span class="n">filename</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span><span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_A_basics_2_AddingClouds_14_0.png" src="../../_images/notebooks_A_basics_2_AddingClouds_14_0.png" />
+</div>
+</div>
+<p>The dark regions of the cloud optical depth plot specify where the bulk of the cloud opacity is. The light regions of the single scattering plot, indicate regions of wavenumber where your atmosphere is highly scattering.</p>
+</section>
+</section>
+<section id="Cloud-Input-for-Using-Single-Parameter-Box-Model">
+<h2>Cloud Input for Using Single Parameter Box Model<a class="headerlink" href="#Cloud-Input-for-Using-Single-Parameter-Box-Model" title="Link to this heading"></a></h2>
+<p>Sometimes we are looking for something simpler than a full cloud model. In these cases we can specify our cloud layer with <code class="docutils literal notranslate"><span class="pre">g0</span></code>, <code class="docutils literal notranslate"><span class="pre">w0</span></code>, <code class="docutils literal notranslate"><span class="pre">opd</span></code> and then <code class="docutils literal notranslate"><span class="pre">p</span></code> (the pressure level in log10 bars) and <code class="docutils literal notranslate"><span class="pre">dp</span></code> (the cloud thickness also in log10 bars)</p>
+<p><span class="math notranslate nohighlight">\(\mathrm{cloud\_base(bars)} = 10^{p}\)</span></p>
+<p><span class="math notranslate nohighlight">\(\mathrm{cloud\_top(bars)} = 10^{p-dp}\)</span></p>
+<p><strong>``dp`` should never be negative!</strong></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#set model clouds, note these are lists since you can specify multiple cloud layers</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span> <span class="n">g0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.9</span><span class="p">],</span> <span class="n">w0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">],</span> <span class="n">opd</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">dp</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">])</span>  <span class="c1"># Slab cloud from 1.0 bar up to 0.1 bar</span>
+</pre></div>
+</div>
+</div>
+<section id="Plotting-simple-cloud-profile">
+<h3>Plotting simple cloud profile<a class="headerlink" href="#Plotting-simple-cloud-profile" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nwno</span> <span class="o">=</span> <span class="mi">196</span> <span class="c1">#this is the default number for A&amp;M cloud code (see below if your wave grid is different)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plot_cld_input</span><span class="p">(</span><span class="n">nwno</span><span class="p">,</span> <span class="n">nlayer</span><span class="p">,</span><span class="n">df</span><span class="o">=</span><span class="n">case1</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_A_basics_2_AddingClouds_19_0.png" src="../../_images/notebooks_A_basics_2_AddingClouds_19_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">fpfs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">plot_width</span><span class="o">=</span><span class="mi">500</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="dae8df6b-4cc4-496f-a6bc-068405438d47" data-root-id="p1044" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"878e8ecf-3334-4a99-9dae-66e86ae676c0":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1044","attributes":{"width":500,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1045"},"y_range":{"type":"object","name":"DataRange1d","id":"p1046"},"x_scale":{"type":"object","name":"LinearScale","id":"p1053"},"y_scale":{"type":"object","name":"LinearScale","id":"p1054"},"title":{"type":"object","name":"Title","id":"p1051"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1082","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1076","attributes":{"selected":{"type":"object","name":"Selection","id":"p1077","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1078"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"laBRRWCovj9tlFsSDXa9P02J14XO6L8/c24Ea8eDwD9rIVR46oTAP0kmgB/tf8A/WHrqyLq/wD9VQd7S3snAPzhqgL9v1sA/wSaC/tzawD94brdvqNrAP1Gy3Uzc6MA/hHmhtp/4wD84s+Zuj+vAP0Jqr4MxocA/dFabYW7qvD+jNNnL9Lu3P+kva6I/nbo/uiJ0Z9eTwD+02s+aN9PAPyw8RxYZscA/Gfrxp838wD9ch7yOXgvBP1Guodjw7MA/ODEhd4PxwD9c9MRZvObAP+tPGM7p7cA/NurnneQGwT8V0cp7LRjBP0S89mQGFsE/VqT3t24LwT8XShQhfBfBPzSWVSaBTcE/g9+cRgVQwT+cYHIPS2nBPyOmh+1pccE/8qYCKyeSwT+DaMNC7szBP7y//ZsX98E/hC/Zjf4bwj/m/OdNcErCP58alWkRfsI/w0bLKTmvwj9losmbZLLCP510/t8gdcI/r6VPY5zdwT97/rpOlprBP+20qJ57XME/JDJ3xY5CwT9s7uRM9V3BPxw1hMxlocE/0CLCecRCwj88wPE+jS7CP3ERFIYhEcI/ikLHgAFhwj8WS2r7YVbCP0zFTFbBV8U/DAY2hG8Cxj/hKFOKlZPGP6SjqX3ByMY/bm/s255Pxj9DqPHuc1LFPwXp+Q0qV8Q/oRO7DjY8wz8B+Cp8g5XDP1aR2Ak83sI/8/cO7/TkxD+I5nAEAcbFPwO2OkGBPMY/isAeAY6Ixj/ANEH8DCbGPyHyavaNDsg/ahJ4vjI8yD+oxRFF9gnIPz+iMKjvaMc/dhZsoJJCxj968aeSH/zEPznnOJC9vMM/dZcrGgBtwz8fOyyeodLCP60s0jl4b8U/U9L6bMLVxj+KmkSp+gbHP/OLx/qansY/4HSjGvLIxj+Of3CH3pvHP/fK/2y0Ksk/I9GiVScqyT9Ewar3LvzIP/uXaSurVcg/0y/UQn6lxz+ocDa+Mk3HP3ou/dnzT8c/Ed0QhPfkyD90gogMNHnJP+g/fMcAfck/4NQoMnyiyT/xRSjjh5zJP5u915gij8k/E/Q6ZaocyT94zXoQw17IP0/ZvhXLW8c/CBLSZK8vxz+IWSfz2hbHPxzcATrhHMk/n7XiLLbYyT/KVC3k3cbJP4HYN2zBvMk/yNwj71uhyT9h+KhZ4PDJPyVuF5zu9ck/k9qL6TjOyT9ENqzv1p/JPx3lorHwkck/KZTMncjVyT/7mx7UlxLKP+2Y/4wmGMo/vFKhDm0Tyj/7dr/5lAbKPy6+QDkw78k/toThOI2syT/IdGy5CVjJP0bi/RT9Tsk/sv6YNxziyT9DOPxO1xXKP9hDL/HiG8o/rWs7x1obyj9hTzjoeRrKP64skOtJGco/6YCdMkwcyj8xplH/nxjKP7frb+a5E8o/YHy33pAiyj/3E6GgPSjKP1ySdR6tKso/VMurCoQryj+SrsqqZSjKP+QReRc7G8o/LjQ168sTyj/dlvEgrjDKP5eQpGnqO8o/j5hBSxlByj8XvhSi1kXKP7aAbgURSso/vFIlUCFOyj8mLhT3BVPKP5hYaKOEV8o/bGBgacBdyj82sN49fmPKP/26NDyLaco/TkpwQi9vyj/ye6BDGHPKP2QJSAGieMo/98BBiYeDyj/Gs9X8NovKP0AQBqsDk8o/2BuBFBqbyj+tY868dKPKP8xN/gvfq8o/mpvaC+S0yj/8SLu2G77KP1TRPkqtx8o/0ajpx5TRyj+aN26XbNvKP3zAyFwh5so/hFnDFJPxyj8hKW4A8fzKPwSkN/7RCMs/JjSRUAAVyz/RZ6KWoyHLP1v36xifLss/DLakOw88yz8TRbvD4UnLP2Yzn8cgWMs//YQSm8tmyz9swiMiH3bLPwTd3ujJhcs/yrxMh++Vyz9lkMMzmqbLP2VZ8FKWt8s/r+/74fDIyz8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1083","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1084"}}},"glyph":{"type":"object","name":"Line","id":"p1079","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1080","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1081","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1052","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1065"},{"type":"object","name":"WheelZoomTool","id":"p1066","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1067","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1068","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1073"},{"type":"object","name":"ResetTool","id":"p1074"},{"type":"object","name":"HelpTool","id":"p1075"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1060","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1061","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1062"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1063"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"below":[{"type":"object","name":"LinearAxis","id":"p1055","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1056","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1057"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1058"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1059","attributes":{"axis":{"id":"p1055"}}},{"type":"object","name":"Grid","id":"p1064","attributes":{"dimension":1,"axis":{"id":"p1060"}}}]}}]}};
+  const render_items = [{"docid":"878e8ecf-3334-4a99-9dae-66e86ae676c0","roots":{"p1044":"dae8df6b-4cc4-496f-a6bc-068405438d47"},"root_ids":["p1044"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</section>
+<section id="Plot-cloud-from-output-data">
+<h3>Plot cloud from output data<a class="headerlink" href="#Plot-cloud-from-output-data" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="o">=</span><span class="n">jpi</span><span class="o">.</span><span class="n">cloud</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;full_output&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_A_basics_2_AddingClouds_22_0.png" src="../../_images/notebooks_A_basics_2_AddingClouds_22_0.png" />
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="1_GetStarted.html" class="btn btn-neutral float-left" title="Getting Started : Basic Inputs and Outputs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="3_AddingSurfaceReflectivity.html" class="btn btn-neutral float-right" title="Terrestrial Planets: Adding a Surface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

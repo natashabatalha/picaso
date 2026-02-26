@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creating a Grid of Models to use with GridFitter &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Energy Injection in 1D Brown Dwarf Climate Models" href="8_EnergyInjection.html" />
+    <link rel="prev" title="One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Disequilibrium" href="6_CloudyBrownDwarf_DEQ.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_BrownDwarf_PreW.html">Brown Dwarfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_Exoplanet_PreW.html">Planet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_Exoplanet-Photochemistry.html">Planet w/ Photochemistry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4_BrownDwarf_DEQ_SC_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="4b_BrownDwarf_DEQ_const_kzz.html">Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="5_CloudyBrownDwarf_PreW.html">Brown Dwarfs w/ Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_CloudyBrownDwarf_DEQ.html">Brown Dwarfs w/ Clouds and Disequilibrium Chemistry</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Creating a grid of models to use with PICASO's fitting tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Create-function-to-run-climates">Create function to run climates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Create-Function-to-Post-Process-High-Res-Spectra">Create Function to Post-Process High Res Spectra</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Set-Inputs-and-Trigger-Loop!">Set Inputs and Trigger Loop!</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Now-you-are-ready-for-grid-fitting-(next-tutorial)">Now you are ready for grid fitting (next tutorial)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="8_EnergyInjection.html">Brown Dwarfs w/ Energy Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Creating a Grid of Models to use with <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/7_CreateModelGrid.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/7_CreateModelGrid.py">Download full notebook here</a></p>
+</div>
+<section id="Creating-a-Grid-of-Models-to-use-with-GridFitter">
+<h1>Creating a Grid of Models to use with <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code><a class="headerlink" href="#Creating-a-Grid-of-Models-to-use-with-GridFitter" title="Link to this heading"></a></h1>
+<p>You should already be familiar with:</p>
+<ul class="simple">
+<li><p>how to output create a climate model</p></li>
+<li><p>how to post process a high resolution spectral model from that climate model</p></li>
+<li><p>xarray file formats</p></li>
+<li><p>It is <strong>very important you already understand how to analyze and diagnose the validity of climate models</strong>. Here we will use a streamlined function to trigger the creation of many models. However, there is always a chance that some of the climate runs do not converge. Therefore, it is important to you go back and assess each of these models.</p></li>
+</ul>
+<p>The main goal of this notebook will be to create a mini mini grid of models that is on a function of :</p>
+<ul class="simple">
+<li><p>Metallicity (mh)</p></li>
+<li><p>Carbon to Oxygen Ratio (cto)</p></li>
+<li><p>Heat redistribution (heat_redis)</p></li>
+<li><p>Internal Heat (tint)</p></li>
+</ul>
+<p>Take a look at some papers which have created climate grids for recommendation on how to determine what values for each of these. Here in this notebook we will simply run two of each, just to show how the function works.</p>
+<ul class="simple">
+<li><p>WASP-39 b (e.g. <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2023Natur.614..664A/abstract">Alderson et al 2023</a>)</p></li>
+<li><p>WASP-17 b (e.g. <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2023ApJ...956L..32G/abstract">Grant et al 2023</a>)</p></li>
+</ul>
+<section id="Create-function-to-run-climates">
+<h2>Create function to run climates<a class="headerlink" href="#Create-function-to-run-climates" title="Link to this heading"></a></h2>
+<p>If you dont understand these inputs we encourage you to complete the basic climate tutorials first!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">run_climate</span><span class="p">(</span><span class="n">base_case_name</span><span class="p">,</span> <span class="n">array_save_dir</span><span class="p">,</span> <span class="n">mh</span><span class="p">,</span> <span class="n">CtoO</span><span class="p">,</span>
+                <span class="n">t_int</span><span class="p">,</span> <span class="n">star_temp</span><span class="p">,</span> <span class="n">star_metal</span><span class="p">,</span> <span class="n">star_radius</span><span class="p">,</span>
+                <span class="n">star_logg</span><span class="p">,</span> <span class="n">semi_major</span><span class="p">,</span> <span class="n">nlevel</span><span class="p">,</span> <span class="n">rcb_guess</span><span class="p">,</span>
+                <span class="n">rfacv</span><span class="p">,</span> <span class="n">opacity_ph</span><span class="p">,</span> <span class="n">teq</span><span class="p">,</span>
+                <span class="n">planet_mass</span><span class="p">,</span> <span class="n">planet_radius</span><span class="p">,</span>
+                <span class="n">resume</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1">#check if done already and want to skip:</span>
+    <span class="c1">#create file name</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running climate&quot;</span><span class="p">)</span>
+
+    <span class="c1">#let&#39;s create a nice naming scheme based on our parameters</span>
+    <span class="n">savefile</span><span class="o">=</span><span class="n">base_case_name</span><span class="o">+</span><span class="s2">&quot;_climate_tint&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t_int</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_rfacv&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">rfacv</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_mh&quot;</span><span class="o">+</span><span class="n">mh</span><span class="o">+</span><span class="s2">&quot;_cto&quot;</span><span class="o">+</span><span class="n">CtoO</span><span class="o">+</span><span class="s2">&quot;.nc&quot;</span>
+
+    <span class="c1">#let&#39;s make sure we dont repeat ourselves if a file already exists</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">resume</span> <span class="o">&amp;</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">array_save_dir</span><span class="p">,</span><span class="s1">&#39;climate&#39;</span><span class="p">,</span><span class="n">savefile</span><span class="p">))):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skipping&#39;</span><span class="p">,</span><span class="n">savefile</span><span class="p">,</span><span class="s1">&#39;, file already exists&#39;</span><span class="p">)</span>
+        <span class="n">cl_xarray</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">xr</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">array_save_dir</span><span class="p">,</span><span class="s1">&#39;climate&#39;</span><span class="p">,</span><span class="n">savefile</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">savefile</span><span class="p">,</span><span class="n">cl_xarray</span>
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="c1">#This is setting up the problem for a planet</span>
+        <span class="n">case_name</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;planet&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">case_name</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity_ph</span><span class="p">,</span> <span class="n">temp</span><span class="o">=</span><span class="n">star_temp</span><span class="p">,</span><span class="n">metal</span><span class="o">=</span><span class="n">star_metal</span><span class="p">,</span><span class="n">logg</span><span class="o">=</span><span class="n">star_logg</span><span class="p">,</span>
+                        <span class="n">radius</span><span class="o">=</span><span class="n">star_radius</span><span class="p">,</span> <span class="n">semi_major</span><span class="o">=</span> <span class="n">semi_major</span> <span class="p">,</span>
+                        <span class="n">database</span><span class="o">=</span><span class="s1">&#39;phoenix&#39;</span><span class="p">,</span> <span class="n">radius_unit</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">),</span> <span class="n">semi_major_unit</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">)</span>
+        <span class="n">case_name</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">mass</span><span class="o">=</span><span class="n">planet_mass</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">),</span>
+                      <span class="n">radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">))</span>
+        <span class="n">case_name</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">t_int</span><span class="p">)</span>
+
+        <span class="c1">#setup mechanism to create initial guesses</span>
+        <span class="n">pt</span> <span class="o">=</span> <span class="n">case_name</span><span class="o">.</span><span class="n">guillot_pt</span><span class="p">(</span><span class="n">teq</span><span class="p">,</span> <span class="n">nlevel</span><span class="o">=</span><span class="n">nlevel</span><span class="p">,</span> <span class="n">T_int</span> <span class="o">=</span> <span class="n">t_int</span><span class="p">,</span> <span class="n">p_bottom</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">p_top</span><span class="o">=-</span><span class="mi">6</span><span class="p">)</span>
+        <span class="n">temp_guess</span> <span class="o">=</span> <span class="n">pt</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">pt</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">case_name</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span><span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="n">pressure</span><span class="p">,</span>
+                          <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span><span class="o">=</span><span class="n">rfacv</span><span class="p">)</span>
+
+        <span class="c1">#here we are setting with_spec to True just so we can use the output_xarray function</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">case_name</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ph</span><span class="p">,</span> <span class="n">save_all_profiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1">#make folder if needed</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving xarray: &quot;</span> <span class="o">+</span> <span class="n">savefile</span><span class="p">)</span>
+        <span class="c1">#in add output you can add any extra meta data fields you want to have in your xarray file</span>
+        <span class="n">climate_xarray</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">output_xarray</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">case_name</span><span class="p">,</span> <span class="n">add_output</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;author&#39;</span><span class="p">:</span> <span class="s1">&#39;Awesome Scientist&#39;</span><span class="p">,</span>
+                                                                      <span class="s1">&#39;planet_params&#39;</span><span class="p">:{</span>
+                                                                          <span class="s1">&#39;mh&#39;</span><span class="p">:</span><span class="n">mh</span><span class="p">,</span>
+                                                                          <span class="s1">&#39;cto&#39;</span><span class="p">:</span><span class="n">CtoO</span><span class="p">,</span>
+                                                                          <span class="s1">&#39;heat_redis&#39;</span><span class="p">:</span><span class="n">rfacv</span><span class="p">,</span>
+                                                                          <span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="n">t_int</span><span class="p">,</span>
+                                                                      <span class="p">}},</span>
+                          <span class="n">savefile</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">array_save_dir</span><span class="p">,</span><span class="s2">&quot;climate&quot;</span><span class="p">,</span><span class="n">savefile</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">savefile</span><span class="p">,</span><span class="n">climate_xarray</span>
+<br/><br/></pre></div>
+</div>
+</div>
+<section id="An-important-note-about-add_output-kwarg-in-jdi.output_xarray">
+<h3>An important note about <code class="docutils literal notranslate"><span class="pre">add_output</span></code> kwarg in <code class="docutils literal notranslate"><span class="pre">jdi.output_xarray</span></code><a class="headerlink" href="#An-important-note-about-add_output-kwarg-in-jdi.output_xarray" title="Link to this heading"></a></h3>
+<p>Later, you might want to use your xarray grid as input for picaso’s <code class="docutils literal notranslate"><span class="pre">GridFitting</span></code> function. <code class="docutils literal notranslate"><span class="pre">GridFitting</span></code> is discussed in the next set of tutorials. Without going into depth, the main thing to note at thi stage is that <code class="docutils literal notranslate"><span class="pre">GridFitting</span></code> looks at your xarray attributes to understand what parameters your grid is computed for. For example, if <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code> encountered 8 different xarray files and the attributes included varying M/H and C/O then it would conclude your grid has been created as a
+function of those two parameters.</p>
+<p>SO, <strong>if you are building a grid for use with ``GridFitter`` you must</strong>:</p>
+<ul class="simple">
+<li><p>Use picaso’s naming scheme for variables (which you can see with picaso.analyze.possible_params see example below)</p></li>
+<li><p>Use picaso’s categories (for example planet metallicity <code class="docutils literal notranslate"><span class="pre">mh</span></code> would be stored under <code class="docutils literal notranslate"><span class="pre">planet_params</span></code> – as is done in the example above – stellar metallicity <code class="docutils literal notranslate"><span class="pre">feh</span></code> would be stored under <code class="docutils literal notranslate"><span class="pre">stellar_params</span></code>)</p></li>
+<li><p>Make sure these are included in your spectra <code class="docutils literal notranslate"><span class="pre">xarray</span></code> files (as is done in this example)</p></li>
+</ul>
+</section>
+</section>
+<section id="Create-Function-to-Post-Process-High-Res-Spectra">
+<h2>Create Function to Post-Process High Res Spectra<a class="headerlink" href="#Create-Function-to-Post-Process-High-Res-Spectra" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hi_res_spec_xarr</span><span class="p">(</span><span class="n">savefile</span><span class="p">,</span> <span class="n">climate_xarray</span><span class="p">,</span> <span class="n">array_save_dir</span><span class="p">,</span> <span class="n">opacity_highres</span><span class="p">,</span><span class="n">add_xarray_output</span><span class="p">,</span><span class="n">resume</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="c1">#make sure we have the same naming system for this file</span>
+    <span class="n">spec_savefile</span> <span class="o">=</span> <span class="n">savefile</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;climate&#39;</span><span class="p">,</span><span class="s1">&#39;spectra&#39;</span><span class="p">)</span>
+
+    <span class="c1">#let&#39;s make sure we dont repeat ourselves if a file already exists</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">resume</span> <span class="o">&amp;</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">array_save_dir</span><span class="p">,</span><span class="s1">&#39;spectra&#39;</span><span class="p">,</span><span class="n">spec_savefile</span><span class="p">))):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Skipping&#39;</span><span class="p">,</span><span class="n">spec_savefile</span><span class="p">,</span><span class="s1">&#39;, file already exists&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1">#we can directly input our climate xarray</span>
+        <span class="n">hi_res</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">input_xarray</span><span class="p">(</span><span class="n">climate_xarray</span><span class="p">,</span><span class="n">opacity_highres</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;planet&#39;</span><span class="p">)</span>
+        <span class="c1">#at this point you could consider post processing clouds if you wish!</span>
+        <span class="c1">#hi_res.clouds(... )</span>
+        <span class="n">df_spec</span> <span class="o">=</span> <span class="n">hi_res</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity_highres</span><span class="p">,</span> <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;thermal+transmission&#39;</span><span class="p">,</span>
+                                  <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">preserve_hires</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">output_xarray</span><span class="p">(</span><span class="n">df_spec</span><span class="p">,</span> <span class="n">hi_res</span><span class="p">,</span>
+                                  <span class="n">savefile</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">array_save_dir</span><span class="p">,</span><span class="s2">&quot;spectra&quot;</span><span class="p">,</span><span class="n">spec_savefile</span><span class="p">),</span>
+                                          <span class="n">add_output</span><span class="o">=</span><span class="n">add_xarray_output</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Done!&#39;</span><span class="p">,</span> <span class="n">spec_savefile</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Set-Inputs-and-Trigger-Loop!">
+<h2>Set Inputs and Trigger Loop!<a class="headerlink" href="#Set-Inputs-and-Trigger-Loop!" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">correlated_k_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">)</span>
+<span class="n">array_save_dir</span> <span class="o">=</span><span class="s1">&#39;/data/test/tutorial&#39;</span>
+<span class="n">mh_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0.0&#39;</span><span class="p">,</span> <span class="s1">&#39;1.0&#39;</span><span class="p">]</span>
+<span class="n">CtoO_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0.46&#39;</span><span class="p">,</span> <span class="s1">&#39;0.27&#39;</span><span class="p">]</span>
+<span class="n">heat_redis_list</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">]</span>
+<span class="n">t_int_list</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">300</span><span class="p">]</span>
+
+<span class="c1">#continue where left off? Or restart?</span>
+<span class="n">resume</span><span class="o">=</span><span class="kc">False</span>
+
+<span class="c1">#other variables</span>
+<span class="n">base_case_name</span><span class="o">=</span><span class="s1">&#39;wasp-39b&#39;</span> <span class="c1">#tag name for filenames</span>
+<span class="n">R</span><span class="o">=</span><span class="mi">100</span> <span class="c1">#resolution power</span>
+
+<span class="c1">#wav range for high res spectra</span>
+<span class="n">min_wav</span><span class="o">=</span><span class="mi">3</span>
+<span class="n">max_wav</span><span class="o">=</span><span class="mi">15</span>
+
+<span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span> <span class="c1"># number of atmospheric layers we want</span>
+<span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">85</span> <span class="c1">#upper bound on first radiative convective boundary</span>
+
+<span class="c1">#planet/star params</span>
+<span class="n">star_temp</span> <span class="o">=</span> <span class="mi">5400</span>
+<span class="n">star_metal</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="n">star_radius</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">star_logg</span> <span class="o">=</span> <span class="mf">4.45</span>
+
+<span class="n">wasp_mass</span><span class="o">=</span><span class="mf">0.28</span>
+<span class="n">wasp_radius</span><span class="o">=</span><span class="mf">1.27</span>
+<span class="n">teq</span><span class="o">=</span><span class="mf">1120.55</span>
+<span class="n">semi_major</span><span class="o">=</span><span class="mf">0.0486</span>
+
+<span class="c1">#define what resampled opacities you want to use</span>
+<span class="n">opacity_hires</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="n">min_wav</span><span class="p">,</span><span class="n">max_wav</span><span class="p">])</span>
+
+
+<span class="c1">#Trigger mega loop !</span>
+<span class="k">for</span> <span class="n">mh</span> <span class="ow">in</span> <span class="n">mh_list</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">CtoO</span> <span class="ow">in</span> <span class="n">CtoO_list</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">rfacv</span> <span class="ow">in</span> <span class="n">heat_redis_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t_int</span> <span class="ow">in</span> <span class="n">t_int_list</span><span class="p">:</span>
+                <span class="c1">#grab k table opacities</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">mh</span><span class="p">,</span> <span class="n">CtoO</span><span class="p">,</span><span class="n">rfacv</span><span class="p">,</span><span class="n">t_int</span><span class="p">)</span>
+                <span class="n">ph_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">correlated_k_dir</span><span class="p">,</span><span class="sa">f</span><span class="s1">&#39;sonora_2121grid_feh</span><span class="si">{</span><span class="n">mh</span><span class="si">}</span><span class="s1">_co</span><span class="si">{</span><span class="n">CtoO</span><span class="si">}</span><span class="s1">.hdf5&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">ph_db</span><span class="p">)</span>
+                <span class="n">opacity_ph</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">ck_db</span><span class="o">=</span><span class="n">ph_db</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;preweighted&#39;</span><span class="p">)</span>
+                <span class="c1">#get climate xarray</span>
+                <span class="n">savefile</span><span class="p">,</span> <span class="n">climate_xarray</span> <span class="o">=</span> <span class="n">run_climate</span><span class="p">(</span><span class="n">base_case_name</span><span class="p">,</span> <span class="n">array_save_dir</span><span class="p">,</span>
+                                                       <span class="n">mh</span><span class="p">,</span> <span class="n">CtoO</span><span class="p">,</span> <span class="n">t_int</span><span class="p">,</span> <span class="n">star_temp</span><span class="p">,</span> <span class="n">star_metal</span><span class="p">,</span>
+                            <span class="n">star_radius</span><span class="p">,</span> <span class="n">star_logg</span><span class="p">,</span> <span class="n">semi_major</span><span class="p">,</span> <span class="n">nlevel</span><span class="p">,</span> <span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span><span class="p">,</span>
+                                                       <span class="n">opacity_ph</span><span class="p">,</span> <span class="n">teq</span><span class="o">=</span><span class="n">teq</span><span class="p">,</span>
+                            <span class="n">planet_mass</span><span class="o">=</span><span class="n">wasp_mass</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">wasp_radius</span><span class="p">,</span> <span class="n">resume</span><span class="o">=</span><span class="n">resume</span><span class="p">)</span>
+                <span class="c1">#get hi res xarray</span>
+                <span class="n">hi_res_spec_xarr</span><span class="p">(</span><span class="n">savefile</span><span class="p">,</span><span class="n">climate_xarray</span><span class="p">,</span> <span class="n">array_save_dir</span><span class="p">,</span><span class="n">opacity_hires</span><span class="p">,</span>
+                                 <span class="n">add_xarray_output</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;author&#39;</span><span class="p">:</span> <span class="s1">&#39;Awesome Scientist&#39;</span><span class="p">,</span>
+                                                              <span class="s1">&#39;planet_params&#39;</span><span class="p">:{</span>
+                                                                  <span class="s1">&#39;mh&#39;</span><span class="p">:</span><span class="n">mh</span><span class="p">,</span>
+                                                                  <span class="s1">&#39;cto&#39;</span><span class="p">:</span><span class="n">CtoO</span><span class="p">,</span>
+                                                                  <span class="s1">&#39;heat_redis&#39;</span><span class="p">:</span><span class="n">rfacv</span><span class="p">,</span>
+                                                                  <span class="s1">&#39;tint&#39;</span><span class="p">:</span><span class="n">t_int</span><span class="p">,</span>
+                                                              <span class="p">}},</span><span class="n">resume</span><span class="o">=</span><span class="n">resume</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0.0 0.46 0.5 200
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh0.0_co0.46.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint200_rfacv0.5_mh0.0_cto0.46.nc
+Done! wasp-39b_spectra_tint200_rfacv0.5_mh0.0_cto0.46.nc
+0.0 0.46 0.5 300
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh0.0_co0.46.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint300_rfacv0.5_mh0.0_cto0.46.nc
+Done! wasp-39b_spectra_tint300_rfacv0.5_mh0.0_cto0.46.nc
+0.0 0.27 0.5 200
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh0.0_co0.27.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint200_rfacv0.5_mh0.0_cto0.27.nc
+Done! wasp-39b_spectra_tint200_rfacv0.5_mh0.0_cto0.27.nc
+0.0 0.27 0.5 300
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh0.0_co0.27.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint300_rfacv0.5_mh0.0_cto0.27.nc
+Done! wasp-39b_spectra_tint300_rfacv0.5_mh0.0_cto0.27.nc
+1.0 0.46 0.5 200
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh1.0_co0.46.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint200_rfacv0.5_mh1.0_cto0.46.nc
+Done! wasp-39b_spectra_tint200_rfacv0.5_mh1.0_cto0.46.nc
+1.0 0.46 0.5 300
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh1.0_co0.46.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint300_rfacv0.5_mh1.0_cto0.46.nc
+Done! wasp-39b_spectra_tint300_rfacv0.5_mh1.0_cto0.46.nc
+1.0 0.27 0.5 200
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh1.0_co0.27.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint200_rfacv0.5_mh1.0_cto0.27.nc
+Done! wasp-39b_spectra_tint200_rfacv0.5_mh1.0_cto0.27.nc
+1.0 0.27 0.5 300
+/data/reference_data/picaso/ref4/opacities/preweighted/sonora_2121grid_feh1.0_co0.27.hdf5
+Running climate
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
+  result = func(self.values, **kwargs)
+/home/nbatalh1/codes/picaso/picaso/justdoit.py:5242: RuntimeWarning: divide by zero encountered in divide
+  all_out[&#39;fnet/fnetir&#39;]=flux_net_final/flux_net_ir_final
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saving xarray: wasp-39b_climate_tint300_rfacv0.5_mh1.0_cto0.27.nc
+Done! wasp-39b_spectra_tint300_rfacv0.5_mh1.0_cto0.27.nc
+</pre></div></div>
+</div>
+</section>
+<section id="Now-you-are-ready-for-grid-fitting-(next-tutorial)">
+<h2>Now you are ready for grid fitting (next tutorial)<a class="headerlink" href="#Now-you-are-ready-for-grid-fitting-(next-tutorial)" title="Link to this heading"></a></h2>
+<p>Now that you have a grid of xarrays you are ready for grid fitting using <code class="docutils literal notranslate"><span class="pre">picaso</span></code>’s grid fitting tools. The next set of tutorials will teach you how to use these skills.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">picaso.analyze</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">lyz</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/codes/picaso/picaso/analyze.py:477: SyntaxWarning: invalid escape sequence &#39;\c&#39;
+  ax[&#39;A&#39;].plot(wlgrid_center,best_fit,color,linewidth=2,label=r&#34;Best Fit &#34;+igrid+&#34;+&#34;+idata+&#34;, ${\chi}_{\\nu}$$^2$= &#34;+ str(np.round(chi1,2)))
+/home/nbatalh1/codes/picaso/picaso/analyze.py:506: SyntaxWarning: invalid escape sequence &#39;\d&#39;
+  ax[&#39;B&#39;].set_ylabel(&#34;${\delta}/N$&#34;,fontsize=20)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">grid_name</span> <span class="o">=</span> <span class="s1">&#39;mygrid&#39;</span>
+
+<span class="n">fitting</span> <span class="o">=</span> <span class="n">lyz</span><span class="o">.</span><span class="n">GridFitter</span><span class="p">(</span><span class="n">grid_name</span><span class="p">,</span> <span class="n">model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">array_save_dir</span><span class="p">,</span><span class="s1">&#39;spectra&#39;</span><span class="p">),</span>
+                         <span class="n">to_fit</span><span class="o">=</span><span class="s1">&#39;transit_depth&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Total number of models in grid is 16
+For tint in planet_params grid is: [200. 300.]
+For mh in planet_params grid is: [&#39;+000&#39; &#39;+100&#39; &#39;0.0&#39; &#39;1.0&#39;]
+For cto in planet_params grid is: [&#39;0.27&#39; &#39;0.46&#39; &#39;100&#39; &#39;250&#39;]
+</pre></div></div>
+</div>
+<p>All we have done is point GridFitter to the directory and it has detected a grid that is a function of our two metallicities, internal temperatures, and C/Os. This was possible because we gave it the correct naming parameters.</p>
+<p>These are the possible parameters that <code class="docutils literal notranslate"><span class="pre">GridFitter</span></code> searches for. Make sure to follow the example above to add them to the xarray output fields.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lyz</span><span class="o">.</span><span class="n">possible_params</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;planet_params&#39;: [&#39;logmh&#39;,
+  &#39;rp&#39;,
+  &#39;mp&#39;,
+  &#39;tint&#39;,
+  &#39;heat_redis&#39;,
+  &#39;p_reference&#39;,
+  &#39;logkzz&#39;,
+  &#39;kzz&#39;,
+  &#39;mh&#39;,
+  &#39;cto&#39;,
+  &#39;p_quench&#39;,
+  &#39;rainout&#39;,
+  &#39;teff&#39;,
+  &#39;logg&#39;,
+  &#39;gravity&#39;,
+  &#39;m_length&#39;],
+ &#39;stellar_params&#39;: [&#39;rs&#39;, &#39;logg&#39;, &#39;steff&#39;, &#39;feh&#39;, &#39;ms&#39;],
+ &#39;cld_params&#39;: [&#39;opd&#39;, &#39;ssa&#39;, &#39;asy&#39;, &#39;p_cloud&#39;, &#39;haze_eff&#39;, &#39;fsed&#39;]}
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="6_CloudyBrownDwarf_DEQ.html" class="btn btn-neutral float-left" title="One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Disequilibrium" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="8_EnergyInjection.html" class="btn btn-neutral float-right" title="Energy Injection in 1D Brown Dwarf Climate Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

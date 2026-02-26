@@ -1,0 +1,377 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Chemical Equilibrium and Resort-Rebin &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">One-Dimensional Climate Models: Brown Dwarfs w/ Chemical Equilibrium and Resort-Rebin</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/D_climate/1b_BrownDwarf_ResortRebin_Chemeq.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/D_climate/1b_BrownDwarf_ResortRebin_Chemeq.py">Download full notebook here</a></p>
+</div>
+<section id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Chemical-Equilibrium-and-Resort-Rebin">
+<h1>One-Dimensional Climate Models: Brown Dwarfs w/ Chemical Equilibrium and Resort-Rebin<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Chemical-Equilibrium-and-Resort-Rebin" title="Link to this heading"></a></h1>
+<p>In this tutorial you will learn how to run 1d climate models with chemical equilibrium but using resort rebin instead of the pre-weighted chemeq tables.</p>
+<p>What you should already be familiar with:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission">basics of running/analyzing thermal spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html">how to analyze thermal emission spectra</a></p></li>
+<li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html">how to run a basic 1d brown dwarf tutorial</a></p></li>
+</ul>
+<p>What you should have downloaded:</p>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">data.get_data</span></code> helper function to get resortrebin files and add them to the default picaso location: <code class="docutils literal notranslate"><span class="pre">reference/opaities/resortrebin</span></code> &gt;&gt; import picaso.data as d</p>
+<blockquote>
+<div><p>d.get_data(category_download=’ck_tables’,target_download=’by-molecule’)</p>
+</div></blockquote>
+<p>You should also already have the bobcat structure files:</p>
+<blockquote>
+<div><p>d.get_data(category_download=’sonora_grids’,target_download=’bobcat’)</p>
+</div></blockquote>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="c1">#%matplotlib inline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">constants</span> <span class="k">as</span> <span class="n">const</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy</span><span class="w"> </span><span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+</pre></div>
+</div>
+</div>
+<section id="Setting-up-Initial-Run-(highlighting-main-differences-for-resort-rebin)">
+<h2>Setting up Initial Run (highlighting main differences for resort-rebin)<a class="headerlink" href="#Setting-up-Initial-Run-(highlighting-main-differences-for-resort-rebin)" title="Link to this heading"></a></h2>
+<p>In this case because we’re mixing the gases on the fly, we don’t need to define the correlated-k database/file. As you can see here in opannection, the method is now set to <code class="docutils literal notranslate"><span class="pre">resortrebin</span></code>. We’ve defined a list of gases to mix here but if you don’t define anything all gasses will be mixed. For more information about the difference between these two methods, you can look at the <a href="#id1"><span class="problematic" id="id2">`Fun with Chem notebook &lt;&gt;`__</span></a></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
+
+<span class="n">gases_fly</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CO&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">,</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;NH3&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;N2&#39;</span><span class="p">,</span><span class="s1">&#39;HCN&#39;</span><span class="p">,</span><span class="s1">&#39;H2&#39;</span><span class="p">,</span><span class="s1">&#39;He&#39;</span><span class="p">,</span><span class="s1">&#39;PH3&#39;</span><span class="p">,</span><span class="s1">&#39;C2H2&#39;</span><span class="p">,</span><span class="s1">&#39;Na&#39;</span><span class="p">,</span><span class="s1">&#39;K&#39;</span><span class="p">,</span><span class="s1">&#39;TiO&#39;</span><span class="p">,</span><span class="s1">&#39;VO&#39;</span><span class="p">,</span><span class="s1">&#39;FeH&#39;</span><span class="p">]</span>
+
+<span class="c1">#change opacity connection</span>
+<span class="n">opacity_ck</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">,</span><span class="n">preload_gases</span><span class="o">=</span><span class="n">gases_fly</span><span class="p">)</span> <span class="c1"># grab your opacities</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">(</span><span class="n">calculation</span><span class="o">=</span><span class="s2">&quot;browndwarf&quot;</span><span class="p">,</span> <span class="n">climate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="c1"># start a calculation</span>
+
+
+<span class="n">tint</span><span class="o">=</span> <span class="mi">700</span>
+<span class="n">grav</span> <span class="o">=</span> <span class="mi">316</span> <span class="c1"># Gravity of your Planet in m/s/s</span>
+
+<span class="n">cl_run</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span><span class="o">=</span><span class="n">grav</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span> <span class="c1"># input gravity</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">effective_temp</span><span class="p">(</span><span class="n">tint</span><span class="p">)</span> <span class="c1"># input effective temperature</span>
+
+<span class="n">nlevel</span> <span class="o">=</span> <span class="mi">91</span>
+</pre></div>
+</div>
+</div>
+<p>We recommend starting with Sonora-Bobcat models as an initial guess.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure</span><span class="p">,</span><span class="n">temp_guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="n">sonora_profile_db</span><span class="p">,</span><span class="sa">f</span><span class="s2">&quot;t</span><span class="si">{</span><span class="n">tint</span><span class="si">}</span><span class="s2">g</span><span class="si">{</span><span class="n">grav</span><span class="si">}</span><span class="s2">nc_m0.0.cmp.gz&quot;</span><span class="p">),</span>
+                            <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">skiprows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">rcb_guess</span> <span class="o">=</span> <span class="mi">79</span> <span class="c1"># top most level of guessed convective zone</span>
+
+<span class="c1"># Here are some other parameters needed for the code.</span>
+<span class="n">rfacv</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1">#we are focused on a brown dwarf so let&#39;s keep this as is</span>
+</pre></div>
+</div>
+</div>
+<p>In comparison to when running climate models with the preweighted ck tables, those we already defined the metallicity and C/O ratio in the format of the table files. Here since we’re not using those tables, we need to define the metallicity and C/O ratio along with the type of chemistry we want to do.</p>
+<p><strong>New Parameters</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">mh</span></code> : this is the metallicity <strong>relative</strong> to solar</p>
+<p><code class="docutils literal notranslate"><span class="pre">cto_relative</span></code> : C/O <strong>relative</strong> to solar OR <code class="docutils literal notranslate"><span class="pre">cto_absolute</span></code> which makes it the actual C/O value</p>
+<p><code class="docutils literal notranslate"><span class="pre">chem_method</span></code> : This will tell PICASO what kind of chemistry you want. The 3 options are <code class="docutils literal notranslate"><span class="pre">visscher</span></code>, <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code>, and <code class="docutils literal notranslate"><span class="pre">photochem</span></code>.</p>
+<p>The difference between <code class="docutils literal notranslate"><span class="pre">visscher</span></code> and <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code> are the grid points used with <code class="docutils literal notranslate"><span class="pre">visscher</span></code> having the most updated chemistry as well. We will get into <code class="docutils literal notranslate"><span class="pre">photochem</span></code> in another notebook doing photochemistry.</p>
+<p>You <strong>MUST</strong> include the <code class="docutils literal notranslate"><span class="pre">mh</span></code> and one of the <code class="docutils literal notranslate"><span class="pre">cto...</span></code> inputs when doing the <code class="docutils literal notranslate"><span class="pre">visscher</span></code> and <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code> method.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cl_run</span><span class="o">.</span><span class="n">inputs_climate</span><span class="p">(</span><span class="n">temp_guess</span><span class="o">=</span> <span class="n">temp_guess</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span> <span class="n">pressure</span><span class="p">,</span>
+                        <span class="n">rcb_guess</span><span class="o">=</span><span class="n">rcb_guess</span><span class="p">,</span> <span class="n">rfacv</span> <span class="o">=</span> <span class="n">rfacv</span><span class="p">)</span>
+
+<span class="n">mh</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">cto_relative</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1">#now that we are not using preweighted ck tables we need to tell picaso how to compute chemistry on the fly</span>
+<span class="n">cl_run</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">mh</span><span class="o">=</span><span class="n">mh</span><span class="p">,</span> <span class="n">cto_relative</span><span class="o">=</span><span class="n">cto_relative</span><span class="p">,</span> <span class="n">chem_method</span><span class="o">=</span><span class="s1">&#39;visscher&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">cl_run</span><span class="o">.</span><span class="n">climate</span><span class="p">(</span><span class="n">opacity_ck</span><span class="p">,</span> <span class="n">save_all_profiles</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">with_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SUMMARY
+-------
+Clouds: False
+quench False
+cold_trap False
+vol_rainout False
+no_ph3 False
+Moist Adiabat: False
+Iteration number  0 , min , max temp  234.96617322894122 2711.315678240838 , flux balance  -0.12102108709716844
+Iteration number  1 , min , max temp  238.69804929981 2717.9216112160043 , flux balance  -0.09487061367453709
+Iteration number  2 , min , max temp  242.31374315698392 2724.668363204319 , flux balance  -0.06781179874547417
+Iteration number  3 , min , max temp  245.82880696760208 2731.5608482782645 , flux balance  -0.03982109301002183
+Iteration number  4 , min , max temp  249.25764558360368 2738.6062015381285 , flux balance  -0.010876612535028158
+Iteration number  5 , min , max temp  250.49053564306288 2741.2604724750377 , flux balance  -2.2150156500146494e-05
+In t_start: Converged Solution in iterations  5
+Big iteration is  250.49053564306288 0
+ We are already at a root, tolf , test =  5e-05 ,  2.2150156500146494e-05
+Profile converged before itmx
+Iteration number  0 , min , max temp  252.62572334306927 2740.9341961939303 , flux balance  0.00014408612703621347
+Iteration number  1 , min , max temp  252.63897068753067 2740.933047450133 , flux balance  1.1025121975810279e-06
+In t_start: Converged Solution in iterations  1
+Big iteration is  252.63897068753067 0
+ We are already at a root, tolf , test =  5e-05 ,  3.2886132990402834e-06
+Profile converged before itmx
+ convection zone status
+0 79 89 0 0 0
+1
+[0, 63, 63, 63, 79, 89]
+Iteration number  0 , min , max temp  253.12083465646742 2741.0455272195354 , flux balance  -1.2132468689520303e-05
+In t_start: Converged Solution in iterations  0
+Big iteration is  253.12083465646742 0
+Iteration number  0 , min , max temp  253.12874798661045 2741.0459518989433 , flux balance  -9.490223123813534e-08
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+Grow Phase : Upper Zone
+[0, 62, 63, 63, 79, 89]
+Iteration number  0 , min , max temp  253.2496608116602 2740.9969558878283 , flux balance  2.2314463196910543e-06
+Iteration number  1 , min , max temp  253.2516998019538 2740.9968255660992 , flux balance  2.0826223368470882e-08
+In t_start: Converged Solution in iterations  1
+Big iteration is  253.2516998019538 0
+ We are already at a root, tolf , test =  5e-05 ,  6.473294336799259e-07
+Profile converged before itmx
+[0, 62, 64, 64, 79, 89]
+Iteration number  0 , min , max temp  253.31795262206617 2740.92949431593 , flux balance  -2.195976979717528e-06
+In t_start: Converged Solution in iterations  0
+Big iteration is  253.31795262206617 0
+Iteration number  0 , min , max temp  253.31887808965556 2740.92910364333 , flux balance  -1.1606803889961518e-08
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+[0, 61, 64, 64, 79, 89]
+Iteration number  0 , min , max temp  253.37315886146618 2740.8634199001303 , flux balance  -1.914805061058287e-06
+In t_start: Converged Solution in iterations  0
+Big iteration is  253.37315886146618 0
+Iteration number  0 , min , max temp  253.374012102053 2740.8627534233087 , flux balance  -1.3081385687866023e-08
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+[0, 61, 65, 65, 79, 89]
+Iteration number  0 , min , max temp  253.43625550700293 2740.8075991312853 , flux balance  -8.034560137674328e-06
+In t_start: Converged Solution in iterations  0
+Big iteration is  253.43625550700293 0
+Iteration number  0 , min , max temp  253.43724614931037 2740.806935469116 , flux balance  -8.236289791437821e-08
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+[0, 60, 65, 65, 79, 89]
+Iteration number  0 , min , max temp  253.4867455422823 2740.7566617774396 , flux balance  -1.6859290855046488e-05
+In t_start: Converged Solution in iterations  0
+Big iteration is  253.4867455422823 0
+Iteration number  0 , min , max temp  253.48782260505098 2740.755336499341 , flux balance  -2.1035037479884676e-07
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+[0, 59, 65, 65, 79, 89]
+Iteration number  0 , min , max temp  253.5230650010696 2740.7709966684442 , flux balance  -1.133164376910837e-05
+In t_start: Converged Solution in iterations  0
+Big iteration is  253.5230650010696 0
+Iteration number  0 , min , max temp  253.5238095982639 2740.7705784741806 , flux balance  -1.5207596474940572e-07
+In t_start: Converged Solution in iterations  0
+Profile converged before itmx
+[0, 59, 66, 66, 79, 89]
+Iteration number  0 , min , max temp  253.53847887264322 2740.7808808272594 , flux balance  2.617332149490844e-05
+Iteration number  1 , min , max temp  253.53843650379483 2740.781492314242 , flux balance  2.875172098394905e-07
+In t_start: Converged Solution in iterations  1
+Big iteration is  253.53843650379483 0
+ We are already at a root, tolf , test =  5e-05 ,  2.3910132164612816e-06
+Profile converged before itmx
+final [0, 59, 66, 66, 79, 89]
+Iteration number  0 , min , max temp  253.54134683822042 2740.778036100137 , flux balance  2.6826400765563947e-05
+Iteration number  1 , min , max temp  253.5410411228989 2740.7786079774905 , flux balance  2.9553440603505207e-07
+In t_start: Converged Solution in iterations  1
+Big iteration is  253.5410411228989 0
+ We are already at a root, tolf , test =  5e-05 ,  2.3858857666450026e-06
+Profile converged before itmx
+YAY ! ENDING WITH CONVERGENCE
+</pre></div></div>
+</div>
+</section>
+<section id="Compare-Resort-rebin-and-Pre-weighted-CK-table-derived-Climate-Profiles">
+<h2>Compare Resort-rebin and Pre-weighted CK table derived Climate Profiles<a class="headerlink" href="#Compare-Resort-rebin-and-Pre-weighted-CK-table-derived-Climate-Profiles" title="Link to this heading"></a></h2>
+<p>Now we can compare how these two methods perform against one another</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="mf">1.7e-4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">],</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Resort-Rebin, Chemical Equilibrium&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">temp_guess</span><span class="p">,</span><span class="n">pressure</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span><span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Pre-weighted CK, Chemical Equilibrium&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Pressure [bars]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Temperature [K]&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 0, &#39;Temperature [K]&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_D_climate_1b_BrownDwarf_ResortRebin_Chemeq_11_1.png" src="../../_images/notebooks_D_climate_1b_BrownDwarf_ResortRebin_Chemeq_11_1.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

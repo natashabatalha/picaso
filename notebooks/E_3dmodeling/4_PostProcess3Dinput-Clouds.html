@@ -1,0 +1,1007 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post-Process 3D Clouds Input &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="3D Spectra" href="5_3DSpectra.html" />
+    <link rel="prev" title="What is post-processing?" href="3_PostProcess3Dinput-Chemistry.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="2_3DInputsWithPICASOandXarray.html">Basics of a 3D Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_PostProcess3Dinput-Chemistry.html">What is post-processing?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_PostProcess3Dinput-Chemistry.html#Post-Process-3D-Chemistry-Input">Post-Process 3D Chemistry Input</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Post-Processing Clouds for 3D runs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Post-Process-Clouds:-User-Options">Post-Process Clouds: User Options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Post-Process-Clouds:-User-Defined-Input">Post-Process Clouds: User Defined Input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Post-Process-Clouds:-virga-cloud-model">Post-Process Clouds: <code class="docutils literal notranslate"><span class="pre">virga</span></code> cloud model</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="5_3DSpectra.html">Modeling a 3D Spectrum (Adams et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="6_PhaseCurves.html">Modeling a Thermal Phase Curve pt 1 (Robbins-Blanch et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="7_PhaseCurves-wChemEq.html">Modeling a Thermal Phase Curve pt 2 (Robbins-Blanch et al. 2022)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="8_ReflectedPhaseCurve.html">Modeling a Reflected Light Phase Curve (Hamill et al. 2024)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Post-Process 3D Clouds Input</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/E_3dmodeling/4_PostProcess3Dinput-Clouds.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/E_3dmodeling/4_PostProcess3Dinput-Clouds.py">Download full notebook here</a></p>
+</div>
+<section id="Post-Process-3D-Clouds-Input">
+<h1>Post-Process 3D Clouds Input<a class="headerlink" href="#Post-Process-3D-Clouds-Input" title="Link to this heading"></a></h1>
+<p>There are many cases were you may want to post-process components from a 3D GCM output. Post-processing is used to compensate for simplicities, or assumptions within a GCM. For example, you may want to post-process clouds on your output spectra, even if your initial GCM run did not include the effects of clouds.</p>
+<p>In this notebook you will learn:</p>
+<ol class="arabic simple">
+<li><p>How to post- process clouds using simple box model</p></li>
+<li><p>How to post- process clouds using <code class="docutils literal notranslate"><span class="pre">virga</span></code></p></li>
+</ol>
+<p>You should already know:</p>
+<ol class="arabic simple">
+<li><p>How to format and regrid an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> dataset</p></li>
+</ol>
+<p>Next notebook you will learn:</p>
+<ol class="arabic simple">
+<li><p>How to create spectra and phase curves from 3D input</p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="Post-Process-Clouds:-User-Options">
+<h2>Post-Process Clouds: User Options<a class="headerlink" href="#Post-Process-Clouds:-User-Options" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>User-defined input: this would only be used to explore simplistic cases (e.g. 100% H2O, or 50/50 H2/H2O). It also might be the case that you have abundance models from elsewhere (e.g. 3D model or GCM) and want to add it to your pressure/temperature <code class="docutils literal notranslate"><span class="pre">xarray</span></code></p></li>
+<li><p>Computationally intensive route: Usually GCM output is at a very high spatial resolution – higher than what is needed to post-process spectra. If you want, you can grab chemistry for every single <code class="docutils literal notranslate"><span class="pre">lat</span></code> x <code class="docutils literal notranslate"><span class="pre">lon</span></code> point in your grid first. Then, regrid after.</p>
+<ul class="simple">
+<li><p>Pro: you would only have to run it once, then you could regrid to different spatial resolutions later.</p></li>
+<li><p>Con: computationally expensive (e.g. 128 x 64 pts x ~1 second = 2 hours per model .. though the exact time depends on how many altitude points you have)</p></li>
+</ul>
+</li>
+<li><p>Computationally efficient route: Regrid first, then compute chemistry.</p>
+<ul class="simple">
+<li><p>Pro: would save potentially hundreds of chemistry computations</p></li>
+<li><p>Con: if you aren’t happy with your initial binning choice, you may have to repeat the calculation a few times to get it right</p></li>
+</ul>
+</li>
+</ol>
+<p>In this demo, we will do option #1 and #3 so that it can be self-contained and computationally fast, but you should explore what works best for your problem.</p>
+</section>
+<section id="Post-Process-Clouds:-User-Defined-Input">
+<h2>Post-Process Clouds: User Defined Input<a class="headerlink" href="#Post-Process-Clouds:-User-Defined-Input" title="Link to this heading"></a></h2>
+<p>Very similar to chemistry process, we can create an xarray that has our cloud output. Note that for clouds there is a fourth dimension (wavelength)</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create coords</span>
+<span class="n">lon</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">lat</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">pres</span> <span class="o">=</span> <span class="n">gcm_out</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">wno_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="mf">1e4</span><span class="o">/</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span><span class="c1">#cloud properties are defined on a wavenumber grid</span>
+
+<span class="c1">#create box-band cloud model</span>
+<span class="n">fake_opd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wno_grid</span><span class="p">)))</span> <span class="c1"># create fake data</span>
+<span class="n">where_lat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(((</span><span class="n">lat</span><span class="o">&gt;-</span><span class="mi">50</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lat</span><span class="o">&lt;</span><span class="mi">50</span><span class="p">)))</span><span class="c1">#creating a grey cloud band</span>
+<span class="n">where_pres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(((</span><span class="n">pres</span><span class="o">&lt;</span><span class="mf">0.01</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pres</span><span class="o">&gt;</span><span class="mf">.001</span><span class="p">)))</span><span class="c1">#creating a grey cloud band</span>
+<span class="k">for</span> <span class="n">il</span> <span class="ow">in</span> <span class="n">where_lat</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">fake_opd</span><span class="p">[:,</span><span class="n">il</span><span class="p">,</span><span class="n">ip</span><span class="p">,:]</span><span class="o">=</span><span class="mi">10</span> <span class="c1">#optical depth of 10 (&gt;&gt;1)</span>
+
+<span class="c1">#make up asymmetry and single scattering properties</span>
+<span class="n">fake_asymmetry_g0</span> <span class="o">=</span> <span class="mf">0.8</span><span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wno_grid</span><span class="p">)))</span>
+<span class="n">fake_ssa_w0</span> <span class="o">=</span> <span class="mf">0.9</span><span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lon</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">pres</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wno_grid</span><span class="p">)))</span>
+
+<span class="c1"># put data into a dataset</span>
+<span class="n">ds_cld</span><span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">data_vars</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">opd</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">,</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">fake_opd</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;depth per layer&#39;</span><span class="p">}),</span>
+        <span class="n">g0</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">,</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">fake_asymmetry_g0</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">}),</span>
+        <span class="n">w0</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span><span class="s2">&quot;pressure&quot;</span><span class="p">,</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">fake_ssa_w0</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">}),</span>
+    <span class="p">),</span>
+    <span class="n">coords</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">lon</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lon&quot;</span><span class="p">],</span> <span class="n">lon</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">lat</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;lat&quot;</span><span class="p">],</span> <span class="n">lat</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;degrees&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">pressure</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;pressure&quot;</span><span class="p">],</span> <span class="n">pres</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;bar&#39;</span><span class="p">}),</span><span class="c1">#required</span>
+        <span class="n">wno</span><span class="o">=</span><span class="p">([</span><span class="s2">&quot;wno&quot;</span><span class="p">],</span> <span class="n">wno_grid</span><span class="p">,{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;cm^(-1)&#39;</span><span class="p">})</span><span class="c1">#required for clouds</span>
+    <span class="p">),</span>
+    <span class="n">attrs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;coords with vectors&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="Visualize-Cloud-Input">
+<h3>Visualize Cloud Input<a class="headerlink" href="#Visualize-Cloud-Input" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds_cld</span><span class="p">[</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.collections.QuadMesh at 0x7f32634f5550&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_7_1.png" src="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_7_1.png" />
+</div>
+</div>
+</section>
+<section id="Add-clouds-to-picaso-bundle">
+<h3>Add clouds to <code class="docutils literal notranslate"><span class="pre">picaso</span></code> bundle<a class="headerlink" href="#Add-clouds-to-picaso-bundle" title="Link to this heading"></a></h3>
+<p>As a recap, in the steps below we:</p>
+<ol class="arabic simple">
+<li><p>Initiate a new run (jdi.inputs)</p></li>
+<li><p>Define the geometry of the run (phase_angle)</p></li>
+<li><p>Set the pressure-temperature-lat-lon profile (atmosphere_3d)</p></li>
+</ol>
+<p>Note here we are not worrying about chemical abundances (see post process chem tutorial). We will combine both clouds and chemistry steps in the next tutorial on 3D Spectra.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#first step is identical to what&#39;s been done in the past</span>
+<span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="c1">#turning off alerts since we already went through this</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">,</span> <span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<p>Now we can add cloud box model, which will be automatically regridded to the inputs based on the <code class="docutils literal notranslate"><span class="pre">phase_angle</span></code> function ran above</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">clouds_3d</span><span class="p">(</span><span class="n">ds_cld</span><span class="p">,</span><span class="n">iz_plot</span><span class="o">=</span><span class="n">where_pres</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+verbose=True;regrid=True; Regridding 3D output to ngangle=4, ntangle=4, with phase=0.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_11_2.png" src="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_11_2.png" />
+</div>
+</div>
+<p>Stylize plots to see reversed pressure axis in log</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span>
+    <span class="n">lat</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mf">3e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_13_0.png" src="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_13_0.png" />
+</div>
+</div>
+</section>
+<section id="See-other-regridded-variables">
+<h3>See other regridded variables<a class="headerlink" href="#See-other-regridded-variables" title="Link to this heading"></a></h3>
+<p>All the elements of your data bundle have been regridded! Though for now this is not too interesting since we have set the asymmetry to a constant value of 0.8</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;g0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">pressure</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.collections.QuadMesh at 0x7f32436a91d0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_15_1.png" src="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_15_1.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Post-Process-Clouds:-virga-cloud-model">
+<h2>Post-Process Clouds: <code class="docutils literal notranslate"><span class="pre">virga</span></code> cloud model<a class="headerlink" href="#Post-Process-Clouds:-virga-cloud-model" title="Link to this heading"></a></h2>
+<p>We will run this example on a very coarse (5x5) grid to make it faster. Note that similar to the <code class="docutils literal notranslate"><span class="pre">chemeq_3d</span></code> routine, running <code class="docutils literal notranslate"><span class="pre">virga_3d</span></code> will just run <code class="docutils literal notranslate"><span class="pre">ngangle</span></code>x<code class="docutils literal notranslate"><span class="pre">ntangle</span></code> 1d models. <strong>There is no transport of particles in the vertical/horizontal direction.</strong></p>
+<p><strong>NOTE!!</strong> If you are not familiar with <code class="docutils literal notranslate"><span class="pre">virga</span></code> models it is highly recommended that you start in one-dimension first. <a class="reference external" href="https://natashabatalha.github.io/virga/notebooks/1_GettingStarted.html">You can review the tutorials here</a>. This tutorial will not explain the required <code class="docutils literal notranslate"><span class="pre">virga</span></code> inputs.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">add_kz</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">case_3d</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">,</span> <span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_jup&#39;</span><span class="p">),</span>
+                <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_jup&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5000</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+verbose=True;regrid=True; Regridding 3D output to ngangle=10, ntangle=10, with phase=0.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_17_2.png" src="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_17_2.png" />
+</div>
+</div>
+<p>Run Virga!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># mieff_directory = &#39;/data/virga/&#39;</span>
+<span class="n">mieff_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;virga&#39;</span><span class="p">)</span>
+<span class="n">clds</span> <span class="o">=</span> <span class="n">case_3d</span><span class="o">.</span><span class="n">virga_3d</span><span class="p">([</span><span class="s1">&#39;MnS&#39;</span><span class="p">],</span> <span class="n">mieff_directory</span><span class="p">,</span><span class="n">fsed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">kz_min</span><span class="o">=</span><span class="mf">1e10</span><span class="p">,</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">n_cpu</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">full_output</span><span class="o">=</span><span class="kc">True</span>
+                       <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<p>Plot optical depth as a function of longitude</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">case_3d</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;clouds&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;opd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span><span class="n">wno</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;pressure&#39;</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mf">3e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_21_0.png" src="../../_images/notebooks_E_3dmodeling_4_PostProcess3Dinput-Clouds_21_0.png" />
+</div>
+</div>
+<section id="Trouble-Shooting-Negative-Kz-Values-(smooth_kz)">
+<h3>Trouble Shooting Negative Kz Values (smooth_kz)<a class="headerlink" href="#Trouble-Shooting-Negative-Kz-Values-(smooth_kz)" title="Link to this heading"></a></h3>
+<p>GCM runs produce both positive and negative K_z values. A negative K_z represents downdrafts, which cannot be accounted for in <code class="docutils literal notranslate"><span class="pre">virga</span></code>. In fact, <code class="docutils literal notranslate"><span class="pre">virga</span></code> has a default minimum value of 1e5 cm<span class="math notranslate nohighlight">\(^2\)</span>/s. For the above run, note I used a very large kz_min value of 1e10cm<span class="math notranslate nohighlight">\(^2\)</span>/s. The smaller the k_z value, the values create small particles. Let’s take at some of the difficulty with smoothing over K_z profiles:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gcm_out</span> <span class="o">=</span>  <span class="n">jdi</span><span class="o">.</span><span class="n">HJ_pt_3d</span><span class="p">(</span><span class="n">as_xarray</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">add_kz</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">test</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="n">test</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_tangle</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_gangle</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">test</span><span class="o">.</span><span class="n">atmosphere_3d</span><span class="p">(</span><span class="n">gcm_out</span><span class="p">,</span> <span class="n">regrid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+/home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/xesmf/smm.py:131: UserWarning: Input array is not C_CONTIGUOUS. Will affect performance.
+  warnings.warn(&#39;Input array is not C_CONTIGUOUS. &#39; &#39;Will affect performance.&#39;)
+</pre></div></div>
+</div>
+<p>Explore some profiles in our 3d Kz grid</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">lon</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="mi">0</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">(</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+                            <span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;pressure&#39;</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">],</span><span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Kz (cm2/s)&#39;</span><span class="p">,</span>
+                 <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;pressure (bars)&#39;</span><span class="p">,</span>
+                 <span class="n">width</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">1e11</span><span class="p">,</span> <span class="mf">1e11</span><span class="p">])</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span><span class="o">*</span><span class="mf">1e4</span><span class="p">,</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="c5a5f739-ecd6-4171-8e5b-a3299cb20d07">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("c5a5f739-ecd6-4171-8e5b-a3299cb20d07");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("c5a5f739-ecd6-4171-8e5b-a3299cb20d07")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="ead8f41f-3255-442e-bd30-c5b80363bfc3" data-root-id="p1001" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"eb545b66-03e1-438e-8457-edb135371ad5":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1001","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"Range1d","id":"p1010","attributes":{"start":-100000000000.0,"end":100000000000.0}},"y_range":{"type":"object","name":"Range1d","id":"p1011","attributes":{"start":100.0,"end":1e-06}},"x_scale":{"type":"object","name":"LinearScale","id":"p1012"},"y_scale":{"type":"object","name":"LogScale","id":"p1013"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1041","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1035","attributes":{"selected":{"type":"object","name":"Selection","id":"p1036","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1037"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJgQfLRSPUhQsrInK3sIyVCufz7qH8AGEJlLQC0+wEEQozCq4Qsq+TBTmS5rKgyFcIsQ8m4S2kowjQb2Wj1oy/CgEj7MGE4LcIDuk1QNMwuwjZ7QKlXTTHCS3auSga1McK4p11iAdgvwuVj04ymvinCIXiRboNpJMLcuNbqqUEkwrwYwVh1BSjCMLtD5EtrKMLaK+dsgtEjwjRj6Uz9ahnCA/6pmm/vB8IvsdeiOhXwwbxJEvTMFd3BQ8vHYOPN38H/sI7chbHmwenVLZu0IvHBHIoQnUsl9cGArWact4XzwS0SPzv7FOrBzv1o2Kxu18EDa1r7vLC/wV8pEyonb9zBVsYrtj/838FUqhDGxL3BQbEJqidDHOFBhMBYPntE7kGJCv26bYryQUx4SdQ2vu1BS1PfHEHk40EmxBCHDZXdQR0ZoH9OxqVBaae3U+/oqkFaw44cJ0KzwUMujPBPadLB4If96nMl0cEfaVfvVnzHwY/j+VXIzsPBXszT2G6iwMGYVKU/QpixwRr3md1TeqnBRk0etbrhosERF0pC6UKpwQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1042","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1043"}}},"glyph":{"type":"object","name":"Line","id":"p1038","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1039","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1040","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.2}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1009","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1024"},{"type":"object","name":"WheelZoomTool","id":"p1025","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1026","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1027","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1032"},{"type":"object","name":"ResetTool","id":"p1033"},{"type":"object","name":"HelpTool","id":"p1034"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1019","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1020","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1021"},"axis_label":"pressure (bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1022"}}}],"below":[{"type":"object","name":"LinearAxis","id":"p1014","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1015","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1016"},"axis_label":"Kz (cm2/s)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1017"}}}],"center":[{"type":"object","name":"Grid","id":"p1018","attributes":{"axis":{"id":"p1014"}}},{"type":"object","name":"Grid","id":"p1023","attributes":{"dimension":1,"axis":{"id":"p1019"}}}]}}]}};
+  const render_items = [{"docid":"eb545b66-03e1-438e-8457-edb135371ad5","roots":{"p1001":"ead8f41f-3255-442e-bd30-c5b80363bfc3"},"root_ids":["p1001"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<p>Experiment with splines</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;logp&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">x</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+<span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="n">y</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">spl</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">UnivariateSpline</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span><span class="n">ext</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;splKz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spl</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_3638136/3022888736.py:3: RuntimeWarning: invalid value encountered in log10
+  y = np.log10(df[&#39;kz&#39;].values)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">jpi</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">y_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e2</span><span class="p">,</span><span class="mf">1e-6</span><span class="p">],</span> <span class="n">x_axis_type</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
+                 <span class="n">x_axis_label</span><span class="o">=</span><span class="s1">&#39;Kz (cm2/s)&#39;</span><span class="p">,</span>
+                 <span class="n">y_axis_label</span><span class="o">=</span><span class="s1">&#39;pressure (bars)&#39;</span><span class="p">,</span>
+                 <span class="n">width</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">x_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e5</span><span class="p">,</span> <span class="mf">1e11</span><span class="p">])</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;kz&#39;</span><span class="p">]</span><span class="o">*</span><span class="mf">1e4</span><span class="p">,</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;splKz&#39;</span><span class="p">]</span><span class="o">*</span><span class="mf">1e4</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">],</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">y</span><span class="o">*</span><span class="mf">1e4</span><span class="p">,</span> <span class="mi">10</span><span class="o">**</span><span class="n">x</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="fccda07b-401c-4d23-ad09-e8a3bd90918f" data-root-id="p1046" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"dacc99cf-8319-45bf-8a6b-8852e49e0fc8":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1046","attributes":{"width":300,"height":300,"x_range":{"type":"object","name":"Range1d","id":"p1055","attributes":{"start":100000.0,"end":100000000000.0}},"y_range":{"type":"object","name":"Range1d","id":"p1056","attributes":{"start":100.0,"end":1e-06}},"x_scale":{"type":"object","name":"LogScale","id":"p1057"},"y_scale":{"type":"object","name":"LogScale","id":"p1058"},"title":{"type":"object","name":"Title","id":"p1053"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1086","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1080","attributes":{"selected":{"type":"object","name":"Selection","id":"p1081","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1082"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJgQfLRSPUhQsrInK3sIyVCufz7qH8AGEJlLQC0+wEEQozCq4Qsq+TBTmS5rKgyFcIsQ8m4S2kowjQb2Wj1oy/CgEj7MGE4LcIDuk1QNMwuwjZ7QKlXTTHCS3auSga1McK4p11iAdgvwuVj04ymvinCIXiRboNpJMLcuNbqqUEkwrwYwVh1BSjCMLtD5EtrKMLaK+dsgtEjwjRj6Uz9ahnCA/6pmm/vB8IvsdeiOhXwwbxJEvTMFd3BQ8vHYOPN38H/sI7chbHmwenVLZu0IvHBHIoQnUsl9cGArWact4XzwS0SPzv7FOrBzv1o2Kxu18EDa1r7vLC/wV8pEyonb9zBVsYrtj/838FUqhDGxL3BQbEJqidDHOFBhMBYPntE7kGJCv26bYryQUx4SdQ2vu1BS1PfHEHk40EmxBCHDZXdQR0ZoH9OxqVBaae3U+/oqkFaw44cJ0KzwUMujPBPadLB4If96nMl0cEfaVfvVnzHwY/j+VXIzsPBXszT2G6iwMGYVKU/QpixwRr3md1TeqnBRk0etbrhosERF0pC6UKpwQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1087","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1088"}}},"glyph":{"type":"object","name":"Line","id":"p1083","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1084","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1085","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#1f77b4","line_alpha":0.2}}}},{"type":"object","name":"GlyphRenderer","id":"p1095","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1089","attributes":{"selected":{"type":"object","name":"Selection","id":"p1090","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1091"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"0i7W0I9CH0Jw6PJuqREZQoj4APJGmRRCSfvEFmFREUKeJQ9cqMANQsOX9fnOEwpCfAXiK85JB0LdVciqRikFQuUFw6uWiQNCqUwXRHlNAkKcV+gpdl8BQtxFttB7rwBC77bRuzgxAEJF0+eC57X/QXVdbHdvSf9BtL2gQXMP/0E9dAeDzfv+QW8NyNsiA/9Bg/kmSmsa/0H45Sh7pTb/QbuDMZyxTP9Bq4p/slNR/0FfTwLEXTn/Qd8sZr8B+v5B2nuZSUiJ/kEkPT/Upd79QWOEarai8/xBj4/JEIbE+0FzQp4W7VD6QYC2Ocg4nPhBRx1qx7it9kEfOQRmgZD0QW/jlCPiUvJB6qXUQH4F8EE/IKf1M3TrQb2AE2h0BOdBKmcsfYDb4kFKDCj7wibeQSwvFYg1fddBgcTF6YPO0UEJzoF9MjzKQbppVSMawcJBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QaC3nJ+r+7lBoLecn6v7uUGgt5yfq/u5QQ=="},"shape":[53],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"ui6CF3tDxD4VX/Fwcq/MPotcsrO5TdQ+9qMz8fK93D6z6bRl/VfkPk3frVB6zOw+Nzzoc0Zi9D4tqdmoCdv8PhPu7ZeUbAQ/CWkzOKDpDD8EmWK353YUP1sfxaY9+Bw/FjwygkCBJD94ymso4wYtP7jYevCdizQ/ces9948VPT+Z7SD0AJZEP0iCOxNEJE0/U/swH2mgVD8YzlEhADNdP+YBq3HWqmQ/9pCsoMJBbT+l8EBnSbV0P6bonC2NUH0/UGiCdsG/hD+mFkK1Xl+NPyfI3yg/ypQ/SPHYbDhunT95adSNwdSkPyOuUjAZfa0/HOEffEnftD/P/2EBAoy9P0sRz8jW6cQ/K/htiPGazT8ja2heafTUP3f2lQfpqd0/agzfZwH/5D99FSpJ6LjtP1Xa4hqfCfU/CXB6F+/H/T+jdVQ1QRQFQEku/yH91g1Asg5HV+keFUDe/8cJE+YdQH3ogvqWKSVATMPwETH1LUA/NV66STQ1QD9SRIZVBD5AXrpJDAI/RUDPoKF/ghNOQLahYpy/SVVAbVZ9rrYiXkCNl24Sg1RlQA=="},"shape":[53],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1096","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1097"}}},"glyph":{"type":"object","name":"Line","id":"p1092","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red"}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1093","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red","line_alpha":0.1}},"muted_glyph":{"type":"object","name":"Line","id":"p1094","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"red","line_alpha":0.2}}}},{"type":"object","name":"GlyphRenderer","id":"p1104","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1098","attributes":{"selected":{"type":"object","name":"Selection","id":"p1099","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1100"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ls8U8MgVCUJhQfLRSPUhQsbInK3sIyVCt/z7qH8AGEJqLQC0+wEEQlGqEMbEvcFBtAmqJ0Mc4UF/wFg+e0TuQYsK/bptivJBSnhJ1Da+7UFJU98cQeTjQSLEEIcNld1BHhmgf07GpUFmp7dT7+iqQQ=="},"shape":[14],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"vS6CF3tDxD4WX/Fwcq/MPotcsrO5TdQ+/aMz8fK93D636bRl/VfkPiNraF5p9NQ/d/aVB+mp3T9qDN9nAf/kP30VKknouO0/VdriGp8J9T8JcHoX78f9P6N1VDVBFAVASS7/If3WDUCyDkdX6R4VQA=="},"shape":[14],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1105","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1106"}}},"glyph":{"type":"object","name":"Scatter","id":"p1101","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"fill_color":{"type":"value","value":"red"},"hatch_color":{"type":"value","value":"red"}}},"nonselection_glyph":{"type":"object","name":"Scatter","id":"p1102","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"line_alpha":{"type":"value","value":0.1},"fill_color":{"type":"value","value":"red"},"fill_alpha":{"type":"value","value":0.1},"hatch_color":{"type":"value","value":"red"},"hatch_alpha":{"type":"value","value":0.1}}},"muted_glyph":{"type":"object","name":"Scatter","id":"p1103","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"size":{"type":"value","value":7},"line_color":{"type":"value","value":"red"},"line_alpha":{"type":"value","value":0.2},"fill_color":{"type":"value","value":"red"},"fill_alpha":{"type":"value","value":0.2},"hatch_color":{"type":"value","value":"red"},"hatch_alpha":{"type":"value","value":0.2}}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1054","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1069"},{"type":"object","name":"WheelZoomTool","id":"p1070","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1071","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1072","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1077"},{"type":"object","name":"ResetTool","id":"p1078"},{"type":"object","name":"HelpTool","id":"p1079"}]}},"left":[{"type":"object","name":"LogAxis","id":"p1064","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1065","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1066"},"axis_label":"pressure (bars)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1067"}}}],"below":[{"type":"object","name":"LogAxis","id":"p1059","attributes":{"ticker":{"type":"object","name":"LogTicker","id":"p1060","attributes":{"num_minor_ticks":10,"mantissas":[1,5]}},"formatter":{"type":"object","name":"LogTickFormatter","id":"p1061"},"axis_label":"Kz (cm2/s)","major_label_policy":{"type":"object","name":"AllLabels","id":"p1062"}}}],"center":[{"type":"object","name":"Grid","id":"p1063","attributes":{"axis":{"id":"p1059"}}},{"type":"object","name":"Grid","id":"p1068","attributes":{"dimension":1,"axis":{"id":"p1064"}}}]}}]}};
+  const render_items = [{"docid":"dacc99cf-8319-45bf-8a6b-8852e49e0fc8","roots":{"p1046":"fccda07b-401c-4d23-ad09-e8a3bd90918f"},"root_ids":["p1046"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="3_PostProcess3Dinput-Chemistry.html" class="btn btn-neutral float-left" title="What is post-processing?" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="5_3DSpectra.html" class="btn btn-neutral float-right" title="3D Spectra" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

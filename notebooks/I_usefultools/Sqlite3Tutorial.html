@@ -1,0 +1,675 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SQLITE Tutorial &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Model Formatting Overview" href="data_uniformity_tutorial.html" />
+    <link rel="prev" title="How do I load in target properties from Exo.Mast?" href="FAQs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ModelStorage.html">How to store and reuse models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ContributionFunctions.html">Spectral and Molecular Contribution Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CommonClimateBDIssues.html">Common Climate Issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html">Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html#Set-up-the-PICASO-connection-for-three-test-cases-(mono-and-correlated-k)">Set up the PICASO connection for three test cases (mono and correlated-k)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html#Grab-the-thermal-fluxes,-reflected-fluxes,-and-pressure-levels-from-the-ful-output">Grab the thermal fluxes, reflected fluxes, and pressure levels from the ful output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Level_Fluxes.html#Plot-the-thermal-and-reflected-layer-fluxes">Plot the thermal and reflected layer fluxes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html">How do I load in target properties from Exo.Mast?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#I'm-confused-about-what-opacity-file-to-use">I’m confused about what opacity file to use</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">SQLITE Tutorial</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Establishing-a-Connection-to-a-Database">Establishing a Connection to a Database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Using-SELECT-*-FROM-to-Query-Items">Using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span></code> to Query Items</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Creating-a-New-Database-from-Scratch">Creating a New Database from Scratch</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html">Model Formatting Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Specifying-units">Specifying units</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Data-Types:-Using-xarray">Data Types: Using <code class="docutils literal notranslate"><span class="pre">xarray</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Storing-xarray-data">Storing <code class="docutils literal notranslate"><span class="pre">xarray</span></code> data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Reading/interpreting-an-xarray-file">Reading/interpreting an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">SQLITE Tutorial</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/I_usefultools/Sqlite3Tutorial.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/I_usefultools/Sqlite3Tutorial.py">Download full notebook here</a></p>
+</div>
+<section id="SQLITE-Tutorial">
+<h1>SQLITE Tutorial<a class="headerlink" href="#SQLITE-Tutorial" title="Link to this heading"></a></h1>
+<p>This tutorial shows you how query the existing <code class="docutils literal notranslate"><span class="pre">opacity.db</span></code> and also shows you how to customize your own <code class="docutils literal notranslate"><span class="pre">opacity.db</span></code></p>
+<p>A lot of this code is embedded in PICASO.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<section id="Establishing-a-Connection-to-a-Database">
+<h2>Establishing a Connection to a Database<a class="headerlink" href="#Establishing-a-Connection-to-a-Database" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#this is where your opacity file should be located if you&#39;ve set your environments correctly</span>
+<span class="n">db_filename</span> <span class="o">=</span> <span class="n">opa</span><span class="o">.</span><span class="n">db_filename</span>
+
+<span class="c1">#these functions are so that you can store your float arrays as bytes to minimize storage</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapt_array</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_array</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+<span class="c1">#tell sqlite what to do with an array</span>
+<span class="n">sqlite3</span><span class="o">.</span><span class="n">register_adapter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">adapt_array</span><span class="p">)</span>
+<span class="n">sqlite3</span><span class="o">.</span><span class="n">register_converter</span><span class="p">(</span><span class="s2">&quot;array&quot;</span><span class="p">,</span> <span class="n">convert_array</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#this will be how we execute commands to grab chunks of data</span>
+<span class="c1">#this is how you establish a connection to the db</span>
+<span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_filename</span><span class="p">,</span> <span class="n">detect_types</span><span class="o">=</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">PARSE_DECLTYPES</span><span class="p">)</span>
+<span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+<span class="c1">#usually you want to close your database right after you open it using</span>
+<span class="c1">#conn.close()</span>
+
+<span class="c1">#for now, we will keep it open for the tutorial</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Using-SELECT-*-FROM-to-Query-Items">
+<h2>Using <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span></code> to Query Items<a class="headerlink" href="#Using-SELECT-*-FROM-to-Query-Items" title="Link to this heading"></a></h2>
+<section id="Get-from-header">
+<h3>Get from header<a class="headerlink" href="#Get-from-header" title="Link to this heading"></a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#let&#39;s start by just grabbing all the info from the header</span>
+<span class="n">header</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT * FROM header&#39;</span><span class="p">)</span>
+<span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">description</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">description</span> <span class="ow">in</span> <span class="n">header</span><span class="o">.</span><span class="n">description</span><span class="p">]</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Get-Continuum-Opacity">
+<h3>Get Continuum Opacity<a class="headerlink" href="#Get-Continuum-Opacity" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#what molecules exist?</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT molecule FROM continuum&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;H-bf&#39; &#39;H-ff&#39; &#39;H2-&#39; &#39;H2H2&#39; &#39;H2He&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#what temperatures exist?</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT temperature FROM continuum&#39;</span><span class="p">)</span>
+<span class="n">cia_temperatures</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">())</span>
+<span class="n">cia_temperatures</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([ 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.])
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#wavenumber grid from header</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT wavenumber_grid FROM header&#39;</span><span class="p">)</span>
+<span class="n">wave_grid</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#grab H2H2 at 300 K</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT opacity FROM continuum WHERE molecule=? AND temperature=?&#39;</span><span class="p">,(</span><span class="s1">&#39;H2H2&#39;</span><span class="p">,</span><span class="mi">300</span><span class="p">))</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="n">data</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[(array([4.70616426e-06, 4.70525165e-06, 4.70433917e-06, ...,
+         5.23650419e-51, 5.18255431e-51, 5.12915670e-51], shape=(58681,)),)]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#grab all opacity at 300 K</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT molecule,opacity FROM continuum WHERE temperature=300&#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="n">data</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[(&#39;H2H2&#39;,
+  array([4.70616426e-06, 4.70525165e-06, 4.70433917e-06, ...,
+         5.23650419e-51, 5.18255431e-51, 5.12915670e-51], shape=(58681,))),
+ (&#39;H2He&#39;,
+  array([1.23310576e-06, 1.23291648e-06, 1.23272722e-06, ...,
+         1.00000000e-33, 1.00000000e-33, 1.00000000e-33], shape=(58681,))),
+ (&#39;H2-&#39;,
+  array([1.e-33, 1.e-33, 1.e-33, ..., 1.e-33, 1.e-33, 1.e-33],
+        shape=(58681,))),
+ (&#39;H-bf&#39;,
+  array([1.e-33, 1.e-33, 1.e-33, ..., 1.e-33, 1.e-33, 1.e-33],
+        shape=(58681,))),
+ (&#39;H-ff&#39;,
+  array([1.e-63, 1.e-63, 1.e-63, ..., 1.e-63, 1.e-63, 1.e-63],
+        shape=(58681,)))]
+</pre></div></div>
+</div>
+</section>
+<section id="Get-Molecular-Opacity">
+<h3>Get Molecular Opacity<a class="headerlink" href="#Get-Molecular-Opacity" title="Link to this heading"></a></h3>
+<p>Molecular opacities are on a specific P-T grid so we book keep them by assigning indices to each pair e.g (1: 1e-6 bar, 75 K, 2:1e-6, 80K.. and so on)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#get the PT grid with the corresponding grid</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT ptid, pressure, temperature FROM molecular&#39;</span><span class="p">)</span>
+<span class="n">data</span><span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="n">pt_pairs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">)</span>
+<span class="n">pt_pairs</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span><span class="c1">#example of the first 10 PT pairs</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[(1, 1e-06, 75.0),
+ (2, 3e-06, 75.0),
+ (3, 1e-05, 75.0),
+ (4, 3e-05, 75.0),
+ (5, 0.0001, 75.0),
+ (6, 0.0003, 75.0),
+ (7, 0.001, 75.0),
+ (8, 0.003, 75.0),
+ (9, 0.01, 75.0),
+ (10, 0.03, 75.0)]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#what molecules exist?</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT molecule FROM molecular&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;C2H2&#39; &#39;CH4&#39; &#39;CO&#39; &#39;CO2&#39; &#39;H2O&#39; &#39;H2S&#39; &#39;K&#39; &#39;Na&#39; &#39;OCS&#39; &#39;SO2&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># grab the opacity at a specific temp and pressure</span>
+<span class="n">grab_p</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="c1"># bar</span>
+<span class="n">grab_t</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># kelvin</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+<span class="c1">#here&#39;s a little code to get out the correct pair (so we dont have to worry about getting the exact number right)</span>
+<span class="n">ind_pt</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">pt_pairs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span> <span class="n">coordinate</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">coordinate</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+          <span class="k">for</span> <span class="n">coordinate</span> <span class="ow">in</span>  <span class="nb">zip</span><span class="p">([</span><span class="n">grab_p</span><span class="p">],[</span><span class="n">grab_t</span><span class="p">])]</span>
+
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT molecule,ptid,opacity</span>
+<span class="s2">            FROM molecular</span>
+<span class="s2">            WHERE molecule = ?</span>
+<span class="s2">            AND ptid = ?&quot;&quot;&quot;</span><span class="p">,(</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="n">ind_pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="n">data</span><span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="n">data</span> <span class="c1">#gives you the molecule, ptid, and the opacity</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[(&#39;H2O&#39;,
+  31,
+  array([6.39185649e-29, 7.06041034e-29, 7.87311780e-29, ...,
+         7.01409004e-32, 2.43220896e-31, 1.54685524e-31], shape=(58681,)))]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">grab_moles</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">]</span>
+<span class="n">grab_p</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">100</span><span class="p">]</span> <span class="c1"># bar</span>
+<span class="n">grab_t</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">200</span><span class="p">,</span><span class="mi">700</span><span class="p">]</span> <span class="c1"># kelvin</span>
+
+<span class="c1">#here&#39;s a little code to get out the correct pair (so we dont have to worry about getting the exact number right)</span>
+<span class="n">ind_pt</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">pt_pairs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span> <span class="n">coordinate</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">coordinate</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+          <span class="k">for</span> <span class="n">coordinate</span> <span class="ow">in</span>  <span class="nb">zip</span><span class="p">(</span><span class="n">grab_p</span><span class="p">,</span><span class="n">grab_t</span><span class="p">)]</span>
+
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT molecule,ptid,opacity</span>
+<span class="s2">            FROM molecular</span>
+<span class="s2">            WHERE molecule in </span><span class="si">{}</span>
+<span class="s2">            AND ptid in </span><span class="si">{}</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">grab_moles</span><span class="p">)),</span> <span class="nb">str</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ind_pt</span><span class="p">))))</span>
+<span class="n">data</span><span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+<span class="n">data</span> <span class="c1">#gives you the molecule, ptid, and the opacity</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[(&#39;CO2&#39;,
+  31,
+  array([4.63531065e-020, 3.72348958e-020, 4.08507238e-020, ...,
+         1.00000000e-100, 1.00000000e-100, 1.00000000e-100], shape=(58681,))),
+ (&#39;CO2&#39;,
+  233,
+  array([1.57465495e-019, 1.69219635e-019, 1.83593280e-019, ...,
+         1.00000000e-100, 1.00000000e-100, 1.00000000e-100], shape=(58681,))),
+ (&#39;CO2&#39;,
+  797,
+  array([2.26578895e-019, 2.28178815e-019, 2.29778842e-019, ...,
+         1.00000000e-100, 1.00000000e-100, 1.00000000e-100], shape=(58681,))),
+ (&#39;H2O&#39;,
+  31,
+  array([6.39185649e-29, 7.06041034e-29, 7.87311780e-29, ...,
+         7.01409004e-32, 2.43220896e-31, 1.54685524e-31], shape=(58681,))),
+ (&#39;H2O&#39;,
+  233,
+  array([8.69204872e-25, 9.01353937e-25, 9.36180829e-25, ...,
+         9.49728971e-31, 1.34571887e-30, 7.05000056e-31], shape=(58681,))),
+ (&#39;H2O&#39;,
+  797,
+  array([2.74006543e-21, 2.75426280e-21, 2.76846113e-21, ...,
+         6.43091701e-30, 7.18598416e-30, 7.64721757e-30], shape=(58681,)))]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#Dont forget to close your connection!!!!</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Creating-a-New-Database-from-Scratch">
+<h2>Creating a New Database from Scratch<a class="headerlink" href="#Creating-a-New-Database-from-Scratch" title="Link to this heading"></a></h2>
+<p><strong>Note on molecule names</strong>: Because <code class="docutils literal notranslate"><span class="pre">picaso</span></code> uses dict formatting to handle opacities, users can easily swap in different molecules.</p>
+<p>For example, if I wanted to include CO2-H2 CIA absorption, I can add <code class="docutils literal notranslate"><span class="pre">CO2H2</span></code> to the molecules list below. However, it is only quasi-automated in this regaurd. Please contact <a class="reference external" href="mailto:natasha&#46;e&#46;batalha&#37;&#52;&#48;gmail&#46;com">natasha<span>&#46;</span>e<span>&#46;</span>batalha<span>&#64;</span>gmail<span>&#46;</span>com</a> if you are adding new CIA to the code.</p>
+<p><strong>Exceptions</strong>: The exceptions to this are non-CIA continuum opacities. Right now, the other sources of continuum enabled are <code class="docutils literal notranslate"><span class="pre">H2-</span></code>, <code class="docutils literal notranslate"><span class="pre">H-bf</span></code> and <code class="docutils literal notranslate"><span class="pre">H-ff</span></code> which have odd-ball formatting since they aren’t simple two molecules. <em>Please let me know if you want to see another continuum source added</em>.</p>
+<p><strong>Careful</strong> with case sensitive molecules like <strong>TiO</strong>, <strong>Na</strong>. Make sure you get these right.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db_filename</span> <span class="o">=</span> <span class="s1">&#39;/data/picaso_dbs/new_fake_opacity.db&#39;</span>
+<span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_filename</span><span class="p">,</span> <span class="n">detect_types</span><span class="o">=</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">PARSE_DECLTYPES</span><span class="p">)</span>
+<span class="c1">#same story with bytes and arrays</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapt_array</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Binary</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_array</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+<span class="c1">#tell sqlite what to do with an array</span>
+<span class="n">sqlite3</span><span class="o">.</span><span class="n">register_adapter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">adapt_array</span><span class="p">)</span>
+<span class="n">sqlite3</span><span class="o">.</span><span class="n">register_converter</span><span class="p">(</span><span class="s2">&quot;array&quot;</span><span class="p">,</span> <span class="n">convert_array</span><span class="p">)</span>
+
+<span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<section id="Build-Tables:-header,-continuum,-and-molecular-tables">
+<h3>Build Tables: header, continuum, and molecular tables<a class="headerlink" href="#Build-Tables:-header,-continuum,-and-molecular-tables" title="Link to this heading"></a></h3>
+<p>It is <strong>VERY</strong> important that these tables are structured the same way. If you think something should be edited, ping <a class="reference external" href="mailto:natasha&#46;e&#46;batalha&#37;&#52;&#48;gmail&#46;com">natasha<span>&#46;</span>e<span>&#46;</span>batalha<span>&#64;</span>gmail<span>&#46;</span>com</a></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#header</span>
+<span class="n">command</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;DROP TABLE IF EXISTS header;</span>
+<span class="s2">CREATE TABLE header (</span>
+<span class="s2">    id INTEGER PRIMARY KEY,</span>
+<span class="s2">    pressure_unit VARCHAR,</span>
+<span class="s2">    temperature_unit VARCHAR,</span>
+<span class="s2">    wavenumber_grid array,</span>
+<span class="s2">    continuum_unit VARCHAR,</span>
+<span class="s2">    molecular_unit VARCHAR</span>
+<span class="s2">    );&quot;&quot;&quot;</span>
+
+<span class="n">cur</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+<span class="c1">#molecular data table, note the existence of PTID which will be very important</span>
+<span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;DROP TABLE IF EXISTS molecular;</span>
+<span class="s2">CREATE TABLE molecular (</span>
+<span class="s2">    id INTEGER PRIMARY KEY,</span>
+<span class="s2">    ptid INTEGER,</span>
+<span class="s2">    molecule VARCHAR ,</span>
+<span class="s2">    pressure FLOAT,</span>
+<span class="s2">    temperature FLOAT,</span>
+<span class="s2">    opacity array);&quot;&quot;&quot;</span>
+
+<span class="n">cur</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+<span class="c1">#continuum data table</span>
+<span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;DROP TABLE IF EXISTS continuum;</span>
+<span class="s2">CREATE TABLE continuum (</span>
+<span class="s2">    id INTEGER PRIMARY KEY,</span>
+<span class="s2">    molecule VARCHAR ,</span>
+<span class="s2">    temperature FLOAT,</span>
+<span class="s2">    opacity array);&quot;&quot;&quot;</span>
+
+<span class="n">cur</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span> <span class="c1">#this commits the changes to the database</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Insert-header-info-(unit-and-wave-grid-info!)">
+<h3>Insert header info (unit and wave grid info!)<a class="headerlink" href="#Insert-header-info-(unit-and-wave-grid-info!)" title="Link to this heading"></a></h3>
+<p>The units <strong>MUST</strong> be the same. The wave grid can be whatever as long as it’s consistent between continuum and molecular tables.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">wave_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1e4</span><span class="o">/</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span> <span class="c1">#fake inverse cm wavenumber grid</span>
+
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;INSERT INTO header (pressure_unit, temperature_unit, wavenumber_grid, continuum_unit,molecular_unit) values (?,?,?,?,?)&#39;</span><span class="p">,</span>
+            <span class="p">(</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span><span class="s1">&#39;kelvin&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">wave_grid</span><span class="p">),</span> <span class="s1">&#39;cm-1 amagat-2&#39;</span><span class="p">,</span> <span class="s1">&#39;cm2/molecule&#39;</span><span class="p">))</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Insert-continuum-opacity-to-database">
+<h3>Insert continuum opacity to database<a class="headerlink" href="#Insert-continuum-opacity-to-database" title="Link to this heading"></a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cia_temperature_grid</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">300</span><span class="p">,</span><span class="mi">500</span><span class="p">,</span><span class="mi">700</span><span class="p">]</span>
+<span class="c1">#insert continuum</span>
+<span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;H2H2&#39;</span><span class="p">,</span> <span class="s1">&#39;H2He&#39;</span><span class="p">,</span> <span class="s1">&#39;H2H&#39;</span><span class="p">,</span> <span class="s1">&#39;H2CH4&#39;</span><span class="p">,</span> <span class="s1">&#39;H2N2&#39;</span><span class="p">,</span><span class="s1">&#39;H2-&#39;</span><span class="p">,</span> <span class="s1">&#39;H-bf&#39;</span><span class="p">,</span> <span class="s1">&#39;H-ff&#39;</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">T</span> <span class="ow">in</span> <span class="n">cia_temperature_grid</span><span class="p">:</span>
+        <span class="n">OPACITY</span> <span class="o">=</span> <span class="n">wave_grid</span> <span class="o">*</span><span class="mi">0</span> <span class="o">+</span> <span class="mf">1e-33</span> <span class="c1">#INSERT YOUR OPACITY HERE</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;INSERT INTO continuum (molecule, temperature, opacity) values (?,?,?)&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">mol</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="n">OPACITY</span><span class="p">))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Insert-molecular-opacity-to-database">
+<h3>Insert molecular opacity to database<a class="headerlink" href="#Insert-molecular-opacity-to-database" title="Link to this heading"></a></h3>
+<p>Again, make sure that your molecules are <strong>case-sensitive</strong>: e.g. Sodium should be <code class="docutils literal notranslate"><span class="pre">Na</span></code> not <code class="docutils literal notranslate"><span class="pre">NA</span></code></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#create a fake PT grid</span>
+<span class="n">pts</span><span class="o">=</span><span class="p">[]</span>
+<span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="mi">200</span><span class="p">,</span><span class="mi">400</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">pres</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">]:</span>
+        <span class="n">pts</span> <span class="o">+=</span> <span class="p">[[</span><span class="n">temp</span><span class="p">,</span><span class="n">pres</span><span class="p">]]</span>
+<span class="n">pts</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[100, 0.1],
+ [100, 1],
+ [100, 100],
+ [200, 0.1],
+ [200, 1],
+ [200, 100],
+ [400, 0.1],
+ [400, 1],
+ [400, 100]]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#insert molecular</span>
+<span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;H2O&#39;</span><span class="p">,</span><span class="s1">&#39;CO2&#39;</span><span class="p">,</span><span class="s1">&#39;CH4&#39;</span><span class="p">]:</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1">#NOTE THIS INDEX HERE IS CRUCIAL! It will be how we quickly locate opacities</span>
+    <span class="k">for</span> <span class="n">T</span><span class="p">,</span><span class="n">P</span> <span class="ow">in</span> <span class="n">pts</span><span class="p">:</span>
+        <span class="n">OPACITY</span> <span class="o">=</span> <span class="n">wave_grid</span> <span class="o">*</span><span class="mi">0</span> <span class="o">+</span> <span class="mf">1e-33</span> <span class="c1">#INSERT YOUR OPACITY HERE</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;INSERT INTO molecular (ptid, molecule, temperature, pressure,opacity) values (?,?,?,?,?)&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">mol</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="n">T</span><span class="p">),</span><span class="nb">float</span><span class="p">(</span><span class="n">P</span><span class="p">),</span> <span class="n">OPACITY</span><span class="p">))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#ALL DONE!!!</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="FAQs.html" class="btn btn-neutral float-left" title="How do I load in target properties from Exo.Mast?" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="data_uniformity_tutorial.html" class="btn btn-neutral float-right" title="Model Formatting Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

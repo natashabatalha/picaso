@@ -1,0 +1,804 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Approximations for Spherical Harmonics Radiative Transfer in Reflected Light &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission" href="3_AnalyzingApproximationsThermal.html" />
+    <link rel="prev" title="Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light" href="1_AnalyzingApproximationsReflectedLightToon.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="1_AnalyzingApproximationsReflectedLightToon.html">Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light</a></li>
+<li class="toctree-l3"><a class="reference internal" href="1_AnalyzingApproximationsReflectedLightToon.html#Benchmark-Toon89-w/-Dlugach-&amp;-Yanovitskij-(1974)">Benchmark Toon89 w/ Dlugach &amp; Yanovitskij (1974)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Spherical Harmonics Radiative Transfer in Reflected Light</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Benchmark-Jupiter-like-case-profile">Benchmark Jupiter-like case profile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Setup-comparison-with-two-stream-radiative-transfer">Setup comparison with two-stream radiative transfer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Setting-up-Spherical-Harmonics-Approximations-to-compare-with-Toon">Setting up Spherical Harmonics Approximations to compare with Toon</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Reproducing-Figure-5a-from-Rooney-et-al.-2023">Reproducing Figure 5a from Rooney et al. 2023</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Reproducing-Figure-5b-from-Rooney-et-al.-2023">Reproducing Figure 5b from Rooney et al. 2023</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="3_AnalyzingApproximationsThermal.html">Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="3_AnalyzingApproximationsThermal.html#Dependence-of-Radiative-Transfer-Method-on-Scattering-Parameters">Dependence of Radiative Transfer Method on Scattering Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Approximations for Spherical Harmonics Radiative Transfer in Reflected Light</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/H_radiativetransfer/2_AnalyzingApproximationsReflectedLightSH.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/H_radiativetransfer/2_AnalyzingApproximationsReflectedLightSH.py">Download full notebook here</a></p>
+</div>
+<section id="Approximations-for-Spherical-Harmonics-Radiative-Transfer-in-Reflected-Light">
+<h1>Approximations for Spherical Harmonics Radiative Transfer in Reflected Light<a class="headerlink" href="#Approximations-for-Spherical-Harmonics-Radiative-Transfer-in-Reflected-Light" title="Link to this heading"></a></h1>
+<p>In <a class="reference external" href="add-link">Rooney et al 2023</a> we rigorously derive the spherical harmonics method for reflected light and benchmark the 4-term method (SH4) against <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1989JGR....9416287T/abstract">Toon et al. 1989</a> and two independent methods. Here, we provide the code to reproduce the analysis that compares Toon89 with the higher fidelity 4-term spherical harmonics method for reflected light calculations.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1">#picaso</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.model_compare</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ptest</span>
+
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="d7112e49-2352-416c-9004-bb897afb056e">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("d7112e49-2352-416c-9004-bb897afb056e");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("d7112e49-2352-416c-9004-bb897afb056e")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<section id="Benchmark-Jupiter-like-case-profile">
+<h2>Benchmark Jupiter-like case profile<a class="headerlink" href="#Benchmark-Jupiter-like-case-profile" title="Link to this heading"></a></h2>
+<p>Here we use the same profile explored in the two-stream radiative transfer tutorial.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">opa</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span><span class="c1">#, resample=100)</span>
+<span class="n">case1</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+<span class="c1">#phase</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
+
+<span class="c1">#gravity</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">gravity</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span> <span class="n">gravity_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;m/(s**2)&#39;</span><span class="p">))</span>
+
+<span class="c1">#star</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opa</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span><span class="mf">0.0122</span><span class="p">,</span><span class="mf">4.437</span><span class="p">)</span> <span class="c1">#kelvin, log metal, log cgs</span>
+
+<span class="c1">#atmosphere</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_pt</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+
+<span class="c1">#set model clouds</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span> <span class="n">filename</span><span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">jupiter_cld</span><span class="p">(),</span> <span class="n">sep</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Setup-comparison-with-two-stream-radiative-transfer">
+<h2>Setup comparison with two-stream radiative transfer<a class="headerlink" href="#Setup-comparison-with-two-stream-radiative-transfer" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#we&#39;ll use these labels to keep track of the cases we have created</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">albs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1">#run</span>
+
+<span class="n">multi_phase</span> <span class="o">=</span> <span class="s1">&#39;N=2&#39;</span> <span class="c1">#two legendre polynomials (toon default)</span>
+<span class="n">single_phase</span><span class="o">=</span><span class="s1">&#39;TTHG_ray&#39;</span> <span class="c1">#two term HG with rayleigh (toon default)</span>
+<span class="n">DE</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1">#delta eddington correction, (toon default)</span>
+<span class="n">raman</span><span class="o">=</span><span class="s1">&#39;none&#39;</span> <span class="c1">#lets turn raman off, for clarity in this benchmark case</span>
+
+<span class="c1">#set all approximatinos</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">toon_coefficients</span><span class="o">=</span><span class="s1">&#39;quadrature&#39;</span><span class="p">,</span>
+             <span class="n">multi_phase</span><span class="o">=</span><span class="n">multi_phase</span><span class="p">,</span>
+             <span class="n">single_phase</span><span class="o">=</span><span class="n">single_phase</span><span class="p">,</span>
+             <span class="n">delta_eddington</span><span class="o">=</span><span class="n">DE</span><span class="p">,</span> <span class="n">raman</span><span class="o">=</span><span class="n">raman</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">fpfs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+
+<span class="n">labels</span><span class="o">+=</span><span class="p">[</span><span class="s1">&#39;Toon89&#39;</span><span class="p">]</span>
+<span class="n">albs</span><span class="o">+=</span><span class="p">[</span><span class="n">alb</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Setting-up-Spherical-Harmonics-Approximations-to-compare-with-Toon">
+<h2>Setting up Spherical Harmonics Approximations to compare with Toon<a class="headerlink" href="#Setting-up-Spherical-Harmonics-Approximations-to-compare-with-Toon" title="Link to this heading"></a></h2>
+<p>Spherical harmonics allows us to remain consistent with scattering functions throughout the methodology. In Toon when calculation the two stream solution for multiple layers, the phase functions are hard-coded set to be one term HG. However, when implementing the source function technique to derive the outgoing intensity we introduce a two-term HG for direct-scattering beam in attempt to capture the back-scattering radiation observed on Neptune. These details are further discussed in Cahoy et al
+2010, Batalha et al. 2019, Feng et al. 2017.</p>
+<p>In spherical harmonics, we can simply consider a two-term HG phase function throughout the calculation. In order to better compare with Toon however (for historical purposes), we made sure that our SH routines could also match that Toon approach. Therefore, below you see we have <strong>two</strong> different single scattering forms. Note that this is only for comparison with Toon89. The default for SH is to use a TTHG phase function with Rayleigh throughout the radiative transfer calculation.</p>
+<p>Further details can be found in Rooney et al. 2023.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># NOT SH default; enforcing for toon comparison which cannot handle</span>
+<span class="c1"># pre-processed two term phase functions</span>
+<span class="n">w_single_form</span><span class="o">=</span><span class="s1">&#39;OTHG&#39;</span><span class="p">;</span> <span class="n">w_single_rayleigh</span><span class="o">=</span><span class="s1">&#39;off&#39;</span>
+<span class="n">w_multi_form</span><span class="o">=</span><span class="s1">&#39;OTHG&#39;</span><span class="p">;</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="s1">&#39;on&#39;</span>
+
+<span class="c1">#defaults in SH technique</span>
+<span class="n">psingle_form</span><span class="o">=</span><span class="s1">&#39;TTHG&#39;</span><span class="p">;</span> <span class="n">psingle_rayleigh</span><span class="o">=</span><span class="s1">&#39;on&#39;</span>
+<span class="c1">#2 or 4 stream (SH routines handles both though 4 is the default)</span>
+<span class="n">stream</span><span class="o">=</span><span class="mi">4</span>
+
+<span class="n">case1</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span><span class="o">=</span><span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span>
+              <span class="n">w_single_form</span><span class="o">=</span><span class="n">w_single_form</span><span class="p">,</span> <span class="n">w_single_rayleigh</span><span class="o">=</span><span class="n">w_single_rayleigh</span><span class="p">,</span>
+              <span class="n">w_multi_form</span><span class="o">=</span><span class="n">w_multi_form</span><span class="p">,</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="n">w_multi_rayleigh</span><span class="p">,</span>
+             <span class="n">psingle_form</span><span class="o">=</span><span class="n">psingle_form</span><span class="p">,</span> <span class="n">psingle_rayleigh</span><span class="o">=</span><span class="n">psingle_rayleigh</span><span class="p">,</span>
+             <span class="n">delta_eddington</span><span class="o">=</span><span class="n">DE</span><span class="p">,</span> <span class="n">raman</span><span class="o">=</span><span class="n">raman</span><span class="p">)</span>
+<span class="c1"># case1.approx(rt_method=&#39;SH&#39;, stream=4, raman=&#39;none&#39;)</span>
+<span class="n">df3</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
+<span class="n">wno3</span><span class="p">,</span> <span class="n">alb3</span><span class="p">,</span> <span class="n">fpfs3</span> <span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df3</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df3</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno3</span><span class="p">,</span> <span class="n">alb3</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno3</span><span class="p">,</span> <span class="n">alb3</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">labels</span><span class="o">+=</span><span class="p">[</span><span class="s1">&#39;SH4 (OTHG multi)&#39;</span><span class="p">]</span>
+<span class="n">albs</span><span class="o">+=</span><span class="p">[</span><span class="n">alb3</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Here we relax the constraint for OTHG to see how the multiple scattering approximation in Toon impacts the spectrum.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">w_multi_form</span><span class="o">=</span><span class="s1">&#39;TTHG&#39;</span><span class="p">;</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="s1">&#39;on&#39;</span>
+
+<span class="n">case1</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span><span class="o">=</span><span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+              <span class="n">w_single_form</span><span class="o">=</span><span class="n">w_single_form</span><span class="p">,</span> <span class="n">w_single_rayleigh</span><span class="o">=</span><span class="n">w_single_rayleigh</span><span class="p">,</span>
+              <span class="n">w_multi_form</span><span class="o">=</span><span class="n">w_multi_form</span><span class="p">,</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="n">w_multi_rayleigh</span><span class="p">,</span>
+             <span class="n">psingle_form</span><span class="o">=</span><span class="n">psingle_form</span><span class="p">,</span> <span class="n">psingle_rayleigh</span><span class="o">=</span><span class="n">psingle_rayleigh</span><span class="p">,</span>
+             <span class="n">delta_eddington</span><span class="o">=</span><span class="n">DE</span><span class="p">,</span> <span class="n">raman</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="c1"># case1.approx(rt_method=&#39;SH&#39;, stream=4, raman=&#39;none&#39;)</span>
+<span class="n">df5</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
+<span class="n">wno5</span><span class="p">,</span> <span class="n">alb5</span><span class="p">,</span> <span class="n">fpfs5</span> <span class="o">=</span> <span class="n">df5</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df5</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df5</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno5</span><span class="p">,</span> <span class="n">alb5</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno5</span><span class="p">,</span> <span class="n">alb5</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">labels</span><span class="o">+=</span><span class="p">[</span><span class="s1">&#39;SH4 (TTHG multi)&#39;</span><span class="p">]</span>
+<span class="n">albs</span><span class="o">+=</span><span class="p">[</span><span class="n">alb5</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Reproducing-Figure-5a-from-Rooney-et-al.-2023">
+<h2>Reproducing Figure 5a from Rooney et al. 2023<a class="headerlink" href="#Reproducing-Figure-5a-from-Rooney-et-al.-2023" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">wno</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">albs</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">700</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="fe2a0c78-4705-4eca-bebb-0d77b2ae9168" data-root-id="p1001" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"942e6f24-dfe1-473e-9a0e-cf5d1328d658":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1001","attributes":{"width":700,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1002"},"y_range":{"type":"object","name":"DataRange1d","id":"p1003"},"x_scale":{"type":"object","name":"LinearScale","id":"p1010"},"y_scale":{"type":"object","name":"LinearScale","id":"p1011"},"title":{"type":"object","name":"Title","id":"p1008"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1039","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1033","attributes":{"selected":{"type":"object","name":"Selection","id":"p1034","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1035"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"cwI0zxN+2D8PZMcodf7VP1bi2S83Jdw/FS1Eu+Lt4D/U7ZqSgfDgP/odYkmPDOE/qisWszvn4T9TCiulgAXiP/zQAsqnwOE/27RbD2Dp4T8WDhFnMy3hP4jkBoTJKOM/ESao1oGd4z9YCmMQkR3jP5gSBNuhQOA/ar1rJyq/0D9oqXLx3/nDPzZtgdO5hcw/5tNwFnEy4T9Bn5402SriP8ODT/tNzeE/98yQNQS14j/SL0Xcp//iP9ITAZ8fg+I//K25gG6p4j/QfK6Ft3riP8tCgdXjwuI/xvmDVZVp4z8BfFYAZ8bjP1r18ZVXo+M/ZmRqzo5k4z+kg4bjZaPjP8EZcxMv/eM/hrHyvDQN5D/MLWb0OxDkP7p/yVPLDuQ/HcNp88Eb5D+bSyWHNRzkP7HJk0b3QeQ/VudYvHZZ5D9NyrGLGGjkP+xZZSNQcOQ/X34UvmR35D96N9/ZMXnkP4fKmBfPeOQ/7EMYq45m5D+e5OwwSFjkP1RMJhHzH+Q/8GaMu4fW4z/ifXoC3eXjP12H1gbJOuQ/WQWpaOl35D+KfacECnDkP8roxB7/YOQ/rw8S5f1l5D/2k00oSXPkP9YcvMLwwOQ/f7NyIM7O5D+b/jSly9rkP4hGbkC64OQ/QMJDrZnb5D/Y/AByV8nkP+8S5xM6tOQ/RRRMP4OQ5D+63QE9hpXkP04aZAmrg+Q/uteMCyLD5D/xjub569rkP5ZJrFjC5OQ/BcR/EGrt5D9qLR08LenkP/L363O8FOU/bkQSGeIa5T8U2h4+0RvlP0XKgTecE+U/2CLfiqH35D/pbGl7RNPkPxz3y53EquQ/MRZ1YPGR5D+bfQqj4oDkP4UXIxkj5eQ/jdvAVCcW5T/E5mNpsR3lP/FS+0GxEeU/v1GxZR4Y5T+gGA/U9DTlP0n2+bvaY+U/DokCw+Jr5T/NkIEsPHHlP+j3LmgjZuU/2hJyH1hT5T+SNj4d0UnlPx32XBD8UeU/GAXkIHGe5T/27PIjhLXlP7SNo2FTuuU/bqEIndjE5T8RxoNEMsnlP+WPXSgVyOU/nxlC2Yq35T9X/MEzvZLlPygjcQsBWuU/H1wMxgxN5T99jsjQq0rlPzpYtv/jseU/I1Q6ncfP5T8EzUEokdPlP6nIqy7b1+U/+LCJrf7b5T/u/2V6cO7lP5pKoAqk9uU/PHlmh0X45T8Mpf1N8PXlP5d105k5+OU/YwFE3rcL5j/m4sFsjRzmP4HWTQ1UJeY/nwH0Twgt5j8GQwjTzjPmPzQkpzJoOOY/TDj0TQIw5j8UBU9daRzmPzSRgr6uHuY/ZmMsq05T5j9o0YZXk2jmP2hKNDq0cuY/QPoVgl175j/tBZpZ44PmP6Ss/jdjjOY/hqK8TmOW5j9Bxxher53mP/Y33If9o+Y/yroE+QSz5j+sU6kjPr7mP7YY1F40yOY/hMrJs+nR5j8EIiagjdnmP3hB/EKy2uY/z8nNCSne5j/II2dtmvjmPw+9U96DCOc/uNJsbZkU5z+3zNnEXSDnP51N099RK+c/ZuY3mtE15z/srFuR3EDnP0nSkMlTS+c/7bkfDVJX5z/tuUshn2LnPzz7lJUBbuc/781S0It45z/bBKQJo4DnP4nZ0jpViuc/klLDr/qa5z9sr2b1LafnP4C1e9wns+c/A/qIcCa/5z8q/SNWHMvnP9iAMYag1uc/gR59GbDi5z9yCQ6ff+7nPx8kq4RT+uc/0qjGChQG6D/zqqTRzBDoP3ai9ab5G+g/5ebFuwQo6D8xMjvq2DLoP6RS7K4FPug/HxR2g+JI6D96IueX5FPoP+w4246nXug/zc+Lhntp6D9DD4xNFHToP5cRPAGGfug/ungN2uiI6D+qEeLVJJToP3wKAtUYn+g/1+lRxvip6D9M9hUk5rToP8nkKMyiv+g/ndYuKlvK6D8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1040","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1041"}}},"glyph":{"type":"object","name":"Line","id":"p1036","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1037","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1038","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1048","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1042","attributes":{"selected":{"type":"object","name":"Selection","id":"p1043","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1044"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"Togut5n92D/SCvHMpWbWP6H75dUN59w/ulvArHqQ4T+Yp3TrN5ThP6oP4ah1vuE/NjLPUB254j87pjtap+LiP10SlF7TqOI/BgCKzprU4j86aXrDVB7iP2XsrOq/FuQ/c5T8SB+M5D+YRXKQbgfkP+QpPVpI5uA/gxrZGI3w0D92dgRE7AHEP49nLkTA8cw/r6yeWEvU4T/gQCnfuOLiPwOIMo43e+I/DijVcSx94z+Lx1auidDjP9mGcEKrROM/SpDprvdv4z/RR5IbmTvjP4PeRmFAjOM/xI/5VKxK5D9qoVoWcLjkP2zX0ubdkuQ/oBuPfcZO5D/Bi4srZY7kP/GEytsQ7+Q/H0vscF4B5T9zJlwVlQTlPzGxqSVJBOU/zARA9NER5T+dovkasBLlP9TFHfEUPuU/iT8sUClZ5T+ayYhzamrlPw1RR87OdOU/vDgKdw5+5T9xFmFOPYDlP+nrOeZnfuU/oHEkijVn5T/Y3KTZVFblP2QDgWLJGuU/bhMtxSTQ5D+D8OWRf+DkP0rGXHB4OOU/4xRfnO975T9KyKbUznLlP4NMHCTZYuU/P1YbF8Np5T8MNdwV+XflP6MEVSh42+U/CgVjCzDu5T/Fhq2MMf/lPyEMktOtB+Y/X0HlS14A5j8Ja4SYyublPy2AGDz3yeU/VMvePD+c5T80yj9CTKPlP7hO3K/Ri+U/iELQOO/b5T89s324kvrlP12j47y6B+Y/TuE6+XAT5j+OjvPpxQ3mPxMBkWkjS+Y/tG68J7xT5j/8qDnj+lTmP1IsF7GDSeY/bpv5ocgi5j9Youi/9fDlP2E6uziau+U/htISm7+e5T8OfbMERIjlP2O6NrRTBuY/XAuWgAtG5j+BTmBdLE/mP3QA/ERTPeY/cyMtXPBF5j8kdPNxc27mP+ZrIPE3ruY/Bp/6eSy45j/k4KhsWr7mP1un5VE6rOY/G9EEA+SO5j/YxQRdG3/mP8zbUdy2h+Y/7k4hAkHs5j8YwESlfQrnP+Hh4pyuD+c/AI129U4d5z+IZyLKliLnPz89UtDdI+c/JDrI1QQQ5z/GLMjOrd/mPzFvC195lOY/7evNhguE5j8YzGjkVIHmPzHBGoPXCuc/TpBxvGE05z/MK7fpYzfnP58J+bkSO+c/c+jPjcg+5z+6BpQg/VfnP6zNZ1ApYuc/FGryio1i5z/bfkeH61znPwoMAdIcXuc/YKhDCHd45z8uO+rw6I7nP/Lx3YArmec/dzHNc8uh5z9UCgvzHannP91T6vh3rec/xiRA5lKf5z93cf3wa4HnP4Bop0e5guc/mMlmVx3J5z+AzFs0fuTnP6bvHAcX8Oc/bhh9f4r55z9PHJQ1ugLoP0bvh9ffC+g/pmo3OiYX6D9S3s8SbR7oP6njMdYzJOg/eI4wwm026D+hlIVoJEPoPxt2o/kJTug/A13/tWZY6D8Ay7NT1V/oP44whIwiXug/IXUlRbpf6D+h2trinIDoPyjFi4QWk+g/Acl4gEig6D+NFovWBq3oP0NV6wahuOg/pK3ql5fD6D8AtUxbRM/oP7Quohwi2ug/rZubFAfn6D8o4OsS/PLoP4oSG3EM/+g/xg+AKwIK6T/TVwHFohHpPwEfrD5hG+k/RvSi5GIu6T8ypRZEejvpP1qHJ1JGSOk/yj/ReBhV6T/T7EeO3mHpP5OhrzARbuk/e7rpgPl66T/RAHsskYfpP1SObCUylOk/qOheZ8Cg6T9/vMAkA6zpP9st4UMXuOk/Jk7841bF6T/MfI9AE9HpP6YR8YdJ3ek/UfA5mCXp6T+SukmlO/XpP8BI2TEOAeo/BOb4GgMN6j/cB6N1uxjqP1Z+qYZRJOo/oTmktt8v6j/dzEvfdzzqPzMu6TWeSOo/iErfBLxU6j8ONc9w/GDqP2aBCQcUbeo/K25V5jh56j8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1049","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1050"}}},"glyph":{"type":"object","name":"Line","id":"p1045","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1046","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1047","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1057","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1051","attributes":{"selected":{"type":"object","name":"Selection","id":"p1052","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1053"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"DGV7v6IW2z8ytERPU03YP5gu2WxGUd8/ldida5EV4z/j8XHTyBzjPwi0FrdPX+M/ad+Z4fGJ5D+mYTsoq8fkP+PInLVxouQ/JVCFP87N5D/NBJFzXCzkP85NtMdvDeY/cyiBjK565j/OWnJTovPlP+SbHWwhduI/eeGcg7mS0j+zoP6hOf3FP4WK0ueIx88/264jvBJU4z8DWKfEk33kP6zp6egqCuQ/o9a2EzEt5T+jRTUvFo7lP/EDCTsB7+Q/0R6kJKsh5T/xVxhjJubkPzpu1S/HQuU/D8S0P9Ak5j+7SE4rhq3mP4xERMz9g+Y/GHr0szE55j/8+KIdHHjmP0bZPP1n3OY/5tZh+ADz5j8lwXv6GfTmP+rfyVOF9eY/6inoYKv/5j93FuJyW/vmP9R5NeBYLOc/rWAssIBK5z9Oyv8MS1znP/t7ThfgZec/Ue0DVShu5z+AsJA2nnDnP+WYrygxcuc/bXZ8r05i5z+FHVVwZVXnPxOP31MVHuc/EoDi5VbW5j8ut1lTBeXmP3ZxCokSOec/xVqrnVR15z+6eTPDVG3nP8xj1XEvX+c/iD4Ftxhi5z+UGK7FK3HnP1Mq3VpEquc/aCW02eCz5z/bpx3EsrznP84lc/ODwec/VsJ5POW+5z8jtJmezLPnP1OmOU1Yp+c/7S4B3nCL5z+GV+rEfYvnPwULmFBEfuc/MWHZMcKs5z9Wz/MdgbznPzJa4xDfwuc/H4IDqvnJ5z8YVNAmqcjnP/P3Ut4u5+c/jTRGlJzr5z+kSvyrkuznPwNnlGSH5+c/uKw7nPTV5z96j/qXzr/nP4Ma28fmouc/jo8sYjyK5z8FqDkzAH7nP4rpvL5byec/5dhIlIno5z9qQMLDKu3nP+y/a/lK5ec/PNm4Mvjp5z+8WVvGQQDoP+lUeRxlIOg/+vPJRZYl6D/J4zLD9ijoPxHbt9ESIOg/bcpZsdoR6D8XeQYF4wnoP51UbzxbD+g/UmeALhFD6D9u2yQJSVPoPyVh4yFNVug/ksf+QuVd6D84bJxIJGHoPyrPvFfhYug/E7tf+3ZZ6D/TrqW81UHoP6jfRR0dHeg/8tTUYYUU6D8kfK3EYxToPxwis+54W+g/DMenETly6D9tyGJPbXToPybOiLLxdug/5VHBNaR56D8x8oBYe4joP7f3wHo/j+g/HUq66KGQ6D+tCfTcqo7oP25MRu+FkOg/jr3bIXCg6D9TbrNCRq7oP1F9JDgTteg/7tQAcvi66D/2+OxdKsDoP8a3LcK4w+g/2wm4OeK86D+UrIz2Lq3oP+Y4TaFdr+g/10Igbu/X6D+bitLY/+joPzYRij/x8Og/MfSsfKj36D/RAIzuQf7oPypx4qTjBOk/DfRfoOkM6T/NUaYWiBLpP9yuwA08F+k/iJUfY74j6T8vfPc45SzpPyDDIFz7NOk/7zcdUfg86T9EPb+6PEPpP2MI7eDLQ+k/V7DwTIFG6T9/z2g08FzpP42VzrZ/auk/swBHdbt06T+PRAnSun7pP2TDFv2zh+k/iKa/aCmQ6T836jXbJ5npP98yvMeooek/ctevaJir6T/uuG1X9bTpP9hiwRh0vuk/lvSIdj7H6T/RKtw/wc3pP+oLUTzI1ek/711hPpHk6T+6sW6MXO/pP5YEDSgB+uk/DX39rLcE6j9sWVDhcg/qPx8JGkHPGeo/13HFl7wk6j/2H8G+ei/qP8SZn25LOuo/KT8XqhlF6j8ml82L8k7qP9y0HfQ3Weo/SaF4JV5k6j+AursTa27qPyYxEpbeeOo/quKjlxaD6j9GhhEihI3qP6adTwfGl+o/BsTF2Cqi6j8js+8faKzqPyAYlrORtuo/8UdS8rrA6j9FhPc/xMvqPwS6q5OC1uo/5pvATEDh6j9kEIm/H+zqP+/C2uLj9uo/ZGzZMbkB6z8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1058","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1059"}}},"glyph":{"type":"object","name":"Line","id":"p1054","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1055","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1056","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1009","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1022"},{"type":"object","name":"WheelZoomTool","id":"p1023","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1024","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1025","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1030"},{"type":"object","name":"ResetTool","id":"p1031"},{"type":"object","name":"HelpTool","id":"p1032"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1017","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1018","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1019"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1020"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1060","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1061","attributes":{"label":{"type":"value","value":"Toon89"},"renderers":[{"id":"p1039"}]}},{"type":"object","name":"LegendItem","id":"p1062","attributes":{"label":{"type":"value","value":"SH4 (OTHG multi)"},"renderers":[{"id":"p1048"}]}},{"type":"object","name":"LegendItem","id":"p1063","attributes":{"label":{"type":"value","value":"SH4 (TTHG multi)"},"renderers":[{"id":"p1057"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1012","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1013","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1014"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1015"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1016","attributes":{"axis":{"id":"p1012"}}},{"type":"object","name":"Grid","id":"p1021","attributes":{"dimension":1,"axis":{"id":"p1017"}}}]}}]}};
+  const render_items = [{"docid":"942e6f24-dfe1-473e-9a0e-cf5d1328d658","roots":{"p1001":"fe2a0c78-4705-4eca-bebb-0d77b2ae9168"},"root_ids":["p1001"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</section>
+<section id="Reproducing-Figure-5b-from-Rooney-et-al.-2023">
+<h2>Reproducing Figure 5b from Rooney et al. 2023<a class="headerlink" href="#Reproducing-Figure-5b-from-Rooney-et-al.-2023" title="Link to this heading"></a></h2>
+<p>Here we reproduce the same procedure from above, but with a different cloud setup.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#set model clouds, note these are lists since you can specify multiple cloud layers</span>
+<span class="n">case1</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span> <span class="n">g0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.9</span><span class="p">],</span> <span class="n">w0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">],</span> <span class="n">opd</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span> <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">dp</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">])</span>  <span class="c1"># Slab cloud from 1.0 bar up to 0.1 bar</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">albs</span> <span class="o">=</span> <span class="p">[]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">multi_phase</span> <span class="o">=</span> <span class="s1">&#39;N=2&#39;</span>
+<span class="n">single_phase</span><span class="o">=</span><span class="s1">&#39;TTHG_ray&#39;</span>
+<span class="n">DE</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">case1</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">multi_phase</span><span class="o">=</span><span class="n">multi_phase</span><span class="p">,</span><span class="n">single_phase</span><span class="o">=</span><span class="n">single_phase</span><span class="p">,</span>
+             <span class="n">delta_eddington</span><span class="o">=</span><span class="n">DE</span><span class="p">,</span> <span class="n">raman</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">fpfs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno</span><span class="p">,</span> <span class="n">alb</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno</span><span class="p">,</span> <span class="n">alb</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">labels</span><span class="o">+=</span><span class="p">[</span><span class="s1">&#39;Toon89&#39;</span><span class="p">]</span>
+<span class="n">albs</span><span class="o">+=</span><span class="p">[</span><span class="n">alb</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#run SH4</span>
+<span class="n">w_single_form</span><span class="o">=</span><span class="s1">&#39;OTHG&#39;</span><span class="p">;</span> <span class="n">w_single_rayleigh</span><span class="o">=</span><span class="s1">&#39;off&#39;</span>
+<span class="n">w_multi_form</span><span class="o">=</span><span class="s1">&#39;OTHG&#39;</span><span class="p">;</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="s1">&#39;on&#39;</span>
+<span class="n">psingle_form</span><span class="o">=</span><span class="s1">&#39;TTHG&#39;</span><span class="p">;</span> <span class="n">psingle_rayleigh</span><span class="o">=</span><span class="s1">&#39;on&#39;</span>
+
+<span class="n">case1</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span><span class="o">=</span><span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+              <span class="n">w_single_form</span><span class="o">=</span><span class="n">w_single_form</span><span class="p">,</span> <span class="n">w_single_rayleigh</span><span class="o">=</span><span class="n">w_single_rayleigh</span><span class="p">,</span>
+              <span class="n">w_multi_form</span><span class="o">=</span><span class="n">w_multi_form</span><span class="p">,</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="n">w_multi_rayleigh</span><span class="p">,</span>
+             <span class="n">psingle_form</span><span class="o">=</span><span class="n">psingle_form</span><span class="p">,</span> <span class="n">psingle_rayleigh</span><span class="o">=</span><span class="n">psingle_rayleigh</span><span class="p">,</span>
+             <span class="n">delta_eddington</span><span class="o">=</span><span class="n">DE</span><span class="p">,</span> <span class="n">raman</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="c1"># case1.approx(rt_method=&#39;SH&#39;, stream=4, delta_eddington=DE, raman=&#39;none&#39;)</span>
+<span class="n">df2</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
+<span class="n">wno2</span><span class="p">,</span> <span class="n">alb2</span><span class="p">,</span> <span class="n">fpfs2</span> <span class="o">=</span> <span class="n">df2</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df2</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df2</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno2</span><span class="p">,</span> <span class="n">alb2</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno2</span><span class="p">,</span> <span class="n">alb2</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">labels</span><span class="o">+=</span><span class="p">[</span><span class="s1">&#39;SH4 (OTHG single)&#39;</span><span class="p">]</span>
+<span class="n">albs</span><span class="o">+=</span><span class="p">[</span><span class="n">alb2</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#run SH2</span>
+<span class="n">w_multi_form</span><span class="o">=</span><span class="s1">&#39;TTHG&#39;</span><span class="p">;</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="s1">&#39;on&#39;</span>
+
+<span class="n">case1</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">rt_method</span><span class="o">=</span><span class="s1">&#39;SH&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+              <span class="n">w_single_form</span><span class="o">=</span><span class="n">w_single_form</span><span class="p">,</span> <span class="n">w_single_rayleigh</span><span class="o">=</span><span class="n">w_single_rayleigh</span><span class="p">,</span>
+              <span class="n">w_multi_form</span><span class="o">=</span><span class="n">w_multi_form</span><span class="p">,</span> <span class="n">w_multi_rayleigh</span><span class="o">=</span><span class="n">w_multi_rayleigh</span><span class="p">,</span>
+             <span class="n">psingle_form</span><span class="o">=</span><span class="n">psingle_form</span><span class="p">,</span> <span class="n">psingle_rayleigh</span><span class="o">=</span><span class="n">psingle_rayleigh</span><span class="p">,</span>
+             <span class="n">delta_eddington</span><span class="o">=</span><span class="n">DE</span><span class="p">,</span> <span class="n">raman</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+<span class="n">df3</span> <span class="o">=</span> <span class="n">case1</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opa</span><span class="p">)</span>
+<span class="n">wno3</span><span class="p">,</span> <span class="n">alb3</span><span class="p">,</span> <span class="n">fpfs3</span> <span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df3</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">df3</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">]</span>
+<span class="n">wno3</span><span class="p">,</span> <span class="n">alb3</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">wno3</span><span class="p">,</span> <span class="n">alb3</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+<span class="n">labels</span><span class="o">+=</span><span class="p">[</span><span class="s1">&#39;SH4 (TTHG multi)&#39;</span><span class="p">]</span>
+<span class="n">albs</span><span class="o">+=</span><span class="p">[</span><span class="n">alb3</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">([</span><span class="n">wno</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">albs</span><span class="p">,</span><span class="n">labels</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">700</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="ec1cfd9f-9135-4553-9536-fb569f8c1671" data-root-id="p1070" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"b78d6e27-a64b-4663-8618-f409061106d8":{"version":"3.4.3","title":"Bokeh Application","roots":[{"type":"object","name":"Figure","id":"p1070","attributes":{"width":700,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1071"},"y_range":{"type":"object","name":"DataRange1d","id":"p1072"},"x_scale":{"type":"object","name":"LinearScale","id":"p1079"},"y_scale":{"type":"object","name":"LinearScale","id":"p1080"},"title":{"type":"object","name":"Title","id":"p1077"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1108","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1102","attributes":{"selected":{"type":"object","name":"Selection","id":"p1103","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1104"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"laBRRWCovj9tlFsSDXa9P02J14XO6L8/c24Ea8eDwD9rIVR46oTAP0kmgB/tf8A/WHrqyLq/wD9VQd7S3snAPzhqgL9v1sA/wSaC/tzawD94brdvqNrAP1Gy3Uzc6MA/hHmhtp/4wD84s+Zuj+vAP0Jqr4MxocA/dFabYW7qvD+jNNnL9Lu3P+kva6I/nbo/uiJ0Z9eTwD+02s+aN9PAPyw8RxYZscA/Gfrxp838wD9ch7yOXgvBP1Guodjw7MA/ODEhd4PxwD9c9MRZvObAP+tPGM7p7cA/NurnneQGwT8V0cp7LRjBP0S89mQGFsE/VqT3t24LwT8XShQhfBfBPzSWVSaBTcE/g9+cRgVQwT+cYHIPS2nBPyOmh+1pccE/8qYCKyeSwT+DaMNC7szBP7y//ZsX98E/hC/Zjf4bwj/m/OdNcErCP58alWkRfsI/w0bLKTmvwj9losmbZLLCP510/t8gdcI/r6VPY5zdwT97/rpOlprBP+20qJ57XME/JDJ3xY5CwT9s7uRM9V3BPxw1hMxlocE/0CLCecRCwj88wPE+jS7CP3ERFIYhEcI/ikLHgAFhwj8WS2r7YVbCP0zFTFbBV8U/DAY2hG8Cxj/hKFOKlZPGP6SjqX3ByMY/bm/s255Pxj9DqPHuc1LFPwXp+Q0qV8Q/oRO7DjY8wz8B+Cp8g5XDP1aR2Ak83sI/8/cO7/TkxD+I5nAEAcbFPwO2OkGBPMY/isAeAY6Ixj/ANEH8DCbGPyHyavaNDsg/ahJ4vjI8yD+oxRFF9gnIPz+iMKjvaMc/dhZsoJJCxj968aeSH/zEPznnOJC9vMM/dZcrGgBtwz8fOyyeodLCP60s0jl4b8U/U9L6bMLVxj+KmkSp+gbHP/OLx/qansY/4HSjGvLIxj+Of3CH3pvHP/fK/2y0Ksk/I9GiVScqyT9Ewar3LvzIP/uXaSurVcg/0y/UQn6lxz+ocDa+Mk3HP3ou/dnzT8c/Ed0QhPfkyD+dk31R63nJP82GPwpVgMk/Wsp5+wipyT9g/M3LzaXJP6EUYtEAmsk/RBC45QAmyT9jz4Lg4mXIPx3lr9z4YMc/3Df1So41xz+AbbvMmB3HPzIhXD+1Mck/vbmIcLQEyj8sxPKSRfbJP2OHwbAU8ck/dhA3bnXSyT9xsVM+JznKP5u140HkQMo/jfbVO+IPyj/TDyCgI9vJP+mHSNnkz8k/wZBTVBUsyj+vkE/+vpLKP2Bvl0rnpco/A2sIr2Wdyj/4bjhPAoLKPym97HQuWco/PDxty9j9yT8pPXEZHJvJP5RcJYTNlMk/lHzoTe9ayj+X4R2Zd87KP9fYb7Ia7Mo/8gFTJQDtyj9y0JkwberKP+BXZUr548o/RrzZoOjqyj9meO8bA+PKP1hzl7zr28o/9tSokPwKyz9AN7p2tyDLP0E5U4SZIss/FLrLIZsZyz9urUANEAXLPyXYQyGk4co/zIx9WS3Wyj+cwKlAhB7LP4oov/ymSss/6QUKFzRdyz+MYdsZhGfLPy2VQLH6bMs/TwJfc3lwyz9u2FIX53jLP1uwXwS6fcs/NryxM/CMyz8lW5vt35TLP62wejLWm8s/FvafWYqcyz/kutJIFpjLP0kxHvK1ncs/O1h1cuu+yz+ImrRXB87LP68z0V6d2ss/rgVYmZDmyz8oHgakUfLLP1E7QMIh+8s/UYfPVGUHzD/281VlBRLMP5hCzL6SHMw/YwSegM0mzD9ABnHwDS/MP4n/OSxaPMw/vWhUjwtOzD9dgStYSVvMP3tfTCZGasw/1tieKe53zD9bYybLsYbMP8rKDxu8lMw/N0TUq4KjzD8si/mZ77HMP4/IjYuLwMw/9oOvDi/QzD/As8fj5uHMP5TpXqhu8sw/fN7Xan0DzT9bsJHYYRXNP/LhcUheJ80/tPjyufQ5zT8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1109","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1110"}}},"glyph":{"type":"object","name":"Line","id":"p1105","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1106","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1107","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1117","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1111","attributes":{"selected":{"type":"object","name":"Selection","id":"p1112","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1113"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"bvZRWJLvvj+MItr+xLO9P0aiYEUxH8A/K/6ezQ+3wD8n/mMTN7jAP6jgDkGNs8A/BtGh3TP3wD9TXtD3GwLBP9Vd5eidD8E/8s5lQ2sUwT/DSkrlMRTBP7FVom8sI8E/D3B9ooczwT9jlIQT7SXBP/augklt1sA/ndjw/WojvT/M7L3Teda3P1ZfvjwUy7o/CFzJEJzHwD8ahFPNgwnBP6HFnpk55cA/LDyOTvE0wT/mjshbCETBP7Y8dq1TJME/25KJ26gpwT+rP0yBOB7BP3yIiNZpJsE/ql1Ev6ZBwT/BHTgbXVTBP1p4QoIZUsE/46fza0BHwT+BrvkellPBPziUpMWcicE/rM/XwUOMwT/qCAJmz6TBP39emDCmrME/PpQPUUTMwT/mKWGl3wPCPylXfO5/LMI/cIUbUutPwj+RZPzayHvCP1EQwLmkq8I/byPwXz7Zwj9Pk8cDbNzCP30ybekWpMI/Jhdte2wWwj8RNmmCU9bBP5Z7H4zamcE/dVsAQYqAwT8Oc43uKZvBP8LUxm+328E/xOs6Q3Vzwj+CvSkydl/CPxqvXcFRRMI/gMgmBhmLwj+K7LOsJoTCP+WDm3s7LsU/nHkHtH7ExT8D/25P60bGPwHD9e1Rd8Y/LQYoaFwMxj9YlmZSkCzFP3w+hLL5TsQ/BtaOaIxSwz86/1mhop/DP3IknkYi/8I/PB1jWjHIxD8K0wbfbIvFPyhF1m9e8cU/KDzipoc0xj8bYWFSeeDFP2Nr6EeEkMc/4e23Vmi5xz9cWodmcI7HP5bj3OAiA8c/LYrnmVwCxj/BSqq02+PEP/FEQC6vycM/z0UpMoKAwz+KIyX6u/nCP31jxjpFRcU/fJsPFAx+xj+zcggez6fGP//klB5dSsY/9/dxvoFvxj9MKw8zHSvHP8xvb6gAh8g/aP89YJOHyD/ud50KEmHIP0DuZMu1z8c/jLqNxnI0xz/3uS0XxuXGP4DvRKk66cY/Up1KE/BMyD/pWmkO3c7IPwifHGpk1Mg/Fr4rGqn4yD+M1mpDX/bIP7PvHiKW7cg/bWqS8j2KyD9dvhbcpOPHP+FOcy31/sY/u8lwndjXxj9OSDLDfsTGPzdHdUNklMg/PfZqRFZMyT9SdbhixT/JPykU9s4yO8k/dhUZpE0hyT+9Pvzrs3vJP8qbBn5Hg8k/fWKbRXNZyT8yaZNizivJP0rne/FZIsk/iYab4WRzyT88xzpBK83JP3fDGkN33sk/YWuGZ+zXyT8gm+UHN8HJP3H2GjcTn8k/BXqCagRRyT/JePrSO/vIP8MXxPHJ9sg/nUtSv7ijyT/xpHf4NgjKP/FLN2WzIso/yJzeonckyj8ly8xURCPKPwUKvJPNHso/qulwafQlyj9PM3JlOSDKPzH8b5AgG8o/7uukAvxEyj/KivJs71jKP3SrxQvfW8o/Sv6ywohVyj9XI7s7VkXKP8EWO8w5KMo/XWLIWaQfyj8F4jGcd1/KP7Ey38vhhso/anaEymGYyj96C7tM5aLKPxYVf9BMqco/pTu7whKuyj8a6DtJILfKP0bv54Imvco/yYfjih3Myj/U025s79TKP0HumD7/3Mo/V2ngks3fyj89CPNBPd7KP59ijRlY5co/VxACjhAEyz/sxrXQZxPLP9tJbw6vIMs/Y8mUfIEtyz83fJBjPzrLP+apvM2VRMs/DIwmhfFRyz+JsRr2Al7LP5gqjEofass/BdzM/hF2yz9SIjTec4DLP2WoXQA2j8s/beDirsmhyz/kRA+zu7DLP+mjr/RFwcs/duXdidPQyz8v/vDtceHLP5OCePqY8cs/LplYn4MCzD+fxqK9ShPMPxhduFliJMw/m0EuVH82zD/SF0dmhErMP7x91JO5Xcw/0p5MK45xzD9WVOAERYbMPyEeLdhCm8w/caemWf2wzD8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1118","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1119"}}},"glyph":{"type":"object","name":"Line","id":"p1114","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1115","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1116","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#E69F00","line_alpha":0.2,"line_width":3}}}},{"type":"object","name":"GlyphRenderer","id":"p1126","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1120","attributes":{"selected":{"type":"object","name":"Selection","id":"p1121","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1122"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"ZgD39fH67z/ZWIn+i8TvPzCGIY+Cju8/6khaCtVY7z80HNrTgiPvP4NuUVCL7u4/Mt145e257j8dcw/6qYXuP0Xq2PW+Ue4/XvCbQSwe7j9ZbiBH8ertP9LSLXENuO0/c1+JK4CF7T8vefTiSFPtP1z7KgVnIe0/ro3hANrv7D8A/cNFob7sP/aWc0S8jew/WoiFbipd7D9OPoE26yzsPzjK3g/+/Os/dUgFb2LN6z+sSUnJF57rP/k+65Qdb+s/p+gVSXNA6z+kx9xdGBLrP5WROkwM5Oo/lacPjk626j+BjyCe3ojqP+9vFPi7W+o/qY5zGOYu6j/B0aV8XALqPy1D8aIe1uk/75Z4Ciyq6T+zszkzhH7pP/w9DJ4mU+k/wiWgzBIo6T+DNnxBSP3oP9Kp/H/G0ug/QbxRDI2o6D/JRH5rm37oP4lOViPxVOg/7bR9uo0r6D8uwma4cALoPzTQUKWZ2ec/vetGCgix5z/neR5xu4jnPwLgdWSzYOc/nS2zb+845z/0yAIfbxHnP4QdVv8x6uY/80xinjfD5j8h4p6Kf5zmP3iGRFMJduY/dblLiNRP5j9Nimu64CnmP8xTGHstBOY/XXqCXLre5T8oLJXxhrnlP1wj9c2SlOU/kWr/hd1v5T9EI8iuZkvlP2hOGd4tJ+U/CJdxqjID5T/0HgOrdN/kP4dNsnfzu+Q/XaAUqa6Y5D8hfm/YpXXkP1MLt5/YUuQ/CwGNmUYw5D+3hT9h7w3kP80HyJLS6+M/dxrKyu/J4z8fVJKmRqjjP/8uFcTWhuM/fevtwZ9l4z+OdF0/oUTjP9tFSdzaI+M/2lM6OUwD4z+99Vv39OLiPz7RerjUwuI/McgDH+ui4j8I6ALON4PiPwFbImm6Y+I/QVuplHJE4j+eJ3v1XyXiP0f6FTGCBuI/HQGS7djn4T/cV6DRY8nhP+4DioQiq+E/CvIurhSN4T+J9QT3OW/hP2HJFgiSUeE/4hIDixw04T8bZvsp2RbhP+pLw4/H+eA/tkmvZ+fc4D/R6qNdOMDgP33LFB66o+A/kKUDVmyH4D+5Xv+yTmvgP1sYI+NgT+A/A0EVlaIz4D9+pwZ4ExjgP9YeY3dm+d8/5Y6xIAPD3z8Jgo1N/IzfPz9TmWBRV98/PwuDvQEi3z81mQLJDO3eP2gO2OhxuN4/+9zJgzCE3j+ZGaMBSFDePyDAMcu3HN4/O/tESn/p3T/ubqvpnbbdPwKGMRUThN0/W8KfOd5R3T8nELnE/h/dP/UbOSV07tw/gavSyj293D93+S0mW4zcP+AT56jLW9w/aj2MxY4r3D9rUZzvo/vbP5oqhZsKzNs/jQyiPsKc2z/eDzpPym3bPwuRfkQiP9s/8KGJlskQ2z8Afly+v+LaP/0A3jUEtdo/cyDZd5aH2j+tZ/v/dVraP0x200qiLdo/aoHP1RoB2j9Q1zsf39TZP55lQabuqNk/EULk6kh92T+4NQJu7VHZP6FKUbHbJtk//lteNxP82D/HqIuDk9HYP7loDxpcp9g/xWPyf2x92D/viw47xFPYP3WZDdJiKtg/c6lnzEcB2D/C3mGyctjXPz8FDQ3jr9c/ZTdEZpiH1z8fhqtIkl/XP/+irj/QN9c/qIx/11EQ1z95PRWdFunWP4lcKh4ewtY/wvA76Web1j9HFoiN83TWPwW2DJvATtY/cT+Gos4o1j9xZG41HQPWP3HX+uWr3dU/lwscR3q41T8a93vsh5PVP7LXfGrUbtU/Ivk3Vl9K1T/bfXxFKCbVP6wpzs4uAtU/gC5kiXLe1D8p+ycN87rUPzMMtPKvl9Q/ub5S06h01D83Jf1I3VHUP2DeWe5ML9Q/6e27XvcM1D9HlyE23OrTP2s6MxH7yNM/YTJCjVOn0z/ftUdI5YXTP8W54+CvZNM/dNVb9rJD0z8="},"shape":[181],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"dQpFsVFLwD+3YN5yPj+/P3lw3Vpz/sA/FoZaY2qkwT/F2Hq1W6XBPzItZ+GYocE/xxHWzLfrwT86c7Os9vfBPx91iSV7BsI/9i2ooRkLwj/Y4lHhkgvCP9jvEL9uGcI/3xBlsdImwj9/8DO+FRvCPzqAdgYXxME/n86r32OVvj9BOHT2T+e4PwR5G0blErw/GkJSDkSuwT/MNfQKN+/BP65WIlNJx8E/2E6oqOEZwj9jK3vX6yfCP31RGeIvCcI/2OvwLXUQwj8mthI3NATCP+8mEAa4DsI/rw/+DIEtwj9M6NA1dULCP64HcPl4QMI/T9QcEC83wj8GBJyIO0HCP1YzRO71bcI/C0zXo49wwj96lQUfdoTCP1XBTEcxi8I/BuZE8x+lwj/5+a1GytLCPyTOOJXe9MI/VdCsG3oSwz/RYxIUJTfDP3qhNZtkX8M/uuuCyuKFwz8fwPJVrojDPzgQafCWWcM/FDh+8ATkwj+O0B09dK/CP/1iMG01fsI/Wlmma6Vpwj82M76+p3/CPwiHNt4CtcI/dwijnNUywz9HyezIxCLDPzOJKuF6DMM/rPn8pMhIwz9BhqSGoULDP0Ns2LcKkMU/V2t0ghkWxj+sutG4iIvGP1s45TZqt8Y/G1PLnqtWxj+uXbP0uI7FP0AEtKtdzMQ/M406Ey7zwz86tYOSrTbEP8gKLHWRrMM/+zEQ2WU4xT+q0yGUDuXFP5dKaveaQcY/7eUnQNZ+xj9GXeHXHzPGP1gg3o9Qu8c/oyWY8kThxz9uNaJYjLnHP6BlqhpYOcc/m/5mWkZQxj/me7eFnFHFP6qmRF5oXMQ/GgkEKx4fxD+ck0YTg6vDPwXMmyXXq8U/elbmS8bBxj87MmgDlujGP1KnAg+ylMY/mGLhp0i3xj8vaOJciWPHP/JK/5pno8g/Q6jHigikyD8lHNdvB4DIP7YB0jb9+Mc/VsdQoaJqxz94e/vcoSPHP9riGfrHJsc/j0gPK1NuyD8DBYlqMujIP/Pjk/Wg7cg/JbBSK+8PyT+OEs079w3JP0q/M6vLBck/wfHEc6aoyD9SPOW6BA7IP9I+N2IePcc/UtNxSdcaxz8U37PzLwrHP7RUqZ2Os8g/IB6bZ8ZgyT8/3YSIK1XJPw5XE+4mUck/bfOpTew4yT+IRHr6mo7JPwTfnVn7lck/rrB5cJxuyT9RS/x23UPJP1tECFtWO8k/nzUDnAiIyT/MvlXXc93JP/HrHzIu7sk/5XmMTjboyT+pxzoj4tLJP1gwxd/Gssk/n7nMs2dpyT/FRTWQjRnJP8AvsdHbFck/jLw7DIe4yT/mFUKVQxjKP2ZfNHzVMco/pUjil9gzyj9YLvlkCjPKPy+38TEjL8o/SfIpfk42yj8/U+pqOzHKP9Y8QD/MLMo/6ahZqwVVyj8/iVkocGjKP4QqLnyka8o/ioaKZwVmyj/qkrC4C1fKPx3vSEjjO8o/tyiWQFQ0yj/l1jNEVXHKP2jbiyZXl8o/6ERiTYSoyj8SfSiTC7PKP83HYjGruco/rMUbmMC+yj/ub+Qt7sfKP6RHOAk9zso/mijvwRTdyj9Nbn80FebKP9xLEu5g7so/30okeK/xyj+IdJj52/DKP4ALZppO+Mo/ASOY4zwWyz9kmI2kjiXLP83b6FvuMss/yAYl1+M/yz+tI2nzykzLPy3c2WFtV8s/G/gNn/Vkyz87dh8tSXHLP4QcIw2tfcs/713Kgu+Jyz908ElVu5TLP+FZKim3o8s/KtxD/1q2yz+ROGizkcXLPzFfS45T1ss/qS/nbSzmyz9gw4MIEPfLPxyy09+JB8w/clA+jcUYzD+jRPK/5ynMPyno2vdeO8w/e8UWOddNzD8D/nC0J2LMP3y7yDa8dcw/7rVOofGJzD8mwSuaB5/MP0jvmyNrtMw/o5XpKY7KzD8="},"shape":[181],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1127","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1128"}}},"glyph":{"type":"object","name":"Line","id":"p1123","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1124","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1125","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#F0E442","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1078","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1091"},{"type":"object","name":"WheelZoomTool","id":"p1092","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1093","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1094","attributes":{"syncable":false,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5}}}},{"type":"object","name":"SaveTool","id":"p1099"},{"type":"object","name":"ResetTool","id":"p1100"},{"type":"object","name":"HelpTool","id":"p1101"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1086","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1087","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1088"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1089"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}},{"type":"object","name":"Legend","id":"p1129","attributes":{"location":[0,0],"click_policy":"mute","items":[{"type":"object","name":"LegendItem","id":"p1130","attributes":{"label":{"type":"value","value":"Toon89"},"renderers":[{"id":"p1108"}]}},{"type":"object","name":"LegendItem","id":"p1131","attributes":{"label":{"type":"value","value":"SH4 (OTHG single)"},"renderers":[{"id":"p1117"}]}},{"type":"object","name":"LegendItem","id":"p1132","attributes":{"label":{"type":"value","value":"SH4 (TTHG multi)"},"renderers":[{"id":"p1126"}]}}]}}],"below":[{"type":"object","name":"LinearAxis","id":"p1081","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1082","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1083"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1084"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1085","attributes":{"axis":{"id":"p1081"}}},{"type":"object","name":"Grid","id":"p1090","attributes":{"dimension":1,"axis":{"id":"p1086"}}}]}}]}};
+  const render_items = [{"docid":"b78d6e27-a64b-4663-8618-f409061106d8","roots":{"p1070":"ec1cfd9f-9135-4553-9536-fb569f8c1671"},"root_ids":["p1070"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="1_AnalyzingApproximationsReflectedLightToon.html" class="btn btn-neutral float-left" title="Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="3_AnalyzingApproximationsThermal.html" class="btn btn-neutral float-right" title="Approximations for Spherical Harmonics Radiative Transfer in Thermal Emission" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

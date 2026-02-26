@@ -1,0 +1,269 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/conf.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/conf.py">Download full notebook here</a></p>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#</span>
+<span class="c1"># picaso documentation build configuration file, created by</span>
+<span class="c1"># sphinx-quickstart on Thu Nov 29 08:56:44 2018.</span>
+<span class="c1">#</span>
+<span class="c1"># This file is execfile()d with the current directory set to its</span>
+<span class="c1"># containing dir.</span>
+<span class="c1">#</span>
+<span class="c1"># Note that not all possible configuration values are present in this</span>
+<span class="c1"># autogenerated file.</span>
+<span class="c1">#</span>
+<span class="c1"># All configuration values have a default; values that are commented out</span>
+<span class="c1"># serve to show the default.</span>
+
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sphinx_rtd_theme</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
+<span class="c1"># If extensions (or modules to document with autodoc) are in another directory,</span>
+<span class="c1"># add these directories to sys.path here. If the directory is relative to the</span>
+<span class="c1"># documentation root, use os.path.abspath to make it absolute, like shown here.</span>
+<span class="c1">#</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;/home/nbatalh1/codes/picaso/&#39;</span><span class="p">))</span><span class="c1">#/Users/nbatalh1/Documents/codes/PICASO/picaso/&#39;))</span>
+
+
+<span class="c1"># -- General configuration ------------------------------------------------</span>
+
+<span class="c1"># If your documentation needs a minimal Sphinx version, state it here.</span>
+<span class="c1">#</span>
+<span class="c1"># needs_sphinx = &#39;1.0&#39;</span>
+
+<span class="c1"># Add any Sphinx extension module names here, as strings. They can be</span>
+<span class="c1"># extensions coming with Sphinx (named &#39;sphinx.ext.*&#39;) or your custom</span>
+<span class="c1"># ones.</span>
+<span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sphinx.ext.autodoc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.todo&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.mathjax&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.githubpages&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sphinx.ext.napoleon&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;nbsphinx&#39;</span><span class="p">]</span><span class="c1">#,</span>
+    <span class="c1">#&#39;sphinxcontrib.applehelp&#39;]</span>
+
+<span class="n">nbsphinx_custom_formats</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;.py&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;jupytext.reads&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;fmt&#39;</span><span class="p">:</span> <span class="s1">&#39;py:percent&#39;</span><span class="p">}],</span>
+<span class="p">}</span>
+
+<span class="n">nbsphinx_allow_errors</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">nbsphinx_execute</span> <span class="o">=</span> <span class="s1">&#39;always&#39;</span>
+
+<span class="c1">#bibtex_bibfiles = [&#39;refs.bib&#39;]</span>
+<span class="c1"># Add any paths that contain templates here, relative to this directory.</span>
+<span class="n">templates_path</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_templates&#39;</span><span class="p">]</span>
+
+<span class="c1"># The suffix(es) of source filenames.</span>
+<span class="c1"># You can specify multiple suffix as a list of string:</span>
+<span class="c1">#</span>
+<span class="c1"># source_suffix = [&#39;.rst&#39;, &#39;.md&#39;]</span>
+<span class="n">source_suffix</span> <span class="o">=</span> <span class="s1">&#39;.rst&#39;</span>
+
+<span class="c1"># The master toctree document.</span>
+<span class="n">master_doc</span> <span class="o">=</span> <span class="s1">&#39;index&#39;</span>
+
+<span class="c1"># General information about the project.</span>
+<span class="n">project</span> <span class="o">=</span> <span class="s1">&#39;picaso&#39;</span>
+<span class="n">author</span> <span class="o">=</span> <span class="s1">&#39;Natasha E. Batalha&#39;</span>
+
+<span class="c1"># The version info for the project you&#39;re documenting, acts as replacement for</span>
+<span class="c1"># |version| and |release|, also used in various other places throughout the</span>
+<span class="c1"># built documents.</span>
+<span class="c1">#</span>
+<span class="c1"># The short X.Y version.</span>
+<span class="n">version</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+<span class="c1"># The full version, including alpha/beta/rc tags.</span>
+<span class="n">release</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+
+<span class="c1"># The language for content autogenerated by Sphinx. Refer to documentation</span>
+<span class="c1"># for a list of supported languages.</span>
+<span class="c1">#</span>
+<span class="c1"># This is also used if you do content translation via gettext catalogs.</span>
+<span class="c1"># Usually you set &quot;language&quot; from the command line for these cases.</span>
+<span class="n">language</span> <span class="o">=</span> <span class="s1">&#39;en&#39;</span><span class="c1">#None</span>
+
+<span class="c1"># List of patterns, relative to source directory, that match files and</span>
+<span class="c1"># directories to ignore when looking for source files.</span>
+<span class="c1"># This patterns also effect to html_static_path and html_extra_path</span>
+<span class="n">exclude_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;**.ipynb_checkpoints&#39;</span><span class="p">,</span><span class="s1">&#39;**/*WIP*&#39;</span><span class="p">,</span> <span class="s1">&#39;**/*WIP*ipynb&#39;</span><span class="p">,</span><span class="s1">&#39;**/*Quickstart*&#39;</span><span class="p">]</span>
+
+<span class="c1"># The name of the Pygments (syntax highlighting) style to use.</span>
+<span class="n">pygments_style</span> <span class="o">=</span> <span class="s1">&#39;sphinx&#39;</span>
+
+<span class="c1"># If true, `todo` and `todoList` produce output, else they produce nothing.</span>
+<span class="n">todo_include_todos</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="c1"># -- Options for HTML output ----------------------------------------------</span>
+
+<span class="c1"># The theme to use for HTML and HTML Help pages.  See the documentation for</span>
+<span class="c1"># a list of builtin themes.</span>
+<span class="c1">#</span>
+<span class="n">html_theme</span> <span class="o">=</span> <span class="s1">&#39;sphinx_rtd_theme&#39;</span>
+<span class="c1"># Theme options are theme-specific and customize the look and feel of a theme</span>
+<span class="c1"># further.  For a list of options available for each theme, see the</span>
+<span class="c1"># documentation.</span>
+<span class="c1">#</span>
+<span class="c1"># html_theme_options = {}</span>
+
+<span class="c1"># Add any paths that contain custom themes here, relative to this directory.</span>
+<span class="c1">#html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]</span>
+
+<span class="c1"># Add any paths that contain custom static files (such as style sheets) here,</span>
+<span class="c1"># relative to this directory. They are copied after the builtin static files,</span>
+<span class="c1"># so a file named &quot;default.css&quot; will overwrite the builtin &quot;default.css&quot;.</span>
+<span class="n">html_static_path</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_static&#39;</span><span class="p">]</span>
+
+
+<span class="c1"># -- Options for HTMLHelp output ------------------------------------------</span>
+
+<span class="c1"># Output file base name for HTML help builder.</span>
+<span class="n">htmlhelp_basename</span> <span class="o">=</span> <span class="s1">&#39;picasodoc&#39;</span>
+
+
+
+<span class="n">nbsphinx_prolog</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">{</span><span class="si">% s</span><span class="s2">et docname = env.doc2path(env.docname, base=None) %}</span>
+<span class="s2">.. note::  `Download full notebook here &lt;https://github.com/natashabatalha/picaso/tree/master/docs/{{ docname }}&gt;`_</span>
+<span class="s2">&quot;&quot;&quot;</span>
+<span class="c1">#.. only:: html</span>
+<span class="c1">#</span>
+<span class="c1">#    This notebook can be downloaded at : https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/{{ docname }}</span>
+<span class="c1">#</span>
+
+<span class="c1">#def setup(app):</span>
+<span class="c1">#    app.add_stylesheet(&#39;https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css&#39;)</span>
+<span class="c1">#    app.add_javascript(&#39;https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js&#39;)</span>
+<span class="c1">#    app.add_javascript(&#39;https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js&#39;)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

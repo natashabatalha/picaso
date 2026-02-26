@@ -1,26 +1,28 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tutorials &mdash; picaso 3.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b76e3c8a" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>Tutorials &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/documentation_options.js?v=26f62d79"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="ESO ATMO 2021 Tutorial: Chemistry and Clouds in Exoplanet Transit Spectroscopy" href="notebooks/workshops/ESO2021/ESO_Tutorial.html" />
+    <link rel="next" title="Basics of analyzing transmission spectra with JWST" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html" />
     <link rel="prev" title="Contributing to PICASO" href="contribution.html" /> 
 </head>
 
@@ -35,9 +37,6 @@
           <a href="index.html" class="icon icon-home">
             picaso
           </a>
-              <div class="version">
-                3.3
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -48,12 +47,28 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebook_workflow.html">Tutorial Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">The Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="picaso.html">The Code</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contribution.html">Contributing</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Workshop Material</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sagan-school-2023-interpretting-jwst-transmission-spectra">Sagan School 2023: Interpretting JWST Transmission Spectra</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html">Basics of analyzing transmission spectra with JWST</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Check-PICASO-Imports">Check PICASO Imports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Observed-Spectrum">Observed Spectrum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Spectra-Ingredients">Spectra Ingredients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Basic-Inputs">Basic Inputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Creating-a-Transmission-Spectrum">Creating a Transmission Spectrum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Increasing-Model-Complexity-to-Improve-Fit:-Chemistry,-Climate,-Clouds">Increasing Model Complexity to Improve Fit: Chemistry, Climate, Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Mystery-absorbery-:-How-to-diagnose-unfit-spectral-regions">Mystery absorbery : How to diagnose unfit spectral regions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Xarray-output-(.nc)-the-model">Xarray output (.nc) the model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Cloud-Modeling-with-Virga">Cloud Modeling with Virga</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#eso-atmo-2021">ESO ATMO 2021</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/ESO2021/ESO_Tutorial.html">Tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/workshops/ESO2021/ESO_Tutorial.html">Tutorial Material</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#early-release-workshop-2021">Early Release Workshop 2021</a><ul>
@@ -111,12 +126,59 @@
            <div itemprop="articleBody">
              
   <section id="tutorials">
-<h1>Tutorials<a class="headerlink" href="#tutorials" title="Link to this heading">¶</a></h1>
-<section id="eso-atmo-2021">
-<h2>ESO ATMO 2021<a class="headerlink" href="#eso-atmo-2021" title="Link to this heading">¶</a></h2>
+<h1>Tutorials<a class="headerlink" href="#tutorials" title="Link to this heading"></a></h1>
+<section id="sagan-school-2023-interpretting-jwst-transmission-spectra">
+<h2>Sagan School 2023: Interpretting JWST Transmission Spectra<a class="headerlink" href="#sagan-school-2023-interpretting-jwst-transmission-spectra" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/ESO2021/ESO_Tutorial.html">Tutorial</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html">Basics of analyzing transmission spectra with JWST</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Check-PICASO-Imports">Check PICASO Imports</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Make-sure-we-have-the-right-data">Make sure we have the right data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Observed-Spectrum">Observed Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Spectra-Ingredients">Spectra Ingredients</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#PICASO-Basics">PICASO Basics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Basic-Inputs">Basic Inputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Cross-Section-Connection">Cross Section Connection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Set-Basic-Planet-and-Stellar-Inputs">Set Basic Planet and Stellar Inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Set-Climate-and-Chemistry">Set Climate and Chemistry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Creating-a-Transmission-Spectrum">Creating a Transmission Spectrum</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#First-Run-PICASO">First Run PICASO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Our-Spectra">Our Spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Model-Investigation">Model Investigation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Increasing-Model-Complexity-to-Improve-Fit:-Chemistry,-Climate,-Clouds">Increasing Model Complexity to Improve Fit: Chemistry, Climate, Clouds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Define-Goodness-of-Fit">Define Goodness of Fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Revisiting-Chemistry-Assumption">Revisiting Chemistry Assumption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Revisiting-Climate-Assumption">Revisiting Climate Assumption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Revisiting-Cloudless-assumption">Revisiting Cloudless assumption</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Mystery-absorbery-:-How-to-diagnose-unfit-spectral-regions">Mystery absorbery : How to diagnose unfit spectral regions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Explore-opacity-database">Explore opacity database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Create-Model-with-Fixed-Chemistry">Create Model with Fixed Chemistry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Xarray-output-(.nc)-the-model">Xarray output (.nc) the model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Save-W39-case-w/o-SO2">Save W39 case w/o SO2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Save-SO2-case">Save SO2 case</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html#Cloud-Modeling-with-Virga">Cloud Modeling with Virga</a></li>
+</ul>
+</div>
+</section>
+<section id="eso-atmo-2021">
+<h2>ESO ATMO 2021<a class="headerlink" href="#eso-atmo-2021" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/ESO2021/ESO_Tutorial.html">Tutorial Material</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/ESO2021/ESO_Tutorial.html#What-happens-to-a-transit-(transmission+emission)-spectrum-as-a-function-of-temperature">What happens to a transit (transmission+emission) spectrum as a function of temperature</a></li>
 <li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/ESO2021/ESO_Tutorial.html#What-molecules-are-most-important-to-planetary-spectroscopy?">What molecules are most important to planetary spectroscopy?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/ESO2021/ESO_Tutorial.html#Where-in-temperature-space-do-chemical-transitions-seem-to-take-place?">Where in temperature space do chemical transitions seem to take place?</a></li>
@@ -129,7 +191,7 @@
 </div>
 </section>
 <section id="early-release-workshop-2021">
-<h2>Early Release Workshop 2021<a class="headerlink" href="#early-release-workshop-2021" title="Link to this heading">¶</a></h2>
+<h2>Early Release Workshop 2021<a class="headerlink" href="#early-release-workshop-2021" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/ERS2021/ThermalEmissionTutorial.html">Setup <code class="docutils literal notranslate"><span class="pre">PICASO</span></code></a></li>
@@ -155,7 +217,7 @@
 </div>
 </section>
 <section id="sagan-school-2021-spectroscopy-of-young-planets">
-<h2>Sagan School 2021: Spectroscopy of Young Planets<a class="headerlink" href="#sagan-school-2021-spectroscopy-of-young-planets" title="Link to this heading">¶</a></h2>
+<h2>Sagan School 2021: Spectroscopy of Young Planets<a class="headerlink" href="#sagan-school-2021-spectroscopy-of-young-planets" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2021/1_Spectroscopy.html">Building Intuition for Spectroscopy</a><ul>
@@ -189,10 +251,13 @@
 </div>
 </section>
 <section id="sagan-school-2020-writing-a-jwst-proposal">
-<h2>Sagan School 2020: Writing a JWST Proposal<a class="headerlink" href="#sagan-school-2020-writing-a-jwst-proposal" title="Link to this heading">¶</a></h2>
+<h2>Sagan School 2020: Writing a JWST Proposal<a class="headerlink" href="#sagan-school-2020-writing-a-jwst-proposal" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2020/JWSTProposalTutorial.html">Initial Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2020/JWSTProposalTutorial.html">Initial Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2020/JWSTProposalTutorial.html#Download-Files-and-Install-Extra-Packages-beyond-PICASO">Download Files and Install Extra Packages beyond PICASO</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/workshops/SaganSchool2020/JWSTProposalTutorial.html#What-accuracy-in-planet-properties-do-I-need?">What accuracy in planet properties do I need?</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="notebooks/workshops/SaganSchool2020/JWSTProposalTutorial.html#Using-Exoplanet-Archive-API-to-Query-Confirmed-Targets">Using <code class="docutils literal notranslate"><span class="pre">Exoplanet</span> <span class="pre">Archive</span> <span class="pre">API</span></code> to Query Confirmed Targets</a></li>
 </ul>
@@ -218,7 +283,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="contribution.html" class="btn btn-neutral float-left" title="Contributing to PICASO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="notebooks/workshops/ESO2021/ESO_Tutorial.html" class="btn btn-neutral float-right" title="ESO ATMO 2021 Tutorial: Chemistry and Clouds in Exoplanet Transit Spectroscopy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="notebooks/workshops/SaganSchool2023/HowToAnalyzeExoplanetSpectra.html" class="btn btn-neutral float-right" title="Basics of analyzing transmission spectra with JWST" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
