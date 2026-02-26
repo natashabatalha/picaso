@@ -69,3 +69,14 @@ Chemistry
 `Wogan, et al. "The Open-source Photochem Code: A General Chemical and Climate Model for Interpreting (Exo)Planet Observations" <https://ui.adsabs.harvard.edu/abs/2025PSJ.....6..256W/abstract>`_
 
 - 1D photochemical modeling
+
+Clouds
+------
+
+`Batalha, Natasha E., et al. "Condensation Clouds in Substellar Atmospheres with Virga." The Astrophysical Journal (2026) <https://ui.adsabs.harvard.edu/abs/2026AJ....171...98B/abstract>`_
+
+- Virga cloud models 
+
+`Moran, Sarah; Lodge, Matt, et al. "Fractal Aggregate Aerosols in the Virga Cloud Code. I. Model Description and Application to a Benchmark Cloudy Exoplanet." The Astrophysical Journal (2025) <https://ui.adsabs.harvard.edu/abs/2025ApJ...994..116M/abstract>`_
+
+- Virga cloud models with aggregate particles
