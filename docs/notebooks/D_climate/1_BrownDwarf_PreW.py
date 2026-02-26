@@ -19,7 +19,7 @@
 #
 # What you should already be familiar with:
 #
-# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission)
+# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/notebooks/A_basics/5_AddingThermalFlux.html)
 # - [how to analyze thermal emission spectra](https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html)
 #
 # What you will need to download to use this tutorial:
@@ -97,7 +97,7 @@ cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
 cl_run.effective_temp(teff) # input effective temperature
 
 # %% [markdown]
-# Let's now grab our gaseous opacities, whose path we have already defined above. Again, this code uses a correlated-k approach for accurately capturing opacities (see [section 2.1.4; Mukerjee et al 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract)).
+# Let's now grab our gaseous opacities, whose path we have already defined above. Again, this code uses a correlated-k approach for accurately capturing opacities (see [section 2.1.4; Mukherjee et al 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract)).
 
 # %%
 mh = '0.0'#'+0.0' #log metallicity

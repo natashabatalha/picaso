@@ -2,9 +2,10 @@ Installation
 ============
 
 There are a few avenues for installing PICASO (git, pip, or conda). To help determine which is best for you, we have a few questions to help you decide:
+
 1. Are you a researcher who wants to stay up-to-date with the latest beta changes and contribute to the code base? Please follow the git clone instructions below.
 2. Are you a student or researcher who just wants to get started with PICASO quickly and use it for science? Please follow the pip or conda install instructions below.
-3. Do you want to use PICASO for an school assignment or workshop? `Jump to the picaso-lite section of the Quickstart Notebook </notebooks/Quickstart.py>`_
+3. Do you want to use PICASO for an school assignment or workshop? `Jump to the picaso-lite section of the Quickstart Notebook </notebooks/Quickstart.py#quickstart-for-students-learning>`_
 
 
 Python >= 3.11 is recommended. It is also recommended you use environments (either conda or pip). Please check out `our conda environment tutorial <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_.  
@@ -41,22 +42,35 @@ Install with conda
 Reference Data 
 ==============
 
-PICASO has the ability to ingest lots of different kinds of data. But not all are required. **Only two are required: 1) The `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ and 2) the resampled opacity file which will let you do some basic spectral modeling.**
+PICASO has the ability to ingest lots of different kinds of data. But not all are required. 
+
+**Only two are required:** 
+
+1) The `Reference Folder from Github <https://github.com/natashabatalha/picaso/tree/master/reference>`_ and 
+2) the resampled opacity file which will let you do some basic spectral modeling.
 
 +----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | Data Type                        | Req? | What it is primarily used for | Where it should go                                          |
 +==================================+======+===============================+=============================================================+
 | Reference                        | Yes  | everything                    | $picaso_refdata                                             |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | Resampled Opacities              | Yes  | Spectroscopic modeling        | $picaso_refdata/opacities/opacities*.db                     |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | Stellar Database                 | No   | Exoplanet modeling            | $PYSYN_CDBS/grid                                            |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | Preweighted correlatedK Tables   | No   | Chemical equilibrium climate  | Your choice (default=$picaso_refdata/opacities/preweighted) |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | By molecule correlatedK Tables   | No   | Disequilibrium climate        | Your choice (default=$picaso_refdata/opacities/resortrebin) |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | Sonora grid models               | No   | Initial guess/grid fitting    | Your choice (default=$picaso_refdata/sonora_grids)          |
++----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 | Virga Mieff files                | No   | Virga cloud modeling          | Your choice (default=$picaso_refdata/virga)                 |
 +----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 
-Get Required Data 
------------------
+How to get Required Data 
+------------------------
+
+We outline here an easy way of getting the required data. These steps are also outlined in our `Quickstart Notebook </notebooks/Quickstart.py>`_.
 
 .. code-block:: python
 

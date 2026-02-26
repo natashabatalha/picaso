@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# ## Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation
+# # Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation
 #
 # Here in this notebook we work on getting the pressure-dependent level fluxes and also comparing these level fluxes with our three methods of getting opacities (resort-rebin, resampled, and preweighted)
 
@@ -90,7 +90,7 @@ for key in ['mono','ck', 'resort']:
     df[key] = cases[key].spectrum(calc[key], full_output=True, calculation='thermal+reflected')
 
 # %% [markdown]
-# ## Grab the thermal fluxes, reflected fluxes, and pressure levels from the ful output
+# ## Grab the thermal fluxes, reflected fluxes, and pressure levels from the full output
 
 # %%
 # Get the data out of the picaso run

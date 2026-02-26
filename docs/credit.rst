@@ -38,7 +38,7 @@ Phase curves
 
 1D Climate Models
 -----------------
-`Mukherjee, et al. "PICASO 3.0: A One-Dimensional Climate Model for Giant Planets and Brown Dwarfs." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
+`Mukherjee, et al. "PICASO 3.0: A One-Dimensional Climate Model for Giant Planets and Brown Dwarfs." The Astrophysical Journal (2023): 157. <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_
 
 - 1D climate models of substellar atmospheres
 
@@ -65,3 +65,7 @@ Chemistry
 `Marley, Mark S.,Saumon, Didier, Visscher, Channon et al. "The Sonora Brown Dwarf Atmosphere and Evolution Models. I. Model Description and Application to Cloudless Atmospheres in Rainout Chemical Equilibrium" ApJ (2021). <https://ui.adsabs.harvard.edu/abs/2021ApJ...920...85M/abstract>`_
 
 - Use of the `chemeq_visscher` functions 
+
+`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets"`_
+
+- Use of the 2121 chemistry grid ('visscher' chemistry)

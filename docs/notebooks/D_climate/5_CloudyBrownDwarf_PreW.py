@@ -17,7 +17,7 @@
 #
 # In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds included self-consistently! For a more in depth look at the climate-cloud code check out [Mang et al. 2026]() (note this should also be cited if using this code/tutorial).
 #
-# You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
+# You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
 #
 # What you need to have downloaded for clouds to work:
 # [Virga](https://natashabatalha.github.io/virga/installation.html) and be sure to have the mieff files downloaded as well!
@@ -132,7 +132,7 @@ plt.show()
 # %% [markdown]
 # Now you should be able to see a mostly smooth PT profile that's a little warmer than the cloud-free Sonora Bobcat profile. Even though it looks warmer, the actual effective temperature of the object is the same because the water cloud opacity blocks out some of the flux.
 #
-# As you may know (or will find out) clouds are really difficult to converge models for especially with H2O clouds in cold regions for example. To learn more about common signs that you should look for to identify "bad" models, take a look at the [Common Climate Issues Notebook]()
+# As you may know (or will find out) clouds are really difficult to converge models for especially with H2O clouds in cold regions for example. To learn more about common signs that you should look for to identify "bad" models, take a look at the [Common Climate Issues Notebook](https://natashabatalha.github.io/picaso/notebooks/I_usefultools/CommonClimateBDIssues.html)
 
 # %% [markdown]
 # ## Looking at the Cloud Properties

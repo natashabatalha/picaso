@@ -12,6 +12,9 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # FAQs
+
 # %%
 import warnings
 warnings.filterwarnings('ignore')
@@ -23,7 +26,7 @@ from bokeh.io import output_notebook
 output_notebook()
 
 # %% [markdown]
-# # How do I load in target properties from Exo.Mast?
+# ## How do I load in target properties from Exo.Mast?
 
 # %%
 nexsci = jdi.all_planets()
@@ -64,7 +67,7 @@ plot += [jpi.spectrum(x,y,plot_width=400,y_axis_label='(Rp/Rs)^2')]
 jpi.show(jpi.row(plot))
 
 # %% [markdown]
-# # How do I access the pressure-temperature profile parameterizations?
+# ### How do I access the pressure-temperature profile parameterizations?
 
 # %%
 #start by loading in some template properties
@@ -73,7 +76,7 @@ hatp26_row = nexsci.loc[nexsci['hostname']=='HAT-P-26']
 hatp26 = jdi.load_planet(hatp26_row,opa, st_metfe=0)
 
 # %% [markdown]
-# ### How do the input parameters effect the parameterization?
+# #### How do the input parameters effect the parameterization?
 
 # %%
 fig = [jpi.figure(width=300, height=300, y_axis_type='log', y_range=[100,1e-6],x_range=[400,1700],
@@ -103,7 +106,7 @@ jpi.show(jpi.row(fig))
 
 
 # %% [markdown]
-# # How do I return the output from photon attenuation plot?
+# ### How do I return the output from photon attenuation plot?
 
 # %%
 #first isolate the row
@@ -130,14 +133,14 @@ for i,iy,ilab in zip([0,1],[at_pressures_gas,at_pressures_ray ], ['Molecular','R
 jpi.show(fig)
 
 # %% [markdown]
-# # Can I use the phase angle function to specify a non-zero phase for thermal emission?
+# ## Can I use the phase angle function to specify a non-zero phase for thermal emission?
 #
 # The phase angle function computes the incoming and outgoing angles. However, non-zero phase functionality is specific to __reflected light observations only__. This might be confusing because of course it is possible to observe thermal emission of planet at non-zero phase. However, unlike reflected light, thermal emission radiates from the planet in all directions (regardless of phase angle).
 #
 # __Do not force the code to run at non-zero phase angles for thermal emission.__
 
 # %% [markdown]
-# # I'm confused about what opacity file to use
+# ## I'm confused about what opacity file to use
 #
 # Question: I'm confused about the opacity files. Version 1.0 (opacity.db) is the low res version that covers the "useful" wavelengths (0.3 to 14 micron) while version 2.0 has two files that cover the 0.6-6 micron at higher resolution and 4.8-15 micron. What should I download? And once I download it, where do I put them? If it's just the one file that seems straightforward in terms of where to put it but what happens when there are two files (or all 3) in the same folder?
 #
@@ -159,7 +162,7 @@ jpi.show(fig)
 #
 
 # %% [markdown]
-# # Has your question not been answered? Feel free to contact us!
+# ## Has your question not been answered? Feel free to contact us!
 #
 # Submit an issue on Github: https://github.com/natashabatalha/picaso/issues
 
