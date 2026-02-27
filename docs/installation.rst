@@ -5,7 +5,7 @@ There are a few avenues for installing PICASO (git, pip, or conda). To help dete
 
 1. Are you a researcher who wants to stay up-to-date with the latest beta changes and contribute to the code base? Please follow the git clone instructions below.
 2. Are you a student or researcher who just wants to get started with PICASO quickly and use it for science? Please follow the pip or conda install instructions below.
-3. Do you want to use PICASO for an school assignment or workshop? `Jump to the picaso-lite section of the Quickstart Notebook </notebooks/Quickstart.py#quickstart-for-students-learning>`_
+3. Do you want to use PICASO for an school assignment or workshop? `Jump to the picaso-lite section of the Quickstart Notebook <https://natashabatalha.github.io/picaso/notebooks/Quickstart.html#Quickstart-for-Students-&-Learning>`_
 
 
 Python >= 3.11 is recommended. It is also recommended you use environments (either conda or pip). Please check out `our conda environment tutorial <https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments>`_.  
@@ -279,11 +279,8 @@ Where the folder ``grid/`` contains whatever ``stsynphot`` data files you have d
 Using Quickstart Notebook
 =========================
 
-If you are already very familiar with package installs, environment variables **OR you are a student using PICASO for classwork you can jump straight** to our `Quickstart Notebook </notebooks/Quickstart.py>`_.
+If you are already very familiar with package installs, environment variables **OR you are a student using PICASO for classwork you can jump straight** to our `Quickstart Notebook <https://natashabatalha.github.io/picaso/notebooks/Quickstart.html>`_.
 
-.. toctree::
-   :maxdepth: 1
-	Simple Install </notebooks/Quickstart.py>
 
 
 
