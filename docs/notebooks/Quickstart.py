@@ -17,20 +17,21 @@
 # ---
 
 # %% [markdown]
-# # Quickstart
+# # Quickstart for Research 
 #
-# Here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need.
+# If you are student using PICASO for classrooms go to Quickstart for Students and Learning. 
+# Otherwise, here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need.
 #
 # Be sure to have followed the [installation instructions](https://github.com/James-Mang/dev_picaso/blob/9278a1df9bab306b9e03a2a427a59e7ddaaa7e09/docs/installation.rst) and follow the steps below depending on how you installed PICASO.
 #
-# This notebook is organized as follows:
-# 1. One additional step **only those who used pip or conda to install PICASO**
-# 2. Run PICASO environment checker
-# 2. Additional data that you might need **regardless of installation method**
-# 3. Quickstart for quick simple examples and workshops 
+# This quickstart for research is organized as follows:
+# 1. Setup environment variable, if needed 
+# 2. Download required data
+# 3. Run PICASO environment checker
+# 4. Optional Data 
 
 # %% [markdown]
-# ## Create `picaso_refdata` environment variable
+# ## 1. Create `picaso_refdata` environment variable
 #
 # We give [different ways of setting environment variables here](https://natashabatalha.github.io/picaso/installation). Setting them with `os` is perfectly fine though some users like setting them system wide so that they do not have to constantly set paths.
 #
@@ -50,12 +51,12 @@ os.environ['PYSYN_CDBS'] = os.path.join(os.environ['picaso_refdata'],'stellar_gr
 # Note what we did above sets the environment variable which is totally okay but this way you will need to add this to the top of all your future notebooks **before you import picaso** if you haven't set it in your bash file
 
 # %% [markdown]
-# ## 1. Download Required Data
+# ## 2. Download Required Data
 
 # %% [markdown]
 # Required data: 
 #
-# 1) This basic directory: https://github.com/natashabatalha/picaso/tree/master/reference (If you cloned on git you already have this!!!!!!)
+# 1) This basic directory: https://github.com/natashabatalha/picaso/tree/master/reference (**If you cloned on git you already have this!!!!!!**)
 # 2) Resampled opacities (7 Gb)
 #
 # We can get both through `picaso.data`
@@ -78,7 +79,7 @@ data.get_reference(os.environ['picaso_refdata']) #only ever need to do one time
 #
 # - $picaso_refdata/opacities
 #
-# **Note**: This is ~ 5GB file so please make sure that you have a reliable internet connection before trying to download this file, otherwise you might encounter a timeout error.
+# **Note**: This is ~ 7GB file so please make sure that you have a reliable internet connection before trying to download this file, otherwise you might encounter a timeout error.
 
 # %%
 data.get_data(category_download='resampled_opacity',target_download='default')
@@ -96,16 +97,13 @@ data.get_data(category_download='resampled_opacity',target_download='default')
 data.get_data_config()[1]['resampled_opacity']['default']['url']
 
 # %% [markdown]
-# ## 2. Run PICASO Environment Checker
+# ## 3. Run PICASO Environment Checker
 
 # %%
 data.check_environ()
 
 # %% [markdown]
-# You might see that we still need to download the resampled opacity file.
-
-# %% [markdown]
-# ## 3. Optional reference data you may want for PICASO
+# ## 4. Optional reference data you may want for PICASO
 
 # %% [markdown]
 # ### Download the stellar grids needed for exoplanet modeling (optional)

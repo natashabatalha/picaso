@@ -8,6 +8,7 @@ Getting Data and Setting up Environments after Installation
 -----------------------------------------------------------
 
 This quickstart notebook has some overlap with our installation instructions (Please read the installation page first if you are unfamiliar with package installation, environment variables, etc), but it is designed to be a quick way to get up and running with PICASO after you have installed it. It includes instructions for getting reference data, setting up environments, and checking environments have been successfully setup. 
+
 .. toctree::
    :maxdepth: 1
 
@@ -48,7 +49,7 @@ Clouds
 
 1D Climate Modeling
 -------------------
-Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
+Relevant Citations: `Mukherjee et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_
 
 .. toctree::
    :maxdepth: 1
@@ -65,7 +66,7 @@ Relevant Citatons: `Mukherjee et al. 2022 <https://ui.adsabs.harvard.edu/abs/202
 
 3D Spectra and Phase Curves
 ---------------------------
-Relevant Citatons: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <http://arxiv.org/abs/2204.03545>`_ for Phase Curves. 
+Relevant Citations: `Adams et al. 2022 <https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract>`_ for 3D spectra and `Robbins-Blanch et al. 2022 <http://arxiv.org/abs/2204.03545>`_ for Phase Curves. 
 
 .. toctree::
    :maxdepth: 1
@@ -119,12 +120,12 @@ Useful Tools
    :maxdepth: 1
    
    How to store and reuse models </notebooks/I_usefultools/ModelStorage.py>
+   Data Storage Uniformity </notebooks/I_usefultools/data_uniformity_tutorial.py>
    Spectral and Molecular Contribution Functions </notebooks/I_usefultools/ContributionFunctions.py>
    Common Climate Issues </notebooks/I_usefultools/CommonClimateBDIssues.py>
    Integrated Level Fluxes </notebooks/I_usefultools/Level_Fluxes.py>
-   Misc FAQs </notebooks/I_usefultools/FAQs.py>
    SQLITE Tutorial </notebooks/I_usefultools/Sqlite3Tutorial.py>
-   Data Storage Uniformity </notebooks/I_usefultools/data_uniformity_tutorial.py>
+   Misc FAQs </notebooks/I_usefultools/FAQs.py>
 
 References
 ----------
