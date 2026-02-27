@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart for Research &mdash; picaso 4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tutorial &amp; Notebook Workflow" href="../notebook_workflow.html" />
+    <link rel="prev" title="Installation" href="../installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">The Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Quickstart for Research</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#1.-Create-picaso_refdata-environment-variable">1. Create <code class="docutils literal notranslate"><span class="pre">picaso_refdata</span></code> environment variable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#2.-Download-Required-Data">2. Download Required Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#3.-Run-PICASO-Environment-Checker">3. Run PICASO Environment Checker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#4.-Optional-reference-data-you-may-want-for-PICASO">4. Optional reference data you may want for PICASO</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Want-anything-else?-Use-get_data-function">Want anything else? Use <code class="docutils literal notranslate"><span class="pre">get_data</span></code> function</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Quickstart-for-Students-&amp;-Learning">Quickstart for Students &amp; Learning</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#basics-of-spectral-modeling">Basics of Spectral Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#chemistry">Chemistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#clouds">Clouds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#d-climate-modeling">1D Climate Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#d-spectra-and-phase-curves">3D Spectra and Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#opacities">Opacities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#useful-tools">Useful Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../installation.html">Installation</a></li>
+      <li class="breadcrumb-item active">Quickstart for Research</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/notebooks/Quickstart.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/Quickstart.py">Download full notebook here</a></p>
+</div>
+<section id="Quickstart-for-Research">
+<h1>Quickstart for Research<a class="headerlink" href="#Quickstart-for-Research" title="Link to this heading"></a></h1>
+<p>If you are student using PICASO for classrooms go to Quickstart for Students and Learning. Otherwise, here is the quickstart to getting up and running with <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> using <code class="docutils literal notranslate"><span class="pre">python</span></code> to set environment variables and <code class="docutils literal notranslate"><span class="pre">get_data</span></code> to get everything you need.</p>
+<p>Be sure to have followed the <a class="reference external" href="https://github.com/James-Mang/dev_picaso/blob/9278a1df9bab306b9e03a2a427a59e7ddaaa7e09/docs/installation.rst">installation instructions</a> and follow the steps below depending on how you installed PICASO.</p>
+<p>This quickstart for research is organized as follows:</p>
+<ol class="arabic simple">
+<li><p>Setup environment variable, if needed</p></li>
+<li><p>Download required data</p></li>
+<li><p>Run PICASO environment checker</p></li>
+<li><p>Optional Data</p></li>
+</ol>
+<section id="1.-Create-picaso_refdata-environment-variable">
+<h2>1. Create <code class="docutils literal notranslate"><span class="pre">picaso_refdata</span></code> environment variable<a class="headerlink" href="#1.-Create-picaso_refdata-environment-variable" title="Link to this heading"></a></h2>
+<p>We give <a class="reference external" href="https://natashabatalha.github.io/picaso/installation">different ways of setting environment variables here</a>. Setting them with <code class="docutils literal notranslate"><span class="pre">os</span></code> is perfectly fine though some users like setting them system wide so that they do not have to constantly set paths.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import os
+print(os.environ[&#39;picaso_refdata&#39;] ) #should return a path
+
+#does it not?? Lets make sure you have it set in your environment:
+os.environ[&#39;picaso_refdata&#39;] = &#39;YOUR_PATH/picaso/reference/&#39;
+
+#set path for optional stellar data if you plan to model irradiated objects
+os.environ[&#39;PYSYN_CDBS&#39;] = os.path.join(os.environ[&#39;picaso_refdata&#39;],&#39;stellar_grids&#39;) #or your own path to stellar grids if you have them elsewhere
+</pre></div>
+</div>
+</div>
+<p>Note what we did above sets the environment variable which is totally okay but this way you will need to add this to the top of all your future notebooks <strong>before you import picaso</strong> if you haven’t set it in your bash file</p>
+</section>
+<section id="2.-Download-Required-Data">
+<h2>2. Download Required Data<a class="headerlink" href="#2.-Download-Required-Data" title="Link to this heading"></a></h2>
+<p>Required data:</p>
+<ol class="arabic simple">
+<li><p>This basic directory: <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">https://github.com/natashabatalha/picaso/tree/master/reference</a> (<strong>If you cloned on git you already have this!!!!!!</strong>)</p></li>
+<li><p>Resampled opacities (7 Gb)</p></li>
+</ol>
+<p>We can get both through <code class="docutils literal notranslate"><span class="pre">picaso.data</span></code></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import picaso.data as data
+</pre></div>
+</div>
+</div>
+<section id="1)-Req'd-Data:-Reference-Directory">
+<h3>1) Req’d Data: Reference Directory<a class="headerlink" href="#1)-Req'd-Data:-Reference-Directory" title="Link to this heading"></a></h3>
+<p>If you installed through pip or conda then you will need to do this step. If you did a <strong>git clone then you should already have this</strong> and just need to point <code class="docutils literal notranslate"><span class="pre">picaso_refdata</span></code> to the directory <code class="docutils literal notranslate"><span class="pre">reference</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>data.get_reference(os.environ[&#39;picaso_refdata&#39;]) #only ever need to do one time
+</pre></div>
+</div>
+</div>
+</section>
+<section id="2)-Req'd-Data:-Resampled-opacity-file">
+<h3>2) Req’d Data: Resampled opacity file<a class="headerlink" href="#2)-Req'd-Data:-Resampled-opacity-file" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">get_data</span></code> will auto put this files here (where $picaso_refdata points to your ref directory).</p>
+<ul class="simple">
+<li><p>$picaso_refdata/opacities</p></li>
+</ul>
+<p><strong>Note</strong>: This is ~ 7GB file so please make sure that you have a reliable internet connection before trying to download this file, otherwise you might encounter a timeout error.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>data.get_data(category_download=&#39;resampled_opacity&#39;,target_download=&#39;default&#39;)
+</pre></div>
+</div>
+</div>
+<p>Issues with this large file and <code class="docutils literal notranslate"><span class="pre">get_data</span></code>?? Do it manually:</p>
+<ul class="simple">
+<li><p>Download from Zenodo (see url below)</p></li>
+<li><p>Unpack</p></li>
+<li><p>place .db file here $picaso_refdata/opacities</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>#url for manual download
+data.get_data_config()[1][&#39;resampled_opacity&#39;][&#39;default&#39;][&#39;url&#39;]
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="3.-Run-PICASO-Environment-Checker">
+<h2>3. Run PICASO Environment Checker<a class="headerlink" href="#3.-Run-PICASO-Environment-Checker" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>data.check_environ()
+</pre></div>
+</div>
+</div>
+</section>
+<section id="4.-Optional-reference-data-you-may-want-for-PICASO">
+<h2>4. Optional reference data you may want for PICASO<a class="headerlink" href="#4.-Optional-reference-data-you-may-want-for-PICASO" title="Link to this heading"></a></h2>
+<section id="Download-the-stellar-grids-needed-for-exoplanet-modeling-(optional)">
+<h3>Download the stellar grids needed for exoplanet modeling (optional)<a class="headerlink" href="#Download-the-stellar-grids-needed-for-exoplanet-modeling-(optional)" title="Link to this heading"></a></h3>
+<p>If you want to use these stellar files they will need to be accessed by stsynphot package which checks for them here:</p>
+<ul class="simple">
+<li><p>$PYSYN_CDBS/grid</p></li>
+</ul>
+<p>You will be asked if you want to download phoenix or ck04models. we recommend ck04models as a default for reflected light spectra, but phoenix for mid-IR spectra and climate modeling.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>#now let&#39;s make sure we have the pysynphot environment variable set
+data.get_data(category_download=&#39;stellar_grids&#39;)
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Want-anything-else?-Use-get_data-function">
+<h2>Want anything else? Use <code class="docutils literal notranslate"><span class="pre">get_data</span></code> function<a class="headerlink" href="#Want-anything-else?-Use-get_data-function" title="Link to this heading"></a></h2>
+<p>PICASO relies on lots of different kinds of data. However you might not need all of it depending on what you are working on. For example, if you are only working on substellar objects, you do not need to download stellar spectra.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Data Type</p></th>
+<th class="head"><p>Req?</p></th>
+<th class="head"><p>What it is primarily used for</p></th>
+<th class="head"><p>Where it should go</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Reference</p></td>
+<td><p>Yes</p></td>
+<td><p>everything</p></td>
+<td><p>$picaso_refdata</p></td>
+</tr>
+<tr class="row-odd"><td><p>Resampled Opacities</p></td>
+<td><p>Yes</p></td>
+<td><p>Spectroscopic modeling</p></td>
+<td><p>$picaso_refdata/opacities/opacities*.db</p></td>
+</tr>
+<tr class="row-even"><td><p>Stellar Database</p></td>
+<td><p>No</p></td>
+<td><p>Exoplanet modeling</p></td>
+<td><p><span class="math notranslate nohighlight">\(PYSYN_CDBS/grid | | Pre-weighted correlated-K Tables | No | Chemical equilibrium climate | Your choice (default=\)</span>picaso_refdata/opacities/preweighted)</p></td>
+</tr>
+<tr class="row-odd"><td><p>By molecule correlated-K Tables</p></td>
+<td><p>No</p></td>
+<td><p>Disequilibrium climate</p></td>
+<td><p>Your choice (default=<span class="math notranslate nohighlight">\(picaso_refdata/opacities/resortrebin) | | Sonora grid models | No | Initial guess/grid fitting | Your choice (default=\)</span>picaso_refdata/sonora_grids)</p></td>
+</tr>
+<tr class="row-even"><td><p>Virga Mieff files</p></td>
+<td><p>No</p></td>
+<td><p>Virga cloud modeling</p></td>
+<td><p>Your choice (default=$picaso_refdata/virga)</p></td>
+</tr>
+</tbody>
+</table>
+<section id="Examples-using-get-data-in-interactive-mode">
+<h3>Examples using get data in interactive mode<a class="headerlink" href="#Examples-using-get-data-in-interactive-mode" title="Link to this heading"></a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>data.get_data()
+What data can I help you download? Options include:
+[&#39;resampled_opacity&#39;, &#39;stellar_grids&#39;, &#39;sonora_grids&#39;, &#39;ck_tables&#39;]
+&gt;&gt; sonora_grids
+Great. I found these options for sonora_grids. Select one:
+0 - &#39;elfowl-Ytype&#39;: The models between Teff of 275 to 550 K (applicable to Y-type objects). Total: ~40 Gb.
+1 - &#39;elfowl-Ttype&#39;: The models for Teff between 575 to 1200 K (applicable for T-type objects). Total: ~40 Gb.
+2 - &#39;elfowl-Ltype&#39;: Models for Teff between 1300 to 2400 K (applicable for L-type objects). Total: ~40 Gb.
+3 - &#39;bobcat&#39;: Sonora bobcat pressure-temperature profiles
+4 - &#39;diamondback&#39;:
+&gt;&gt; elfowl-Ytype
+No destination has been specified. Let me help put this in the right place.
+When running the code you will have to point to this directory. Therefore, keep it somewhere you will remember. My suggestion would be something like /Users/myaccount/Documents/data/picaso_data/sonora_grids. Please enter a path:
+/Users/nbatalh1/Documents/data/sonora_grids/elfowl
+</pre></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>data.get_data()
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="Quickstart-for-Students-&amp;-Learning">
+<h1>Quickstart for Students &amp; Learning<a class="headerlink" href="#Quickstart-for-Students-&-Learning" title="Link to this heading"></a></h1>
+<p>Here is the quickstart to getting up and running with <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> using <code class="docutils literal notranslate"><span class="pre">python</span></code> to set environment variables and <code class="docutils literal notranslate"><span class="pre">get_data</span></code> to get everything you need for PICASO-lite</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>#install the code
+!pip install picaso
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import picaso.data as d
+
+#pick a path to download all the reference data
+d.os.environ[&#39;picaso_refdata&#39;] = &#39;/data/reference_data/picaso/reftest&#39;
+
+#get all needed data
+d.get_data(category_download=&#39;picaso-lite&#39;, target_download=&#39;tutorial_sagan23&#39;,final_destination_dir=d.os.environ[&#39;picaso_refdata&#39;] )
+
+
+#add this to the top of any picaso notebook that models exoplanets
+d.os.environ[&#39;PYSYN_CDBS&#39;] = d.os.path.join(d.os.environ[&#39;picaso_refdata&#39;],&#39;stellar_grids&#39;)
+
+
+#use this for any virga related notebook
+mieff_dir = d.os.path.join(d.os.environ[&#39;picaso_refdata&#39;],&#39;virga&#39;)
+#use this for any climate modeling (this must includes a few metallicities and c/o ratios so you can get an idea of how to do climate modeling)
+ck_dir = d.os.path.join(d.os.environ[&#39;picaso_refdata&#39;],&#39;opacities&#39;, &#39;preweighted&#39;)
+</pre></div>
+</div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../notebook_workflow.html" class="btn btn-neutral float-right" title="Tutorial &amp; Notebook Workflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
