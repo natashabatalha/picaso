@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # Terrestiral Planets: Adding a Surface
+# # Terrestrial Planets: Adding a Surface
 #
 # Three major changes differences you need to make note of for terrestrial planets in both reflected, emission and transmission geometry:
 #
@@ -66,7 +66,7 @@ sum_planet.star(opacity,5000,0,4.0) #pysynphot database, temp, metallicity, logg
 
 # %%
 sum_planet.atmosphere(df=pd.DataFrame({'pressure':np.logspace(-6,0,40),
-                         'temperature':np.linspace(100,270,40), #very fake temperature profile with a 270 K suface
+                         'temperature':np.linspace(100,270,40), #very fake temperature profile with a 270 K surface
                          'H2O':np.zeros(40)+0.01,
                          'CO2':np.zeros(40)+1-0.01}))
 

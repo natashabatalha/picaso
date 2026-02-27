@@ -20,9 +20,9 @@
 #
 # What you should already be familiar with:
 #
-# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission)
+# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/notebooks/A_basics/5_AddingThermalFlux.html)
 # - [how to analyze thermal emission spectra](https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html)
-# - [how to run a basic 1d brown dwarf tutorial](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
+# - [how to run a basic 1d brown dwarf tutorial](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
 #
 # What you should have downloaded:
 #
@@ -54,7 +54,7 @@ import pandas as pd
 # %% [markdown]
 # ## Setting up Initial Run (highlighting main differences for resort-rebin)
 #
-# In this case becuase we're mixing the gases on the fly, we don't need to define the correlated-k database/file. As you can see here in opannection, the method is now set to `resortrebin`. We've defined a list of gases to mix here but if you don't define anything all gasses will be mixed. For more information about the difference between these two methods, you can look at the [Fun with Chem notebook]()
+# In this case because we're mixing the gases on the fly, we don't need to define the correlated-k database/file. As you can see here in opannection, the method is now set to `resortrebin`. We've defined a list of gases to mix here but if you don't define anything all gasses will be mixed. For more information about the difference between these two methods, you can look at the [Fun with Chem notebook]()
 
 # %%
 sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')

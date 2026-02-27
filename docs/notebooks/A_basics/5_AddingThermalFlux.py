@@ -53,7 +53,7 @@ case1.atmosphere(filename = jdi.HJ_pt(), sep=r'\s+')#
 
 
 # %% [markdown]
-# ## Return ``PICASO`` Full Ouput
+# ## Return ``PICASO`` Full Output
 
 # %%
 df= case1.spectrum(opa, full_output=True,calculation='thermal') #note the new last key

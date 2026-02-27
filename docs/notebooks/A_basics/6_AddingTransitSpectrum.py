@@ -60,7 +60,7 @@ case1.atmosphere(filename = jdi.HJ_pt(), sep=r'\s+')
 case1.approx(p_reference=10)
 
 # %% [markdown]
-# ## Return ``PICASO`` Full Ouput
+# ## Return ``PICASO`` Full Output
 
 # %%
 df= case1.spectrum(opa, full_output=True,calculation='transmission') #note the new last key

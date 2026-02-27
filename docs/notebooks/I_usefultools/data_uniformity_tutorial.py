@@ -13,13 +13,13 @@
 # ---
 
 # %% [markdown]
-# # Model Formating Overview
+# # Model Formatting Overview
 #
 # This notebook was created to enable common formatting for the Early Release Science modeling initiatives. We will review:
 #
 # 1. Variable terminology
 # 2. File naming schemes
-# 3. Data formating
+# 3. Data formatting
 # 4. Physical unit archiving
 #
 # This is namely for the booking of the following model types:
@@ -100,10 +100,11 @@
 #
 # 11. Coming soon.
 #
-# # Specifying units
+
+# %% [markdown]
+# ## Specifying units
 #
 # We should be able to convert all units to `astropy.units`. For unitless parameters (e.g. single scattering albedo, optical depth) unitless designation should be provided. See example:
-#
 #
 
 # %%
@@ -124,7 +125,7 @@ unit = 'cm'
 (1*u.Unit('R_jup')).to('cm')
 
 # %% [markdown]
-# # Data Types: Using `xarray`
+# ## Data Types: Using `xarray`
 #
 # [xarray: N-D labeled arrays and datasets in Python](https://docs.xarray.dev/en/stable/): From their website: "array introduces labels in the form of dimensions, coordinates and attributes on top of raw NumPy-like arrays, which allows for a more intuitive, more concise, and less error-prone developer experience. The package includes a large and growing library of domain-agnostic functions for advanced analytics and visualization with these data structures."
 #
@@ -149,7 +150,8 @@ unit = 'cm'
 # 4. orbit_params (json dict) : with dict keys defined in section 1
 # 5. cld_params (json dict): with dict keys defined in section 1
 # 6. model_notes (str) : any additional modeling notes that you want the user to be aware of
-#
+
+# %% [markdown]
 # ## Easy Example: 1D data: e.g. P-T profiles, chemistry
 #
 # Here we will show an example with `pressure` as the dependent variable. Spectra, which are on a wavelength or wavenumber grid, can also be stored similarly.
@@ -296,9 +298,9 @@ ds = xr.Dataset(
 ds['temperature'].isel(pressure=10).plot()
 
 # %% [markdown]
-# # Storing `xarray` data
+# ## Storing `xarray` data
 #
-# ## Filenaming
+# ### Filenaming
 #
 # We usually rely on a long filename to give us information about the model. If we properly use `attrs` then filenaming does not matter. However, friendly filenames are always appreciated by people using your models. We suggest the following naming convention.
 #
@@ -306,7 +308,7 @@ ds['temperature'].isel(pressure=10).plot()
 #
 # For example: `jupiter_mh1_teff1000_tint100.nc`
 #
-# ## Using `netcdf`
+# ### Using `netcdf`
 #
 # "The recommended way to store xarray data structures is netCDF, which is a binary file format for self-described datasets that originated in the geosciences. Xarray is based on the netCDF data model, so netCDF files on disk directly correspond to Dataset objects (more accurately, a group in a netCDF file directly corresponds to a Dataset object. See Groups for more.)" - [Quoted from xarray website](https://docs.xarray.dev/en/stable/user-guide/io.html)
 
@@ -314,14 +316,14 @@ ds['temperature'].isel(pressure=10).plot()
 ds.to_netcdf("/data/picaso_dbs/fakeplanet_1000teq.nc")
 
 # %% [markdown]
-# ## Using `pickle`
+# ### Using `pickle`
 
 # %%
 import pickle as pk
 pk.dump(ds, open("/data/picaso_dbs/fakeplanet_1000teq.pk",'wb'))
 
 # %% [markdown]
-# # Reading/interpreting an `xarray` file
+# ## Reading/interpreting an `xarray` file
 #
 # First, make sure you have installed [netCDF4](https://github.com/Unidata/netcdf4-python) and [h5netcdf](https://github.com/h5netcdf/h5netcdf) :
 #
@@ -363,9 +365,9 @@ json.loads(ds_sm.attrs['planet_params'])['rp'] #radius used
 
 
 # %% [markdown]
-# # Checking your data is in compliance
+# ## Checking your data is in compliance
 #
-# TLDR: this function will check that your data can be properly interpretted
+# TLDR: this function will check that your data can be properly interpreted
 
 # %%
 def data_check(usr_xa):

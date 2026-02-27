@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # Implemenation: Grid Fitting+Post-Processing using Bayesian Statistics w/ PICASO
+# # Implementation: Grid Fitting+Post-Processing using Bayesian Statistics w/ PICASO
 #
 # If this is your first crack at fitting parameters with PICASO, we strong encourage you to look at the first two retrieval tutorial. Here we will expand on that tutorial and you will learn:
 #
@@ -103,10 +103,10 @@ def get_data():
 # %% [markdown]
 # Let's point towards the grid locations, create a grid fitter object for them, and prep them.
 #
-# If you are not familiar with `lyz.GridFitter` we encourate you to first become familiar with non-Bayesian grid fitting based on purely maximum chi-sq values. You can play around with this [Grid Search tutorial here](https://natashabatalha.github.io/picaso/notebooks/fitdata/GridSearch.html).
+# If you are not familiar with `lyz.GridFitter` we encourage you to first become familiar with non-Bayesian grid fitting based on purely maximum chi-sq values. You can play around with this [Grid Search tutorial here](https://natashabatalha.github.io/picaso/notebooks/fitdata/GridSearch.html).
 #
 # The basic premise of `prep_gridtrieval`:
-# - vets and transforms the grid to ensure it's square and interprelate-able
+# - vets and transforms the grid to ensure it's square and interpolate-able
 # - checks that there is a common pressure grid for the temperature
 
 # %%

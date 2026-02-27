@@ -19,9 +19,9 @@
 #
 # What you should already be familiar with:
 #
-# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission)
+# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/notebooks/A_basics/5_AddingThermalFlux.html)
 # - [how to analyze thermal emission spectra](https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html)
-# - [how to run a basic 1d brown dwarf tutorial](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
+# - [how to run a basic 1d brown dwarf tutorial](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
 #
 # What you should have downloaded:
 #
@@ -100,7 +100,7 @@ rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is
 # We will add one more concept which is the addition of  K$_{zz}$ [cm$^2$/s]. K$_{zz}$ is the eddy diffusion constant, which sets the strength of vertical mixing. In `PICASO` we have two options for  K$_{zz}$:
 #
 #  1. Constant value: sets a constant at every atmospheric layer
-#  2. Self consistent (see Eqn. 27 and 28 in [Mukherjee et al 2022](https://arxiv.org/pdf/2208.07836.pdf))
+#  2. Self consistent (see Eqn. 27 and 28 in [Mukherjee et al 2023](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract))
 #
 #
 # **New code parameters**:
@@ -133,7 +133,7 @@ out = cl_run.climate(opacity_ck, save_all_profiles = True, with_spec=True,
 # %% [markdown]
 # ## Compare Diseq and Chemeq Climate Profile
 #
-# For the case we chose to do a self-consistent kzz instead of a low, constantt kzz. We also use the resort-rebin chemistry method compared to the pre-weighted CK tables. For more information about the difference between these, you can look at the [Fun with Chem notebook]()
+# For the case we chose to do a self-consistent kzz instead of a low, constant kzz. We also use the resort-rebin chemistry method compared to the pre-weighted CK tables. For more information about the difference between these, you can look at the [chemistry notebook](https://natashabatalha.github.io/picaso/tutorials.html#chemistry)
 
 # %%
 plt.ylim(200,1.7e-4)
