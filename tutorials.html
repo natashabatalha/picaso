@@ -49,7 +49,9 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebook_workflow.html">Tutorial Workflow</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Tutorials</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-data-and-setting-up-environments-after-installation">Getting Data and Setting up Environments after Installation</a><ul class="simple">
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#basics-of-spectral-modeling">Basics of Spectral Modeling</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/A_basics/1_GetStarted.html">Getting Started</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/A_basics/2_AddingClouds.html">Simple Clouds</a></li>
@@ -116,25 +118,12 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#useful-tools">Useful Tools</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/ModelStorage.html">How to store and reuse models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html">Data Storage Uniformity</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/ContributionFunctions.html">Spectral and Molecular Contribution Functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/CommonClimateBDIssues.html">Common Climate Issues</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html">Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html#Set-up-the-PICASO-connection-for-three-test-cases-(mono-and-correlated-k)">Set up the PICASO connection for three test cases (mono and correlated-k)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html#Grab-the-thermal-fluxes,-reflected-fluxes,-and-pressure-levels-from-the-ful-output">Grab the thermal fluxes, reflected fluxes, and pressure levels from the ful output</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html#Plot-the-thermal-and-reflected-layer-fluxes">Plot the thermal and reflected layer fluxes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html">How do I load in target properties from Exo.Mast?</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#I'm-confused-about-what-opacity-file-to-use">I’m confused about what opacity file to use</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html">Integrated Level Fluxes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html">Model Formatting Overview</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Specifying-units">Specifying units</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Data-Types:-Using-xarray">Data Types: Using <code class="docutils literal notranslate"><span class="pre">xarray</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Storing-xarray-data">Storing <code class="docutils literal notranslate"><span class="pre">xarray</span></code> data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Reading/interpreting-an-xarray-file">Reading/interpreting an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file</a></li>
-<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html">Misc FAQs</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a><ul>
@@ -183,12 +172,8 @@
 </div>
 <section id="getting-data-and-setting-up-environments-after-installation">
 <h2>Getting Data and Setting up Environments after Installation<a class="headerlink" href="#getting-data-and-setting-up-environments-after-installation" title="Link to this heading"></a></h2>
-<p>This quickstart notebook has some overlap with our installation instructions (Please read the installation page first if you are unfamiliar with package installation, environment variables, etc), but it is designed to be a quick way to get up and running with PICASO after you have installed it. It includes instructions for getting reference data, setting up environments, and checking environments have been successfully setup.
-.. toctree:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">:</span><span class="n">maxdepth</span><span class="p">:</span> <span class="mi">1</span>
-
-<span class="n">Quickstart</span> <span class="o">&lt;/</span><span class="n">notebooks</span><span class="o">/</span><span class="n">Quickstart</span><span class="o">.</span><span class="n">py</span><span class="o">&gt;</span>
-</pre></div>
+<p>This quickstart notebook has some overlap with our installation instructions (Please read the installation page first if you are unfamiliar with package installation, environment variables, etc), but it is designed to be a quick way to get up and running with PICASO after you have installed it. It includes instructions for getting reference data, setting up environments, and checking environments have been successfully setup.</p>
+<div class="toctree-wrapper compound">
 </div>
 </section>
 <section id="basics-of-spectral-modeling">
@@ -226,7 +211,7 @@
 </section>
 <section id="d-climate-modeling">
 <h2>1D Climate Modeling<a class="headerlink" href="#d-climate-modeling" title="Link to this heading"></a></h2>
-<p>Relevant Citatons: <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract">Mukherjee et al. 2022</a></p>
+<p>Relevant Citations: <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract">Mukherjee et al. 2023</a></p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/D_climate/1_BrownDwarf_PreW.html">Brown Dwarfs</a></li>
@@ -243,7 +228,7 @@
 </section>
 <section id="d-spectra-and-phase-curves">
 <h2>3D Spectra and Phase Curves<a class="headerlink" href="#d-spectra-and-phase-curves" title="Link to this heading"></a></h2>
-<p>Relevant Citatons: <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract">Adams et al. 2022</a> for 3D spectra and <a class="reference external" href="http://arxiv.org/abs/2204.03545">Robbins-Blanch et al. 2022</a> for Phase Curves.</p>
+<p>Relevant Citations: <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2022ApJ...926..157A/abstract">Adams et al. 2022</a> for 3D spectra and <a class="reference external" href="http://arxiv.org/abs/2204.03545">Robbins-Blanch et al. 2022</a> for Phase Curves.</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/E_3dmodeling/1_SphericalIntegration.html">Non-Zero Phase and Spherical Integration</a></li>
@@ -294,25 +279,12 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/ModelStorage.html">How to store and reuse models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html">Data Storage Uniformity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/ContributionFunctions.html">Spectral and Molecular Contribution Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/CommonClimateBDIssues.html">Common Climate Issues</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html">Get Integrated Level Fluxes For Solar Reflected and Thermal Radiation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html#Set-up-the-PICASO-connection-for-three-test-cases-(mono-and-correlated-k)">Set up the PICASO connection for three test cases (mono and correlated-k)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html#Grab-the-thermal-fluxes,-reflected-fluxes,-and-pressure-levels-from-the-ful-output">Grab the thermal fluxes, reflected fluxes, and pressure levels from the ful output</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html#Plot-the-thermal-and-reflected-layer-fluxes">Plot the thermal and reflected layer fluxes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html">How do I load in target properties from Exo.Mast?</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#How-do-I-access-the-pressure-temperature-profile-parameterizations?">How do I access the pressure-temperature profile parameterizations?</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#How-do-I-return-the-output-from-photon-attenuation-plot?">How do I return the output from photon attenuation plot?</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#Can-I-use-the-phase-angle-function-to-specify-a-non-zero-phase-for-thermal-emission?">Can I use the phase angle function to specify a non-zero phase for thermal emission?</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#I'm-confused-about-what-opacity-file-to-use">I’m confused about what opacity file to use</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html#Has-your-question-not-been-answered?-Feel-free-to-contact-us!">Has your question not been answered? Feel free to contact us!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/Level_Fluxes.html">Integrated Level Fluxes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/Sqlite3Tutorial.html">SQLITE Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html">Model Formatting Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Specifying-units">Specifying units</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Data-Types:-Using-xarray">Data Types: Using <code class="docutils literal notranslate"><span class="pre">xarray</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Storing-xarray-data">Storing <code class="docutils literal notranslate"><span class="pre">xarray</span></code> data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Reading/interpreting-an-xarray-file">Reading/interpreting an <code class="docutils literal notranslate"><span class="pre">xarray</span></code> file</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/data_uniformity_tutorial.html#Checking-your-data-is-in-compliance">Checking your data is in compliance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/I_usefultools/FAQs.html">Misc FAQs</a></li>
 </ul>
 </div>
 </section>

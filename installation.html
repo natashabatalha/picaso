@@ -51,10 +51,10 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#reference-data">Reference Data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#get-required-data">Get Required Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-get-required-data">How to get Required Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#permanently-set-environment-variables">Permanently Set Environment Variables</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#permanent-method-1-bash-profile-or-zshrc-file">Permanent Method 1: <code class="docutils literal notranslate"><span class="pre">bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">zshrc</span></code> file</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#permanent-method-2-add-it-to-your-conda-enviornment">Permanent Method 2: Add it to your conda enviornment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#permanent-method-2-add-it-to-your-conda-environment">Permanent Method 2: Add it to your conda environment</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#getting-optional-reference-data">Getting Optional Reference Data</a><ul>
@@ -103,10 +103,12 @@
              
   <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
-<p>There are a few avenues for installing PICASO (git, pip, or conda). To help determine which is best for you, we have a few questions to help you decide:
-1. Are you a researcher who wants to stay up-to-date with the latest beta changes and contribute to the code base? Please follow the git clone instructions below.
-2. Are you a student or researcher who just wants to get started with PICASO quickly and use it for science? Please follow the pip or conda install instructions below.
-3. Do you want to use PICASO for an school assignment or workshop? <a class="reference external" href="/notebooks/Quickstart.py">Jump to the picaso-lite section of the Quickstart Notebook</a></p>
+<p>There are a few avenues for installing PICASO (git, pip, or conda). To help determine which is best for you, we have a few questions to help you decide:</p>
+<ol class="arabic simple">
+<li><p>Are you a researcher who wants to stay up-to-date with the latest beta changes and contribute to the code base? Please follow the git clone instructions below.</p></li>
+<li><p>Are you a student or researcher who just wants to get started with PICASO quickly and use it for science? Please follow the pip or conda install instructions below.</p></li>
+<li><p>Do you want to use PICASO for an school assignment or workshop? <a class="reference external" href="/notebooks/Quickstart.py#quickstart-for-students-learning">Jump to the picaso-lite section of the Quickstart Notebook</a></p></li>
+</ol>
 <p>Python &gt;= 3.11 is recommended. It is also recommended you use environments (either conda or pip). Please check out <a class="reference external" href="https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments">our conda environment tutorial</a>.</p>
 <p>Users can 1) install from source or 2) install from pip or 3) conda</p>
 <section id="install-from-source-via-git">
@@ -133,7 +135,12 @@ pip<span class="w"> </span>install<span class="w"> </span>.
 </section>
 <section id="reference-data">
 <h1>Reference Data<a class="headerlink" href="#reference-data" title="Link to this heading"></a></h1>
-<p>PICASO has the ability to injest lots of different kinds of data. But not all are required. <strong>Only two are required: 1) The `Reference Folder from Github &lt;https://github.com/natashabatalha/picaso/tree/master/reference&gt;`_ and 2) the resampled opacity file which will let you do some basic spectral modeling.</strong></p>
+<p>PICASO has the ability to ingest lots of different kinds of data. But not all are required.</p>
+<p><strong>Only two are required:</strong></p>
+<ol class="arabic simple">
+<li><p>The <a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/reference">Reference Folder from Github</a> and</p></li>
+<li><p>the resampled opacity file which will let you do some basic spectral modeling.</p></li>
+</ol>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Data Type</p></th>
@@ -143,44 +150,51 @@ pip<span class="w"> </span>install<span class="w"> </span>.
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Reference
-Resampled Opacities
-Stellar Database
-Preweighted correlatedK Tables
-By molecule correlatedK Tables
-Sonora grid models
-Virga Mieff files</p></td>
-<td><p>Yes
-Yes
-No
-No
-No
-No
-No</p></td>
-<td><p>everything
-Spectroscopic modeling
-Exoplanet modeling
-Chemical equilibrium climate
-Disequilibrium climate
-Initial guess/grid fitting
-Virga cloud modeling</p></td>
-<td><p>$picaso_refdata
-$picaso_refdata/opacities/opacities*.db
-$PYSYN_CDBS/grid
-Your choice (default=$picaso_refdata/opacities/preweighted)
-Your choice (default=$picaso_refdata/opacities/resortrebin)
-Your choice (default=$picaso_refdata/sonora_grids)
-Your choice (default=$picaso_refdata/virga)</p></td>
+<tr class="row-even"><td><p>Reference</p></td>
+<td><p>Yes</p></td>
+<td><p>everything</p></td>
+<td><p>$picaso_refdata</p></td>
+</tr>
+<tr class="row-odd"><td><p>Resampled Opacities</p></td>
+<td><p>Yes</p></td>
+<td><p>Spectroscopic modeling</p></td>
+<td><p>$picaso_refdata/opacities/opacities*.db</p></td>
+</tr>
+<tr class="row-even"><td><p>Stellar Database</p></td>
+<td><p>No</p></td>
+<td><p>Exoplanet modeling</p></td>
+<td><p>$PYSYN_CDBS/grid</p></td>
+</tr>
+<tr class="row-odd"><td><p>Preweighted correlatedK Tables</p></td>
+<td><p>No</p></td>
+<td><p>Chemical equilibrium climate</p></td>
+<td><p>Your choice (default=$picaso_refdata/opacities/preweighted)</p></td>
+</tr>
+<tr class="row-even"><td><p>By molecule correlatedK Tables</p></td>
+<td><p>No</p></td>
+<td><p>Disequilibrium climate</p></td>
+<td><p>Your choice (default=$picaso_refdata/opacities/resortrebin)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sonora grid models</p></td>
+<td><p>No</p></td>
+<td><p>Initial guess/grid fitting</p></td>
+<td><p>Your choice (default=$picaso_refdata/sonora_grids)</p></td>
+</tr>
+<tr class="row-even"><td><p>Virga Mieff files</p></td>
+<td><p>No</p></td>
+<td><p>Virga cloud modeling</p></td>
+<td><p>Your choice (default=$picaso_refdata/virga)</p></td>
 </tr>
 </tbody>
 </table>
-<section id="get-required-data">
-<h2>Get Required Data<a class="headerlink" href="#get-required-data" title="Link to this heading"></a></h2>
+<section id="how-to-get-required-data">
+<h2>How to get Required Data<a class="headerlink" href="#how-to-get-required-data" title="Link to this heading"></a></h2>
+<p>We outline here an easy way of getting the required data. These steps are also outlined in our <a class="reference external" href="/notebooks/Quickstart.py">Quickstart Notebook</a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#using python</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">picaso.data</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">d</span>
     <span class="c1">#where do you want to store your reference data? This should be the path to the reference folder you downloaded from github.</span>
     <span class="n">path_to_reference</span> <span class="o">=</span> <span class="s2">&quot;/path/to/picaso/reference/&quot;</span>
-    <span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_to_reference</span> <span class="c1">#only needed if you are using python to set your environmnet variables otherwise you do not need this</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_to_reference</span> <span class="c1">#only needed if you are using python to set your environment variables otherwise you do not need this</span>
     <span class="c1">#get required data 1) reference data</span>
     <span class="n">d</span><span class="o">.</span><span class="n">get_reference</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">])</span>
     <span class="c1">#get required data 2) resampled opacities</span>
@@ -215,7 +229,7 @@ Your choice (default=$picaso_refdata/virga)</p></td>
 </section>
 <section id="permanently-set-environment-variables">
 <h2>Permanently Set Environment Variables<a class="headerlink" href="#permanently-set-environment-variables" title="Link to this heading"></a></h2>
-<p>Setting environment variables help packages find data wihtout having to set a path everytime you run the code.
+<p>Setting environment variables help packages find data without having to set a path every time you run the code.
 Above we set the environment using <cite>python</cite>’s <cite>os.environ</cite> which is a temporary way to set environment variables.</p>
 <p>You can feel free to continue using this non-permanent. If so, whenever you install picaso you would need to add this line to your code <strong>before</strong> you import picaso.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -247,10 +261,10 @@ base_cases<span class="w"> </span>chemistry<span class="w"> </span>config.json<s
 </pre></div>
 </div>
 </section>
-<section id="permanent-method-2-add-it-to-your-conda-enviornment">
-<h3>Permanent Method 2: Add it to your conda enviornment<a class="headerlink" href="#permanent-method-2-add-it-to-your-conda-enviornment" title="Link to this heading"></a></h3>
+<section id="permanent-method-2-add-it-to-your-conda-environment">
+<h3>Permanent Method 2: Add it to your conda environment<a class="headerlink" href="#permanent-method-2-add-it-to-your-conda-environment" title="Link to this heading"></a></h3>
 <p>This is my method of choice! It involves creating conda environment specific variables. If you are interested in learning more about environment variables, you can <a class="reference external" href="https://natashabatalha.github.io/picaso/contribution.html#using-conda-enviornments">read more about them here</a></p>
-<p>If you already an evironment setup, you can do the following – which mimics the <cite>bash_profile/method 1</cite> example.</p>
+<p>If you already an environment setup, you can do the following – which mimics the <cite>bash_profile/method 1</cite> example.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>your_env_name
 <span class="nb">cd</span><span class="w"> </span><span class="nv">$CONDA_PREFIX</span>
 mkdir<span class="w"> </span>-p<span class="w"> </span>./etc/conda/activate.d
@@ -289,8 +303,8 @@ touch<span class="w"> </span>./etc/conda/deactivate.d/env_vars.sh
 <p>You can continue using <cite>get_data</cite> to get all additional data that you might need (see <a class="reference external" href="/notebooks/Quickstart.py">Quickstart Notebook</a> for more examples). The most common one is the stellar grids for exoplanet modeling. The stellar grids are handled by another package called <cite>stsynphot</cite> and require the setting of an additional environment variable. Below we provide additional details on setting that up if needed.</p>
 <section id="getting-stsynphot-optional-stellar-data">
 <h3>Getting <code class="docutils literal notranslate"><span class="pre">stsynphot</span></code> Optional Stellar Data<a class="headerlink" href="#getting-stsynphot-optional-stellar-data" title="Link to this heading"></a></h3>
-<p>In order to get stellar spectra needed for many exoplanet PICASO has already isntalled for you the <a class="reference external" href="https://stsynphot.readthedocs.io/en/latest/">stsynphot package</a> which has several download options for stellar spectra. This package also requires setting an environment variable called <code class="docutils literal notranslate"><span class="pre">$PYSYN_CDBS</span></code>. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data).</p>
-<p>The Default for <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a> but we recommend <code class="docutils literal notranslate"><span class="pre">pheonix</span></code> models for climate modeling.</p>
+<p>In order to get stellar spectra needed for many exoplanet PICASO has already installed for you the <a class="reference external" href="https://stsynphot.readthedocs.io/en/latest/">stsynphot package</a> which has several download options for stellar spectra. This package also requires setting an environment variable called <code class="docutils literal notranslate"><span class="pre">$PYSYN_CDBS</span></code>. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data).</p>
+<p>The Default for <code class="docutils literal notranslate"><span class="pre">PICASO</span></code> is Castelli-Kurucz Atlas: <a class="reference external" href="https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/">ck04models</a> but we recommend <code class="docutils literal notranslate"><span class="pre">phoenix</span></code> models for climate modeling.</p>
 <p>Here is how you would do it with PICASO:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">picaso.data</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">d</span>
 <span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYSYN_CDBS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">],</span><span class="s1">&#39;stellar_grids&#39;</span><span class="p">)</span> <span class="c1">#this is a path of your choosing</span>
@@ -302,7 +316,7 @@ touch<span class="w"> </span>./etc/conda/deactivate.d/env_vars.sh
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>http://ssb.stsci.edu/trds/tarfiles/synphot3.tar.gz
 </pre></div>
 </div>
-<p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>.  <strong>The full directory structure does not matter</strong>. Only the last file <code class="docutils literal notranslate"><span class="pre">grid</span></code> is needed. You will need to create an enviornment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. We have a nice placeholder location in the picaso reference data file for these grids <code class="docutils literal notranslate"><span class="pre">$picaso_refdata/stellar_grids</span></code>. So you can imagine something like: <code class="docutils literal notranslate"><span class="pre">$picaso_refdata/stellar_grids/grid/ck04models</span></code>. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where <code class="docutils literal notranslate"><span class="pre">grid</span></code> is.</p>
+<p>When you untar this you should get a directory structure that looks like this <code class="docutils literal notranslate"><span class="pre">&lt;path&gt;/grp/redcat/trds/grid/ck04models</span></code>.  <strong>The full directory structure does not matter</strong>. Only the last file <code class="docutils literal notranslate"><span class="pre">grid</span></code> is needed. You will need to create an environment variable that points to where <code class="docutils literal notranslate"><span class="pre">grid/</span></code> is located. We have a nice placeholder location in the picaso reference data file for these grids <code class="docutils literal notranslate"><span class="pre">$picaso_refdata/stellar_grids</span></code>. So you can imagine something like: <code class="docutils literal notranslate"><span class="pre">$picaso_refdata/stellar_grids/grid/ck04models</span></code>. Though it is not required for you to put them here as long as you make your environment variable point to the desired location where <code class="docutils literal notranslate"><span class="pre">grid</span></code> is.</p>
 <section id="help-permanently-setting-stellar-data-environment-variable">
 <h4>Help Permanently Setting Stellar Data Environment Variable<a class="headerlink" href="#help-permanently-setting-stellar-data-environment-variable" title="Link to this heading"></a></h4>
 <p>Similar to PICASO’s environment variable instructions, follow the same steps to create an environment variable for <code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS</span></code>. PICASO recommends the path: <code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS=$picaso_refdata/stellar_grids</span></code> but you might have this elsewhere.</p>

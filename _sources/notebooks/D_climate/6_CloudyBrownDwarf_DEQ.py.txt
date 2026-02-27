@@ -17,7 +17,7 @@
 #
 # In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds and chemical disequilibrium. For a more in depth look at the climate-cloud code check out [Mang et al. 2026]() (note this should also be cited if using this code/tutorial).
 #
-# You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html) and running clouds in [equilibrium]()
+# You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html) and running clouds in [equilibrium](https://natashabatalha.github.io/picaso/notebooks/D_climate/5_CloudyBrownDwarf_PreW.html)
 #
 # What you need to have downloaded for clouds to work:
 #
@@ -96,7 +96,7 @@ virga_dir = os.path.join(os.getenv('picaso_refdata'),'virga') # path to virga di
 # 2. `cold_trap` : (True/False) If True, the abundances of volatile species like H2O, NH3, and CH4 will not be allowed to increase after they begin to rainout. Default = False
 # 3. `no_ph3` :  (True/False) If True, completely remove PH3 from the atmosphere. Default = False
 #
-# These parameters are included to increase flexibility for you when you want to generate your own model! To play around with these different parameters you can look at the [Fun with Chem notebook]()
+# These parameters are included to increase flexibility for you when you want to generate your own model! To play around with these different parameters you can look at the [chemistry notebooks](https://natashabatalha.github.io/picaso/tutorials.html#chemistry)
 #
 # *Note* that all disequilibrium models default to follow the kinetic CO2 prescription described in [Zahnle & Marley 2014](https://ui.adsabs.harvard.edu/abs/2014ApJ...797...41Z/abstract) where the abundance quenches with respect to CO in disequilibrium. This is a correction applied to [Sonora Elf Owl v2](https://ui.adsabs.harvard.edu/abs/2025RNAAS...9..108W/abstract)
 #
