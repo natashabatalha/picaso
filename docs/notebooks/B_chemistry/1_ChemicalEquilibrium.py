@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: pic312
 #     language: python
 #     name: python3
 # ---
@@ -79,10 +80,9 @@ jpi.show(jpi.mixing_ratio(full_out['full_output'], limit=15)) # plot top 15 chem
 
 # %%
 #1 ck tables from roxana
-mh = '+000'#'+0.0' #log metallicity
-CtoO = '100'#'1.0' # CtoO ratio
-
-ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2020_feh{mh}_co_{CtoO}.data.196')
+mh = '0.0'#'+0.0' #log metallicity
+CtoO = '0.55'# # CtoO absolute ratio
+ck_db = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted', f'sonora_2121grid_feh{mh}_co{CtoO}.hdf5')
 
 # %% [markdown]
 # Let's create two different opacity connections so that we can look at the chemical equilibrium that is encoded within the preweighted CK tables as well as the chemistry that is loaded from the chemistry tables.

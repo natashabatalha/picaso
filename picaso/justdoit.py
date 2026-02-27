@@ -2048,10 +2048,10 @@ class inputs():
                 raise Exception("Specify cto_relative or cto_absolute when chem_method is set")
             if cto_relative is not None and cto_absolute is not None:
                 raise Exception("Specify cto_relative or cto_absolute. Do not specify both.")
-            if chem_method not in ['visscher_1060', 'visscher', 'on-the-fly', 'photochem']:
+            if chem_method not in ['visscher_1060', 'visscher', 'visscher_2121','on-the-fly', 'photochem']:
                 raise Exception(f"A chem option {chem_method} is not valid.") 
             
-            if chem_method in ['visscher', 'on-the-fly', 'photochem']:
+            if chem_method in ['visscher', 'visscher_2121','on-the-fly', 'photochem']:
                 solar_cto = LODDERS2020_C_TO_O
             elif chem_method == 'visscher_1060':
                 solar_cto = 0.458
@@ -2154,7 +2154,7 @@ class inputs():
         cto_absolute = self.inputs['atmosphere'].get('cto_absolute')
         if chem_method_str == 'visscher_1060':            
             self.chemeq_visscher_1060(cto_relative, np.log10(mh))   
-        elif chem_method_str == 'visscher':  
+        elif ((chem_method_str == 'visscher') or (chem_method_str == 'visscher_2121')):  
             self.chemeq_visscher_2121(cto_absolute, np.log10(mh)) 
         elif chem_method_str == 'on-the-fly' or chem_method_str == 'photochem':
             # chem_method of "photochem" still needs equilibrium chemistry.
