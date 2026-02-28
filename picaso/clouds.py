@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from numba import jit
 
@@ -180,7 +181,6 @@ def update_clouds_selfconsistent(bundle, opacityclass, CloudParameters, Atmosphe
 
     bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
-    #if not average_only: 
     cld_out = bundle.virga(**virga_kwargs)
 
     opd_now, w0_now, g0_now = cld_out['opd_per_layer'], cld_out['single_scattering'], cld_out['asymmetry']
@@ -247,23 +247,10 @@ def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_
     ```
     """
     cloudy = CloudParameters.cloudy
-    if cloudy == "cloudless":
+    if cloudy == "cloudless" or cloudy == "fixed":
         return 0, 0, 0.1, CloudParameters
-    elif cloudy == "selfconsistent" or cloudy == "fixed":
-        CloudParameters = CloudParameters._replace(cloudy="fixed_after_first")
-        # On the first iteration, fixed clouds are self-consistent
-        # On later iterations, we keep returning the opacity/SSA/asymmetry calculated in this iteration
+    elif cloudy == "selfconsistent":
         return update_clouds_selfconsistent(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_kwargs, hole_kwargs, verbose=verbose)
-    elif cloudy == "fixed_after_first":
-        level_pressure, wno = bundle.inputs['atmosphere']['profile']['pressure'], opacityclass.wno
-        opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
-        opd_clmt = opd_cld_climate[:,:,0]
-        w0_clmt = w0_cld_climate[:,:,0]
-        g0_clmt = g0_cld_climate[:,:,0]
-        layer_pressure = np.sqrt(level_pressure.values[:-1] * level_pressure.values[1:])
-        df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=layer_pressure, wavenumber=wno)
-        bundle.clouds(df=df_cld,**hole_kwargs)
-        return df_cld, 0.0, 0.1, CloudParameters
     else:
         raise NotImplementedError(f"The only supported cloud modes are 'cloudless', 'fixed', 'selfconsistent'; got {cloudy}")
         

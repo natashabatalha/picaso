@@ -101,7 +101,7 @@ def rebin_mitgcm_pt(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kz
     ubar0, ubar1, cos_theta ,lat_picaso,lon_picaso = compute_disco(ng,nt, gangle, tangle, phase_angle)    
 
 
-    threed_grid = pd.read_csv(input_file,sep=r'\s+',names=['p','t','k'])
+    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
     latlong_ind = np.concatenate((np.array(threed_grid.loc[np.isnan(threed_grid['k'])].index),[threed_grid.shape[0]] ))
@@ -205,7 +205,7 @@ def rebin_mitgcm_cld(ng, nt, phase_angle, input_file, output_file,names=['i','j'
     ubar0, ubar1, cos_theta ,lat_picaso,lon_picaso = compute_disco(ng,nt, gangle, tangle, phase_angle)    
 
 
-    threed_grid = pd.read_csv(input_file,sep=r'\s+',names=names)
+    threed_grid = pd.read_csv(input_file,delim_whitespace=True,names=names)
     #get the lat and lon points by looking at the locations that the last 
     #index is nan but the first two have values. 
     #this assumes that the MIT GCM person has created their file by printing
@@ -329,7 +329,7 @@ def make_3d_pt_input(ng,nt,phase_angle,input_file,output_file,**kwargs):
     dset = {}
     for g in gangle:
         for t in tangle:
-            data = pd.read_csv(input_file, sep=r'\s+',**kwargs)
+            data = pd.read_csv(input_file, delim_whitespace=True,**kwargs)
             if first:
                 dset['header'] = ','.join(list(data.keys()))
                 first = False
@@ -389,7 +389,7 @@ def make_3d_cld_input(ng,nt,phase_angle,input_file,output_file, lat_range=None, 
 
     for g, lg in zip(gangle,lon):
         for t, lt in zip(tangle, lat):
-            data = pd.read_csv(input_file, sep=r'\s+',
+            data = pd.read_csv(input_file, delim_whitespace = True,
                     header=None, skiprows=1, names = ['lvl', 'wv','opd','g0','w0','sigma'],
                     dtype='f8')
             if not isinstance(lat_range,type(None)):
