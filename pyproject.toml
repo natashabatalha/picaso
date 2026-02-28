@@ -10,11 +10,11 @@ readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
     {name = "Natasha E. Batalha", email = "natasha.e.batalha@gmail.com"},
 ]
-license = {text = "GPL-3.0"}
+license = "GPL-3.0"
 requires-python = ">=3.7"
 dependencies = [
-    "bokeh>=2.3.0,<3.5.0",
-    "numpy",
+    "bokeh>=2.3.0,<3.8.2",
+    "numpy>=2.0",
     "numba",
     "pandas",
     "joblib",
@@ -24,14 +24,20 @@ dependencies = [
     "stsynphot",
     "sphinx",
     "scipy",
-    "virga-exo==2.0",
+    "h5py",
+    "virga-exo==2.0.1",
     "xarray",
     "pooch",
     "tqdm",
-    "bibtexparser==1.4.3",
+    "bibtexparser==1.4.4",
     "netcdf4",
     "h5netcdf",
+    "jupytext",
 ]
+
+[tool.setuptools.packages.find]
+include = ["picaso*"]
+exclude = ["reference*"]
 
 [project.urls]
 Homepage = "https://natashabatalha.github.io/picaso"

@@ -37,7 +37,7 @@ __refdata__ = os.environ.get('picaso_refdata')
 # 	start_case.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, metallicity, logg	
 
 	
-# 	start_case.atmosphere(filename=jdi.jupiter_pt(), delim_whitespace=True)
+# 	start_case.atmosphere(filename=jdi.jupiter_pt(), sep=r'\s+')
 
 # 	df = start_case.spectrum(opacity, calculation='reflected') 
 
@@ -71,7 +71,7 @@ def test_reflected_1d(create_data=False):
 	#define star
 	start_case.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, metallicity, logg
 
-	start_case.atmosphere(filename=jdi.jupiter_pt(), delim_whitespace=True)
+	start_case.atmosphere(filename=jdi.jupiter_pt(), sep=r'\s+')
 
 	df = start_case.spectrum(opacity)
 
@@ -127,7 +127,7 @@ def test_reflected_1d(create_data=False):
 	assert np.allclose(benchmark_spectrum['albedo_ch4'], alb_ch4, atol=0.01), 'Failed CH4 albedo reflected_1d test'
 
 	# exclude water molecule
-	start_case.atmosphere(filename=jdi.jupiter_pt(), exclude_mol='H2O', delim_whitespace=True)
+	start_case.atmosphere(filename=jdi.jupiter_pt(), exclude_mol='H2O', sep=r'\s+')
 
 	df = start_case.spectrum(opacity)
 	wno_nowater, alb_nowater, fpfs = df['wavenumber'] , df['albedo'] , df['fpfs_reflected']
