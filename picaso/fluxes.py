@@ -1,89 +1,12 @@
-from numba import jit, objmode
-from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10,ones, array_equal
+from collections import namedtuple
 import numpy as np
-import time
-import pickle as pk
+
+from numba import jit
+from numpy import exp, zeros, sqrt, pi, outer, min, dot,log, ones
 from scipy.linalg import solve_banded
 
-@jit(nopython=True, cache=True)
-def slice_eq(array, lim, value):
-    """Funciton to replace values with upper or lower limit
-    """
-    for i in range(array.shape[0]):
-        new = array[i,:] 
-        new[where(new==lim)] = value
-        array[i,:] = new     
-    return array
-
-@jit(nopython=True, cache=True)
-def slice_lt(array, lim):
-    """Funciton to replace values with upper or lower limit
-    """
-    for i in range(array.shape[0]):
-        new = array[i,:] 
-        new[where(new<lim)] = lim
-        array[i,:] = new     
-    return array
-
-@jit(nopython=True, cache=True)
-def slice_gt(array, lim):
-    """Funciton to replace values with upper or lower limit
-    """
-    for i in range(array.shape[0]):
-        new = array[i,:] 
-        new[where(new>lim)] = lim
-        array[i,:] = new     
-    return array
-
-@jit(nopython=True, cache=True)
-def slice_lt_cond(array, cond_array, cond, newval):
-    """Funciton to replace values with upper or lower limit
-    """
-    for i in range(array.shape[0]):
-        new = array[i,:] 
-        new_cond = cond_array[i,:]
-        new[where(new_cond<cond)] = newval
-        array[i,:] = new     
-    return array
-
-
-@jit(nopython=True, cache=True)
-def slice_lt_cond_arr(array, cond_array, cond, newarray):
-    """Funciton to replace values with upper or lower limit
-    """
-    shape = cond_array.shape#e.g. dtau
-
-    cond_array=cond_array.ravel()
-    new = array.ravel() #e.g. b0 
-    newarray1 = newarray[0:-1,:].ravel()
-    newarray2 = newarray[1:,:].ravel()
-
-    #for i in range(array.shape[0]):
-    replace1 = newarray1[where(cond_array<cond)]
-    replace2 = newarray2[where(cond_array<cond)]
-    new[where(cond_array<cond)] = 0.5*(replace1+replace2)
-    array = new.reshape(shape)    
-    return array
-
-@jit(nopython=True, cache=True)
-def slice_rav(array, lim):
-    """Funciton to replace values with upper or lower limit
-    """
-    shape = array.shape
-    new = array.ravel()
-    new[where(new>lim)] = lim
-    new[where(new<-lim)] = -lim
-    return new.reshape(shape)
-
-@jit(nopython=True, cache=True)
-def numba_cumsum(mat):
-    """Function to compute cumsum along axis=0 to bypass numba not allowing kwargs in 
-    cumsum 
-    """
-    new_mat = zeros(mat.shape)
-    for i in range(mat.shape[1]):
-        new_mat[:,i] = cumsum(mat[:,i])
-    return new_mat
+from .disco import compress_thermal
+from .numerics import slice_gt, slice_rav
 
 @jit(nopython=True, cache=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
@@ -2574,8 +2497,6 @@ def get_thermal_1d_gfluxi_deprecate(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0
         flux_minus_midpt_all[:,:]+=flux_minus_mdpt[:,:]*weight
         flux_plus_midpt_all[:,:]+=flux_plus_mdpt[:,:]*weight
     
-
-    
     return flux_minus_all, flux_plus_all, flux_minus_midpt_all, flux_plus_midpt_all
 
 @jit(nopython=True, cache=True,fastmath=True)
@@ -3897,3 +3818,279 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
 
     return blackbody_array
 
+OpacityWEd_Tuple_defaultT = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
+OpacityWEd_Tuple_default = OpacityWEd_Tuple_defaultT(np.zeros((8,8,8)), 
+                    np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)), np.zeros((8,8,8)),np.zeros((8,8,8)),  
+                    np.zeros((8,8,8)) , np.zeros((8,8,8)))
+
+OpacityNoEd_Tuple_defaultT = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
+OpacityNoEd_Tuple_default = OpacityNoEd_Tuple_defaultT(np.zeros((8,8,8)), 
+                    np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)))
+                    
+@jit(nopython=True, cache=False)
+def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+                Disco,Opagrid, F0PI, reflected, thermal, 
+                do_holes=False, fhole=0.0, hole_OpacityWEd=OpacityWEd_Tuple_default,hole_OpacityNoEd=OpacityNoEd_Tuple_default):
+    """
+    Program to run RT for climate calculations. Runs the thermal and reflected module.
+    And combines the results with wavenumber widths.
+
+    Parameters 
+    ----------
+    Atmosphere : tuple
+        Contains temperature, pressure, dtdp, mmw, and scale height
+    OpacityWEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info with delta eddington corrected values 
+    OpacityNoEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info without delta eddington corrected values 
+    ScatteringPhase : namedtuple
+        All scattering phase function inputs like ftau_cld and ftau_ray and fraction of forward to back scattering
+    Disco : namedtuple
+        All geometry inputs such as gauss/chebychev angles, incoming outgoing angles, etc 
+    Opagrid : namedtuple
+        Any opacity grid info such as wavelength grids, temperature pressure grids, tmax and tmin
+    F0PI : ndarray
+        Stellar spectrum if it exists otherwise this is just 1s array
+    reflected : bool 
+        Run reflected light
+    thermal : bool 
+        Run thermal emission
+    do_holes: bool
+        run patchy/fractional cloudy and clear model
+    fhole: float
+        Fraction of cloudy area
+    hole_OpacityWEd : namedtuple
+        The clear opacities / scattering properties (opposed to the cloudy ones which are stored in the main opacity tuple)
+    hole_OpacityNoEd : namedtuple
+        The clear opacities / scattering properties w/o delta eddington correction (opposed to the cloudy ones which are stored in the main opacity tuple)
+    
+        
+    Return
+    ------
+    array
+        Visible and IR -- net (layer and level), upward (level) and downward (level)  fluxes
+    """  
+    if do_holes == True: 
+        if fhole==0: 
+            print('Warning. A cloud hole is requested but the hole is set to zero which is doing a fully cloudy run but unecessarily running opacities twice.')
+    #import dill as pickle
+    #with open('tuples.pkl', 'wb') as file:
+    #    pickle.dump([Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
+    #            Disco,Opagrid, F0PI, reflected, thermal, 
+    #            do_holes, fhole, hole_OpacityWEd,hole_OpacityNoEd], file)
+    #unpack atmosphere items 
+    pressure, temperature ,nlevel= Atmosphere.p_level, Atmosphere.t_level,Atmosphere.nlevel
+    #unpack opacity items w/ delta eddington correctioin
+    DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2,W0_no_raman = OpacityWEd.DTAU, OpacityWEd.TAU, OpacityWEd.W0, OpacityWEd.COSB,OpacityWEd.ftau_cld, OpacityWEd.ftau_ray,OpacityWEd.GCOS2,OpacityWEd.W0_no_raman
+    #unpack opacity items w/o delta eddington correctioin
+    DTAU_OG,TAU_OG, W0_OG, COSB_OG = OpacityNoEd.DTAU,OpacityNoEd.TAU, OpacityNoEd.W0, OpacityNoEd.COSB
+    #unpack scattering phase items 
+    surf_reflect, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward = ScatteringPhase.surf_reflect, ScatteringPhase.single_phase,ScatteringPhase.multi_phase,ScatteringPhase.frac_a,ScatteringPhase.frac_b,ScatteringPhase.frac_c,ScatteringPhase.constant_back,ScatteringPhase.constant_forward
+    #unpack disco items 
+    ng,nt,gweight,tweight,ubar0,ubar1,cos_theta = Disco.ng,Disco.nt,Disco.gweight,Disco.tweight,Disco.ubar0,Disco.ubar1,Disco.cos_theta
+    #unpack Opagrid info 
+    nwno,dwni,wno,ngauss, gauss_wts = Opagrid.nwno,Opagrid.delta_wno,Opagrid.wno,Opagrid.ngauss, Opagrid.gauss_wts
+   
+    #if we are doing holes, then unpack those taus as well 
+    if do_holes == True: 
+        DTAU_clear, TAU_clear, W0_clear, COSB_clear,W0_no_raman_clear=hole_OpacityWEd.DTAU, hole_OpacityWEd.TAU, hole_OpacityWEd.W0, hole_OpacityWEd.COSB,hole_OpacityWEd.W0_no_raman
+        ftau_cld_clear, ftau_ray_clear,GCOS2_clear = hole_OpacityWEd.ftau_cld, hole_OpacityWEd.ftau_ray,hole_OpacityWEd.GCOS2
+        DTAU_OG_clear,TAU_OG_clear, W0_OG_clear, COSB_OG_clear=hole_OpacityNoEd.DTAU, hole_OpacityNoEd.TAU, hole_OpacityNoEd.W0, hole_OpacityNoEd.COSB
+        
+
+    # for visible
+    flux_net_v = np.zeros(shape=(ng,nt,nlevel)) #net level visible fluxes
+    flux_net_v_layer=np.zeros(shape=(ng,nt,nlevel)) #net layer visible fluxes
+
+    flux_plus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level plus visible fluxes
+    flux_minus_v= np.zeros(shape=(ng,nt,nlevel,nwno)) # level minus visible fluxes
+    
+    #"""<<<<<<< NEWCLIMA
+    # for thermal
+    flux_plus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
+    flux_minus_midpt = np.zeros(shape=(ng,nt,nlevel,nwno))
+
+    flux_plus = np.zeros(shape=(ng,nt,nlevel,nwno))
+    flux_minus = np.zeros(shape=(ng,nt,nlevel,nwno))
+    #"""
+
+    """<<<<<<< OG
+    # for thermal
+    flux_plus_midpt = np.zeros(shape=(nlevel,nwno))
+    flux_minus_midpt = np.zeros(shape=(nlevel,nwno))
+
+    flux_plus = np.zeros(shape=(nlevel,nwno))
+    flux_minus = np.zeros(shape=(nlevel,nwno))
+    """
+
+    # outputs needed for climate
+    flux_net_ir = np.zeros(shape=(nlevel)) #net level visible fluxes
+    flux_net_ir_layer=np.zeros(shape=(nlevel)) #net layer visible fluxes
+
+    flux_plus_ir= np.zeros(shape=(nlevel,nwno)) # level plus visible fluxes
+    flux_minus_ir= np.zeros(shape=(nlevel,nwno)) # level minus visible fluxes
+
+    
+    #ugauss_angles= np.array([0.0985350858,0.3045357266,0.5620251898,0.8019865821,0.9601901429])    
+    #ugauss_weights = np.array([0.0157479145,0.0739088701,0.1463869871,0.1671746381,0.0967815902])
+    #ugauss_angles = np.array([0.66666])
+    #ugauss_weights = np.array([0.5])
+
+    if reflected:
+        #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+        b_top = 0.0
+        for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+            #"""
+            #<<<<<<< NEWCLIMA
+            #here only the fluxes are returned since we dont care about the outgoing intensity at the 
+            #top, which is only used for albedo/ref light spectra
+            ng_clima,nt_clima=1,1
+            ubar0_clima = ubar0*0+0.5
+            ubar1_clima = ubar1*0+0.5
+            _, out_ref_fluxes = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
+                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                                    surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
+                                    single_phase,multi_phase,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                                    get_toa_intensity=0, get_lvl_flux=1)
+
+            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = out_ref_fluxes
+            
+            #import pickle as pk
+            #pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('newclima.pk','wb'))
+
+            # call radiation for clearsky case
+            if do_holes == True:
+                _, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
+                        DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
+                        GCOS2_clear[:,:,ig],ftau_cld_clear[:,:,ig],ftau_ray_clear[:,:,ig],
+                        DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
+                        surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
+                        single_phase,multi_phase,
+                        frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                        get_toa_intensity=0, get_lvl_flux=1)
+            
+                flux_minus_all_v_clear, flux_plus_all_v_clear, flux_minus_midpt_all_v_clear, flux_plus_midpt_all_v_clear = out_ref_fluxes_clear
+                
+                #weighted average of cloudy and clearsky
+                flux_plus_midpt_all_v = (1.0 - fhole)* flux_plus_midpt_all_v + fhole * flux_plus_midpt_all_v_clear
+                flux_minus_midpt_all_v = (1.0 - fhole)* flux_minus_midpt_all_v + fhole * flux_minus_midpt_all_v_clear
+                flux_plus_all_v = (1.0 - fhole)* flux_plus_all_v + fhole * flux_plus_all_v_clear
+                flux_minus_all_v = (1.0 - fhole)* flux_minus_all_v + fhole * flux_minus_all_v_clear
+
+            flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
+            flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
+
+            #======="""
+            #nlevel = atm.c.nlevel
+
+            """
+            <<<<<<< GFLUXV
+            ng_clima,nt_clima=1,1
+            ubar0_clima = ubar0*0+0.5
+            ubar1_clima = ubar1*0+0.5
+
+            RSFV = 0.01 # from tgmdat.f of EGP
+            
+            b_surface = 0.0 +RSFV*ubar0[0]*F0PI*np.exp(-TAU[-1,:,ig]/ubar0[0])
+            
+            delta_approx = 0 # assuming delta approx is already applied on opds 
+                        
+            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = get_reflected_1d_gfluxv(nlevel, wno,nwno, ng_clima,nt_clima, DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                                                                                       surf_reflect,b_top,b_surface,ubar0_clima, F0PI,tridiagonal, delta_approx)
+            
+            import pickle as pk
+            pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('gfluxv.pk','wb'))
+
+            flux_net_v_layer += (np.sum(flux_plus_midpt_all_v,axis=3)-np.sum(flux_minus_midpt_all_v,axis=3))*gauss_wts[ig]
+            flux_net_v += (np.sum(flux_plus_all_v,axis=3)-np.sum(flux_minus_all_v,axis=3))*gauss_wts[ig]
+            """
+
+            flux_plus_v += flux_plus_all_v*gauss_wts[ig]
+            flux_minus_v += flux_minus_all_v*gauss_wts[ig]
+
+        #if full output is requested add in xint at top for 3d plots
+
+
+    if thermal:
+
+        #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
+        
+        for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+            
+            #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
+            #the uncorrected raman single scattering 
+            
+            #"""<<<<<<< NEWCLIMA
+            hard_surface = 0 
+            _,out_therm_fluxes = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
+                                            DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                            pressure,ubar1,
+                                            surf_reflect, hard_surface, dwni, calc_type=1)
+
+            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = out_therm_fluxes
+
+            if do_holes == True:
+            #clearsky case
+                _,out_therm_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
+                                            DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
+                                            pressure,ubar1,
+                                            surf_reflect, hard_surface, dwni, calc_type=1)
+                
+                flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= out_therm_fluxes_clear
+                
+                #weighted average of cloudy and clearsky
+                flux_plus_midpt_all_i = (1.0 - fhole)* flux_plus_midpt_all_i + fhole * flux_plus_midpt_all_i_clear
+                flux_minus_midpt_all_i = (1.0 - fhole)* flux_minus_midpt_all_i + fhole * flux_minus_midpt_all_i_clear
+                flux_plus_all_i = (1.0 - fhole)* flux_plus_all_i + fhole * flux_plus_all_i_clear
+                flux_minus_all_i = (1.0 - fhole)* flux_minus_all_i + fhole * flux_minus_all_i_clear
+
+            flux_plus += flux_plus_all_i*gauss_wts[ig]
+            flux_minus += flux_minus_all_i*gauss_wts[ig]
+            flux_plus_midpt += flux_plus_midpt_all_i*gauss_wts[ig]#*weights
+            flux_minus_midpt += flux_minus_midpt_all_i*gauss_wts[ig]#*weights
+            #"""
+            
+            """<<<<<<< OG CODE
+            calc_type=1 # this line might change depending on Natasha's new function
+            
+            #for iubar,weights in zip(ugauss_angles,ugauss_weights):
+            flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i=get_thermal_1d_gfluxi(nlevel,wno,nwno,ng,nt,temperature,DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], pressure,ubar1,surf_reflect, ugauss_angles,ugauss_weights, tridiagonal,calc_type, dwni)#,bb , y2, tp, tmin, tmax)
+            
+            flux_plus += flux_plus_all_i*gauss_wts[ig]#*weights
+            flux_minus += flux_minus_all_i*gauss_wts[ig]#*weights
+
+            flux_plus_midpt += flux_plus_midpt_all_i*gauss_wts[ig]#*weights
+            flux_minus_midpt += flux_minus_midpt_all_i*gauss_wts[ig]#*weights
+            """
+
+        #"""<<<<<<< NEWCLIMA
+        #compresses in gauss-chebyshev angle space 
+        #the integration over the "disk" of the planet opposed to the 
+        #other gauss angles which are for the correlatedk tables
+        #gweight = np.array([0.01574791, 0.07390887, 0.14638699, 0.16717464, 0.09678159])
+        #tweight = np.array([1])#[6.28318531])
+        flux_plus = compress_thermal(nwno, flux_plus, gweight, tweight)
+        flux_minus= compress_thermal(nwno, flux_minus, gweight, tweight)
+        flux_plus_midpt= compress_thermal(nwno, flux_plus_midpt, gweight, tweight)
+        flux_minus_midpt= compress_thermal(nwno, flux_minus_midpt, gweight, tweight)
+        #"""
+
+        for wvi in range(nwno):
+            flux_net_ir_layer += (flux_plus_midpt[:,wvi]-flux_minus_midpt[:,wvi]) * dwni[wvi]
+            flux_net_ir += (flux_plus[:,wvi]-flux_minus[:,wvi]) * dwni[wvi]
+
+            flux_plus_ir[:,wvi] += flux_plus[:,wvi] * dwni[wvi]
+            flux_minus_ir[:,wvi] += flux_minus[:,wvi] * dwni[wvi]
+        """
+        print('debug fluxes in get_fluxes', temperature)
+        for wvi in range(nwno):
+            for il in range(len(flux_plus_midpt[:,0])):
+                print(wvi, dwni[wvi],flux_plus_midpt[il,wvi],flux_minus_midpt[il,wvi] )
+        """
+
+        #if full output is requested add in flux at top for 3d plots
+    
+    return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
