@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.animation as animation
 from matplotlib import rc
-from virga import justdoit as vj
 
 from scipy.stats.stats import pearsonr  
 from scipy.stats import binned_statistic
@@ -103,7 +102,7 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},
             np.array(y_err.append((py - yerr, py + yerr)))
 
         plot.multi_line(x_err, y_err, **error_kwargs)
-        plot.circle(x, y, **point_kwargs)
+        plot.scatter(x, y, **point_kwargs)
         return plot
     elif plot_type=='matplotlib':
         point_kwargs['color'] = point_kwargs.get('color','k')
@@ -176,7 +175,7 @@ def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0,
 
     plot.multi_line(x_err, y_err, **error_kwargs)
 
-    plot.circle(x, y, **point_kwargs)
+    plot.scatter(x, y, **point_kwargs)
     return
 
 def bin_errors(newx, oldx, dy):
@@ -2180,14 +2179,14 @@ def pt_adiabat(clima_out, input_class, opacityclass, plot=True):
 
     Atmosphere = calculate_atm(input_class,opacityclass,only_atmosphere=True)
 
-    # errors if we've not asked for spectrum
-    # layer_p = clima_out['spectrum_output']['full_output']['layer']['pressure']
+    layer_p = clima_out['spectrum_output']['full_output']['layer']['pressure']
+    
     grad, cp = convec(clima_out['temperature'],clima_out['pressure'],
                       AdiabatBundle, Atmosphere,moist=moist)
                       
-    #plt.semilogy(clima_out['dtdp'], layer_p)
-    #plt.semilogy(grad,layer_p) 
-    #plt.ylim([1e4,1e-4]), 
-    #plt.xlabel('dT/dP vs adiabat')
-    #plt.ylabel('Pressure(bars)')
-    return cp, grad, clima_out['dtdp']
+    plt.semilogy(clima_out['dtdp'], layer_p)
+    plt.semilogy(grad,layer_p) 
+    plt.ylim([1e4,1e-4]), 
+    plt.xlabel('dT/dP vs adiabat')
+    plt.ylabel('Pressure(bars)')
+    return cp, grad, clima_out['dtdp'], layer_p

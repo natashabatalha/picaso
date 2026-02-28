@@ -28,7 +28,6 @@ dist/
 *__pycache__/
 
 # reference files 
-reference/*
 reference/sonora_grids/*
 reference/stellar_grids/*
 reference/virga/*
