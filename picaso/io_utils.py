@@ -4,6 +4,25 @@ import pandas as pd
 import warnings 
 import h5py
 
+def read_visscher_2121(filename):
+    """
+    Explicit function to read and reformat channon's files 
+    
+    Parameters
+    -----------
+    filename: chem filename 
+
+    Returns
+    -------
+    pandas df 
+        columns include temperature (Kelvin), pressure (bar), and all molecules (v/v mixing ratio)
+    """
+    header = pd.read_csv(filename).keys()[0]
+    cols = header.replace('T(K)','temperature').replace('P(bar)','pressure').split()
+    a = pd.read_csv(filename,sep=r'\s+',skiprows=1,header=None, names=cols)
+    a['pressure']=10**a['pressure']
+    return a
+
 def read_json(filename, **kwargs):
     """
     read in a JSON format file.  return None if the file is not there.

@@ -4,19 +4,19 @@ irradiated=false #options: true or false (if true, user needs to input star prop
 calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
-observation_data = ['/Users/sjanson/Desktop/code/picaso/docs/notebooks/D_climate/spectra_logzz_9.0_teff_400.0_grav_1000.0_mh_0.0_co_1.0.nc']
+observation_data = ['']
 coord_key = 'central_wavelength' 
 y_key = 'transit_depth'
 error_key = 'transit_depth_error'
-retrieval_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
-spectrum_output = '/Users/sjanson/Desktop/code/picaso/docs/notebooks/J_driver_WIP/output'
+retrieval_output = ''
+spectrum_output = ''
 
 
 [OpticalProperties]
-opacity_files = '/Users/sjanson/Desktop/code/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
+opacity_file = '_default_/opacities/opacities.db' # single db 
 opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
 opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
-virga_mieff = '/Users/sjanson/Desktop/code/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
+virga_mieff = '_default_/virga/' # any other inputs you want to give to justodit.opannection()
 
 [object]
 radius    = {value=1.2, unit='Rjup'}
@@ -48,17 +48,12 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'knots' 
+profile = 'userfile' 
 
 [temperature.userfile]
-filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
+filename='_default_/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
 
 pd_kwargs={sep=' '} #kwargs for pandas.read_csv
-
-#[temperature.zj24]
-#pressures=[1e3, 1e1, 1e0, 1e-1, 1e-2, 1e-4]
-#Tbottom={value=2000,unit='K'}
-#dT=[0.2857,0.25,0.0,0.25,0.2,0.12]
 
 [temperature.pressure]
 reference = {value=1e1,unit='bar'}
@@ -69,6 +64,11 @@ spacing = 'log'
 
 [temperature.isothermal]
 T = 500
+
+[temperature.zj24]
+pressures=[1e3, 1e1, 1e0, 1e-1, 1e-2, 1e-4] # bar 
+Tbottom=2000 # K 
+dTs = [0.2857, 0.25, 0.0, 0.25, 0.2, 0.12]
 
 [temperature.knots]
 P_knots=[1e2,1e1,1e0,1e-1,1e-2, 1e-3]
@@ -103,29 +103,58 @@ logKir=-1.5
 alpha=0.5
 
 [temperature.sonora_bobcat]
-sonora_path='/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0'
+sonora_path='_default_/sonora_grids/bobcat'
 teff=1000
 
 #TODO turn below into a notice
 #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
+
 [chemistry]
 method='visscher' 
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
-H2O={value=1e-3,unit='v/v'}
-CH4={value=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
-NH3={value=1e-5,unit='v/v'}
-TiO={value=1e-3,unit='v/v'}
+background={gases=['H2','He'], fraction=5.667} # optional 
+molecules=['mol1']
 
-#CO2 = {values=[1e-2,1e-3],pressure=[1e-2, 1e-4], profile='knots'}
-background={gases=['H2','He'],fraction=5.667} # optional 
+[chemistry.free.mol1]
+profile="2gradients" #constant, gradient, knots# # this emulates water rainout
+p_switch = 1e-2
+vmr_switch=1e-3
+gradient_top=-4
+gradient_bottom=0
+profile_options={constant=['value'], 2gradients=['p_switch', 'vmr_switch','gradient_top','gradient_bottom'],
+                 knots=['P_knots','interpolation_method', 'vmr_knots' ]}
+
+[chemistry.free.mol1]
+profile="knots"
+P_knots=[ 1e3, 1e1, 1e0, 1e-1, 1e-3]
+interpolation_method="slinear"
+vmr_knots=[1e-3, 1e-5, 1e-6, 1e-4, 1e-5]
+
+[chemistry.free.mol1]
+profile="2gradients"
+p_switch = 1e2 
+vmr_switch=1e-5
+gradient_top=0
+gradient_bottom=-1.5
+
+[chemistry.free.mol1]
+profile="constant"
+value=1e-8
+
+#[chemistry.free.mol1]
+#profile="2gradients"
+#p_switch = 1e1
+#vmr_switch=1e-4
+#gradient_top=-5
+#gradient_bottom=1
 
 [chemistry.visscher]
 cto_absolute=0.55
 log_mh=0
 
 [chemistry.userfile]
-filename='/Users/sjanson/Desktop/code/picaso/reference/base_cases/HJ.pt'
+filename='_default_/base_cases/HJ.pt'
 pd_kwargs={sep=' '}
 
 [clouds]
@@ -177,12 +206,15 @@ reference_wave=1 #reference wave in micron sets to alpha
 slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
 deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
 
+[clouds.cloud1.userfile]
+filename='_default_/base_cases/HJ.cld'
+pd_kwargs={sep=' '}
+
 [clouds.patchy]
 npatch = 1
 patch1 = 'clear'
 patch2 = 'cloud1'
 frac_1 = 0.3 #this is the fraction assigned to patch 1
-
 
 [retrieval]
 

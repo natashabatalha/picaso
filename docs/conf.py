@@ -42,6 +42,10 @@ extensions = ['sphinx.ext.autodoc',
     'nbsphinx']#,
     #'sphinxcontrib.applehelp']
 
+nbsphinx_custom_formats = {
+    '.py': ['jupytext.reads', {'fmt': 'py:percent'}],
+}
+
 nbsphinx_allow_errors = False
 
 nbsphinx_execute = 'always'

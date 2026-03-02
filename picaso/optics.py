@@ -1,6 +1,6 @@
 from .deq_chem import mix_all_gases_gasesfly
 from .rayleigh import Rayleigh
-from .opacity_factory import g_w_2gauss
+from .opacity_factory import g_w_2gauss, get_ck_tables
 from .deq_chem import mix_all_gases
 
 import warnings
@@ -719,74 +719,25 @@ class RetrieveCKs():
 
         return
 
-    def __init___deprecate(self, ck_dir, cont_dir, wave_range=None, deq=False, gases_fly=None, on_fly=False):
-        self.ck_filename = ck_dir
-        self.gases_fly = gases_fly
-
-        #check to see if new hdf5 files are being used 
-        if 'hdf5' in self.ck_filename: 
-            self.get_h5_data()
-        else: 
-            #read in the full abundance file sot hat we can check the number of kcoefficient layers 
-            #this should either be 1460 or 1060
-            self.full_abunds =  pd.read_csv(os.path.join(self.ck_filename,'full_abunds'), sep=r'\s+')
-            self.kcoeff_layers = self.full_abunds.shape[0]
-
-        if deq == False :
-        #choose get data function based on layer number
-            if 'hdf5' in self.ck_filename: 
-                #if this is h5, ive already read in the data, so pass
-                pass
-            elif self.kcoeff_layers==1060: 
-                self.get_legacy_data_1060(wave_range,deq=deq) #wave_range not used yet
-            elif self.kcoeff_layers==1460:
-                self.get_legacy_data_1460(wave_range) #wave_range not used yet
-            else: 
-                raise Exception(f"There are {self.kcoeff_layers} in the full_abunds file. Currently only the 1060 or 1460 grids are supported. Please check your file input.")
-            
-            self.db_filename = cont_dir
-
-            #defines what continuum is available but does not load it
-            self.get_available_continuum()
-            self.get_available_rayleigh()
-        
-        elif deq == True:            
-            if 'hdf5' not in self.ck_filename: 
-                #if this is not an h5 file i still need to read in the legacy data
-                self.get_legacy_data_1460(wave_range)
-            
-            self.get_new_wvno_grid_661()
-            
-            #get avail continuum needs to be run before loader 
-            #so that we can check if some molecules the user specified 
-            #is actually a continuum mol
-            self.db_filename = cont_dir
-
-            #defines what continuum is available but does not load it
-            self.get_available_continuum()
-
-            #now we can load the ktables for those gases defined in gases_fly
-            opa_filepath  = os.path.join(__refdata__, 'climate_INPUTS/661')
-            self.load_kcoeff_arrays_first(opa_filepath)
-            
-            self.get_available_rayleigh()
-
-
-        if isinstance(self.gases_fly, list) and len(self.gases_fly) > 0:
-            # If a list of gases is provided, use the on‐the‐fly method.
-            self.get_opacities = self.get_opacities_deq_onfly
-        else:
-            # Otherwise, use the premixed method.
-            self.get_opacities = self.__class__.get_opacities.__get__(self)
-
-
-        return
-
     def get_h5_data(self):
         """
         Reads in new h5py formatted data
         """
-        with h5py.File(self.ck_filename, "r") as f:
+        output = get_ck_tables(self.ck_filename)
+        self.molecules = output['molecules']
+        self.wno = output['wno']
+        self.delta_wno = output['delta_wno']
+        self.pressures = output['pressures']
+        self.temps = output['temps']
+        self.gauss_pts = output['gauss_pts']
+        self.gauss_wts = output['gauss_wts']
+        self.kappa = output['kappa']
+        self.full_abunds = output['full_abunds']
+        self.nc_p = output['nc_p']
+        self.kcoeff_layers = self.full_abunds.shape[0]
+        self.nwno = len(self.wno)
+        self.ngauss = len(self.gauss_pts)
+        """with h5py.File(self.ck_filename, "r") as f:
             self.molecules = [x.decode('utf-8') for x in f["ck_molecules"][:]]
             self.wno = f["wno"][:]
             self.delta_wno = f["delta_wno"][:]   
@@ -809,9 +760,7 @@ class RetrieveCKs():
         self.full_abunds['pressure'] = self.pressures
         self.nc_p = self.full_abunds.groupby('temperature').size().values
         #finally we want the unique values of temperature
-        self.temps = np.unique(self.full_abunds['temperature'])
-
-
+        self.temps = np.unique(self.full_abunds['temperature'])"""
 
     def get_legacy_data_1460(self):
         """
@@ -1305,6 +1254,7 @@ class RetrieveCKs():
             max_avail_p = np.min([ilo, self.nc_p[it]-3])#3 b/c using len instead of where as was done with t above
             p_low_ind[i] = max_avail_p
             p_log_low += [p_log_grid[max_avail_p]]
+
             
         p_log_low = np.array(p_log_low)
 
@@ -1362,8 +1312,19 @@ class RetrieveCKs():
         gases_fly : bool 
             Specifies what gasses to mix on the fly 
         """
-        #gases_fly = copy.deepcopy(self.preload_gases)
-        check_hdf5=glob.glob(os.path.join(path,'*.hdf5'))
+        output = get_ck_tables(path, preload_gases=self.preload_gases,avail_continuum=self.avail_continuum)
+        self.wno = output['wno']
+        self.delta_wno = output['delta_wno']
+        self.pressures = output['pressures']
+        self.temps = output['temps']
+        self.gauss_pts = output['gauss_pts']
+        self.gauss_wts = output['gauss_wts']
+        self.nc_p = output['nc_p']
+        self.kappas = output['kappas']  
+        self.molecules=output['molecules']
+        self.nwno = len(self.wno)
+        self.ngauss = len(self.gauss_pts)
+        """check_hdf5=glob.glob(os.path.join(path,'*.hdf5'))
         check_npy=glob.glob(os.path.join(path,'*.npy'))
         self.kappas = {}
         msg=[]
@@ -1379,12 +1340,18 @@ class RetrieveCKs():
                     self.gauss_pts = f["gauss_pts"][:]  
                     self.gauss_wts = f["gauss_wts"][:]
                     self.ngauss = len(self.gauss_pts)
+                    #do we really need nc_p.. i think not but leave for now 
+                    s1460 = pd.read_csv(os.path.join(__refdata__,'opacities','grid1460.csv'))
+                    pres=s1460['pressure_bar'].unique().astype(float)
+                    #all temperatures
+                    temp=s1460['temperature_K'].unique().astype(float)
+                    self.nc_p = s1460.groupby('temperature_K').size().values
                     #want the axes to be [npressure, ntemperature, nwave, ngauss ]
                     array = f["kcoeffs"][:] 
                     self.kappas[imol] = array
             elif os.path.join(path,f'{imol}_1460.npy') in check_npy:
                 msg = ['Warning: npy files for DEQ will be deprecated in a future PICASO udpate. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html']
-                array = np.load(os.path.join(path,f'{imol}_1460.npy'))
+                array = np.load(os.path.join(path,f'{imol}_1460.npy')).copy()
                 pts,wts = g_w_2gauss(order=4,gfrac=0.95)
                 self.get_new_wvno_grid_661() #this sets self.delta_wno, wno and nwno
                 s1460 = pd.read_csv(os.path.join(__refdata__,'opacities','grid1460.csv'))
@@ -1415,7 +1382,7 @@ class RetrieveCKs():
         #this is redundant but not ready to fully get rid of gases_fly
         #to be consistent with everything gases_fly should be replaced with 
         #self.molecules
-        self.molecules=list(self.kappas.keys())
+        self.molecules=list(self.kappas.keys())"""
 
     def get_new_wvno_grid_661(self):
         path = os.path.join(__refdata__, 'climate_INPUTS/')
@@ -1565,7 +1532,7 @@ class RetrieveCKs():
         """needed to interpret bytes to array"""
         out = io.BytesIO(text)
         out.seek(0)
-        return np.load(out)
+        return np.load(out).copy()
 
     def open_local(self):
         """Code needed to open up local database, interpret arrays from bytes and return cursor"""
@@ -2442,7 +2409,7 @@ def convert_array(clas, text):
     """needed to interpret bytes to array"""
     out = io.BytesIO(text)
     out.seek(0)
-    return np.load(out)
+    return np.load(out).copy()
 
 @jit(nopython=True, cache=True)
 def find_nearest(array,value):

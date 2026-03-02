@@ -9,7 +9,7 @@ If you want to get started quickly and are already familiar with many coding pri
 .. toctree::
    :maxdepth: 1
 
-   Simple Install </notebooks/Quickstart.ipynb>
+   Simple Install </notebooks/Quickstart.py>
 
 Installation
 ============
@@ -239,7 +239,7 @@ Create ``stsynphot`` Environment Variable for Stellar Data if needed
 
 In order to get stellar spectra needed for many exoplanet use cases you will have to install the `stsynphot package <https://stsynphot.readthedocs.io/en/latest/>`_ which has several download options for stellar spectra. This package also requires setting an environment variable called ``$PYSYN_CDBS``. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data). 
 
-The Defulat for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_ but we recommend ``pheonix`` models for climate modeling. 
+The Default for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_ but we recommend ``pheonix`` models for climate modeling. 
 
 Here is how you would do it with PICASO:
 
