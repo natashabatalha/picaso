@@ -383,7 +383,7 @@ class Parameterize():
             if len(species['background']['gases'])==1: #1 background gas
                 mixingratio_df[species['background']['gases'][0]] = total_sum_of_background
         return mixingratio_df
-
+    
     def vmr_knots(self, species):
         """
         Computes a pressure dependent abundance profile by interpolating
@@ -410,7 +410,7 @@ class Parameterize():
             P_knots = [P_knots[k]["value"] for k in sorted(P_knots.keys())]
         interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind=interp_kind, bounds_error=False, fill_value='extrapolate')
         vmr_by_level = 10**interpolator(np.log10(self.pressure_level))
-        clippedvmr = np.clip(vmr_by_level, 0, 1)
+        clippedvmr = np.clip(vmr_by_level, 0, 0.1)
 
         return clippedvmr
 
@@ -458,7 +458,7 @@ class Parameterize():
             10 ** (log_ct + bottom * np.abs(delta))
         )
 
-        vmr = np.minimum(vmr, 1)
+        vmr = np.minimum(vmr, 0.1)
 
         return vmr
 

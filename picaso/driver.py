@@ -414,13 +414,14 @@ def retrieve(config, param_tools):
     if prior_config['sampler']['resume']:
         print('Resuming retrieval...')
         # sampler = dynesty.DynamicNestedSampler.restore(config['InputOutput']['retrieval_output']+'/dynesty.save')
-        sampler = dill. load(open (config|'InputOutput'|['retrieval_output']+'/sampler. pkl', 'rb'))
+        sampler = dill.load(open (config|'InputOutput'|['retrieval_output']+'/sampler. pkl', 'rb'))
         sampler.pool = pool
         sampler.M = pool.map
         sampler.nprocesses = pool. size
         resume=True
     else:
-        sampler = dynesty.DynamicNestedSampler(loglike_fn, hypercube_fn, ndims, pool=pool, **sampler_args) 
+        # sampler = dynesty.DynamicNestedSampler(loglike_fn, hypercube_fn, ndims, pool=pool, **sampler_args)
+        sampler = dynesty.NestedSampler(loglike_fn, hypercube_fn, ndims, pool=pool, **sampler_args) 
         resume=False
 
     sampler.run_nested(checkpoint_file=config['InputOutput']['retrieval_output']+'/dynesty.save',
