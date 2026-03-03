@@ -4975,7 +4975,7 @@ class inputs():
     def interpret_run(self):
         print('SUMMARY')
         print('-------')
-        print('Clouds:', self.inputs['climate'].get('cloudy',False))
+        print('Clouds:', self.inputs['climate'].get('cloudy','cloudless'))
         for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
         print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
 
@@ -5247,11 +5247,11 @@ class inputs():
         # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
 
         # cloud inputs
-        cloudy = self.inputs['climate'].get('cloudy',False)
+        cloudy = self.inputs['climate'].get('cloudy','cloudless')
 
         #kzz treatment ? lets store a constant kz profile if it exists 
         #DO I NEED A KZZ? 
-        need_kzz = cloudy or diseq_chem or save_all_kzz
+        need_kzz = cloudy != "selfconsistent" or diseq_chem or save_all_kzz
         if need_kzz: 
             #lets initiative a separate place to store this 
             self.inputs['atmosphere']['kzz']={}
@@ -5376,7 +5376,6 @@ class inputs():
             all_out['fixed_opd'] = self.fixed_opd
             all_out['fixed_g0'] = self.fixed_g0
             all_out['fixed_w0'] = self.fixed_w0
-
 
         if save_all_profiles: 
             all_out['all_profiles'] = all_profiles 
