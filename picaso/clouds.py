@@ -207,7 +207,7 @@ def update_clouds_selfconsistent(bundle, opacityclass, CloudParameters, Atmosphe
         print("Doing clouds: Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
     CloudParameters = CloudParameters._replace(OPD=opd_cld_climate,G0=g0_cld_climate,W0=w0_cld_climate,cld_out=cld_out)
     bundle.clouds(df=df_cld,**hole_kwargs)
-    return df_cld, taudif, taudif_tol, CloudParameters
+    return cld_out, df_cld, taudif, taudif_tol, CloudParameters
 
 def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_kwargs, hole_kwargs, verbose=False):
     """
@@ -248,7 +248,7 @@ def update_clouds(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_
     """
     cloudy = CloudParameters.cloudy
     if cloudy == "cloudless" or cloudy == "fixed":
-        return 0, 0, 0.1, CloudParameters
+        return 0, 0, 0, 0.1, CloudParameters
     elif cloudy == "selfconsistent":
         return update_clouds_selfconsistent(bundle, opacityclass, CloudParameters, Atmosphere, kzz, virga_kwargs, hole_kwargs, verbose=verbose)
     else:
