@@ -359,14 +359,12 @@ class Parameterize():
         for i in species.keys(): 
             #make sure its not the background
             if i !='background':
-                value = species[i].get('value',None)
-                #easy case where there is just one well-mixed value 
-                if value is not None: #abundance of the chemistry input per molecule
-                    mixingratio_df[i] = value    
-                else: #each molecule input manually
+                if isinstance(species[i], dict): #abundance of the chemistry input per molecule
                     profile = species[i]['profile']
                     profile_fun = getattr(self, f'vmr_{profile}')
-                    mixingratio_df[i] = profile_fun(species[i])
+                    mixingratio_df[i] = profile_fun(species[i])  
+                else: #each molecule input manually
+                    mixingratio_df[i] = species[i]   
 
                 total_sum_of_gases += mixingratio_df[i].values
         #add background gas if it is requested
@@ -602,7 +600,7 @@ class Parameterize():
             pressures = [pressures[k]["value"] for k in sorted(pressures.keys())]
 
         if isinstance(dTs, dict):
-            dTs = [dTs[k]["value"] for k in sorted(dTs.keys())]
+            dTs = [dTs[k] for k in sorted(dTs.keys())]
 
         pressure = self.pressure_level
         nlevel = len(pressure)

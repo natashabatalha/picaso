@@ -213,7 +213,10 @@ def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT, retrieval=True):
         # update parameters
         for i, key in enumerate(fitpars.keys()):
             if not (key.startswith("offset") or key.startswith("scaling") or key.startswith("err_inf")):
-                set_dict_value(config, key + ".value", row[i])
+                if (key.startswith("object")):
+                    set_dict_value(config, key+'.value', row[i])
+                else:
+                    set_dict_value(config, key, row[i])
 
         # compute spectrum
         picaso_class = setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
