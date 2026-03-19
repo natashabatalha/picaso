@@ -43,8 +43,10 @@ def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False):
     else: 
         H2O=None;H2=None;PH3=False
 
+    mh_linear = bundle.inputs['atmosphere'].get('mh',None)
+
     #compute quench levels for everything
-    quench_levels, timescale_mixing = get_quench_levels(Atmosphere, kz, grav, PH3=PH3, H2O=H2O, H2=H2)
+    quench_levels, timescale_mixing = get_quench_levels(Atmosphere, kz, grav, mh_linear, PH3=PH3, H2O=H2O, H2=H2)
     if verbose: print('Computed quenched levels at',quench_levels)
     return quench_levels
 
