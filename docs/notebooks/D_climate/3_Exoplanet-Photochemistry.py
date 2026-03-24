@@ -18,7 +18,7 @@
 # %% [markdown]
 # This notebook will take us through how to run a self-consistent radiative-convective-photochemical-equilibrium (RCPE) model with PICASO and Photochem.
 #
-# For a more in depth look at the photochem code check out [Wogan et al. 2025](https://ui.adsabs.harvard.edu/abs/2025PSJ.....6..256W/abstract) (note this should also be cited along with [PICASO 4.0]() if using this code/tutorial).
+# For a more in depth look at the photochem code check out [Wogan et al. 2025](https://ui.adsabs.harvard.edu/abs/2025PSJ.....6..256W/abstract) (note this should also be cited along with [Mang et al. 2026](https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract) if using this code/tutorial).
 #
 #
 # Here, we will use WASP-39 b as an example. We will begin by importing several packages required for the run.

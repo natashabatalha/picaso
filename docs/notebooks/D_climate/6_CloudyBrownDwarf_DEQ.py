@@ -15,7 +15,7 @@
 # %% [markdown]
 # # One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Disequilibrium
 #
-# In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds and chemical disequilibrium. For a more in depth look at the climate-cloud code check out [Mang et al. 2026]() (note this should also be cited if using this code/tutorial).
+# In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds and chemical disequilibrium. For a more in depth look at the climate-cloud code check out [Mang et al. 2026](https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract) (note this should also be cited if using this code/tutorial).
 #
 # You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html) and running clouds in [equilibrium](https://natashabatalha.github.io/picaso/notebooks/D_climate/5_CloudyBrownDwarf_PreW.html)
 #
