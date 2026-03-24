@@ -43,7 +43,7 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '4.0'
+__version__ = '4.0.1'
 
 LODDERS2020_C_TO_O = 0.54939759398
 
@@ -52,7 +52,8 @@ if not os.path.exists(__refdata__):
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
-    if __version__ != str(ref_v): 
+    if (__version__ != str(ref_v)) and (str(ref_v) not in __version__): 
+        #will not apply warning to changes at the X.X.1 level (e.g., no warning for incompatilitibies for 4.0.1 vs 4.0). This means reference data changes must always assume new tenth decimal increase in version)
         msg = f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference"
         warnings.warn(msg)
 
