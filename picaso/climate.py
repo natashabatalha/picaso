@@ -44,6 +44,9 @@ def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False):
         H2O=None;H2=None;PH3=False
 
     mh_linear = bundle.inputs['atmosphere'].get('mh',None)
+    if isinstance(mh_linear, type(None)):
+        print('User warning: mh was not explicitly set so we are assuming no metallicity dependence (e.g., M/H=1xSolar) for the quench approximations published in Zahnle and Marley 2014')
+        mh_linear= 1
 
     #compute quench levels for everything
     quench_levels, timescale_mixing = get_quench_levels(Atmosphere, kz, grav, mh_linear, PH3=PH3, H2O=H2O, H2=H2)
