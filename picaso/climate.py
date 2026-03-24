@@ -4,6 +4,7 @@ from numba import jit, vectorize,float32,float64
 from numba.experimental import jitclass
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
 import astropy.units as u
+import astropy.constants as c
 import virga.justdoit as vj
 
 from .fluxes import get_reflected_1d,get_thermal_1d
@@ -55,7 +56,8 @@ def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere,
                flux_net_ir_layer=None,flux_plus_ir_attop=None,
                #kwargs for get_kzz function
                moist=False, 
-               do_holes=False, fhole=None,verbose=True):
+               do_holes=False, fhole=None,
+               verbose=True):
     
     """
     Update the kzz profile using the mixing length theory.
@@ -113,7 +115,6 @@ def update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere,
         
     
     # use mixing length theory to calculate Kzz profile nebhere
-    
     kz = get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,AdiabatBundle,nstr, Atmosphere, moist = moist)  
     
     return kz 
@@ -444,7 +445,7 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     p_bar = pressure 
     
     nlevel = len(temp)
-    
+
     r_atmos = 8.3143e7/mmw
 
     nz= nlevel -1
@@ -485,7 +486,7 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
         
         if chf[iz] < ratio_min*chf[iz+1]:
             chf[iz]= ratio_min*chf[iz+1]
-        
+
 #     Now we adjust so that the convective flux is equal to the3
 #     target convective flux to see if this helps with the
 #     convergence.
@@ -493,7 +494,6 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     f_actual = chf[nz-1]
     
     ratio = f_target/f_actual
-    
     for iz in range(nz-1,-1,-1):
         
         chf[iz] = max(chf[iz]*ratio,flx_min) 
@@ -505,13 +505,12 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
         else:
             grad_x,cp_x = did_grad_cp(t_layer[j], p_layer_bar[j], Adiabat)
         lapse_ratio[j] = min(np.array([1.0, dtdp[j]/grad_x]))
-
     
     rho_atmos = p_layer/ (r_atmos * t_layer)
     
     c_p = (7./2.)*r_atmos
     scale_h = r_atmos * t_layer / (grav_cgs)
-    
+
     mixl = np.zeros_like(lapse_ratio)
     for jj in range(len(pressure)-1):
         mixl[jj] = max(0.1,lapse_ratio[jj])*scale_h[jj]
@@ -519,7 +518,6 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     scalef_kz = 1./3.
     
     kz = scalef_kz * scale_h * (mixl/scale_h)**(4./3.) *( ( r_atmos*chf[:-1] ) / ( rho_atmos*c_p ) )**(1./3.)
-    
     
     kz = np.append(kz,kz[-1])
     
@@ -541,7 +539,6 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     dz = scale_h[1:] * (np.log((p_layer[:-1]/1e6) / (p_layer[1:]/1e6)))
     z = np.zeros(nlevel - 1)
     z[0] = dz[0]
-
     for i in range(1, nlevel-2):#nlevel - 1):#index change neb
         z[i] = z[i - 1] + dz[i] 
 
@@ -567,12 +564,15 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
             end_index = np.minimum(nstr[4], i + below_range)
             # start_index = np.maximum(nstr[3], i - pm_range)
             # end_index = np.minimum(nstr[4], i + pm_range)
-            kz_lower.append(np.mean(kz[start_index:end_index]))
+            if start_index == end_index:
+                kz_lower.append(np.mean(kz[start_index:end_index+1])) # this is a one layer convective zone
+            else: 
+                kz_lower.append(np.mean(kz[start_index:end_index]))
         kz_lower = np.array(kz_lower)
         kz[nstr[3]:nstr[4]] = kz_lower
     else:
         kz[nstr[0]:nstr[1]] = kz_upper
-    
+
     return kz
 
 
@@ -1022,7 +1022,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     else:                
         flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                     Disco,Opagrid, F0PI, compute_reflected, compute_thermal)
- 
+
     # extract visible fluxes
     flux_net_v_layer = flux_net_v_layer_full[0,0,:]  #fmnetv
     flux_net_v = flux_net_v_full[0,0,:]#fnetv
@@ -1144,7 +1144,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
             for j in range(nlevel -1):
                 dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
             
-            return   temp,  dtdp, all_profiles , flux_net_ir,flux_net_v, flux_plus_ir[0,:] 
+            return temp, dtdp, all_profiles, flux_net_ir, flux_net_v, flux_plus_ir[0,:]
             #return   temp,  dtdp, flag_converge, flux_net_ir, flux_plus_ir[0,:], all_profiles, cldsave_count
             
         
@@ -1486,6 +1486,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
             #    wno,nwno,ng,nt, gweight, tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
             #    DTAU_OG_clear , TAU_OG_clear, W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false reflected, True thermal
             Atmosphere=replace_temp(Atmosphere,temp)
+
             if do_holes == True:
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                             Disco,Opagrid, F0PI, reflected = False, thermal=compute_thermal, 
@@ -1493,7 +1494,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
 
             else:                
                 flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
-                            Disco,Opagrid, F0PI,reflected = False, thermal=compute_thermal)
+                            Disco,Opagrid, F0PI, reflected = False, thermal=compute_thermal)
          
            
 
@@ -1624,14 +1625,14 @@ def t_start(nofczns,nstr,convergence_criteria,#
             
            
            
-            return   temp,  dtdp, all_profiles , flux_net_ir,flux_net_v, flux_plus_ir[0,:] 
+            return temp, dtdp, all_profiles, flux_net_ir,flux_net_v, flux_plus_ir[0,:]
         
     if verbose: print("Iterations exceeded it_max ! sorry ")
     dtdp=np.zeros(shape=(nlevel-1))
     for j in range(nlevel -1):
         dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
 
-    return temp, dtdp , all_profiles , flux_net_ir_layer,flux_net_v, flux_plus_ir[0,:]
+    return temp, dtdp, all_profiles, flux_net_ir_layer, flux_net_v, flux_plus_ir[0,:]
 
 @jit(nopython=True, cache=True)
 def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx):
@@ -1765,6 +1766,7 @@ OpacityWEd_Tuple_default = OpacityWEd_Tuple_defaultT(np.zeros((8,8,8)),
 OpacityNoEd_Tuple_defaultT = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
 OpacityNoEd_Tuple_default = OpacityNoEd_Tuple_defaultT(np.zeros((8,8,8)), 
                     np.zeros((8,8,8)), np.zeros((8,8,8)), np.zeros((8,8,8)))
+
 @jit(nopython=True, cache=False)
 def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                 Disco,Opagrid, F0PI, reflected, thermal, 
@@ -1823,7 +1825,7 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
     #unpack opacity items w/o delta eddington correctioin
     DTAU_OG,TAU_OG, W0_OG, COSB_OG = OpacityNoEd.DTAU,OpacityNoEd.TAU, OpacityNoEd.W0, OpacityNoEd.COSB
     #unpack scattering phase items 
-    surf_reflect, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward = ScatteringPhase.surf_reflect, ScatteringPhase.single_phase,ScatteringPhase.multi_phase,ScatteringPhase.frac_a,ScatteringPhase.frac_b,ScatteringPhase.frac_c,ScatteringPhase.constant_back,ScatteringPhase.constant_forward
+    surf_reflect, hard_surface, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward = ScatteringPhase.surf_reflect, ScatteringPhase.hard_surface, ScatteringPhase.single_phase,ScatteringPhase.multi_phase,ScatteringPhase.frac_a,ScatteringPhase.frac_b,ScatteringPhase.frac_c,ScatteringPhase.constant_back,ScatteringPhase.constant_forward
     #unpack disco items 
     ng,nt,gweight,tweight,ubar0,ubar1,cos_theta = Disco.ng,Disco.nt,Disco.gweight,Disco.tweight,Disco.ubar0,Disco.ubar1,Disco.cos_theta
     #unpack Opagrid info 
@@ -1955,14 +1957,12 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
     if thermal:
 
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
-        
         for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
             
             #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
             #the uncorrected raman single scattering 
             
             #"""<<<<<<< NEWCLIMA
-            hard_surface = 0 
             _,out_therm_fluxes = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
                                             DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                             pressure,ubar1,
@@ -2033,6 +2033,102 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
     
     return flux_net_v_layer, flux_net_v, flux_plus_v, flux_minus_v , flux_net_ir_layer, flux_net_ir, flux_plus_ir, flux_minus_ir
 
+def update_rfacv(bundle, Atmosphere, OpacityWEd, OpacityNoEd=None,
+                 ScatteringPhase=None, Disco=None, Opagrid=None, F0PI=None,
+                 flux_net_v_layer=None,
+                 do_holes=False, fhole=0.0, OpacityWEd_clear=None, OpacityNoEd_clear=None,
+                 verbose=True):
+    """
+    Update rfacv following Koll2022 ApJ 924 134 by using the get_fluxes routine. 
+    Intended for use with tidally locked rocky exoplanets.
+
+    Parameters
+    ----------
+    bundle : object
+        The bundle object containing the inputs and other parameters.
+    Atmosphere : tuple
+        Contains temperature, pressure, dtdp, mmw, and scale height
+    OpacityWEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info with delta eddington corrected values 
+    OpacityNoEd : namedtuple
+        All opacity (e.g. dtau, tau, w0, g0) info without delta eddington corrected values 
+    ScatteringPhase : namedtuple
+        All scattering phase function inputs like ftau_cld and ftau_ray and fraction of forward to back scattering
+    Disco : namedtuple
+        All geometry inputs such as gauss/chebychev angles, incoming outgoing angles, etc 
+    Opagrid : namedtuple
+        Any opacity grid info such as wavelength grids, temperature pressure grids, tmax and tmin
+    F0PI : ndarray
+        Stellar spectrum if it exists otherwise this is just 1s array
+    flux_net_v_layer : arr
+        Net visible fluxes
+    do_holes : bool
+        Default=False; if True, computes the fluxes with holes
+    fhole : float
+        Default=None ; fraction of the disk assumed to be clear
+    OpacityWEd_clear : namedtuple
+        The clear opacities / scattering properties (opposed to the cloudy ones which are stored in the main opacity tuple)
+    OpacityNoEd_clear : namedtuple
+        The clear opacities / scattering properties w/o delta eddington correction (opposed to the cloudy ones which are stored in the main opacity tuple)
+    verbose : bool
+        Flag for printing message to update rfacv
+    """
+
+    # print update message if requested
+    if verbose: print("I am updating rfacv.")
+
+    # unpack items needed to update rfacv
+    # properties or star and orbit
+    inputs = bundle.inputs
+    radius_star = inputs['star']['radius']
+    temp_star = inputs['star']['temp']
+    sa = inputs['star']['semi_major']
+    # atmosphere items
+    pressure = Atmosphere.p_level
+    # opacity items w/ delta eddington correction
+    DTAU = OpacityWEd.DTAU
+
+    # check if we need to grab fluxes
+    if np.any(flux_net_v_layer==None):
+        if verbose: print('I dont have fluxes, let me compute them')
+        if do_holes == True:
+            flux_net_v_layer, _, _, _, _, _, _, _ = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                            Disco, Opagrid, F0PI, reflected=True, thermal=False, 
+                            do_holes=True, fhole=fhole, hole_OpacityWEd=OpacityWEd_clear, hole_OpacityNoEd=OpacityNoEd_clear)
+        else:                
+            flux_net_v_layer, _, _, _, _, _, _, _ = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                            Disco, Opagrid, F0PI, reflected=True, thermal=False,
+                            do_holes=False)
+        
+        FNETV = flux_net_v_layer[0,0,0]
+    else: # FNETV has to be processed differently depending on if is coming straight from get_fluxes or t_start
+        FNETV = flux_net_v_layer[0]
+                            
+    """
+    Update the rfacv value based on the analytic prescription for tidally locked rocky planets.
+    To do this we need to calculate:
+    1) the longwave optical depth
+    2) the equilibrium temperature
+    3) the surface pressure
+    """
+
+    # 1) calculate the longwave optical depth TauLW by summing the optical depth across all levels and wavelengths
+    TauLW = DTAU.sum()
+
+    # calculate the bond albedo using net visible fluxes and the solar constant egp estimate
+    solarc = c.sigma_sb.to(u.erg/u.K**4/u.cm**2/u.s).value * temp_star**4 * (radius_star/sa)**2 # solar constant S=L/(4 pi a^2)=sigma_SB * T_star^4 * (R_star / a)^2
+    bond_albedo = 1 + 2*FNETV/solarc
+
+    # 2) calculate the equilibrium temperature Teq; see equation 13 Saumon+1996 ApJ 460 993
+    Teq = temp_star * np.sqrt(radius_star/(2*sa)) * (1-bond_albedo)**0.25
+
+    # 3) calculate the surface pressure p_surf by taking the deepest pressure level
+    p_surf = pressure[-1]
+
+    # finally, compute new rfacv value using Koll2022 ApJ 924 134
+    rfacv = get_rfacv_rockytl(p_surf, TauLW, Teq)
+
+    return rfacv
 
 @jit(nopython=True)
 def replace_temp(tuple_old, NEW_TEMP): 
@@ -2043,12 +2139,12 @@ def replace_temp(tuple_old, NEW_TEMP):
 
 Atmosphere_Tuple = namedtuple('Atmosphere_Tuple',['dtdp','mmw_layer','nlevel','t_level','p_level','condensables','condensable_abundances','condensable_weights','scale_height'])
 OpacityWEd_Tuple = namedtuple("OpacityWEd_Tuple", ["DTAU", "TAU", "W0", "COSB",'ftau_cld','ftau_ray','GCOS2', 'W0_no_raman','f_deltaM'])
-ScatteringPhase_Tuple = namedtuple('ScatteringPhase_Tuple',['surf_reflect','single_phase','multi_phase','frac_a','frac_b','frac_c','constant_back','constant_forward'])
+ScatteringPhase_Tuple = namedtuple('ScatteringPhase_Tuple',['surf_reflect', 'hard_surface', 'single_phase','multi_phase','frac_a','frac_b','frac_c','constant_back','constant_forward'])
 Disco_Tuple = namedtuple('Disco_Tuple',['ng','nt', 'gweight','tweight', 'ubar0','ubar1','cos_theta'])
 OpacityNoEd_Tuple = namedtuple("OpacityNoEd_Tuple", ["DTAU", "TAU", "W0", "COSB"])
 
 
-def calculate_atm(bundle, opacityclass, only_atmosphere=False, analytic_rfacv=False):
+def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     """
     Function to calculate the atmosphere and opacities for the given inputs.
     Parameters
@@ -2059,17 +2155,12 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False, analytic_rfacv=Fa
         The opacity class containing the opacity data.
     only_atmosphere : bool, optional
         If True, no opacities are calculated, just updates the Atmosphere tuple. The default is False.
-    analytic_rfacv : bool, optional
-        If True, updates rfacv using analytic prescription outlined in Koll (2022) for tidally locked rocky planets. The default is False.
-
     """
 
     inputs = bundle.inputs
 
     wno = opacityclass.wno
-    nwno = opacityclass.nwno
     ngauss = opacityclass.ngauss
-    gauss_wts = opacityclass.gauss_wts #for opacity
 
     #check to see if we are running in test mode
     test_mode = inputs['test_mode']
@@ -2080,7 +2171,6 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False, analytic_rfacv=Fa
     #set approx numbers options (to be used in numba compiled functions)
     single_phase = inputs['approx']['rt_params']['toon']['single_phase']
     multi_phase = inputs['approx']['rt_params']['toon']['multi_phase']
-    toon_coefficients = inputs['approx']['rt_params']['toon']['toon_coefficients']
     raman_approx =inputs['approx']['rt_params']['common']['raman']
     #method = inputs['approx']['rt_method']
     stream = inputs['approx']['rt_params']['common']['stream']
@@ -2117,21 +2207,10 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False, analytic_rfacv=Fa
     ubar0, ubar1 = geom['ubar0'], geom['ubar1']
     #"""
 
-    #set star parameters
-    radius_star = inputs['star']['radius']
-    temp_star = inputs['star']['temp']
-    F0PI = opacityclass.relative_flux
-
-    b_top = 0
-
-    #semi major axis
-    sa = inputs['star']['semi_major']
-
     #define cloud inputs 
     #for patchy clouds
     do_holes = inputs['clouds'].get('do_holes',False)
     if do_holes == True:
-        fhole = inputs['clouds']['fhole']
         fthin_cld = inputs['clouds']['fthin_cld']
 
     # save level fluxes in addition to the top of atmosphere fluxes?
@@ -2148,7 +2227,6 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False, analytic_rfacv=Fa
     atm.planet.gravity = inputs['planet']['gravity']
     atm.planet.radius = inputs['planet']['radius']
     atm.planet.mass = inputs['planet']['mass']
-    atm.get_lvl_flux=get_lvl_flux
 
     #if dimension == '1d':
     atm.get_profile()
@@ -2191,7 +2269,7 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False, analytic_rfacv=Fa
     
     if only_atmosphere: 
         return Atmosphere
-
+    
     # grab needed opacities for the problem
     exclude_mol = inputs['atmosphere']['exclude_mol']
     opacityclass.get_opacities(atm, exclude_mol=exclude_mol)
@@ -2221,88 +2299,11 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False, analytic_rfacv=Fa
 
     OpacityNoEd = OpacityNoEd_Tuple(DTAU_OG, TAU_OG, W0_OG, COSB_OG)
 
-    ScatteringPhase= ScatteringPhase_Tuple(atm.surf_reflect,single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward)
+    ScatteringPhase= ScatteringPhase_Tuple(atm.surf_reflect,atm.hard_surface,single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward)
 
     Disco = Disco_Tuple(ng,nt, gweight,tweight, ubar0,ubar1,cos_theta)
 
-    # update rfacv if using analytic heat redistribution from Koll (2022)
-    if analytic_rfacv:
-        """
-        Update the rfacv value based on the analytic prescription for tidally locked rocky planets.
-        To do this we need to calculate:
-        1) the longwave optical depth
-        2) the equilibrium temperature
-        3) the surface pressure
-        """
-
-        # 1) calculate the longwave optical depth TauLW by summing the optical depth across all levels and wavelengths
-        TauLW = DTAU.sum()
-
-        # perform Toon RT for reflected light case
-        xint_at_top = 0 
-        for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
-            nlevel = atm.c.nlevel
-
-            if get_lvl_flux: 
-                atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-
-            xint, lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
-                                                DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                                GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                                                DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
-                                                atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                                                single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
-                                                get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
-                                                toon_coefficients=toon_coefficients,b_top=b_top)
-                    
-            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = lvl_fluxes
-
-            if do_holes == True:
-                xint_clear, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng,nt,
-                        DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
-                        GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                        DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
-                        atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                        single_phase,multi_phase,
-                        frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                        get_toa_intensity=1, get_lvl_flux=int(atm.get_lvl_flux),
-                        toon_coefficients=toon_coefficients,b_top=b_top)
-                    
-                flux_minus_all_v_clear, flux_plus_all_v_clear, flux_minus_midpt_all_v_clear, flux_plus_midpt_all_v_clear = out_ref_fluxes_clear
-                        
-                # weighted average of cloudy and clearsky
-                flux_plus_midpt_all_v = (1.0 - fhole)* flux_plus_midpt_all_v + fhole * flux_plus_midpt_all_v_clear
-                flux_minus_midpt_all_v = (1.0 - fhole)* flux_minus_midpt_all_v + fhole * flux_minus_midpt_all_v_clear
-                flux_plus_all_v = (1.0 - fhole)* flux_plus_all_v + fhole * flux_plus_all_v_clear
-                flux_minus_all_v = (1.0 - fhole)* flux_minus_all_v + fhole * flux_minus_all_v_clear
-                xint = (1.0 - fhole)* xint + fhole * xint_clear
-
-            xint_at_top += xint*gauss_wts[ig]
-
-            if get_lvl_flux:
-                atm.lvl_output_reflected['flux_minus']+=flux_minus_all_v*gauss_wts[ig]
-                atm.lvl_output_reflected['flux_plus']+=flux_plus_all_v*gauss_wts[ig]
-                atm.lvl_output_reflected['flux_minus_mdpt']+=flux_minus_midpt_all_v*gauss_wts[ig]
-                atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
-
-        # compress full tangle-gangle flux output onto 1D flux grid using compress_disco routine
-        # calculate the bond albedo
-        albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight, F0PI)
-        bond_albedo = (np.trapz(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
-                       np.trapz(x=1/wno, y=opacityclass.unshifted_stellar_spec)) # see equation 18 Batalha+2019 ApJ 878 70
-
-        # 2) calculate the equilibrium temperature Teq; see equation 13 Saumon+1996 ApJ 460 993
-        Teq = temp_star * np.sqrt(radius_star/(2*sa)) * (1-bond_albedo)**0.25
-
-        # 3) calculate the surface pressure p_surf by taking the deepest pressure level
-        p_surf = (atm.level['pressure'][-1] * u.dyne / u.cm**2).to(u.bar).value
-
-        # finally, compute new rfacv value using Koll2022 ApJ 924 134
-        rfacv = get_rfacv_rockytl(p_surf, TauLW, Teq)
-    else:
-        rfacv = inputs['climate']['rfacv'] # keep rfacv constant
-
-    return OpacityWEd, OpacityNoEd,ScatteringPhase,Disco,Atmosphere, return_opa_holes, rfacv
+    return OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, return_opa_holes
     #return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
 
 @jit(nopython=True, cache=True)
@@ -3180,7 +3181,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     """
     #under what circumstances to we compute quench levels 
     full_kinetis ='photochem' in str(bundle.inputs['approx']['chem_method'])
-    do_quench_appox = diseq and (not full_kinetis)
+    do_quench_appox = bundle.inputs['approx']['chem_params']['quench']
 
     #unpack 
     F0PI = opacityclass.relative_flux 
@@ -3261,18 +3262,12 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     
     # get opacities for the first time with simple chem 
     # this first call will be refreshed before tstart if things like chemistry are changed from the quench approx
-    # update rfacv if running analytic heat redistribution
-    OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, holes, rfacv =  calculate_atm(bundle, opacityclass, analytic_rfacv=analytic_rfacv)
+    OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, holes = calculate_atm(bundle, opacityclass)
     #was there hole information returned? 
     #i am conpressing this for readability as these things are usually None, unless the user sets it 
     OpacityWEd_clear=holes[0]; OpacityNoEd_clear=holes[0]
 
-    ### 2) IF: ANALYTIC HEAT REDISTRIBUTION
-    if analytic_rfacv:
-        bundle.inputs['climate']['rfacv'] = rfacv
-        all_rfacv = np.append(all_rfacv, rfacv)
-
-    ### 3) IF: UPDATE KZZ 
+    ### 2) IF: UPDATE KZZ 
     if do_kzz_calc:
         kz = update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
                #these are only needed if you dont have fluxes and need to compute them
@@ -3280,7 +3275,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                #kwargs for get_kzz function
                moist=moist, do_holes=do_holes, fhole=fhole)
-        bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookeeping current kz 
+        bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookkeeping current kz 
 
         if save_kzz: all_kzz = np.append(all_kzz,kz)
         #are clouds turned on such that we need the sc kzz for virga? 
@@ -3289,6 +3284,14 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         #is self consistent kz needed for diseq chem too? 
         if sc_kzz_and_diseq: 
             kz_chem = kz 
+
+    ### 3) IF: ANALYTIC HEAT REDISTRIBUTION
+    if analytic_rfacv:
+        rfacv = update_rfacv(bundle=bundle, Atmosphere=Atmosphere, OpacityWEd=OpacityWEd, OpacityNoEd=OpacityNoEd,
+                             ScatteringPhase=ScatteringPhase, Disco=Disco, Opagrid=Opagrid, F0PI=F0PI,
+                             do_holes=do_holes, fhole=fhole, OpacityWEd_clear=OpacityWEd_clear, OpacityNoEd_clear=OpacityNoEd_clear)
+        bundle.inputs['climate']['rfacv'] = rfacv #bookkeeping current rfacv
+        all_rfacv = np.append(all_rfacv, rfacv)
 
     ### 4) IF: COMPLEX CHEM
     ##  4-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
@@ -3311,7 +3314,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     ### 6) IF NEEDED: COMPUTE OPACITIES 
     refresh_needed = full_kinetis or do_quench_appox or cloudy
     if refresh_needed:
-        OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, hole, rfacv = calculate_atm(bundle, opacityclass)
+        OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, hole = calculate_atm(bundle, opacityclass)
         #these are most of the time returned as None, if no clouds and no patchy clouds are requested
         OpacityWEd_clear=hole[0]; OpacityNoEd_clear=hole[1]
     
@@ -3325,7 +3328,6 @@ def profile(bundle, nofczns, nstr, temp, pressure,
 
     ## begin bigger loop which gets opacities
     for iii in range(itmx):
-
         if do_holes == True:
             temp, dtdp, all_profiles,  flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop = t_start(
                 nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
@@ -3346,14 +3348,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         bundle.add_pt( temp, pressure)
         #simple chem no quenching 
         bundle.premix_atmosphere(opa = opacityclass,quench_levels=None,verbose=verbose) 
-
-        ### 2) IF: ANALYTIC HEAT REDISTRIBUTION
-        if analytic_rfacv:
-            _, _, _, _, _, _, rfacv = calculate_atm(bundle, opacityclass, analytic_rfacv=analytic_rfacv)
-            bundle.inputs['climate']['rfacv'] = rfacv
-            all_rfacv = np.append(all_rfacv, rfacv)
         
-        ### 3) IF: UPDATE KZZ 
+        ### 2) IF: UPDATE KZZ 
         if do_kzz_calc:
             #NEB: commenting out because we have fluxes from the above output. lets rely on those for now. 
             #get opacities for KZZ calculation
@@ -3376,6 +3372,14 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             #is self consistent kz needed for diseq chem too? 
             if sc_kzz_and_diseq: 
                 kz_chem = kz 
+
+        ### 3) IF: ANALYTIC HEAT REDISTRIBUTION
+        if analytic_rfacv:
+            # we can skip RT if we have fluxes already
+            rfacv = update_rfacv(bundle=bundle, Atmosphere=Atmosphere, OpacityWEd=OpacityWEd,
+                                 flux_net_v_layer=flux_net_v_layer)
+            bundle.inputs['climate']['rfacv'] = rfacv #bookkepping current rfacv
+            all_rfacv = np.append(all_rfacv, rfacv)
 
         ### 4) IF: COMPLEX CHEM
         ##  4-a) option 1: GET QUENCH LEVELS FOR DISEQ and UPDATE CHEM
@@ -3403,7 +3407,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         ### 6) IF NEEDED: COMPUTE OPACITIES 
         refresh_needed = full_kinetis or do_quench_appox or cloudy
         if refresh_needed:
-            OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, hole, rfacv = calculate_atm(bundle, opacityclass)
+            OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere, hole = calculate_atm(bundle, opacityclass)
             OpacityWEd_clear=hole[0]; OpacityNoEd_clear=hole[0]
         
         # 7) PREP RETURNS! 

@@ -4126,6 +4126,7 @@ class inputs():
             Set constant albedo for surface reflectivity 
         wavenumber : list
             The desired wavenumber grid (inverse cm) for the albedo
+            Make sure this wavenumber grid matches the wavenumber grid of the opacities
         old_wavenumber : list
             Original wavenumber grid (inverse cm) for the albedo which is used to interpolate onto the new wavenumber grid
         """
