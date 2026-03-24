@@ -15,7 +15,7 @@
 # %% [markdown]
 # # One-Dimensional Climate Models: The Basics of Planets
 #
-# In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out [Mukherjee et al. 2022](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract) (note this should also be cited if using this code/tutorial).
+# In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out [Mukherjee et al. 2023](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract) (note this should also be cited if using this code/tutorial).
 #
 # What you should already be familiar with:
 #

@@ -41,7 +41,7 @@ Enhancements:
 
 3.0 (2022-10-25)
 ~~~~~~~~~~~~~~~~
-* First version of climate code (Mukherjee et al. 2022)
+* First version of climate code (Mukherjee et al. 2023)
 * First version of grid fitting tools (JWST Transiting Exoplanet ERS et al. 2022)
 * Code help for xarrays
 * Reference/citation tools for opacities

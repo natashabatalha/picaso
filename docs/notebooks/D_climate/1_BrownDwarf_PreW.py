@@ -15,7 +15,7 @@
 # %% [markdown]
 # # One-Dimensional Climate Models: The Basics of Brown Dwarfs
 #
-# In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out [Mukherjee et al. 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract) (note this should also be cited if using this code/tutorial).
+# In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out [Mukherjee et al. 2023](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract) (note this should also be cited if using this code/tutorial).
 #
 # What you should already be familiar with:
 #
@@ -97,7 +97,7 @@ cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
 cl_run.effective_temp(teff) # input effective temperature
 
 # %% [markdown]
-# Let's now grab our gaseous opacities, whose path we have already defined above. Again, this code uses a correlated-k approach for accurately capturing opacities (see [section 2.1.4; Mukherjee et al 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract)).
+# Let's now grab our gaseous opacities, whose path we have already defined above. Again, this code uses a correlated-k approach for accurately capturing opacities (see [section 2.1.4; Mukherjee et al 2023](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract)).
 
 # %%
 mh = '0.0'#'+0.0' #log metallicity
@@ -138,7 +138,7 @@ temp_guess = np.zeros(shape=(nlevel)) + 500 # K , isothermal atmosphere guess
 # **New Parameters:**
 #
 # 1. `rcb_guess` : this defines the top most level of your guessed convective zone. If you don't have a clue where your convective zone might end be choose a number that is $\sim$nlevel-5 (a few pressure levels away from the very bottom of your grid)
-# 2. `rfacv`: (See [Mukherjee et al. 2022](https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract) Eqn. 20 `r_st`)
+# 2. `rfacv`: (See [Mukherjee et al. 2023](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract) Eqn. 20 `r_st`)
 #
 # Non-zero values of rst (aka "rfacv" legacy terminology) is only relevant when the external irradiation on the atmosphere is non-zero. In the scenario when a user is computing a planet-wide average T(P) profile, the stellar irradiation is contributing to 50% (one hemisphere) of the planet and as a result rst = 0.5. If instead the goal is to compute a night-side average atmospheric state, rst is set to be 0. On the other extreme, to compute the day-side atmospheric state of a tidally locked planet rst should be set at 1.
 
