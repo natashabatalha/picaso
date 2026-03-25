@@ -24,7 +24,7 @@ def continuum(new_wno ='newwave_2000.coverage', original_file = 'CIA_DS_aug_2015
 		absorbers. 
 	"""
 	if isinstance(new_wno ,str):
-		new_wno = np.sort(pd.read_csv(new_wno, delim_whitespace=True)['wavenumber'].values)
+		new_wno = np.sort(pd.read_csv(new_wno, sep=r'\s+')['wavenumber'].values)
 	else: 
 		new_wno = np.sort(new_wno)
 	factory = ContinuumFactory(original_file,colnames, new_wno,new_filename=new_filename)
@@ -60,7 +60,7 @@ def molecular(original_dir = '/Users/natashabatalha/Documents/AlbedoCodeWC/opaci
 	"""
 	
 	if isinstance(new_wno ,str):
-		new_wno = np.sort(pd.read_csv(new_wno, delim_whitespace=True)['wavenumber'].values)
+		new_wno = np.sort(pd.read_csv(new_wno, sep=r'\s+')['wavenumber'].values)
 	else: 
 		new_wno = np.sort(new_wno)
 	factory = MolecularFactory(original_dir, new_wno,new_filename=new_filename)

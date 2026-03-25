@@ -102,7 +102,7 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},
             np.array(y_err.append((py - yerr, py + yerr)))
 
         plot.multi_line(x_err, y_err, **error_kwargs)
-        plot.circle(x, y, **point_kwargs)
+        plot.scatter(x, y, **point_kwargs)
         return plot
     elif plot_type=='matplotlib':
         point_kwargs['color'] = point_kwargs.get('color','k')
@@ -175,7 +175,7 @@ def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0,
 
     plot.multi_line(x_err, y_err, **error_kwargs)
 
-    plot.circle(x, y, **point_kwargs)
+    plot.scatter(x, y, **point_kwargs)
     return
 
 def bin_errors(newx, oldx, dy):

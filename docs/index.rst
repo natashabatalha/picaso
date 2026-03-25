@@ -65,6 +65,7 @@ Resources
    :hidden:
 
    Installation <installation>
+   Tutorial Workflow <notebook_workflow>
    The Tutorials <tutorials>
    The Code <picaso>
    Contributing <contribution>

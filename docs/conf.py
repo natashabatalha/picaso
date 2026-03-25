@@ -42,6 +42,10 @@ extensions = ['sphinx.ext.autodoc',
     'nbsphinx']#,
     #'sphinxcontrib.applehelp']
 
+nbsphinx_custom_formats = {
+    '.py': ['jupytext.reads', {'fmt': 'py:percent'}],
+}
+
 nbsphinx_allow_errors = False
 
 nbsphinx_execute = 'always'
@@ -82,7 +86,7 @@ language = 'en'#None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['**.ipynb_checkpoints']
+exclude_patterns = ['**.ipynb_checkpoints','**/*WIP*', '**/*WIP*ipynb']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

@@ -1,6 +1,7 @@
 import numpy as np 
 import warnings
-from numba import jit, vectorize,float32,float64
+from numba import jit, vectorize,float32,float64,types
+from numba.typed import List
 from numba.experimental import jitclass
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log,log10
 import astropy.units as u
@@ -44,8 +45,13 @@ def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False):
     else: 
         H2O=None;H2=None;PH3=False
 
+    mh_linear = bundle.inputs['atmosphere'].get('mh',None)
+    if isinstance(mh_linear, type(None)):
+        print('User warning: mh was not explicitly set so we are assuming no metallicity dependence (e.g., M/H=1xSolar) for the quench approximations published in Zahnle and Marley 2014')
+        mh_linear= 1
+
     #compute quench levels for everything
-    quench_levels, timescale_mixing = get_quench_levels(Atmosphere, kz, grav, PH3=PH3, H2O=H2O, H2=H2)
+    quench_levels, timescale_mixing = get_quench_levels(Atmosphere, kz, grav, mh_linear, PH3=PH3, H2O=H2O, H2=H2)
     if verbose: print('Computed quenched levels at',quench_levels)
     return quench_levels
 
@@ -173,85 +179,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     analytic_rfacv : bool
         if True, use the analytic rfacv prescription for tidally locked rocky exoplanets outlined in Koll (2022)
     """
-
-    """ Can deprecate all of this since we moved to profile 
-    first_call_ever=False
-    cloudy = CloudParameters.cloudy
-    
-    if cloudy: 
-        virga_kwargs = {key:getattr(CloudParameters,key) for key in ['fsed','mh','b','param','directory','condensates']}
-        hole_kwargs = {key:getattr(CloudParameters,key) for key in ['do_holes','fthin_cld','fhole']}
-        do_holes = hole_kwargs['do_holes'];fhole=hole_kwargs['fhole']
-        cld_species = CloudParameters.condensates
-    else: 
-        cld_species=[] ; do_holes = False; fhole=None
-
-    F0PI = opacityclass.relative_flux
-
-    #save profiles if requested 
-    if save_kzz: all_kzz= []
-
-    nlevel = len(temp)
-    # first change the nstr vector because need to check if they grow or not
-    # delete upper convective zone if one develops 
-
-    #NEBQ: do we need this now that we arent running chemeq=first anymore? 
-    del_zone =0 # move 4 levels deeper
-    if (nstr[1] > 0) & (nstr[4] > 0) & (nstr[3] > 0) :
-        nstr[1] = nstr[4]+del_zone
-        nstr[2] = nlevel-2#89
-        nstr[3],nstr[4],nstr[5] = 0,0,0
-        
-        if verbose: print("2 conv Zones, so making small adjustments")
-    elif (nstr[1] > 0) & (nstr[3] == 0):
-        if nstr[4] == 0:
-            nstr[1]+= del_zone #5#15
-        else:
-            nstr[1] += del_zone #5#15  
-            nstr[3], nstr[4] ,nstr[5] = 0,0,0#6#16
-        if verbose: print("1 conv Zone, so making small adjustment")
-    if nstr[1] >= nlevel -2 : # making sure we haven't pushed zones too deep
-        nstr[1] = nlevel -4
-    if nstr[4] >= nlevel -2:
-        nstr[4] = nlevel -3
-    
-    if verbose: print("New NSTR status is ", nstr)
-
-    ### 1) UPDATE PT, CHEM, OPACITIES 
-    bundle.add_pt( temp, pressure)
-    #no quenching in this first run because we need an atmosphere first to get the 
-    #fluxes that gives us a kzz that gives us a quench level
-    bundle.premix_atmosphere(opa = opacityclass,quench_levels=None, cld_species=cld_species)
-    OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere , holes=  calculate_atm(bundle, opacityclass)
-    
-    # Clearsky profile, define others with _clear to avoid overwriting cloudy profile
-    OpacityWEd_clear=holes[0]; OpacityNoEd_clear=holes[1]
-
-    ### 2) UPDATE KZZ
-    if self_consistent_kzz:
-        kz = update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
-               #these are only needed if you dont have fluxes and need to compute them
-               OpacityWEd=OpacityWEd, OpacityNoEd=OpacityNoEd,ScatteringPhase=ScatteringPhase,Disco=Disco,Opagrid=Opagrid, F0PI=F0PI,
-               OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
-               #kwargs for get_kzz function
-               moist=moist, do_holes=do_holes, fhole=fhole)
-        if save_kzz: all_kzz = np.append(all_kzz,kz)
-    #Otherwise get the fixed profile in bundle
-    else : 
-        kz = bundle.inputs['atmosphere']['profile']['kz'].values
-
-    ### 3) GET QUENCH LEVELS FOR DISEQ 
-    if bundle.inputs['approx']['chem_method']!='photochem':
-        quench_levels=update_quench_levels(bundle, Atmosphere, kz, grav)
-    else: 
-        quench_levels = None
-        raise Exception('photochem not yet working')
-
-    ### 4) UDPATE CHEM w/ new Quench Levels or Photochem
-    bundle.premix_atmosphere(opa=opacityclass,quench_levels=quench_levels,
-            cld_species=cld_species)
-    """
-    ### 5) RUN PROFILE to converge new profile 
+    ### 5) PROFILE to converge initial profile 
     # define the initial convergence criteria for profile 
     convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=5.0, convt=4.0, x_max_mult=7.0) 
 
@@ -389,7 +317,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             convergence_criteria,final ,      
             flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop, 
             verbose=verbose,moist = moist,
-            save_kzz=True,all_kzz=all_kzz,self_consistent_kzz=self_consistent_kzz,
+            save_kzz=save_kzz,all_kzz=all_kzz,self_consistent_kzz=self_consistent_kzz,
             analytic_rfacv=analytic_rfacv, all_rfacv=all_rfacv)   
     
     #STEP 3) find strat that will now run profile several times, each time updating the opacities and chemistry 
@@ -472,7 +400,7 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
     #     the correction logic below and should always be true
     #     in a well formed model.
 
-    chf = np.zeros_like(tidal)
+    chf = np.zeros(tidal.shape)
 
     chf[nz-1] = f_sum
     
@@ -1226,6 +1154,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
 
                         #update temp before throwing to moist_grad function
                         Atmosphere=replace_temp(Atmosphere,temp)
+                        
                         if moist == True:
                             grad_x, cp_x = moist_grad( beta[j1-1], press, AdiabatBundle, Atmosphere, j1-1)
                         else: 
@@ -2263,8 +2192,15 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     our_condesables = [i for i in allowed_condensibles if i in  bundle.inputs['atmosphere']['profile'].keys()]
     condensable_abundances = bundle.inputs['atmosphere']['profile'].loc[:,our_condesables].T.values
     condensable_weights = [atm.weights[i].values[0] for i in our_condesables]
+    
+    #check if list ends up empty and assign value for numba jit
+    if len(our_condesables)==0: 
+        our_condesables = ['None']
+        condensable_abundances = np.zeros((1,1))
+        condensable_weights =[0.0]
 
-    Atmosphere= Atmosphere_Tuple(atm.layer['dtdp'], atm.layer['mmw'],nlevel,atm.level['temperature'],atm.level['pressure_bar'],
+
+    Atmosphere= Atmosphere_Tuple(atm.layer['dtdp'], atm.layer['mmw'],nlevel,np.ascontiguousarray(atm.level['temperature']).copy(),np.ascontiguousarray(atm.level['pressure_bar']).copy(),
                                     our_condesables,condensable_abundances,condensable_weights,atm.level['scale_height'])
     
     if only_atmosphere: 
@@ -3060,7 +2996,7 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
         Updated CloudParameters namedtuple.
     ```
     """
-    opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD, CloudParameters.G0, CloudParameters.W0
+    opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD.copy(), CloudParameters.G0.copy(), CloudParameters.W0.copy()
     we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
 
     opd_prev_cld_step = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
@@ -3193,7 +3129,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
    #under what circumstances to do we compute a self consistent kzz calc 
     sc_kzz_and_clouds = cloudy #THIS IS ALWAYS BE TRUE.. 
     sc_kzz_and_diseq = self_consistent_kzz and diseq  
-    do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq
+
+    do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq or save_kzz
     constant_kzz =  ((not self_consistent_kzz) and diseq) #((not self_consistent_kzz) and cloudy) or
     if constant_kzz: 
         kz_chem = bundle.inputs['atmosphere']['kzz'].get('constant_kzz')
