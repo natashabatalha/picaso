@@ -151,6 +151,23 @@ N2 = np.array([0.75833, 0.75833, 0.75833, 0.75833, 0.75833, 0.75833, 0.75833,
        0.75833, 0.75833, 0.75833, 0.75833, 0.75833, 0.75833, 0.75833,
        0.75833])
 
+# %% [markdown]
+# We then construct a pandas DataFrame from the embedded arrays, which is the format PICASO expects for atmospheric profiles
+
+# %%
+df_atmo_earth = pd.DataFrame({
+    'pressure':    pressure,
+    'temperature': temperature,
+    'H2O':  H2O,
+    'CO2':  CO2,
+    'O3':   O3,
+    'N2O':  N2O,
+    'CO':   CO,
+    'CH4':  CH4,
+    'O2':   O2,
+    'N2':   N2,
+})
+
 
 # %% [markdown]
 # Next, we define our Earth function parameters.
@@ -507,61 +524,29 @@ lam_rfast = np.array([0.2       , 0.20143369, 0.20287766, 0.20433198, 0.20579673
        1.96656053, 1.98065774, 1.994856  ])
 
 # %% [markdown]
-# PICASO and rfast use a slightly differen wavelength grid for calculations so it is important for a true comparison to regrid the spectra to a common grid here. (Should I give the data regridded already or should I keep this cell if its instructional?)
+# PICASO and rfast use a slightly different wavelength grid for calculations so it is important for a true comparison to regrid the spectra to a common grid here. (Should I give the data regridded already or should I keep this cell if its instructional?)
 
 # %%
-# Bin rfast data to same resolution as PICASO (R=140)
 # Get PICASO wavelength grid
 wno_picaso, fpfs_picaso, albedo_picaso = res['all']
-wavelength_picaso = 1e4 / wno_picaso  # Convert to um
+wavelength_picaso = 1e4 / wno_picaso
 
-# Bin rfast data to R=140 using PICASO's mean_regrid function
-# First convert rfast wavelength to wavenumber
+# Convert rfast wavelength to wavenumber and sort
 wno_rfast = 1e4 / lam_rfast
-#Sort in increasing wavenumber order (mean_regrid expects this)
 sort_idx = np.argsort(wno_rfast)
 wno_rfast_sorted = wno_rfast[sort_idx]
 F1_rfast_sorted = F1_rfast[sort_idx]
 
-# Regrid to R=140
-wno_rfast_binned, F1_rfast_binned = jdi.mean_regrid(wno_rfast_sorted, F1_rfast_sorted, R=140)
-wavelength_rfast_binned = 1e4 / wno_rfast_binned
-
-print(f"Binned rfast wavelength range: {wavelength_rfast_binned.min():.3f} - {wavelength_rfast_binned.max():.3f} μm")
-print(f"Number of binned points: {len(wavelength_rfast_binned)}")
-
-
-# Define a common wavenumber grid
-# Use the overlap region between rfast and PICASO
-wl_min = max(wavelength_rfast_binned.min(), wavelength_picaso.min())
-wl_max = min(wavelength_rfast_binned.max(), wavelength_picaso.max())
-
-print(f"Common wavelength range: {wl_min:.4f} - {wl_max:.4f} μm")
-
-# Create common wavenumber grid at R=140
-# Start with PICASO's grid in the overlap region as template
+# Define common grid from overlap between rfast and PICASO
+wl_min = max(lam_rfast.min(), wavelength_picaso.min())
+wl_max = min(lam_rfast.max(), wavelength_picaso.max())
 mask_overlap = (wavelength_picaso >= wl_min) & (wavelength_picaso <= wl_max)
 wno_common = wno_picaso[mask_overlap]
-
-print(f"Common grid: {len(wno_common)} wavenumber points")
-
-# Regrid PICASO albedo onto common grid
-_, albedo_picaso_common = jdi.mean_regrid(wno_picaso, albedo_picaso, newx=wno_common)
-
-# Regrid rfast albedo onto common grid
-# First need rfast in wavenumber space
-wno_rfast_sorted = np.sort(wno_rfast_binned)  # Make sure it's sorted
-alb_rfast_sorted = F1_rfast_binned[np.argsort(wno_rfast_binned)]
-
-_, albedo_rfast_common = jdi.mean_regrid(wno_rfast_sorted, alb_rfast_sorted, newx=wno_common)
-
-# Convert common wavenumber grid back to wavelength for plotting
 wavelength_common = 1e4 / wno_common
 
-print(f"After regridding:")
-print(f"Common wavelength points: {len(wavelength_common)}")
-print(f"PICASO on common grid: {len(albedo_picaso_common)}")
-print(f"rfast on common grid: {len(albedo_rfast_common)}")
+# Regrid both onto common grid in one step
+_, albedo_picaso_common = jdi.mean_regrid(wno_picaso, albedo_picaso, newx=wno_common)
+_, albedo_rfast_common = jdi.mean_regrid(wno_rfast_sorted, F1_rfast_sorted, newx=wno_common)
 
 # %% [markdown]
 # Now we can plot the two calculations, from PICASO and rfast, and compare.
@@ -916,57 +901,26 @@ lam_rfast_thermal = np.array([ 4.        ,  4.02867384,  4.05755322,  4.08663962
        24.72291822, 24.90014344])
 
 # %%
-# Bin rfast thermal data to same resolution as PICASO (R=140)
 # Get PICASO wavelength grid
 wno_picaso_thermal, fpfs_picaso_thermal, fp_picaso_thermal = res_fix_thermal['all']
-wavelength_picaso_thermal = 1e4 / wno_picaso_thermal  # Convert to um
+wavelength_picaso_thermal = 1e4 / wno_picaso_thermal
 
-# Bin rfast data to R=140 using PICASO's mean_regrid function
-# First convert rfast wavelength to wavenumber
+# Convert rfast wavelength to wavenumber and sort
 wno_rfast_thermal = 1e4 / lam_rfast_thermal
-
-# Sort in increasing wavenumber order (mean_regrid expects this)
 sort_idx = np.argsort(wno_rfast_thermal)
 wno_rfast_thermal_sorted = wno_rfast_thermal[sort_idx]
 F2_rfast_thermal_sorted = F2_rfast_thermal[sort_idx]
 
-# Regrid to R=140
-wno_rfast_thermal_binned, F2_rfast_thermal_binned = jdi.mean_regrid(
-    wno_rfast_thermal_sorted, F2_rfast_thermal_sorted, R=140
-)
-wavelength_rfast_thermal_binned = 1e4 / wno_rfast_thermal_binned
-
-print(f"Binned rfast wavelength range: {wavelength_rfast_thermal_binned.min():.3f} - {wavelength_rfast_thermal_binned.max():.3f} μm")
-print(f"Number of binned points: {len(wavelength_rfast_thermal_binned)}")
-
-# Define a common wavenumber grid
-# Use the overlap region between rfast and PICASO
-wl_min = max(wavelength_rfast_thermal_binned.min(), wavelength_picaso_thermal.min())
-wl_max = min(wavelength_rfast_thermal_binned.max(), wavelength_picaso_thermal.max())
-print(f"Common wavelength range: {wl_min:.4f} - {wl_max:.4f} μm")
-
-# Create common wavenumber grid at R=140
-# Start with PICASO's grid in the overlap region as template
+# Define common grid from overlap between rfast and PICASO
+wl_min = max(lam_rfast_thermal.min(), wavelength_picaso_thermal.min())
+wl_max = min(lam_rfast_thermal.max(), wavelength_picaso_thermal.max())
 mask_overlap = (wavelength_picaso_thermal >= wl_min) & (wavelength_picaso_thermal <= wl_max)
 wno_common_thermal = wno_picaso_thermal[mask_overlap]
-print(f"Common grid: {len(wno_common_thermal)} wavenumber points")
-
-# Regrid PICASO fpfs onto common grid
-_, fpfs_picaso_thermal_common = jdi.mean_regrid(wno_picaso_thermal, fpfs_picaso_thermal, newx=wno_common_thermal)
-
-# Regrid rfast F2 onto common grid
-# First need rfast in wavenumber space
-wno_rfast_thermal_sorted = np.sort(wno_rfast_thermal_binned)  # Make sure it's sorted
-F2_rfast_thermal_sorted = F2_rfast_thermal_binned[np.argsort(wno_rfast_thermal_binned)]
-_, F2_rfast_thermal_common = jdi.mean_regrid(wno_rfast_thermal_sorted, F2_rfast_thermal_sorted, newx=wno_common_thermal)
-
-# Convert common wavenumber grid back to wavelength for plotting
 wavelength_common_thermal = 1e4 / wno_common_thermal
 
-print(f"After regridding:")
-print(f"Common wavelength points: {len(wavelength_common_thermal)}")
-print(f"PICASO on common grid: {len(fpfs_picaso_thermal_common)}")
-print(f"rfast on common grid: {len(F2_rfast_thermal_common)}")
+# Regrid both onto common grid in one step
+_, fpfs_picaso_thermal_common = jdi.mean_regrid(wno_picaso_thermal, fpfs_picaso_thermal, newx=wno_common_thermal)
+_, F2_rfast_thermal_common = jdi.mean_regrid(wno_rfast_thermal_sorted, F2_rfast_thermal_sorted, newx=wno_common_thermal)
 
 # %%
 # Get original PICASO thermal data
