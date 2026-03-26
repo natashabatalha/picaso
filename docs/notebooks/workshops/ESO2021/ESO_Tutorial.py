@@ -31,10 +31,11 @@
 #
 
 # %%
+from virga import justplotit as vpi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings(action='ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 jpi.output_notebook()
 import os
 import pandas as pd
@@ -428,7 +429,7 @@ cld_mdl_out['100'].keys()
 
 # %%
 import virga
-jpi.show(virga.justplotit.opd_by_gas(cld_mdl_out['100']))
+jpi.show(vpi.opd_by_gas(cld_mdl_out['100']))
 
 # %% [markdown]
 # Since we are interested in the full sequence of optical depths, let's pull out these optical depth plots for a few of the cases.
@@ -438,7 +439,7 @@ figs = []
 
 for i,ikey in enumerate(list(all_out_cld.keys())[::3]):
 
-    figs += [virga.justplotit.opd_by_gas(cld_mdl_out[ikey],
+    figs += [vpi.opd_by_gas(cld_mdl_out[ikey],
                                          title=f'Teff={ikey}K',plot_width=300)]
 
     figs[i].legend.location='bottom_left'
@@ -450,7 +451,7 @@ jpi.show(jpi.row(figs))
 # It can be easily seen why the hot spectra are drastically altered by the cloud profile. Plot the PT profile with the condensation curves to see where Mg2SiO4 is condensing.
 
 # %%
-jpi.show(virga.justplotit.pt(cld_mdl_out['1600'], plot_height=500))
+jpi.show(vpi.pt(cld_mdl_out['1600'], plot_height=500))
 
 # %% [markdown]
 # In addition to the contribution plots we made above, below is a simple heat map plotting function that will plot the opacity of the molecule and the opacity of the cloud.

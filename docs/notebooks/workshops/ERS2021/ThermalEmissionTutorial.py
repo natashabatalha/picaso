@@ -30,6 +30,8 @@
 #
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
@@ -55,8 +57,6 @@ import astropy.units as u
 #
 
 # %%
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 import picaso.opacity_factory as op
 jpi.output_notebook() #will force all our plots to appear in the notebook
 
