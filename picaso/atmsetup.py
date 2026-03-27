@@ -13,6 +13,122 @@ from numba import jit
 import math 
 
 __refdata__ = os.environ.get('picaso_refdata')
+EXCLUDE_OPACITY_TYPES = ('line', 'continuum', 'rayleigh')
+
+
+def normalize_exclude_mol(exclude_mol):
+    """
+    Normalize exclude_mol into a per-molecule, per-opacity-type mapping.
+
+    Accepted inputs:
+    - None or 1: no exclusions
+    - str: exclude all opacity types for one molecule
+    - list[str]: exclude all opacity types for each molecule
+    - dict[str, list[str] | str]: exclude only the requested opacity types
+    """
+    if exclude_mol in (None, 1):
+        return {}
+
+    def _empty_flags():
+        return {opacity_type: False for opacity_type in EXCLUDE_OPACITY_TYPES}
+
+    def _is_normalized_mapping(value):
+        if not isinstance(value, dict):
+            return False
+        if not value:
+            return True
+        for molecule, flags in value.items():
+            if not isinstance(molecule, str):
+                return False
+            if not isinstance(flags, dict):
+                return False
+            if set(flags.keys()) != set(EXCLUDE_OPACITY_TYPES):
+                return False
+            if not all(isinstance(flag, (bool, np.bool_)) for flag in flags.values()):
+                return False
+        return True
+
+    def _set_flags(name, requested_types, normalized):
+        if not isinstance(name, str):
+            raise Exception('exclude_mol molecule names must be strings')
+        if isinstance(requested_types, str):
+            requested_types = [requested_types]
+        if not isinstance(requested_types, (list, tuple, set)):
+            raise Exception('exclude_mol dict values must be strings or lists of strings')
+        if len(requested_types) == 0:
+            raise Exception('exclude_mol dict values cannot be empty')
+
+        flags = normalized.setdefault(name, _empty_flags())
+        expanded_types = set()
+        for opacity_type in requested_types:
+            if not isinstance(opacity_type, str):
+                raise Exception('exclude_mol opacity types must be strings')
+            if opacity_type == 'all':
+                expanded_types.update(EXCLUDE_OPACITY_TYPES)
+            elif opacity_type in EXCLUDE_OPACITY_TYPES:
+                expanded_types.add(opacity_type)
+            else:
+                allowed = ', '.join(EXCLUDE_OPACITY_TYPES + ('all',))
+                raise Exception(f"Invalid exclude_mol opacity type '{opacity_type}'. Allowed values are: {allowed}")
+
+        for opacity_type in expanded_types:
+            flags[opacity_type] = True
+
+    if _is_normalized_mapping(exclude_mol):
+        return {
+            molecule: {opacity_type: bool(flag) for opacity_type, flag in flags.items()}
+            for molecule, flags in exclude_mol.items()
+        }
+
+    normalized = {}
+    if isinstance(exclude_mol, str):
+        _set_flags(exclude_mol, ['all'], normalized)
+    elif isinstance(exclude_mol, (list, tuple, set)):
+        for molecule in exclude_mol:
+            _set_flags(molecule, ['all'], normalized)
+    elif isinstance(exclude_mol, dict):
+        for molecule, requested_types in exclude_mol.items():
+            _set_flags(molecule, requested_types, normalized)
+    else:
+        raise Exception('exclude_mol must be None, a string, a list of strings, or a dict')
+
+    return normalized
+
+
+def is_opacity_excluded(exclude_mol, molecule, opacity_type):
+    """
+    Return True if a given opacity type should be excluded for a molecule.
+
+    Accepts normalized exclude_mol mappings and also tolerates legacy values.
+    Matching is attempted against both the exact name and the simplified
+    molecule name (e.g. isotopologue -> simple species).
+    """
+    if exclude_mol in (None, 1, {}):
+        return False
+
+    if opacity_type not in EXCLUDE_OPACITY_TYPES:
+        raise ValueError(f'Unknown opacity_type: {opacity_type}')
+
+    simple_name = convert_to_simple(molecule)
+    for key in (molecule, simple_name):
+        value = exclude_mol.get(key)
+        if isinstance(value, dict) and value.get(opacity_type, False):
+            return True
+        if isinstance(value, (int, bool)) and opacity_type == 'line' and not value:
+            return True
+    return False
+
+
+def molecule_has_excluded_line_opacity(exclude_mol):
+    """Return True if any molecule requests line-opacity exclusion."""
+    if exclude_mol in (None, 1, {}):
+        return False
+    for value in exclude_mol.values():
+        if isinstance(value, dict) and value.get('line', False):
+            return True
+        if isinstance(value, (int, bool)) and not value:
+            return True
+    return False
 
 class ATMSETUP():
     """
@@ -245,7 +361,7 @@ class ATMSETUP():
         """
         return np.zeros(len(logPc)) + T #return isothermal for now
 
-    def get_needed_continuum(self,available_ray_mol,available_continuum):
+    def get_needed_continuum(self,available_ray_mol,available_continuum, exclude_mol=None):
         """
         This will define which molecules are needed for the continuum opacities.
 
@@ -265,21 +381,30 @@ class ATMSETUP():
         # For standard CIA opacities
         for m1 in simple_names:
             for m2 in simple_names:
+                if is_opacity_excluded(exclude_mol, m1, 'continuum'):
+                    continue
+                if is_opacity_excluded(exclude_mol, m2, 'continuum'):
+                    continue
                 if m1+m2 in available_continuum:
                     self.continuum_molecules += [[m1,m2]]
 
         # For special continuum opacities
-        if "H-" in simple_names and 'H-bf' in available_continuum:
+        if ("H-" in simple_names and 'H-bf' in available_continuum and
+                not is_opacity_excluded(exclude_mol, 'H-', 'continuum')):
             self.continuum_molecules += [['H-','bf']]
-        if "H" in simple_names and "electrons" in self.level.keys() and 'H-ff' in available_continuum:
+        if ("H" in simple_names and "electrons" in self.level.keys() and
+                'H-ff' in available_continuum and
+                not is_opacity_excluded(exclude_mol, 'H', 'continuum')):
             self.continuum_molecules += [['H-','ff']]
-        if "H2" in simple_names and "electrons" in self.level.keys() and 'H2-' in available_continuum:
+        if ("H2" in simple_names and "electrons" in self.level.keys() and
+                'H2-' in available_continuum and
+                not is_opacity_excluded(exclude_mol, 'H2', 'continuum')):
             self.continuum_molecules += [['H2-','']]
 
         # Deal with rayleigh opacity
         self.rayleigh_molecules = []
         for i in simple_names: 
-            if i in available_ray_mol: 
+            if i in available_ray_mol and not is_opacity_excluded(exclude_mol, i, 'rayleigh'):
                 self.rayleigh_molecules += [i]
 
     def get_weights(self, molecule):
