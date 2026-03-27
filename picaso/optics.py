@@ -2,6 +2,7 @@ from .deq_chem import mix_all_gases_gasesfly
 from .rayleigh import Rayleigh
 from .opacity_factory import g_w_2gauss, get_ck_tables
 from .deq_chem import mix_all_gases
+from .atmsetup import is_opacity_excluded, molecule_has_excluded_line_opacity
 
 import warnings
 import pandas as pd
@@ -1173,7 +1174,7 @@ class RetrieveCKs():
         kappas = []
         for imol in atmosphere.molecules: 
             #only add to molecule set if it wasnt requested as a excluded molecule
-            if ((exclude_mol==1) or (exclude_mol[imol]==1)):
+            if not is_opacity_excluded(exclude_mol, imol, 'line'):
                 mixes += [atmosphere.layer['mixingratios'][imol].values]
                 kappas += [self.kappas[imol]]
 
@@ -1504,6 +1505,11 @@ class RetrieveCKs():
             Not yet functional for CK option since they are premixed. For individual 
             CK molecules, this will ignore the optical contribution from one molecule. 
         """
+        if molecule_has_excluded_line_opacity(exclude_mol):
+            raise Exception(
+                "Line-opacity exclusion is not supported for premixed/preweighted CK tables because the line opacity is already mixed. "
+                "Use separable opacities or request only continuum/rayleigh exclusion."
+            )
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
     
@@ -2267,10 +2273,7 @@ class RetrieveOpacities():
             #fac is a multiplier for users to test the optical contribution of 
             #each of their molecules
             #for example, does ignoring CH4 opacity affect my spectrum??
-            if exclude_mol==1:
-                fac =1
-            else: 
-                fac = exclude_mol[i]
+            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
             for ind in range(nlayer): # multiply by avogadro constant
             #these where statements are used for non zero arrays 
             #however they should ultimately be put into opacity factory so it doesnt slow 
@@ -2340,10 +2343,7 @@ class RetrieveOpacities():
            #fac is a multiplier for users to test the optical contribution of 
             #each of their molecules
             #for example, does ignoring CH4 opacity affect my spectrum??
-            if exclude_mol==1:
-                fac =1
-            else: 
-                fac = exclude_mol[i]
+            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
             for j,ind in zip(ind_pt,range(nlayer)): # multiply by avogadro constant 
                 self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23 #add to opacity
 

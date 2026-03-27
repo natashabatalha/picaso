@@ -1,4 +1,4 @@
-from .atmsetup import ATMSETUP
+from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
 from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
@@ -46,6 +46,46 @@ __refdata__ = os.environ.get('picaso_refdata')
 __version__ = '4.0.1'
 
 LODDERS2020_C_TO_O = 0.54939759398
+
+
+def _molecule_has_continuum_support(opacityclass, simple_name, active_simple_names):
+    if simple_name == 'H-' and 'H-bf' in opacityclass.avail_continuum:
+        return True
+    if simple_name == 'H' and 'H-ff' in opacityclass.avail_continuum:
+        return True
+    if simple_name == 'H2' and 'H2-' in opacityclass.avail_continuum:
+        return True
+    for other in active_simple_names:
+        if simple_name + other in opacityclass.avail_continuum:
+            return True
+    return False
+
+
+def _warn_for_exclude_requests(atm, exclude_mol, opacityclass):
+    if not exclude_mol:
+        return
+
+    active_simple_names = {convert_to_simple(molecule) for molecule in atm.molecules}
+    for molecule, requested_types in exclude_mol.items():
+        simple_name = convert_to_simple(molecule)
+
+        if requested_types.get('line', False):
+            if molecule not in opacityclass.molecules and simple_name not in opacityclass.molecules:
+                atm.add_warnings(
+                    f"You requested line-opacity exclusion for {molecule}, but the available line opacities are {opacityclass.molecules}."
+                )
+
+        if requested_types.get('continuum', False):
+            if simple_name not in active_simple_names or not _molecule_has_continuum_support(opacityclass, simple_name, active_simple_names):
+                atm.add_warnings(
+                    f"You requested continuum-opacity exclusion for {molecule}, but no matching continuum opacity is active in this calculation."
+                )
+
+        if requested_types.get('rayleigh', False):
+            if simple_name not in opacityclass.rayleigh_molecules:
+                atm.add_warnings(
+                    f"You requested Rayleigh-opacity exclusion for {molecule}, but the available Rayleigh molecules are {opacityclass.rayleigh_molecules}."
+                )
 
 if not os.path.exists(__refdata__): 
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
@@ -208,8 +248,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+    exclude_mol = normalize_exclude_mol(inputs['atmosphere']['exclude_mol'])
+    _warn_for_exclude_requests(atm, exclude_mol, opacityclass)
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -220,12 +264,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
-    if isinstance(exclude_mol,dict):
-        for imol in exclude_mol.keys(): 
-            if imol not in opacityclass.molecules: 
-                atm.add_warnings(f'Youve requested that I exclude opacity from {imol} but the set of opacities I have is {opacityclass.molecules} so your spectra will look identical.')
-
     get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
@@ -1242,8 +1280,12 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+    exclude_mol = normalize_exclude_mol(inputs['atmosphere']['exclude_mol'])
+    _warn_for_exclude_requests(atm, exclude_mol, opacityclass)
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -1254,15 +1296,13 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
-
     get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
     #lastly grab needed opacities for the problem
-    get_opacities(atm)
+    get_opacities(atm, exclude_mol=exclude_mol)
     #only need to get opacities for one pt profile
 
     #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -1932,12 +1972,17 @@ class inputs():
         filename : str 
             (Optional) Filename with pressure, temperature and volume mixing ratios.
             Must contain pressure at least one molecule
-        exclude_mol : list of str 
-            (Optional) List of molecules to ignore from opacity. It will NOT 
-            change other aspects of the calculation like mean molecular weight. 
-            This should be used as exploratory ONLY. if you actually want to remove 
-            the contribution of a molecule entirely from your profile you should remove 
-            it from your input data frame. 
+        exclude_mol : str, list of str, or dict
+            (Optional) Opacity-only exclusion control used for exploratory
+            spectroscopy. This does NOT change chemistry, mean molecular weight,
+            density, or other non-opacity atmospheric properties.
+            Supported forms are:
+            - ``'H2O'`` or ``['H2O', 'CO2']`` to exclude all opacity types
+              associated with each molecule
+            - ``{'H2O': ['line', 'continuum'], 'CO2': ['all']}`` to exclude
+              only selected opacity classes
+            Valid opacity types are ``line``, ``continuum``, ``rayleigh``, and
+            ``all``.
         mh : float 
             Metallicity relative to Solar 
         cto_relative : float 
@@ -2015,18 +2060,7 @@ class inputs():
             if 'climate' not in self.inputs['calculation']:
                 raise Exception("`temperature` not specified as a column/key name")
 
-        # if there ar molecules we want to exclude lets make sure they are in list format
-        if not isinstance(exclude_mol, type(None)):
-            if  isinstance(exclude_mol, str):
-                exclude_mol = [exclude_mol]
-            
-            #now lets transfer to a dictionary for each molecule the user has chosen
-            #this way we can flip them on and off individually
-            self.inputs['atmosphere']['exclude_mol'] = {i:1 for i in df.keys()}
-            for i in exclude_mol: 
-                self.inputs['atmosphere']['exclude_mol'][i]=0
-        else: 
-            self.inputs['atmosphere']['exclude_mol'] = 1
+        self.inputs['atmosphere']['exclude_mol'] = normalize_exclude_mol(exclude_mol)
 
         #sort by pressure to make sure 0 index is low pressure, last index is high pressure
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
