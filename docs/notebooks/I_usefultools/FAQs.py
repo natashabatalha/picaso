@@ -16,12 +16,12 @@
 # # FAQs
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
 #picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 from bokeh.io import output_notebook
 output_notebook()
 

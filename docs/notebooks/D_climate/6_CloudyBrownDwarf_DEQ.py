@@ -15,7 +15,7 @@
 # %% [markdown]
 # # One-Dimensional Climate Models: Brown Dwarfs w/ Clouds in Chemical Disequilibrium
 #
-# In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds and chemical disequilibrium. For a more in depth look at the climate-cloud code check out [Mang et al. 2026]() (note this should also be cited if using this code/tutorial).
+# In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds and chemical disequilibrium. For a more in depth look at the climate-cloud code check out [Mang et al. 2026](https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract) (note this should also be cited if using this code/tutorial).
 #
 # You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html) and running clouds in [equilibrium](https://natashabatalha.github.io/picaso/notebooks/D_climate/5_CloudyBrownDwarf_PreW.html)
 #
@@ -25,13 +25,13 @@
 #
 
 # %%
+from virga import justplotit as vpi
+from virga import justdoit as vdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
-import virga.justdoit as vj
-import virga.justplotit as cldplt
 jpi.output_notebook()
 import astropy.units as u
 import numpy as np
@@ -132,11 +132,11 @@ out = cl_run.climate(opacity_ck, save_all_profiles = True, with_spec=True,
 # Now we can plot the results, first let's grab the condensation curve for all our cloud species
 
 # %%
-kcl_cond_p, kcl_cond_t = vj.condensation_t('KCl', 1, 2.2, pressure = out['pressure'])
-na2s_cond_p, na2s_cond_t = vj.condensation_t('Na2S', 1, 2.2, pressure = out['pressure'])
-mns_cond_p, mns_cond_t = vj.condensation_t('MnS', 1, 2.2, pressure = out['pressure'])
-zns_cond_p, zns_cond_t = vj.condensation_t('ZnS', 1, 2.2, pressure = out['pressure'])
-cr_cond_p, cr_cond_t = vj.condensation_t('Cr', 1, 2.2, pressure = out['pressure'])
+kcl_cond_p, kcl_cond_t = vdi.condensation_t('KCl', 1, 2.2, pressure = out['pressure'])
+na2s_cond_p, na2s_cond_t = vdi.condensation_t('Na2S', 1, 2.2, pressure = out['pressure'])
+mns_cond_p, mns_cond_t = vdi.condensation_t('MnS', 1, 2.2, pressure = out['pressure'])
+zns_cond_p, zns_cond_t = vdi.condensation_t('ZnS', 1, 2.2, pressure = out['pressure'])
+cr_cond_p, cr_cond_t = vdi.condensation_t('Cr', 1, 2.2, pressure = out['pressure'])
 
 # %%
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
@@ -172,7 +172,7 @@ show(jpi.mixing_ratio(out['spectrum_output']['full_output'], limit=14, height=60
 
 # %%
 # once again we can do a quick sanity check to make sure a cloud is present
-show(cldplt.all_optics_1d(out['virga_output'], wave_range=[1,2]))
+show(vpi.all_optics_1d(out['virga_output'], wave_range=[1,2]))
 
 # %% [markdown]
 # ## Cloudy vs Clear Spectra
