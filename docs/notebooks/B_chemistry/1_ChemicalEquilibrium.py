@@ -20,12 +20,12 @@
 #
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 jpi.output_notebook()
 import astropy.units as u
 import numpy as np
