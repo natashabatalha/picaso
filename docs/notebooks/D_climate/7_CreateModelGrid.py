@@ -42,9 +42,9 @@
 # If you dont understand these inputs we encourage you to complete the basic climate tutorials first!
 
 # %%
-import os
-from picaso import justdoit as jdi
 from picaso import justplotit as jpi
+from picaso import justdoit as jdi
+import os
 import numpy as np
 
 

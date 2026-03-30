@@ -19,12 +19,12 @@
 #
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 import pandas as pd
 
 #picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 
 #plotting
 jpi.output_notebook()
