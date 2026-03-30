@@ -197,7 +197,7 @@ GJ436b['observation']['sat_unit'] = '%'
 
 
 # %% [markdown]
-# Next pick an initial set of isntrument modes. I usually pick one at least one from each of the 4 (NIRISS, NIRSpec, NIRCam, and MIRI).
+# Next pick an initial set of instrument modes. I usually pick one at least one from each of the 4 (NIRISS, NIRSpec, NIRCam, and MIRI).
 #
 # <img src="https://exoctk.stsci.edu/pandexo/static/img/pec_res.jpg?v=4d88238dec8aa3a869d91da725065be1" alt="Drawing" style="width: 400px;"/>
 #

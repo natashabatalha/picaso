@@ -22,7 +22,7 @@
 # From the previous tutorials you should understand:
 #
 # 1. How to convert GCM input to PICASO's required Xarray
-# 2. How to post-process output to append to GCM ouput
+# 2. How to post-process output to append to GCM output
 # 3. How to run a thermal phase curve and analyze the output
 #
 # In this tutorial, you will learn:
@@ -47,7 +47,7 @@ jpi.output_notebook()
 #
 # Reflected light calculations consider only scattering from the dayside hemisphere. The dayside hemisphere will continually come in or out of view depending on the phase angle.
 #
-# Let's load in opacity for the visible to near-infrared and the 3D hot Jupiter atmosperic model:
+# Let's load in opacity for the visible to near-infrared and the 3D hot Jupiter atmospheric model:
 #
 # We are resampling our opacities here to make phase curve calculations faster! Use resampling with caution in your own phase curve calculations!!
 
@@ -190,7 +190,7 @@ jpi.show(jpi.spectrum(wno, fpfs, plot_width=500,legend=legend,
 # %% [markdown]
 # ## Reflected phase curve with `Virga` clouds
 #
-# In reflected light brightness can be heavily influenced by cloud layers. Let's add a user-input cloud layer and compare ouputs**
+# In reflected light brightness can be heavily influenced by cloud layers. Let's add a user-input cloud layer and compare outputs**
 #
 # To use Virga clouds, please use the same steps found in [Modeling a 3D spectrum (Adams et al. 2022) : Run Cloudy 3D spectra](https://natashabatalha.github.io/picaso/notebooks/9c_PostProcess3Dinput-Clouds.html#Post-Process-Clouds:-virga-cloud-model) or [Modeling a Phase Curve pt 2 : Run Thermal Phase Curves w/ Post-Processed Virga Models](https://natashabatalha.github.io/picaso/notebooks/9f_PhaseCurves-wChemEq.html#Run-Thermal-Phase-Curve-w/-Post-Processed-virga-Models)
 #

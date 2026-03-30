@@ -15,7 +15,7 @@
 # %% [markdown]
 # # Brown Dwarf Climate Model with Moist Adiabat
 #
-# In this tutorial we will test another parameter space using a moist adiabt which takes into consideration water latent heat release. You can read more details about the effects of this in [Tang et al. 2021](https://iopscience.iop.org/article/10.3847/1538-4357/ac1e90) for clear and partly cloudy atmospheres, and [Mang et al. 2024](https://iopscience.iop.org/article/10.3847/1538-4357/ad6c4c) for fully cloudy atmospheres.
+# In this tutorial we will test another parameter space using a moist adiabat which takes into consideration water latent heat release. You can read more details about the effects of this in [Tang et al. 2021](https://iopscience.iop.org/article/10.3847/1538-4357/ac1e90) for clear and partly cloudy atmospheres, and [Mang et al. 2024](https://iopscience.iop.org/article/10.3847/1538-4357/ad6c4c) for fully cloudy atmospheres.
 #
 # Here we're just going to test running the model for a clear atmosphere
 #

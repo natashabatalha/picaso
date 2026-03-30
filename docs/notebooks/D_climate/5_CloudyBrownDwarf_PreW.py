@@ -17,7 +17,7 @@
 #
 # In this tutorial you will learn how to run 1-D climate models for brown dwarfs with Virga clouds included self-consistently! For a more in depth look at the climate-cloud code check out [Mang et al. 2026]() (note this should also be cited if using this code/tutorial).
 #
-# You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
+# You should already be familiar with running 1-D climate models with running a [simple clear brown dwarf model](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
 #
 # What you need to have downloaded for clouds to work:
 # [Virga](https://natashabatalha.github.io/virga/installation.html) and be sure to have the mieff files downloaded as well!
@@ -36,7 +36,7 @@ import astropy.units as u
 import numpy as np
 import matplotlib.pyplot as plt
 # %matplotlib inline
-import xarray
+import xarray as xr
 from bokeh.plotting import show, figure
 
 # %% [markdown]
@@ -87,7 +87,6 @@ rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is
 # If you are unfamiliar with Virga, we highly recommend going through the [tutorials](https://natashabatalha.github.io/virga/tutorials.html) to understand the basics of how we generate those clouds before pairing them with the 1-D climate models here. It is also necessarry to have the mieff files generated for the cloud species you want to include.
 
 # %%
-# virga_dir = '//Users/nbatalh1/Documents/data/virga' # path to virga directory with the Mie scatering files
 virga_dir = os.path.join(os.getenv('picaso_refdata'),'virga') # path to virga directory with the Mie scattering files
 
 # %% [markdown]
@@ -133,7 +132,7 @@ plt.show()
 # %% [markdown]
 # Now you should be able to see a mostly smooth PT profile that's a little warmer than the cloud-free Sonora Bobcat profile. Even though it looks warmer, the actual effective temperature of the object is the same because the water cloud opacity blocks out some of the flux.
 #
-# As you may know (or will find out) clouds are really difficult to converge models for especially with H2O clouds in cold regions for example. To learn more about common signs that you should look for to identify "bad" models, take a look at the [Common Climate Issues Notebook]()
+# As you may know (or will find out) clouds are really difficult to converge models for especially with H2O clouds in cold regions for example. To learn more about common signs that you should look for to identify "bad" models, take a look at the [Common Climate Issues Notebook](https://natashabatalha.github.io/picaso/notebooks/I_usefultools/CommonClimateBDIssues.html)
 
 # %% [markdown]
 # ## Looking at the Cloud Properties
@@ -220,7 +219,7 @@ plt.legend()
 plt.show()
 
 # %% [markdown]
-# So here you can see the large water cloud feature around 4-5 micron where the flux from this brown dwarf is being surpressed by the large water cloud opacity. Other water features can also be seen in other regions of the spectrum.
+# So here you can see the large water cloud feature around 4-5 micron where the flux from this brown dwarf is being suppressed by the large water cloud opacity. Other water features can also be seen in other regions of the spectrum.
 
 # %% [markdown]
 # ## Patchy Clouds

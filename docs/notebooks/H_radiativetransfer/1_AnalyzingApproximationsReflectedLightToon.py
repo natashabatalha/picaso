@@ -15,7 +15,7 @@
 # %% [markdown]
 # # Approximations for Toon89 Two-Stream Radiative Transfer in Reflected Light
 #
-# Like any code, there are several approximations that go into computing intesity from various phase functions. In reflected light models, some of these approximations drastically change the output spectra.
+# Like any code, there are several approximations that go into computing intensity from various phase functions. In reflected light models, some of these approximations drastically change the output spectra.
 #
 # In this notebook you will:
 #
@@ -119,7 +119,7 @@ show(column(fig_no_cloud,fig_cloudy ))
 #
 # We also know that planet atmospheres have high degrees of Rayleigh scattering. [Cahoy+2010](http://adsabs.harvard.edu/abs/2010ApJ...724..189C) developed a methodology for incorporating Rayleigh into the direct scattering component.
 #
-# A more rrobust way of dealing with Rayleigh is to directly fold it's phase function into the TTHG phase function (TTHG_Ray).
+# A more robust way of dealing with Rayleigh is to directly fold it's phase function into the TTHG phase function (TTHG_Ray).
 #
 # We'll run each case with and without a cloud so you can see what happens in both regimes
 

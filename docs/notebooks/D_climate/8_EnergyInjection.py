@@ -17,7 +17,7 @@
 #
 # In this tutorial you will learn how you can add in an arbitrary amount of energy into your climate model. This could be because you want to build an intuition on the impact of temperature inversions or see if there are hot spots in your object causing variability in the observations for example. For a more in depth look at the climate-cloud code check out [Mang et al. 2026]() (note this should also be cited if using this code/tutorial).
 #
-# You should be comfortable with running climate models by now, the minimum requirement for this tutorial is [One-Dimensional Climate Models: The Basics of Brown Dwarfs](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html).
+# You should be comfortable with running climate models by now, the minimum requirement for this tutorial is [One-Dimensional Climate Models: The Basics of Brown Dwarfs](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html).
 
 # %%
 import os
@@ -32,7 +32,7 @@ import astropy.units as u
 import numpy as np
 import matplotlib.pyplot as plt
 # %matplotlib inline
-import xarray
+import xarray as xr
 from bokeh.plotting import show, figure
 import pandas as pd
 

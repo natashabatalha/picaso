@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # Implemenation: Grid Fitting using Bayesian Statistics w/ PICASO
+# # Implementation: Grid Fitting using Bayesian Statistics w/ PICASO
 #
 # If this is your first crack at fitting parameters with PICASO, we strongly encourage you to look at the first retrieval tutorial. Here, we will expand on that tutorial.
 #
@@ -117,7 +117,7 @@ def get_data():
 # %% [markdown]
 # <div class="alert alert-block alert-info">
 #
-# ^Square is a bit of a misnomer. We just mean the grid needs to be a solid A x B x C x … x N -type matrix (a 4x2x8 rectangle would be equally acceptable as a 5x5x5 square). You can’t have gaps or extra weird regions hanging on (e.g. a staircase would be bad). `prep_gridtrieval` will check that your grid is an acceptable solid N-dimentional rectangle.
+# ^Square is a bit of a misnomer. We just mean the grid needs to be a solid A x B x C x … x N -type matrix (a 4x2x8 rectangle would be equally acceptable as a 5x5x5 square). You can’t have gaps or extra weird regions hanging on (e.g. a staircase would be bad). `prep_gridtrieval` will check that your grid is an acceptable solid N-dimensional rectangle.
 #
 # ^Sometimes P-T profiles are computed for multiple models (or instruments?) and they don't share the same axes. `prep_gridtrieval` will take care of this by chopping the profiles off so they have the same axes (they cover the same range of P and T values).
 #
@@ -216,7 +216,7 @@ class model_set:
 # %% [markdown]
 # <div class="alert alert-block alert-info">
 #
-# `custom_interp` is like a “look up table” interpolator. It goes into `fitter` (the matrix of pre-computed models saved by GridFitter), locates the point specified by cube (which will likely be in-between grid nodes) and interpolates, creating a new spectrum, climate, and p-t profile for that unique midway point. `custom_interp` by default returns a spectum, but it could also return a climate or p-t profile.
+# `custom_interp` is like a “look up table” interpolator. It goes into `fitter` (the matrix of pre-computed models saved by GridFitter), locates the point specified by cube (which will likely be in-between grid nodes) and interpolates, creating a new spectrum, climate, and p-t profile for that unique midway point. `custom_interp` by default returns a spectrum, but it could also return a climate or p-t profile.
 #
 # </div>
 #
@@ -283,11 +283,11 @@ def loglikelihood(cube):
         xbin_model , y_model = jdi.mean_regrid(resultx, resulty, newx=xdata)#remember we put everything already sorted on wavenumber
 
         #add offsets if they exist to the data
-        offset = offset_all.get(ikey,0) #if offset for that instrument doesnt exist, return 0
+        offset = offset_all.get(ikey,0) #if offset for that instrument doesn't exist, return 0
         ydata = ydata+offset
 
         #add error inflation if they exist
-        err_inf = err_inf_all.get(ikey,0) #if err inf term for that instrument doesnt exist, return 0
+        err_inf = err_inf_all.get(ikey,0) #if err inf term for that instrument doesn't exist, return 0
         sigma = edata**2 + (err_inf)**2 #there are multiple ways to do this, here just adding in an extra noise term
         if err_inf !=0:
             #see formalism here for example https://emcee.readthedocs.io/en/stable/tutorials/line/#maximum-likelihood-estimation
@@ -397,7 +397,7 @@ for params in result['samples']:
         band = PredictionBand(1e4/x);first=False   #transforming xaxis to microns
 
     #this is a little tricky as we have added an offset to the data
-    #so what i'll do in this case is add the inverse to the model so we can visualise it with the data in the banded solution
+    #so what i'll do in this case is add the inverse to the model so we can visualize it with the data in the banded solution
     band.add(y-params[-1])
 
 band.line(color='black')#median model

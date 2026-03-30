@@ -40,7 +40,7 @@
 #
 # 1. The basics of our retrievals workflow: the data, the model set, the prior set, the likelihood function (**this tutorial**)
 # 2. The basics of a retrieval analysis: corner plots, Bayesian evidence, 1-3 sigma banded spectra (**this tutorial**)
-# 3. Implemenation: Grid Fitting -- Using only pre-computed grids to get best fit grid values
+# 3. Implementation: Grid Fitting -- Using only pre-computed grids to get best fit grid values
 # 4. Implementation: Grid-trieval -- Using a pre-computed grid and post-processing values such as clouds, added chemistry, etc.
 # 5. Implementation: Free retrieval -- Building parameterizations
 #
@@ -337,7 +337,7 @@ def loglikelihood(cube):
 # %% [markdown]
 # ## Step 7) Check models, likelihoods, priors!
 #
-# Do not undersestimate the importance of this step before moving forward. You always want to ensure that your model is returning sensible values before you jump into running your sampler.
+# Do not underestimate the importance of this step before moving forward. You always want to ensure that your model is returning sensible values before you jump into running your sampler.
 #
 # Ask yourself:
 #

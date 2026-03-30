@@ -45,7 +45,7 @@
 # ## What are correlated-k tables vs. monochromatic opacities
 #
 # 1. Pre-weighted correlated k tables : these are preweighted on chemical equilibrium tables and as such you will get on table per M/H and C/O point
-# 2. Resort Rebin correlated k tables : these are the ones downloaded for on-the-fly disequillibrium and are mixed "on the fly" based on your chemistry. Therefore you will see they are on a per molecule basis.
+# 2. Resort Rebin correlated k tables : these are the ones downloaded for on-the-fly disequilibrium and are mixed "on the fly" based on your chemistry. Therefore you will see they are on a per molecule basis.
 # 3. Monochromatic opacities: these are resampled from line by line calculations and you will notice they are usually very large (10-30 Gb)
 #
 #
@@ -155,7 +155,7 @@ df['resort'] = cases['resort'].spectrum(calc['resort'],full_output=True, calcula
 
 cm1_to_micron = lambda wn: 1e4 / wn
 
-# Num guass points is based on the opacities that you're using
+# Num gauss points is based on the opacities that you're using
 num_gauss_points = 8
 gauss_to_plot    = range(0, num_gauss_points, 2)
 cmap             = plt.cm.viridis

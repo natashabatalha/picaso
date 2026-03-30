@@ -15,13 +15,13 @@
 # %% [markdown]
 # # One-Dimensional Climate Models: The Basics of Planets
 #
-# In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out [Mukherjee et al. 2022](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract) (note this should also be cited if using this code/tutorial).
+# In this tutorial you will learn the very basics of running 1D climate runs. For a more in depth look at the climate code check out [Mukherjee et al. 2023](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract) (note this should also be cited if using this code/tutorial).
 #
 # What you should already be familiar with:
 #
-# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission)
+# - [basics of running/analyzing thermal spectra](https://natashabatalha.github.io/picaso/notebooks/A_basics/5_AddingThermalFlux.html)
 # - [how to analyze thermal emission spectra](https://natashabatalha.github.io/picaso/notebooks/workshops/ERS2021/ThermalEmissionTutorial.html)
-# - [how to compute a Brown Dwarf 1D climate model](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
+# - [how to compute a Brown Dwarf 1D climate model](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
 
 # %%
 import warnings
@@ -111,7 +111,7 @@ pressure = pt['pressure'].values
 #
 # **New Parameters:**
 #
-# 1. `rfacv`: (See Mukherjee et al Eqn. 20 `r_st`) https://arxiv.org/pdf/2208.07836.pdf
+# 1. `rfacv`: (See [Mukherjee et al. 2023](https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract) Eqn. 20 `r_st`)
 #
 # Non-zero values of rst (aka "rfacv" legacy terminology) is only relevant when the external irradiation on the atmosphere is non-zero. In the scenario when a user is computing a planet-wide average T(P) profile, the stellar irradiation is contributing to 50% (one hemisphere) of the planet and as a result rst = 0.5. If instead the goal is to compute a night-side average atmospheric state, rst is set to be 0. On the other extreme, to compute the day-side atmospheric state of a tidally locked planet rst should be set at 1.
 
@@ -187,7 +187,7 @@ plt.title(r"T$_{\rm eff}$= 1000 K, log(g)=5.0",fontsize=25)
 #
 # where a = 1.43877735$\times$10$^{-2}$ m.K and b = 11.91042952$\times$10$^{-17}$ m$^4$kg/s$^3$
 #
-# Let's calculate the brigthness temperature of our current run and check if our pressure grid was okay.
+# Let's calculate the brightness temperature of our current run and check if our pressure grid was okay.
 
 # %%
 brightness_temp, figure= jpi.brightness_temperature(out['spectrum_output'])

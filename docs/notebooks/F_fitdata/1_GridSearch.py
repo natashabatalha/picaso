@@ -255,7 +255,7 @@ for iex in ['CH4','H2O','CO2',None]:
 jpi.show(jpi.spectrum(w,f,legend=l))
 
 # %% [markdown]
-# ## Quantify Molecular Detection using Guassian Fitting
+# ## Quantify Molecular Detection using Gaussian Fitting
 #
 #
 # For very gaussian shaped molecules (like CO2 in this case), we can use a simple Gaussian fitting technique to quantify the significance of our detection. Note this ONLY works in cases where the shape of the molecule is gaussian with a single peak and well-shaped wings.

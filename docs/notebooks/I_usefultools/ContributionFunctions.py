@@ -54,7 +54,7 @@ full_output=df['full_output']
 # `tau_p_surface`
 # - Each dictionary entry is a nwave array that represents the pressure level where the cumulative opacity reaches the value specified by the user through `at_tau`.
 #
-# Note: If you do not see a molecule that you have added as input, check to make sure it is propertly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)
+# Note: If you do not see a molecule that you have added as input, check to make sure it is properly formatted (e.g. Sodium must be Na not NA, Titanium Oxide must be TiO not TIO)
 
 # %%
 out = jdi.get_contribution(case1, opa, at_tau=1)

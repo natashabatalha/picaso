@@ -195,7 +195,7 @@ jpi.show(jpi.spectrum(wno,spec,legend=['Cold','Hot'], y_axis_type='log',
 # %% [markdown]
 # ### Step 1: Check inputs to make sure input chemistry and climate are as expected
 #
-# For both the cold and hot start cases, let's inspect your input in order to make sure that it follows your intuition regarding the effective temperature, gravity that you have inputed.
+# For both the cold and hot start cases, let's inspect your input in order to make sure that it follows your intuition regarding the effective temperature, gravity that you have inputted.
 
 # %%
 #everything will be aggregated here

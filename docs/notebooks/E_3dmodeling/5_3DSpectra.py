@@ -125,6 +125,6 @@ out3d_cld = case_3d.spectrum(opacity,
 # Here we can break down a full map of the molecular, cloud and rayleigh opacity. Whereas in map we had to specify a specific pressure and wavelength, here we can specify an optical depth and it will produce a map of what pressure level corresponds to that optical depth. We tend to see photons that originate from tau=1. Therefore, it is interesting to plot a tau=1 map so we can see if we are seeing different pressure levels at different locations across the disk.
 
 # %%
-#NOTE, we haven't run clouds and are not at short wavelenghts,
+#NOTE, we haven't run clouds and are not at short wavelengths,
 #so the cloud and rayleigh opacity will not be too interesting
 jpi.taumap(out3d_cld['full_output'], wavelength=1.4, at_tau=1)

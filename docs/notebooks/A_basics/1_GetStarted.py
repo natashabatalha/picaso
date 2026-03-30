@@ -23,7 +23,7 @@
 #
 # 3) Added environment variables
 #
-# If you have not done these things, please return to [Installation Guilde](https://natashabatalha.github.io/picaso/installation.html)
+# If you have not done these things, please return to [Installation Guide](https://natashabatalha.github.io/picaso/installation.html)
 #
 # Reminder you can always run these to check your environment:
 #
@@ -131,7 +131,7 @@ start_case.atmosphere(filename=jdi.jupiter_pt(), sep=r'\s+')
 #
 # 2) Can specify any necessary key word arguments for pd.read_csv at the end
 #
-# **PICASO will auto-compute mixing ratios, determine what CIA is neceesary and compute mean molecular weight based on these headers. Take at the preloaded example below**
+# **PICASO will auto-compute mixing ratios, determine what CIA is necessary and compute mean molecular weight based on these headers. Take at the preloaded example below**
 
 # %%
 #to give you an idea
@@ -154,7 +154,7 @@ df = start_case.spectrum(opacity,calculation='reflected')#other options: transmi
 df.keys()
 
 # %% [markdown]
-# ## Regrid Opacities to Constant Resolution
+# ## Re=grid Opacities to Constant Resolution
 #
 
 # %%
@@ -197,7 +197,7 @@ fpfs
 df['full_output'].keys()
 
 # %%
-df['full_output']['layer'].keys()#includes pressure depenedent information from your calculation
+df['full_output']['layer'].keys()#includes pressure dependent information from your calculation
 
 # %%
 df['full_output']['warnings']

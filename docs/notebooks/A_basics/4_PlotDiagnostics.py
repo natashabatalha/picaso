@@ -43,7 +43,7 @@ case1.atmosphere(filename = jdi.jupiter_pt(), sep=r'\s+')
 case1.clouds(filename = jdi.jupiter_cld(), sep=r'\s+')
 
 # %% [markdown]
-# ## Return ``PICASO`` Full Ouput
+# ## Return ``PICASO`` Full Output
 
 # %%
 df = case1.spectrum(opa, full_output=True) #note the new last key
@@ -70,7 +70,7 @@ jpi.show(jpi.mixing_ratio(full_output))
 fig = jpi.cloud(full_output)
 
 # %% [markdown]
-# ### Pressure-Tempertaure Profile
+# ### Pressure-Temperature Profile
 
 # %%
 jpi.show(jpi.pt(full_output))
@@ -103,7 +103,7 @@ jpi.show(jpi.photon_attenuation(full_output, at_tau=0.1, plot_width=500))
 jpi.show(jpi.spectrum(wno,alb,plot_width=500))
 
 # %% [markdown]
-# ### Disecting Full Output
+# ### Dissecting Full Output
 
 # %%
 full_output.keys()

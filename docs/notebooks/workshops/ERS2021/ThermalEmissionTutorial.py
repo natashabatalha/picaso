@@ -84,7 +84,7 @@ opa = jdi.opannection(wave_range=[1,5])
 # ## Set Basic Planet and Stellar Inputs
 
 # %% [markdown]
-# Second step is to set basic planet parameters. To compute raw thermal flux, you only need gravity. However, if you want contrast units (relative flux of planet, to flux of star) you also need planet mass and radius, and steller radius. Below, we specify the planet's mass and radius.
+# Second step is to set basic planet parameters. To compute raw thermal flux, you only need gravity. However, if you want contrast units (relative flux of planet, to flux of star) you also need planet mass and radius, and stellar radius. Below, we specify the planet's mass and radius.
 
 # %%
 case1 = jdi.inputs()

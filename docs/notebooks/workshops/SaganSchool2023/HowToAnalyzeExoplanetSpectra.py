@@ -24,7 +24,7 @@
 # 3. Climate modeling
 # 4. Cloud modeling
 #
-# **NOTE: This tutorial is aimed at both beginner and advanced levels.** It is comparehensive and includes various locations to check understanding.
+# **NOTE: This tutorial is aimed at both beginner and advanced levels.** It is comprehensive and includes various locations to check understanding.
 
 # %% [markdown] id="6b13e969-791b-4a38-885a-82732ba5627d"
 # # Check PICASO Imports
@@ -165,7 +165,7 @@ plt.show()
 #
 # For this demonstration we will use the resampled cross section method. **The major thing to note about using resampled cross sections** is that you have to compute your model at ~100x higher resolution than your data, but then must bin it down to a comparable resolution as your data so you can compare them. You will note that the opacity file you downloaded is resampled at R=10,000. Therefore you will note that **in this tutorial we will always bin the model down to R=100** before comparing with the data.
 #
-# **The overall idea is that we are just simply intializing PICASO to operate, create a "connection" to the models/spectral tools, in that wavelength (in microns) with the respective opacity range.**
+# **The overall idea is that we are just simply initializing PICASO to operate, create a "connection" to the models/spectral tools, in that wavelength (in microns) with the respective opacity range.**
 
 # %% id="1c4f1eb8-1721-4617-bec3-073a665fab3a"
 opa = jdi.opannection(wave_range=[2.7,6])
@@ -198,7 +198,7 @@ w39.gravity(mass=0.28, mass_unit=jdi.u.M_jup,
 help(w39.star)
 
 # %%
-# want to see the specturm you input? it lives here
+# want to see the spectrum you input? it lives here
 w39.inputs['star']
 
 # %% [markdown] id="cbd735be"
@@ -587,7 +587,7 @@ show_spectra(chemistry_grid)
 #
 # 4. You'll notice that as C/O increases, the CO$_2$ bump near 4.4 $\mu$m disappears while a new CH$_4$ line appears near 3.35 $\mu$m. Why might this be?
 #
-# Some more targetted questions to help with the above:
+# Some more targeted questions to help with the above:
 #
 # 1. Figure out what the top 4 most abundant oxygen- and carbon-bearing species are by looking at your chemistry grid.
 # 2. How does their abundance change when you vary the value of M/H?
@@ -606,7 +606,7 @@ show_spectra(chemistry_grid)
 # %%
 # Write a simple function to identify the top most abundant species
 
-def find_top(grid, mh=1, co=1, n=4, method='average', more=False):
+def find_top(grid, mh=1, co=0.55, n=4, method='average', more=False):
     """
     Find the n most abundant oxygen- and carbon-bearing molecules for a given M/H and C/O ratio.
 
@@ -678,7 +678,7 @@ abundances = {}
 # Loop through the M/H grid values
 for i, mh in enumerate(mh_grid_vals):
     # Calculate total abundance of top 4 molecules for a given M/H value
-    top_dict = find_top(chemistry_grid, mh=mh, co=1, n=5, method='sum')
+    top_dict = find_top(chemistry_grid, mh=mh, co=0.55, n=5, method='sum')
     print(f'M/H={mh}, C/O=1:', top_dict)
 
     # Add molecule abundances dynamically and insert at the correct position
@@ -751,7 +751,7 @@ plt.show()
 # Get the average mean molecular weight of the atmosphere at each M/H value
 mmws = []
 for mh in mh_grid_vals:
-    mmws.append(np.mean(chemistry_grid[f'M/H={mh},C/O=1']['full_output']['layer']['mmw']))
+    mmws.append(np.mean(chemistry_grid[f'M/H={mh},C/O=0.55']['full_output']['layer']['mmw']))
 
 # Plot how the mean molecular weight of each molecules changes with M/H
 plt.figure(figsize=(8, 4), dpi=100)

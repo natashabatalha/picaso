@@ -134,7 +134,7 @@ print(relevant_molecules)
 # Now that we have condensed this to a meaningful set of molecules, we can proceed to plot the sequence
 #
 #
-# *Side note: You might try to see if the technique of taking the "median" yields the same results as "max" or "mean". This gives some insight into how dynamic moleculare abundances are as a function of pressure*
+# *Side note: You might try to see if the technique of taking the "median" yields the same results as "max" or "mean". This gives some insight into how dynamic molecular abundances are as a function of pressure*
 
 # %% [markdown]
 # ## Where in temperature space do chemical transitions seem to take place?
