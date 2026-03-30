@@ -31,6 +31,8 @@
 # 2. How to analyze the output
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import pandas as pd
 import numpy as np
 
@@ -38,8 +40,6 @@ from astropy import units as u
 
 import xarray as xr
 
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 jpi.output_notebook()
 
 # %% [markdown]

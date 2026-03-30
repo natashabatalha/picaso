@@ -35,10 +35,11 @@
 # Once you do that you will have to define the path to the condensates (see this next cell)
 
 # %%
+from virga import justplotit as vpi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings(action='ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 
 import virga
 
@@ -185,7 +186,7 @@ cld_output['2276.0_3271.9'].keys()
 # `virga` has several different functions for exploring this output. For example you can plot the optical depth:
 
 # %%
-jpi.show(virga.justplotit.opd_by_gas(cld_output['2276.0_3271.9']))
+jpi.show(vpi.opd_by_gas(cld_output['2276.0_3271.9']))
 
 # %% [markdown]
 # Since we are interested in the full sequence of optical depths, let's pull out these optical depth plots for a few of the cases.
@@ -197,7 +198,7 @@ for i,ikey in enumerate(list(hot_output.keys())[::3]):
 
     t,g=tuple(ikey.split('_'));g=int(np.log10(float(g))*1000)/1000
 
-    figs += [virga.justplotit.opd_by_gas(cld_output[ikey],
+    figs += [vpi.opd_by_gas(cld_output[ikey],
                                          title=f'Teff={t}K,logg={g}',plot_width=300)]
 
     figs[i].legend.location='bottom_left'

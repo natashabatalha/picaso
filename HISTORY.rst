@@ -3,6 +3,14 @@
 History
 -------
 
+4.0.1 (2026-3-30)
+~~~~~~~~~~~~~~~~~
+Ehancements:
+
+* Metallicity dependent in quench timescales 
+* Notebook uniformity with how picaso, virga, and pandexo get input 
+* Force new virga version because of hot fix for metallicity dependent pvaps 
+
 4.0 (2026-2-25)
 ~~~~~~~~~~~~~~~~
 Major functionality:
