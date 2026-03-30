@@ -114,7 +114,7 @@ method='visscher'
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
 background={gases=['H2','He'], fraction=5.667} # optional 
-molecules=['mol1']
+molecules=['mol1','mol2','mol3','mol4']
 
 [chemistry.free.mol1]
 profile="2gradients" #constant, gradient, knots# # this emulates water rainout
@@ -122,23 +122,22 @@ p_switch = 1e-2
 vmr_switch=1e-3
 gradient_top=-4
 gradient_bottom=0
-profile_options={constant=['value'], 2gradients=['p_switch', 'vmr_switch','gradient_top','gradient_bottom'],
-                 knots=['P_knots','interpolation_method', 'vmr_knots' ]}
+profile_options={constant=['value'], 2gradients=['p_switch', 'vmr_switch','gradient_top','gradient_bottom'],knots=['P_knots','interpolation_method', 'vmr_knots' ]}
 
-[chemistry.free.mol1]
+[chemistry.free.mol2]
 profile="knots"
 P_knots=[ 1e3, 1e1, 1e0, 1e-1, 1e-3]
 interpolation_method="slinear"
 vmr_knots=[1e-3, 1e-5, 1e-6, 1e-4, 1e-5]
 
-[chemistry.free.mol1]
+[chemistry.free.mol3]
 profile="2gradients"
 p_switch = 1e2 
 vmr_switch=1e-5
 gradient_top=0
 gradient_bottom=-1.5
 
-[chemistry.free.mol1]
+[chemistry.free.mol4]
 profile="constant"
 value=1e-8
 

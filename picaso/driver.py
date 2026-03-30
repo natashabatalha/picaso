@@ -916,3 +916,5 @@ def plot_mr(picaso_output):
     full_output = picaso_output['full_output']
     fig = jpi.mixing_ratio(full_output, plot_type='bokeh', limit= 10) #limit controls the amount of outputs for the plot
     return fig
+
+
