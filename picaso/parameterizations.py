@@ -462,6 +462,10 @@ class Parameterize():
         self.picaso.chemeq_visscher_2121(cto_absolute, log_mh)
         return self.picaso.inputs['atmosphere']['profile']
 
+    def chem_chemeq_on_the_fly(self,cto_absolute, log_mh): 
+        self.picaso.chemeq_on_the_fly(cto_absolute, log_mh)
+        return self.picaso.inputs['atmosphere']['profile']
+
     def pt_madhu_seager_09_noinversion(self, alpha_1, alpha_2, P_1, P_3, T_3, beta=0.5):
         """"
         Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
