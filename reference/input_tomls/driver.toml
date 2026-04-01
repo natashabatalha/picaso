@@ -28,6 +28,7 @@ teq       = {value=500, unit='Kelvin'}
 
 [geometry]
 phase = {value=0, unit='radian'} #planet phase angle
+phase_kwargs = {} #anything else for function phase in picaso
 
 [star]
 radius= {value=1, unit='Rsun'} 
@@ -107,7 +108,7 @@ sonora_path='_default_/sonora_grids/bobcat'
 teff=1000
 
 #TODO turn below into a notice
-#options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
+#options: 'visscher', 'free', 'userfile','chemeq_on_the_fly'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
 
 [chemistry]
 method='visscher' 
@@ -149,6 +150,10 @@ value=1e-8
 #gradient_bottom=1
 
 [chemistry.visscher]
+cto_absolute=0.55
+log_mh=0
+
+[chemistry.chemeq_on_the_fly]
 cto_absolute=0.55
 log_mh=0
 

@@ -21,11 +21,11 @@ dynesty.utils.pickle_module = dill
 # import ultranest
 
 
-chem_options = ['visscher', 'free', 'userfile']
+chem_options = ['visscher', 'free', 'chemeq_on_the_fly','userfile']
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
 pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj24'] #, 'molliere_20', 'Kitzman_20', 
 
-def run(driver_file=None,driver_dict=None):
+def run(driver_file=None,driver_dict=None,return_class=False):
     if isinstance(driver_file,str):
         with open(driver_file, "rb") as f:
             config = tomllib.load(f)
@@ -66,8 +66,11 @@ def run(driver_file=None,driver_dict=None):
     elif config['calc_type']=='climate':
         raise Exception('WIP not ready yet')
         out = climate(config)
-
-    return output 
+    
+    if return_class:
+        return output ,picaso_class
+    else: 
+        return output
 
 def is_valid_astropy_unit(unit_str):
     try:
@@ -610,10 +613,11 @@ def check_model_samples(config, N=100, samples=None):
 def setup_spectrum_class(config, opacity, param_tools, stage=None):
 
     if isinstance(opacity,type(None)):
+        opacity_kwargs = config['OpticalProperties'].get('opacity_kwargs',{})
         opacity = opannection(
         filename_db=config['OpticalProperties']['opacity_file'], #database(s)
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
-        **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
+        **opacity_kwargs #additonal inputs 
         ) #opanecction connects to the opacity database
     
     irradiated = config['irradiated']
@@ -627,7 +631,8 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
     phase = config['geometry'].get('phase', {}).get('value',None)
     phase_unit = config['geometry'].get('phase', {}).get('unit',None)
     rad = (phase * u.Unit(phase_unit)).to(u.rad).value
-    A.phase_angle(rad) #input the radian angle of the event/geometry of browndwarf/planet
+    phase_kwargs = config['geometry'].get('phase_kwargs', {})
+    A.phase_angle(rad,**phase_kwargs) #input the radian angle of the event/geometry of browndwarf/planet
 
     A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None), 
             gravity_unit= u.Unit(config['object'].get('gravity', {}).get('unit',None)), 
@@ -761,44 +766,49 @@ def PT_handler(pt_config, picaso_class, param_tools): #WIP
     
     return pt_df
 
-
 def set_dict_value(data, path_string, new_value):
     """
-    Sets the value of a key in a nested dictionary using a dot-separated path string.
-
-    For example, a path_string of "details.owner.id" will set the 'id' key
-    inside the 'owner' dictionary, which is inside the 'details' dictionary.
-
-    Args:
-        data (dict): The dictionary to modify.
-        path_string (str): The dot-separated key path to the target value.
-        new_value: The new value to set.
-
-    Returns:
-        bool: True if the value was successfully set, False otherwise.
+    Sets the value of a key in a nested dictionary or a 
+    column in a DataFrame using a dot-separated path string.
     """
     keys = path_string.split('.')
     current_level = data
     
-    # Traverse the dictionary down to the final key
     for i, key in enumerate(keys):
-        # Check if we are at the final key in the path
-        if i == len(keys) - 1:
-            # Set the value for the final key
-            if isinstance(current_level, dict) and key in current_level:
+        # Determine if we are at the target (the last key in the path)
+        is_last_key = (i == len(keys) - 1)
+        
+        if is_last_key:
+            # Case 1: Final target is a dictionary key
+            if isinstance(current_level, dict):
                 current_level[key] = new_value
                 return True
+            
+            # Case 2: Final target is a DataFrame column
+            elif isinstance(current_level, pd.DataFrame):
+                # This replaces the entire column with the new_value
+                current_level[key] = new_value
+                return True
+            
             else:
-                print(f"Error: The path to key '{path_string}' is invalid or does not exist.")
+                print(f"Error: Target container for '{key}' is neither a dict nor a DataFrame.")
                 return False
+        
         else:
-            # Check if the next key in the path exists and is a dictionary
-            if isinstance(current_level, dict) and key in current_level and isinstance(current_level[key], dict):
+            # Traversal Logic (moving deeper into the structure)
+            if isinstance(current_level, dict) and key in current_level:
                 current_level = current_level[key]
+            
+            # Allow traversal through a DataFrame if the path continues
+            # Note: This would only work if the DF cell contains another dict/DF
+            elif isinstance(current_level, pd.DataFrame) and key in current_level.columns:
+                current_level = current_level[key]
+                
             else:
-                print(f"Error: The path is invalid. '{path_string}' is not a dictionary or does not exist.")
+                print(f"Error: Path component '{key}' not found or invalid traversal.")
                 return False
 
+    return False
 
 def find_values_for_key(data, target_key):
     """
