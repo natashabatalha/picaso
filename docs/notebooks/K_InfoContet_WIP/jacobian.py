@@ -15,21 +15,26 @@
 # ---
 
 # %% [markdown]
-# # WIP Using the Driver Function to Compute Jacobians 
+# # Computing Jacobians and IC Statistics 
 #
 # In this notebook we will create a simple driver setup of a Jupiter-like case and use it to compute the jacobian for a set of parameters. 
+# You will also learn how to do the same thing through a picaso class that will directly perturb your pressure dependent arrays
 #
 # You should already be familiar with: 
 #
-# - how to compute reflected light spectrum
+# - how to compute a spectrum
 # - how to use and edit a driver.toml file
 #
 
 # %%
 from picaso import justdoit as jdi
+np = jdi.np
 from picaso import information_content as ic
 from picaso import justplotit as jpi
 jpi.output_notebook()
+
+# %% [markdown]
+# ## Using a Driver File to Compute Jacobian and IC Statistics 
 
 # %%
 _default_ = jdi.__refdata__ 
@@ -41,7 +46,8 @@ simple_input = {
                        'virga_mieff': f'{_default_}/virga/'},
     'calc_type': 'spectrum',
     'irradiated': True,
-    'geometry': {'phase': {'unit': 'radian', 'value': 0}},
+    'geometry': {'phase': {'unit': 'radian', 'value': jdi.np.pi/2}, 
+                 'phase_kwargs':{'num_tangle':6, 'num_gangle':6}},
     'object': {'distance': {'unit': 'parsec', 'value': 8.3},
             'gravity': {'unit': 'cm/s**2', 'value': 100000.0},
             'mass': {'unit': 'Mjup', 'value': 1.2},
@@ -72,8 +78,8 @@ simple_input = {
                              'logg1': -1}
     }, 
     'chemistry':{
-            'method': 'visscher',
-            'visscher': {'cto_absolute': 0.55, 'log_mh': 1.7},
+            'method': 'chemeq_on_the_fly',
+            'chemeq_on_the_fly': {'cto_absolute': 0.55, 'log_mh': 2},
     },
     'clouds':{
         'cloud1_type': 'virga',
@@ -90,7 +96,10 @@ simple_input = {
     } 
 
 # %%
-spectrum = ic.run(driver_dict=simple_input)
+## Compute Initial State Vector 
+
+# %%
+spectrum,cl = ic.run(driver_dict=simple_input,return_class=True)
 
 # %%
 x,y = jdi.mean_regrid(spectrum['wavenumber'],
@@ -99,6 +108,63 @@ x,y = jdi.mean_regrid(spectrum['wavenumber'],
 jpi.show(jpi.spectrum(x,y, plot_width=500))
 
 # %%
-jac_params = ['']
+jac_params = ['cto_absolute','log_mh','fsed','Teq','phase']
+
+# %%
+jac_mat = ic.jacobian(driver_dict = simple_input, params = jac_params)
+
+# %%
+import matplotlib.pyplot as plt
+K_rebin = []
+for i, ip in enumerate(jac_params):
+    x,y = jdi.mean_regrid(spectrum['wavenumber'], jac_mat[:,i],R=200)
+    K_rebin += [y]
+    plt.plot(1e4/x,jdi.np.abs(y/jdi.np.max(jdi.np.abs(y))), label=ip)
+plt.legend()
+
+# %%
+error = 0.01 #+- on abledo itself 
+IC_analyzer = ic.Analyze(spectrum['wavenumber'], jac_mat, error , R=200)
+DOF_SVD = IC_analyzer.degrees_of_freedom_svd()
+prior = [1, 2, 10, 500, np.pi]
+SIC = IC_analyzer.shannon_ic(prior)
+
+# %% [markdown]
+# ## Using a PICASO Class to Compute Jacobian and IC Statistics 
+#
+# Using the same PICASO class that was setup above, lets compute the jacobian on directly the atmosphere parameters using the picaso class we setup
+
+# %%
+jac_params = ['atmosphere.profile.H2O','atmosphere.profile.CH4','atmosphere.profile.CO2','atmosphere.profile.temperature']
+is_log = [True,True,True,False]
+
+opacityclass =jdi.opannection(filename_db= simple_input['OpticalProperties']['opacity_file'], **simple_input['OpticalProperties']['opacity_kwargs'])
+calculation = simple_input['observation_type']
+
+jac_mat_class = ic.jacobian(picaso_class = cl, params = jac_params, is_log=is_log, calculation=calculation, opacityclass=opacityclass) 
+
+
+# %%
+import matplotlib.pyplot as plt
+K_rebin = []
+for i, ip in enumerate(jac_params):
+    x,y = jdi.mean_regrid(spectrum['wavenumber'], jac_mat_class[:,i],R=200)
+    K_rebin += [y]
+    plt.plot(1e4/x,jdi.np.abs(y/jdi.np.max(jdi.np.abs(y))), label=ip)
+plt.legend()
+
+# %%
+error = 0.01 #+- on abledo itself 
+IC_analyzer_cl = ic.Analyze(spectrum['wavenumber'], jac_mat_class, error , R=200)
+DOF_SVD = IC_analyzer_cl.degrees_of_freedom_svd()
+prior = [6, 6, 6, 500]
+SIC = IC_analyzer_cl.shannon_ic(prior)
+
+
+# %%
+SIC
+
+# %%
+DOF_SVD
 
 # %%
