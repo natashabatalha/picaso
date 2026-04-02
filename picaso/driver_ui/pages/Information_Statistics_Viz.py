@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from picaso import information_content as ic
 from picaso import justdoit as jdi
 from picaso import justplotit as jpi
@@ -193,33 +193,33 @@ if 'jacobian_data' in st.session_state:
     st.header(f"1) Binned Jacobian (R={r_max})")
     highest_r_analyzer = ic.Analyze(wno, jac_mat, error_val, R=r_max)
     
-    fig1, ax1 = plt.subplots(figsize=(10, 5))
+    fig1 = go.Figure()
     rebinned_wno = highest_r_analyzer.new_wno if highest_r_analyzer.new_wno is not None else wno
-    # Rebinning was done in __init__ -> rebin_jac_error. self.jacobian is now (nparams, nwno) matrix
-    # wait, rebin_jac_error sets self.jacobian = np.matrix(K_rebin) which is (nparams, nwno)
     
     for i, p_name in enumerate(params):
         y_val = np.array(highest_r_analyzer.jacobian[i, :]).flatten()
-        # Normalize as in notebook for better visualization? 
-        # Notebook does: plt.plot(1e4/x, jdi.np.abs(y/jdi.np.max(jdi.np.abs(y))), label=ip)
         norm_y = np.abs(y_val) / np.max(np.abs(y_val)) if np.max(np.abs(y_val)) != 0 else y_val
-        ax1.plot(1e4/rebinned_wno, norm_y, label=p_name)
+        fig1.add_trace(go.Scatter(x=1e4/rebinned_wno, y=norm_y, name=p_name, mode='lines'))
     
-    ax1.set_xlabel("Wavelength [um]")
-    ax1.set_ylabel("Normalized |Jacobian|")
-    ax1.set_title(f"Binned Jacobian for R={r_max}")
-    ax1.legend()
-    st.pyplot(fig1)
+    fig1.update_layout(
+        xaxis_title="Wavelength [um]",
+        yaxis_title="Normalized |Jacobian|",
+        title=f"Binned Jacobian for R={r_max}",
+        legend_title="Parameters"
+    )
+    st.plotly_chart(fig1, use_container_width=True)
 
     # 2) Plot of their SVD degrees of freedom as a function of resolution
     st.divider()
     st.header("2) SVD Degrees of Freedom vs. Resolution")
-    fig2, ax2 = plt.subplots(figsize=(10, 5))
-    ax2.plot(resolutions, results_svd, marker='o', linestyle='-', color='blue')
-    ax2.set_xlabel("Resolution (R)")
-    ax2.set_ylabel("SVD DFS")
-    ax2.set_title("SVD Degrees of Freedom for Signal")
-    st.pyplot(fig2)
+    fig2 = go.Figure()
+    fig2.add_trace(go.Scatter(x=resolutions, y=results_svd, mode='lines+markers', line=dict(color='blue'), marker=dict(symbol='circle')))
+    fig2.update_layout(
+        xaxis_title="Resolution (R)",
+        yaxis_title="SVD DFS",
+        title="SVD Degrees of Freedom for Signal"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
     # 3) Plot of each of the shannon_ic dictionary outputs as a function of resolution
     st.divider()
@@ -230,48 +230,55 @@ if 'jacobian_data' in st.session_state:
     # DOF and H (Scalars)
     with col1:
         dofs = [r['DOF'] for r in results_shannon]
-        hs = [r['H'] for r in results_shannon]
         
-        fig3a, ax3a = plt.subplots()
-        ax3a.plot(resolutions, dofs, marker='s', label='Shannon DOF', color='green')
-        ax3a.set_xlabel("Resolution (R)")
-        ax3a.set_ylabel("DOF")
-        ax3a.legend()
-        st.pyplot(fig3a)
+        fig3a = go.Figure()
+        fig3a.add_trace(go.Scatter(x=resolutions, y=dofs, mode='lines+markers', name='Shannon DOF', marker=dict(symbol='square', color='green')))
+        fig3a.update_layout(
+            xaxis_title="Resolution (R)",
+            yaxis_title="DOF",
+            title="Shannon DOF"
+        )
+        st.plotly_chart(fig3a, use_container_width=True)
         
     with col2:
-        fig3b, ax3b = plt.subplots()
-        ax3b.plot(resolutions, hs, marker='^', label='Shannon Information (H)', color='red')
-        ax3b.set_xlabel("Resolution (R)")
-        ax3b.set_ylabel("H [bits]")
-        ax3b.legend()
-        st.pyplot(fig3b)
+        hs = [r['H'] for r in results_shannon]
+        
+        fig3b = go.Figure()
+        fig3b.add_trace(go.Scatter(x=resolutions, y=hs, mode='lines+markers', name='Shannon Information (H)', marker=dict(symbol='triangle-up', color='red')))
+        fig3b.update_layout(
+            xaxis_title="Resolution (R)",
+            yaxis_title="H [bits]",
+            title="Shannon Information (H)"
+        )
+        st.plotly_chart(fig3b, use_container_width=True)
         
     # Averaging Kernel and Constraint Interval (Vectors)
     st.subheader("Parameter-specific Shannon Stats")
     col3, col4 = st.columns(2)
     
     with col3:
-        fig3c, ax3c = plt.subplots()
+        fig3c = go.Figure()
         for i, p_name in enumerate(params):
             ak_vals = [r['AveragingKernel'][i] for r in results_shannon]
-            ax3c.plot(resolutions, ak_vals, marker='.', label=p_name)
-        ax3c.set_xlabel("Resolution (R)")
-        ax3c.set_ylabel("Averaging Kernel Diagonal")
-        ax3c.set_title("Averaging Kernel vs. R")
-        ax3c.legend()
-        st.pyplot(fig3c)
+            fig3c.add_trace(go.Scatter(x=resolutions, y=ak_vals, mode='lines+markers', name=p_name, marker=dict(size=6)))
+        fig3c.update_layout(
+            xaxis_title="Resolution (R)",
+            yaxis_title="Averaging Kernel Diagonal",
+            title="Averaging Kernel vs. R"
+        )
+        st.plotly_chart(fig3c, use_container_width=True)
 
     with col4:
-        fig3d, ax3d = plt.subplots()
+        fig3d = go.Figure()
         for i, p_name in enumerate(params):
             ci_vals = [r['constraint_interval'][i] for r in results_shannon]
-            ax3d.plot(resolutions, ci_vals, marker='.', label=p_name)
-        ax3d.set_xlabel("Resolution (R)")
-        ax3d.set_ylabel("Constraint Interval")
-        ax3d.set_title("1-sigma Constraint Interval vs. R")
-        ax3d.legend()
-        st.pyplot(fig3d)
+            fig3d.add_trace(go.Scatter(x=resolutions, y=ci_vals, mode='lines+markers', name=p_name, marker=dict(size=6)))
+        fig3d.update_layout(
+            xaxis_title="Resolution (R)",
+            yaxis_title="Constraint Interval",
+            title="1-sigma Constraint Interval vs. R"
+        )
+        st.plotly_chart(fig3d, use_container_width=True)
 
 else:
     st.warning("Please initialize example or provide Jacobian data to begin.")
