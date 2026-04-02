@@ -34,7 +34,7 @@ from picaso import justplotit as jpi
 jpi.output_notebook()
 
 # %% [markdown]
-# ## Using a Driver File to Compute Jacobian and IC Statistics 
+# ## Using a Driver File to Compute Jacobian
 
 # %%
 _default_ = jdi.__refdata__ 
@@ -95,8 +95,8 @@ simple_input = {
         }
     } 
 
-# %%
-## Compute Initial State Vector 
+# %% [markdown]
+# ### Compute Initial State Vector 
 
 # %%
 spectrum,cl = ic.run(driver_dict=simple_input,return_class=True)
@@ -106,6 +106,9 @@ x,y = jdi.mean_regrid(spectrum['wavenumber'],
                       spectrum['albedo'],R=300)
 
 jpi.show(jpi.spectrum(x,y, plot_width=500))
+
+# %% [markdown]
+# ### Compute Jacobian Given a Parameter Set
 
 # %%
 jac_params = ['cto_absolute','log_mh','fsed','Teq','phase']
@@ -122,6 +125,9 @@ for i, ip in enumerate(jac_params):
     plt.plot(1e4/x,jdi.np.abs(y/jdi.np.max(jdi.np.abs(y))), label=ip)
 plt.legend()
 
+# %% [markdown]
+# ## Compute Information Statistics 
+
 # %%
 error = 0.01 #+- on abledo itself 
 IC_analyzer = ic.Analyze(spectrum['wavenumber'], jac_mat, error , R=200)
@@ -136,7 +142,7 @@ SIC = IC_analyzer.shannon_ic(prior)
 
 # %%
 jac_params = ['atmosphere.profile.H2O','atmosphere.profile.CH4','atmosphere.profile.CO2','atmosphere.profile.temperature']
-is_log = [True,True,True,False]
+is_log = [False,False,False,False]
 
 opacityclass =jdi.opannection(filename_db= simple_input['OpticalProperties']['opacity_file'], **simple_input['OpticalProperties']['opacity_kwargs'])
 calculation = simple_input['observation_type']
@@ -157,14 +163,12 @@ plt.legend()
 error = 0.01 #+- on abledo itself 
 IC_analyzer_cl = ic.Analyze(spectrum['wavenumber'], jac_mat_class, error , R=200)
 DOF_SVD = IC_analyzer_cl.degrees_of_freedom_svd()
-prior = [6, 6, 6, 500]
+prior = [1, 1, 1, 500]
 SIC = IC_analyzer_cl.shannon_ic(prior)
 
 
-# %%
-SIC
+# %% [markdown]
+# ## Save your Jacobian data to use with the PICASO UI
 
 # %%
-DOF_SVD
-
-# %%
+np.savez('jacobian_data.npz', jacobian=jac_mat, wno=spectrum['wavenumber'], params=jac_params)

@@ -6,7 +6,7 @@ import pandas as pd
 #picaso imports 
 from .driver import *
 from .opacity_factory import create_grid
-
+from .justplotit import mean_regrid 
 
 def _get_dict_value(data, path_string):
     """
@@ -281,6 +281,7 @@ class Analyze():
                 _,error = spectres(newx, self.og_wno_grid, self.og_wno_grid, spec_errs = error)
             
             nwno = len(newx)
+            self.new_wno = newx
         else: 
             jacobian=jacobian.T
 
