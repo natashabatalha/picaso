@@ -331,9 +331,7 @@ class Analyze():
         Therefore if your prior here is large then your DOF might be very optimistic. 
         """
         assert len(prior)==self.nparams, 'length of prior array does not match number of parameters from jacobian'
-
-
-        
+        self.prior=prior
         S_prior = np.diag(np.array(prior)**2)
         S_prior_inv = np.linalg.inv(S_prior)
         
@@ -360,4 +358,38 @@ class Analyze():
         H = 0.5*H
 
         return {'AveragingKernel':A_diag, 'DOF':DOF, 'H':H,'constraint_interval':error_on_params}
+
+    def ic_loss_by_wave(self,prior=None):
+        """
+        Computes information loss over spectral ranges to understand what wavelength space is important
+        """
+        prior = getattr(self, 'prior', prior)
+        if isinstance(prior, type(None)):
+            raise Exception('The Analyze() class has not yet received a prior so need to pass one to the ic loss by wave function')
+        else: 
+            self.prior=prior 
+        
+        jacobian_og = copy.deepcopy(self.jacobian)
+        error_og = copy.deepcopy(self.error)
+        wno_og = copy.deepcopy(self.new_wno)
+        H_og = self.shannon_ic(prior)
+
+        lossH_all = []
+        lossCI_all = []
+
+        for i in range(len(wno_og)):
+            #remove single element of jac and error 
+            self.jacobian =  np.delete(jacobian_og, i, axis=1)
+            self.error = np.delete(error_og, i)
+            new_H = self.shannon_ic(prior)
+
+            lossH = H_og['H'] - new_H['H'] 
+            lossCI = [H_og['constraint_interval'][i] - ival for i,ival in enumerate(new_H['constraint_interval'])]
+        
+            lossH_all += [lossH]
+            lossCI_all += [lossCI]
+        
+        return lossH_all, lossCI_all
+
+
 
