@@ -135,6 +135,15 @@ DOF_SVD = IC_analyzer.degrees_of_freedom_svd()
 prior = [1, 2, 10, 500, np.pi]
 SIC = IC_analyzer.shannon_ic(prior)
 
+# %%
+print(SIC)
+
+# %%
+import importlib;importlib.reload(ic)
+
+# %%
+IC_loss_per_wave, CI_loss_per_wave = IC_analyzer.loss_by_wave()
+
 # %% [markdown]
 # ## Using a PICASO Class to Compute Jacobian and IC Statistics 
 #
@@ -172,3 +181,8 @@ SIC = IC_analyzer_cl.shannon_ic(prior)
 
 # %%
 np.savez('jacobian_data.npz', jacobian=jac_mat, wno=spectrum['wavenumber'], params=jac_params)
+
+# %%
+IC_analyzer.jacobian.shape
+
+# %%

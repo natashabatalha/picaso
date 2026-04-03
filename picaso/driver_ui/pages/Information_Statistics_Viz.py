@@ -6,6 +6,7 @@ from picaso import information_content as ic
 from picaso import justdoit as jdi
 from picaso import justplotit as jpi
 import os
+import copy
 
 
 st.set_page_config(page_title="Information Statistics Dashboard", layout="wide")
@@ -168,6 +169,7 @@ if 'jacobian_data' in st.session_state:
 
     resolutions = np.arange(r_min, r_max + r_step, r_step)
     resolutions = resolutions[resolutions <= r_max]
+    to_display = r_max
     
     results_svd = []
     results_shannon = []
@@ -183,6 +185,10 @@ if 'jacobian_data' in st.session_state:
         results_shannon.append(sic)
         progress_bar.progress((i + 1) / len(resolutions))
 
+        if R==to_display: 
+            highest_r_analyzer = copy.copy(analyzer)
+            lossH, lossCI = highest_r_analyzer.loss_by_wave()
+
     # =======================================
     # VISUALIZATIONS
     # =======================================
@@ -190,8 +196,8 @@ if 'jacobian_data' in st.session_state:
     st.divider()
     
     # 1) Plot of their binned Jacobian values for their highest resolution input
-    st.header(f"1) Binned Jacobian (R={r_max})")
-    highest_r_analyzer = ic.Analyze(wno, jac_mat, error_val, R=r_max)
+    st.header(f"Binned Jacobian (R={r_max})")
+    #highest_r_analyzer = ic.Analyze(wno, jac_mat, error_val, R=r_max)
     
     fig1 = go.Figure()
     rebinned_wno = highest_r_analyzer.new_wno if highest_r_analyzer.new_wno is not None else wno
@@ -207,11 +213,11 @@ if 'jacobian_data' in st.session_state:
         title=f"Binned Jacobian for R={r_max}",
         legend_title="Parameters"
     )
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width='stretch')
 
     # 2) Plot of their SVD degrees of freedom as a function of resolution
     st.divider()
-    st.header("2) SVD Degrees of Freedom vs. Resolution")
+    st.header("Are the parameters uniquely identifiable: SVD Degrees of Freedom")
     fig2 = go.Figure()
     fig2.add_trace(go.Scatter(x=resolutions, y=results_svd, mode='lines+markers', line=dict(color='blue'), marker=dict(symbol='circle')))
     fig2.update_layout(
@@ -219,11 +225,11 @@ if 'jacobian_data' in st.session_state:
         yaxis_title="SVD DFS",
         title="SVD Degrees of Freedom for Signal"
     )
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width='stretch')
 
     # 3) Plot of each of the shannon_ic dictionary outputs as a function of resolution
     st.divider()
-    st.header("3) Shannon Information Statistics vs. Resolution")
+    st.header("Does the observation increase our state of knowledge: Shannon Information Statistics")
     
     col1, col2 = st.columns(2)
     
@@ -238,7 +244,7 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="DOF",
             title="Shannon DOF"
         )
-        st.plotly_chart(fig3a, use_container_width=True)
+        st.plotly_chart(fig3a, width='stretch')
         
     with col2:
         hs = [r['H'] for r in results_shannon]
@@ -250,7 +256,7 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="H [bits]",
             title="Shannon Information (H)"
         )
-        st.plotly_chart(fig3b, use_container_width=True)
+        st.plotly_chart(fig3b, width='stretch')
         
     # Averaging Kernel and Constraint Interval (Vectors)
     st.subheader("Parameter-specific Shannon Stats")
@@ -266,7 +272,7 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="Averaging Kernel Diagonal",
             title="Averaging Kernel vs. R"
         )
-        st.plotly_chart(fig3c, use_container_width=True)
+        st.plotly_chart(fig3c, width='stretch')
 
     with col4:
         fig3d = go.Figure()
@@ -278,7 +284,36 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="Constraint Interval",
             title="1-sigma Constraint Interval vs. R"
         )
-        st.plotly_chart(fig3d, use_container_width=True)
+        st.plotly_chart(fig3d, width='stretch')
+    
+    
+    st.divider()
+    # 1) Plot of their binned Jacobian values for their highest resolution input
+    st.header(f"What wavelengths are most important? (R={r_max})")
+    
+    col5, col6 = st.columns(2)
+    
+    # DOF and H (Scalars)
+    with col5:        
+        fig4a = go.Figure()
+        fig4a.add_trace(go.Scatter(x=1e4/rebinned_wno, y=lossH, mode='lines', name='H loss'))
+        fig4a.update_layout(
+            xaxis_title="Wavelength [um]",
+            yaxis_title="Delta IC/um",
+            title="H loss vs. W"
+        )
+        st.plotly_chart(fig4a, width='stretch')
+
+    with col6:
+        fig4b = go.Figure()
+        for i, p_name in enumerate(params):
+            fig4b.add_trace(go.Scatter(x=1e4/rebinned_wno, y=np.array(lossCI)[:,i], mode='lines', name=p_name))
+        fig4b.update_layout(
+            xaxis_title="Wavelength [um]",
+            yaxis_title="Delta Constraint Interval/um",
+            title="Loss in 1-sigma Constraint Interval vs. W"
+        )
+        st.plotly_chart(fig4b, width='stretch')
 
 else:
     st.warning("Please initialize example or provide Jacobian data to begin.")

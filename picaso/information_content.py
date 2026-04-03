@@ -338,7 +338,7 @@ class Analyze():
         S_epsilon_inv = np.diag(1.0 / self.error**2 )
 
         #if this has already been computed then grab it 
-        self.FIM = getattr(self, 'FIM', self.jacobian @ S_epsilon_inv @ self.jacobian.T)
+        self.FIM = self.jacobian @ S_epsilon_inv @ self.jacobian.T
 
         S_Hat = np.linalg.inv(self.FIM + S_prior_inv ) #nparams x nparamers where the sqrt(diagonal elements) are error on parameters e.g. 
         error_on_params = np.sqrt(np.diag(S_Hat))
@@ -359,7 +359,7 @@ class Analyze():
 
         return {'AveragingKernel':A_diag, 'DOF':DOF, 'H':H,'constraint_interval':error_on_params}
 
-    def ic_loss_by_wave(self,prior=None):
+    def loss_by_wave(self,prior=None):
         """
         Computes information loss over spectral ranges to understand what wavelength space is important
         """
@@ -383,8 +383,8 @@ class Analyze():
             self.error = np.delete(error_og, i)
             new_H = self.shannon_ic(prior)
 
-            lossH = H_og['H'] - new_H['H'] 
-            lossCI = [H_og['constraint_interval'][i] - ival for i,ival in enumerate(new_H['constraint_interval'])]
+            lossH = - H_og['H'] + new_H['H'] 
+            lossCI = [ H_og['constraint_interval'][i] - ival for i,ival in enumerate(new_H['constraint_interval'])]
         
             lossH_all += [lossH]
             lossCI_all += [lossCI]
