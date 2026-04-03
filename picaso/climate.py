@@ -12,6 +12,8 @@ from .atmsetup import ATMSETUP
 from .optics import compute_opacity
 from .disco import compress_thermal
 from .deq_chem import get_quench_levels
+from .clouds import update_clouds
+from .grad import moist_grad, did_grad_cp
 
 import os
 
@@ -2134,411 +2136,6 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     return OpacityWEd, OpacityNoEd,ScatteringPhase,Disco,Atmosphere, return_opa_holes
     #return DTAU, TAU, W0, COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , atm.surf_reflect, ubar0,ubar1,cos_theta, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward, wno,nwno,ng,nt, nlevel, ngauss, gauss_wts, mmw,gweight,tweight
 
-@jit(nopython=True, cache=True)
-def moist_grad( t, p, AdiabatBundle, Atmosphere, ind):
-    """
-    Parameters
-    ----------
-    t : float
-        Temperature  value
-    p : float 
-        Pressure value
-    AdiabatBundle : namedtuple 
-        includes:
-        - t_table : array 
-            array of Temperature values with 53 entries
-        - p_table : array 
-            array of Pressure value with 26 entries
-        - grad : array 
-            array of gradients of dimension 53*26
-        - cp : array 
-            array of cp of dimension 53*26
-    Atmosphere : namedtuple 
-        Atmosphere namedtuple which is created in picaso.climate.calculate_atm and includes info about the condensates, PT profile, and atmosphere properties
-    ind: int
-        index of current layer of the t and p to retrieve the right abundance at this layer
-    
-    Returns
-    -------
-    float 
-        grad_x
-    
-    """
-    # Python version of moistgrad function in convec.f in EGP
-    #t_table, p_table, grad, cp = AdiabatBundle.t_table, AdiabatBundle.p_table, AdiabatBundle.grad, AdiabatBundle.cp
-    #gas MMW organized into one vector (g/mol)
-    MoistGradInfo = MoistGradClass()
-
-    Rgas = 8.314e7 #erg/K/mol
-
-    #indexes of species that are allowed to condense
-    #icond = [9,10,12,18] #h2o, ch4, nh3, fe
-
-    condensables = Atmosphere.condensables
-    ncond = len(condensables) #Only 4 molecules are considered for now (H2O, CH4, NH3, Fe) 
-    output_abunds = Atmosphere.condensable_abundances
-    mmw = Atmosphere.condensable_weights
-
-    #Tcrit = [647.,   191.,   406.,  4000.]
-    #Tfr   = [273.,    90.,   195.,  1150.]
-    #hfus  = [6.00e10, 9.46e9, 5.65e10, 1.4e11] #(erg/mol)
-    Tcrit, Tfr, hfus  = np.zeros(ncond),np.zeros(ncond),np.zeros(ncond)
-    
-    for i,imol in enumerate(condensables): 
-        info = MoistGradInfo.returns(imol)
-        Tcrit[i] = info[0]
-        Tfr[i] = info[1]
-        hfus[i] = info[2]
-
-    #set heat of vaporization + fusion (when applicable)
-    dH = np.zeros(ncond)
-    
-    for i,imol in enumerate(condensables): 
-        hvap = HVapClass(t, mmw[i])
-        if(t < Tcrit[i]):
-            dH[i] = dH[i] + hvap.returns(imol)#hvapfunc(icond[i],t, mmw)
-        if(t < Tfr[i]):
-            dH[i] = dH[i] + hfus[i]
-
-    # find condensible partial pressures and H/R/T for condensibles.  
-    # also find background pressure, which makes up difference between partial pressures and total pressure
-    pb = p
-    pc = np.zeros(ncond)
-    a  = np.zeros(ncond)
-
-    for i in range(ncond):
-        #icond[i]+1 since output_abunds has t, p as first two columns so index is shifted by 1
-        #ind is the index of the current layer
-        pc[i] = output_abunds[i][ind]*p
-        a[i]  = dH[i]/Rgas/t
-        pb    -= pc[i]
-
-    # summed heat capacity for ideal gas case. note that this cp is in erg/K/mol
-    cpI = 0.0
-    f = 0.0
-    for i,imol in enumerate(condensables):
-        cpfoo = CPClass(t,mmw[i])
-        f  += output_abunds[i][ind]
-        cpI += output_abunds[i][ind]*cpfoo.returns(imol)*mmw[i]
-
-    # ideal gas adiaibatic gradient
-    gradI = Rgas/cpI*f
-
-    #non-ideal gas from Didier
-    gradNI, cp_x = did_grad_cp(t,p, AdiabatBundle)
-    cp_NI = Rgas/gradNI
-
-    #weighted combination of non-ideal and ideal components
-    gradb = 1.0/((1.0-f)*cp_NI/Rgas + f*cpI/Rgas)
-
-    #moist adiabatic gradient from note by T. Robinson.
-    numer = 1.0
-    denom = 1.0/gradb
-
-    for i in range(ncond):
-        numer += a[i]*pc[i]/p
-        denom += a[i]**2*pc[i]/p
-
-    grad_x = numer/denom
-
-    return grad_x, cp_x 
-
-
-MoistGradTypes = [(i, float64[:]) for i in ['H2O','CH4','NH3','Fe']]
-@jitclass(MoistGradTypes)
-class MoistGradClass(object):
-    def __init__(self):
-        #arrays are Tcrit, tfr, hfus in erg/mol
-        self.H2O = np.array([647.0, 273., 6.00e10])
-        self.CH4 = np.array([191.0, 90.,  9.46e9])
-        self.NH3 = np.array([406.0, 195., 5.65e10])
-        self.Fe = np.array([4000.0, 1150., 1.4e11])
-    def returns(self,mol):
-        """
-        This is the ONLY way to get around numba not being able to run getattr function 
-        """
-        if mol == 'H2O': 
-            a = self.H2O 
-        elif mol == 'CH4':
-            a = self.CH4 
-        elif mol == 'NH3':
-            a = self.NH3
-        elif mol == 'Fe':
-            a = self.Fe
-        else: 
-            raise Exception("Only H2O, CH4, NH3, and Fe have been added to the moist adiabat function")
-        return a
-
-HVapTypes = [(i, float64) for i in ['temperature','mmw']]
-@jitclass(HVapTypes)
-class HVapClass(object):
-    def __init__(self,temperature,mmw):
-        self.temperature = temperature 
-        self.mmw = mmw
-        return 
-        
-    def H2O(self):
-        t = self.temperature/647.
-        if( self.temperature < 647. ):
-            hvap = 51.67*np.exp(0.199*t)*(1 - t)**0.410
-        else:
-            hvap = 0. 
-        return  hvap*1.e10#convert from kJ/mol to erg/mol
-
-    def CH4(self): 
-        t = self.temperature/191
-        if( self.temperature < 191 ):
-            hvap = 10.11*np.exp(0.22*t)*(1 - t)**0.388
-        else:
-            hvap = 0. 
-        return hvap*1.e10#convert from kJ/mol to erg/mol
-
-    def  NH3(self):
-        t = self.temperature - 273.
-        if( self.temperature < 406. ):
-            hvap = (137.91*(133. - t)**0.5 - 2.466*(133. - t))/1.e3*self.mmw
-        else:
-            hvap = 0.
-        return hvap*1.e10 #convert from kJ/mol to erg/mol
-    
-    def Fe(self):
-        hvap = 3.50e2 
-        return hvap*1.e10 #convert from kJ/mol to erg/mol
-    
-    
-    def returns(self,mol):
-        """
-        This is the ONLY way to get around numba not being able to run getattr function 
-        """
-        if mol == 'H2O': 
-            a = self.H2O() 
-        elif mol == 'CH4':
-            a = self.CH4() 
-        elif mol == 'NH3':
-            a = self.NH3()
-        elif mol == 'Fe':
-            a = self.Fe()
-        else: 
-            raise Exception("Only H2O, CH4, NH3, and Fe have been added to the moist adiabat function")
-        return a 
-
-
-CPTypes = [(i, float64) for i in ['temperature','mmw']]
-@jitclass(CPTypes)
-class CPClass(object):
-    """
-    Parameters
-    ----------
-    gas: int 
-        gas index
-    temp : float
-        Temperature  value
-    mmw: list
-        list of mmw of all gases (g/mol)
-
-    Returns
-    -------
-    float 
-        cp
-    """
-    def __init__(self,temperature,mmw):
-        self.temperature = temperature 
-        self.mmw = mmw
-        return 
-        
-    def H2O(self): 
-        #coefficients NIST in polynomial fit
-        A = [      33.7476,      22.1440,      43.2009]
-        B = [     -6.85376,      24.6949,      7.91703]
-        C = [      24.6006,     -6.23914,     -1.35732]
-        D = [     -10.2578,     0.576813,    0.0883558]
-        E = [  0.000170650,   -0.0143783,     -12.3810]
-        G = [      230.708,      210.968,      219.916]
-        default_cp = 33.299
-        return A, B, C, D, E, G, default_cp
-    def CH4(self):
-        A = [      30.1333,      33.3642,      107.517]
-        B = [     -10.7805,      62.9633,    -0.420051]
-        C = [      116.987,     -20.9146,     0.158105]
-        D = [     -64.8550,      2.54256,   -0.0135050]
-        E = [    0.0315890,     -6.26634,     -53.2270]
-        G = [      221.436,      191.066,      225.284]
-        default_cp = 33.258
-        return A, B, C, D, E, G, default_cp
-    def CO(self):
-        A = [      30.7036,      34.2259,      35.3293]
-        B = [     -11.7368,      1.51655,      1.14525]
-        C = [      25.8658,    0.0492481,    -0.170423]
-        D = [     -11.6476,   -0.0690167,    0.0111323]
-        E = [  -0.00675277,     -2.61424,     -2.85798]
-        G = [      237.225,      231.715,      231.882]
-        default_cp = 29.104
-        return A, B, C, D, E, G, default_cp
-    def NH3(self):
-        A = [      28.6905,      48.0925,      89.3168]
-        B = [      14.9648,      16.6892,   -0.0283260]
-        C = [      32.2849,    -0.765783,    -0.403009]
-        D = [     -19.5766,    -0.465621,    0.0366428]
-        E = [    0.0281968,     -7.37491,     -68.5295]
-        G = [      221.899,      226.660,      222.041]
-        default_cp = 33.284
-        return A, B, C, D, E, G, default_cp
-    def N2(self):
-        A = [      30.7036,      34.2259,      35.3293]
-        B = [     -11.7368,      1.51655,      1.14525]
-        C = [      25.8658,    0.0492481,    -0.170423]
-        D = [     -11.6476,   -0.0690167,    0.0111323]
-        E = [  -0.00675277,     -2.61424,     -2.85798]
-        G = [      237.225,      231.715,      231.882]
-        default_cp = 29.104
-        return A, B, C, D, E, G, default_cp
-    def PH3(self):
-        A = [      24.1623,      75.4246,      82.3854]
-        B = [      35.7131,    -0.467915,     0.229399]
-        C = [      28.4716,      2.70503,   -0.0280155]
-        D = [     -24.2205,    -0.650872,   0.00135605]
-        E = [    0.0530053,     -13.0455,     -24.2573]
-        G = [      228.047,      262.751,      258.876]
-        default_cp = 33.259
-        return A, B, C, D, E, G, default_cp
-    def H2S(self):
-        A = [      32.3729,      45.0479,      59.8489]
-        B = [     -1.43579,      7.28547,    -0.380368]
-        C = [      29.0118,    -0.645552,     0.218138]
-        D = [     -14.1925,    -0.109566,   -0.0148742]
-        E = [   0.00759539,     -6.02580,     -21.7958]
-        G = [      244.187,      242.650,      243.798]
-        default_cp = 33.259
-        return A, B, C, D, E, G, default_cp
-    def TiO(self): #elif (igas == 16): # tio
-        A = [      24.6205,      42.5795,      25.6986]
-        B = [      30.8607,     -3.86291,      2.45240]
-        C = [     -23.2493,      1.15148,     0.770717]
-        D = [      5.39026,   -0.0315822,   -0.0946717]
-        E = [    0.0642488,     -2.14344,      26.1268]
-        G = [      255.386,      278.646,      282.105]
-        default_cp = 33.880
-        return A, B, C, D, E, G, default_cp
-    def VO(self): #elif (igas == 17): # vo
-        A = [      23.6324,      40.2277,      31.0958]
-        B = [      28.8676,     -2.68241,    0.0444865]
-        C = [     -21.5825,     0.855477,      1.06932]
-        D = [      5.35779,  -0.00729363,    -0.106395]
-        E = [    0.0281114,     -2.10348,      13.7865]
-        G = [      251.949,      273.020,      275.689]
-        default_cp = 29.106
-        return A, B, C, D, E, G, default_cp
-    def Fe(self): #elif (igas == 18): # fe
-        A = [      22.5120,      29.3785,      31.0353]
-        B = [      23.6042,     -12.7912,     -3.09778]
-        C = [     -49.5765,      6.80824,     0.766662]
-        D = [      26.1116,    -0.979241,   0.00158800]
-        E = [   -0.0305055,    0.0621550,     -22.0154]
-        G = [      202.527,      219.780,      206.035]
-        default_cp = 21.387
-        return A, B, C, D, E, G, default_cp
-    def FeH(self): # feh
-        A = [      17.0970,      43.7692,      80.0135]
-        B = [      52.0678,     0.968978,     -18.2832]
-        C = [     -34.3367,     0.818403,     3.55466]
-        D = [      7.96189,    -0.356898,    -0.288758]
-        E = [     0.455643,     -1.88073,     -41.0125]
-        G = [      285.000,      285.000,      285.000]
-        default_cp = 34.906
-        return A, B, C, D, E, G, default_cp
-    def CrH(self): #elif (igas == 20): # crh
-        A = [      24.6453,      40.9948,      100.083]
-        B = [      12.9392,     -3.29251,     -36.2074]
-        C = [    0.0477315,      1.40327,      7.79945]
-        D = [     -2.45803,   -0.0468814,    -0.458881]
-        E = [    0.0859445,     -3.87926,     -68.1415]
-        G = [      260.000,      280.000,      280.000]
-        default_cp = 29.417
-        return A, B, C, D, E, G, default_cp
-    def Na(self): #elif (igas == 21): # na
-        A = [      20.8154,      21.0812,      38.7681]
-        B = [    -0.162936,   -0.0211313,     -9.69137]
-        C = [     0.281035,    -0.188686,      1.61045]
-        D = [    -0.149202,    0.0703542,   -0.0183163]
-        E = [ -0.000166252,    -0.169969,     -21.5246]
-        G = [      178.894,      178.829,      179.923]
-        default_cp = 20.786
-        return A, B, C, D, E, G, default_cp
-    def K(self): #elif (igas == 22): # k
-        A = [      20.8154,      20.1077,      80.8587]
-        B = [    -0.162936,      1.72326,     -38.6316]
-        C = [     0.281035,     -1.42054,      8.80886]
-        D = [    -0.149202,     0.388577,    -0.553605]
-        E = [ -0.000166252,   -0.0178336,     -57.1459]
-        G = [      185.566,      184.342,      197.881]
-        default_cp = 20.786
-        return A, B, C, D, E, G, default_cp
-    def Rb(self): #elif (igas == 23): # rb
-        A = [      20.8110,      21.8305,      67.6946]
-        B = [    -0.139382,    -0.120618,     -36.4056]
-        C = [     0.241553,    -0.759797,      9.45407]
-        D = [    -0.129505,     0.324361,    -0.654225]
-        E = [ -0.000134562,    -0.519578,     -22.9711]
-        G = [      195.310,      195.381,      215.367]
-        default_cp = 20.786
-        return A, B, C, D, E, G, default_cp
-    def Cs(self):#elif (igas == 24): # cs
-        A = [      20.8111,      19.3844,     -99.0597]
-        B = [    -0.139259,      3.51623,      42.3576]
-        C = [     0.238592,     -3.00169,     -2.76224]
-        D = [    -0.126005,     0.867065,   -0.0552789]
-        E = [ -0.000147773,    0.0177750,      218.172]
-        G = [      200.816,      198.458,      231.228]
-        default_cp = 20.786
-        return A, B, C, D, E, G, default_cp
-    def CO2(self):#elif (igas == 25): # co2
-        A = [      17.1622,      59.7854,      65.7964]
-        B = [      84.3617,    -0.472970,     -1.17414]
-        C = [     -71.5668,      1.36583,     0.232788]
-        D = [      24.3579,    -0.300212,  -0.00788867]
-        E = [    0.0429191,     -6.20314,     -17.2749]
-        G = [      212.619,      266.092,      263.469]
-        default_cp = 20.786
-        return A, B, C, D, E, G, default_cp
-    
-    #polynomial function for cp
-    def polyAE(self,A, B, C, D, E,t,it):
-        cp = A[it] + B[it]*t + C[it]*t**2 + D[it]*t**3 + E[it]/t**2
-        return cp
-        
-    def returns(self,mol):
-        if mol == 'H2O': 
-            A, B, C, D, E, G, default_cp=self.H2O() 
-        elif mol == 'CH4':
-            A, B, C, D, E, G, default_cp=self.CH4()
-        elif mol == 'NH3':
-            A, B, C, D, E, G, default_cp=self.NH3()
-        elif mol == 'Fe':
-            A, B, C, D, E, G, default_cp=self.Fe()
-        else: 
-            raise Exception("Only H2O, CH4, NH3, and Fe have been added to the moist adiabat function")
-        
-        m = self.mmw
-        temp = self.temperature
-        t = temp/1000.
-        
-        if ( temp > 2500.):
-            it = 2
-            cp = self.polyAE(A, B, C, D, E,t,it)
-        elif ( temp > 1000. and temp <= 2500.):
-            it = 1
-            cp = self.polyAE(A, B, C, D, E,t,it)
-        elif ( temp > 100. and temp <= 1000.):
-            it = 0
-            cp = self.polyAE(A, B, C, D, E,t,it)
-        else:
-            cp = default_cp
-        
-        # convert from J/K/mol to erg/g/K
-        cp = cp/m*1.e7
-        return cp
-
-
 def find_strat(bundle, nofczns,nstr,
         temp,pressure,dtdp, 
         AdiabatBundle,
@@ -2839,90 +2436,6 @@ def find_strat(bundle, nofczns,nstr,
     return profile_flag, pressure, temp, dtdp, nstr ,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop, chem, cld_out,all_profiles,all_opd,all_kzz
 
 
-def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
-                   verbose=False,save_profile=True,all_opd=[]):
-    """
-    Updates cloud parameters and returns the cloud output.
-
-    Parameters
-    ----------
-    bundle : object
-        The bundle object containing the inputs and other parameters.
-    CloudParameters : namedtuple
-        Tuple containing the cloud parameters, including the cloudy flag, fsed, mh, b, param, directory, and condensates.
-    Atmosphere : namedtuple
-        Contains temperature, pressure, dtdp, mmw, and scale height.
-    kzz : array
-        Array of Kz cm^2/s.
-    virga_kwargs : dict
-        Dictionary of keyword arguments for the virga function.
-    verbose : bool, optional
-        If True, prints additional information. Default is False.
-    save_profile : bool, optional
-        If True, saves the profile. Default is True.
-    all_opd : list, optional
-        List to store all optical depth profiles. Default is an empty list.
-
-    Returns
-    -------
-    cld_out : dict
-        Dictionary containing cloud output parameters.
-    df_cld : DataFrame
-        DataFrame containing cloud properties in PICASO format.
-    taudif : float
-        Maximum difference in optical depth between iterations.
-    taudif_tol : float
-        Tolerance for the maximum optical depth difference.
-    all_opd : list
-        Updated list of all optical depth profiles.
-    CloudParameters : namedtuple
-        Updated CloudParameters namedtuple.
-    ```
-    """
-    opd_cld_climate, g0_cld_climate, w0_cld_climate = CloudParameters.OPD.copy(), CloudParameters.G0.copy(), CloudParameters.W0.copy()
-    we0, we1, we2, we3 = 0.25, 0.25, 0.25, 0.25
-
-    opd_prev_cld_step = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-
-    virga_kwargs['mmw'] = np.mean(Atmosphere.mmw_layer)
-
-    bundle.inputs['atmosphere']['profile']['kz'] = kzz
-
-    #if not average_only: 
-    cld_out = bundle.virga(**virga_kwargs)
-
-    opd_now, w0_now, g0_now = cld_out['opd_per_layer'], cld_out['single_scattering'], cld_out['asymmetry']
-
-    opd_cld_climate[:, :, 3], g0_cld_climate[:, :, 3], w0_cld_climate[:, :, 3] = opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2]
-    opd_cld_climate[:, :, 2], g0_cld_climate[:, :, 2], w0_cld_climate[:, :, 2] = opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1]
-    opd_cld_climate[:, :, 1], g0_cld_climate[:, :, 1], w0_cld_climate[:, :, 1] = opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0]
-
-    opd_cld_climate[:, :, 0], g0_cld_climate[:, :, 0], w0_cld_climate[:, :, 0] = opd_now, g0_now, w0_now
-
-    sum_opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-    opd_clmt = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
-    g0_clmt = (we0 * opd_cld_climate[:, :, 0] * g0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * g0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * g0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * g0_cld_climate[:, :, 3]) / (sum_opd_clmt)
-    w0_clmt = (we0 * opd_cld_climate[:, :, 0] * w0_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] * w0_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] * w0_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3] * w0_cld_climate[:, :, 3]) / (sum_opd_clmt)
-    g0_clmt = np.nan_to_num(g0_clmt, nan=0.0)
-    w0_clmt = np.nan_to_num(w0_clmt, nan=0.0)
-    opd_clmt[np.where(opd_clmt <= 1e-5)] = 0.0
-
-    df_cld = vj.picaso_format(opd_clmt, w0_clmt, g0_clmt, pressure=cld_out['pressure'], wavenumber=1e4 / cld_out['wave'])
-    #bundle.clouds(df=df_cld)
-
-    diff = (opd_clmt - opd_prev_cld_step)
-    taudif = np.max(np.abs(diff))
-    taudif_tol = 0.4 * np.max(0.5 * (opd_clmt + opd_prev_cld_step))
-
-    if save_profile == 1:
-        all_opd = np.append(all_opd, df_cld['opd'].values[55::196])
-
-    if verbose:
-        print("Doing clouds: Max TAUCLD diff is", taudif, " Tau tolerance is ", taudif_tol)
-    CloudParameters = CloudParameters._replace(OPD=opd_cld_climate,G0=g0_cld_climate,W0=w0_cld_climate)
-    return cld_out, df_cld, taudif, taudif_tol, all_opd, CloudParameters
-
-
 def profile(bundle, nofczns, nstr, temp, pressure, 
             AdiabatBundle,opacityclass,
             grav,
@@ -3004,7 +2517,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     cloudy =  CloudParameters.cloudy
 
    #under what circumstances to do we compute a self consistent kzz calc 
-    sc_kzz_and_clouds = cloudy #THIS IS ALWAYS BE TRUE.. 
+    sc_kzz_and_clouds = cloudy == "selfconsistent" #THIS IS ALWAYS BE TRUE.. 
     sc_kzz_and_diseq = self_consistent_kzz and diseq  
     do_kzz_calc = sc_kzz_and_clouds or sc_kzz_and_diseq or save_kzz
     constant_kzz =  ((not self_consistent_kzz) and diseq) #((not self_consistent_kzz) and cloudy) or
@@ -3012,16 +2525,10 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         kz_chem = bundle.inputs['atmosphere']['kzz'].get('constant_kzz')
         
 
-    if cloudy: 
-        virga_kwargs = {key.replace('virga_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'virga' in key}
-        hole_kwargs = {key.replace('patchy_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'patchy' in key}
-        do_holes = hole_kwargs['do_holes'];fhole=hole_kwargs['fhole']
-        #cld_species = CloudParameters.virga_condensates #neb commenting out not used 
-    else: 
-        #cld_species=[] ; #neb commenting out not used 
-        do_holes = False; fhole=None
+    virga_kwargs = {key.replace('virga_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'virga' in key}
+    hole_kwargs = {key.replace('patchy_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'patchy' in key}
+    do_holes = hole_kwargs.get('do_holes', None); fhole=hole_kwargs.get('fhole', None)
         
-
     min_temp = np.min(temp)
     # Don't use large step_max option for cold models, much better converged with smaller stepping unless it's cloudy
     if min_temp <= 250:# and cloudy != 1:
@@ -3081,6 +2588,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     OpacityWEd_clear=holes[0]; OpacityNoEd_clear=holes[0]
 
     ### 2) IF: UPDATE KZZ 
+    kz_cloud = 0 # dummy value so that the variable exists in cloudless cases
     if do_kzz_calc:
         kz = update_kzz(grav, tidal, AdiabatBundle, nstr, Atmosphere, 
                #these are only needed if you dont have fluxes and need to compute them
@@ -3108,16 +2616,15 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
         bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
     
-    ### 4) IF: COMPUTE CLOUDS 
-    if cloudy :
-        cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
-                                                                          all_opd=all_opd,verbose=verbose)
-        bundle.clouds(df=df_cld,**hole_kwargs)
-        
+    ### 4) COMPUTE CLOUDS - always pass to update_clouds, which will not update the cloud profile unless cloudy == "selfconsistent"
+    cld_out, df_cld, taudif, taudif_tol, CloudParameters=update_clouds(bundle, opacityclass, CloudParameters,Atmosphere,
+                                                                        kz_cloud,virga_kwargs, hole_kwargs)
+
+    if save_profile and cloudy == "selfconsistent":
+        all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
 
     ### 5) IF NEEDED: COMPUTE OPACITIES 
-    refresh_needed = full_kinetis or do_quench_appox or cloudy
+    refresh_needed = full_kinetis or do_quench_appox or cloudy == "selfconsistent"
     if refresh_needed:
         OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere,hole=calculate_atm(bundle, opacityclass )
         #these are most of the time returned as None, if no clouds and no patchy clouds are requested
@@ -3190,20 +2697,15 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             quench_levels=update_quench_levels(bundle, Atmosphere, kz_chem, grav,verbose=verbose)
             bundle.premix_atmosphere_photochem(quench_levels=quench_levels,verbose=verbose)
             
-        ### 4) IF: COMPUTE CLOUDS 
-        if cloudy:
-            cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
-                                                                          all_opd=all_opd,verbose=verbose)
-            bundle.clouds(df=df_cld,**hole_kwargs)
-        else: 
-            cld_out=np.nan
+        ### 4) COMPUTE CLOUDS - always pass to update_clouds, which will not update the cloud profile unless cloudy == "selfconsistent"
+        cld_out, df_cld, taudif, taudif_tol, CloudParameters=update_clouds(bundle, opacityclass, CloudParameters,Atmosphere,
+                                                                          kz_cloud,virga_kwargs,hole_kwargs,verbose=verbose)
         
-        if save_profile and cloudy:
+        if save_profile and cloudy == "selfconsistent":
             all_opd = np.append(all_opd,df_cld['opd'].values[55::196]) #save opd at 4 micron
         
         ### 5) IF NEEDED: COMPUTE OPACITIES 
-        refresh_needed = full_kinetis or do_quench_appox or cloudy
+        refresh_needed = full_kinetis or do_quench_appox or cloudy == "selfconsistent"
         if refresh_needed:
             OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere,hole=calculate_atm(bundle, opacityclass )
             OpacityWEd_clear=hole[0]; OpacityNoEd_clear=hole[0]

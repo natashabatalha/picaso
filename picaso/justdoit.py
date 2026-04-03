@@ -1774,7 +1774,7 @@ class inputs():
         self.inputs['climate']['grad'] = np.array(cp_grad['adiabat_grad'])
         #log Cp (erg/g/K);Specific heat at constant pressure for the same H/He 
         self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
-
+        self.fixed_opd, self.fixed_g0, self.fixed_w0 = 0, 0, 0 # these won't have any effect unless fixed clouds are activated
 
     
 
@@ -2399,6 +2399,15 @@ class inputs():
         kzz_dict = self.inputs['atmosphere'].get('kzz',self.inputs['atmosphere']['profile'])
         kz = kzz_dict.get('constant_kzz', kzz_dict.get('sc_kzz', kzz_dict.get('kz',None)))
         return np.array(kz)
+
+    def fix_clouds(self, opd, g0, w0):
+        self.fixed_opd = opd
+        self.fixed_g0 = g0
+        self.fixed_w0 = w0
+        self.inputs["climate"]["cloudy"] = "fixed"
+
+    def fix_virga_clouds(self, virga_out):
+        self.fix_clouds(virga_out["opd_per_layer"], virga_out["asymmetry"], virga_out["single_scattering"])
     
     def adjust_quench_chemistry(self, quench_levels,chemistry_table=None):
         """
@@ -5001,7 +5010,7 @@ class inputs():
     def interpret_run(self):
         print('SUMMARY')
         print('-------')
-        print('Clouds:', self.inputs['climate'].get('cloudy',False))
+        print('Clouds:', self.inputs['climate'].get('cloudy','cloudless'))
         for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
         print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
 
@@ -5273,11 +5282,11 @@ class inputs():
         # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
 
         # cloud inputs
-        cloudy = self.inputs['climate'].get('cloudy',False)
+        cloudy = self.inputs['climate'].get('cloudy','cloudless')
 
         #kzz treatment ? lets store a constant kz profile if it exists 
         #DO I NEED A KZZ? 
-        need_kzz = cloudy or diseq_chem or save_all_kzz
+        need_kzz = cloudy != "selfconsistent" or diseq_chem or save_all_kzz
         if need_kzz: 
             #lets initiative a separate place to store this 
             self.inputs['atmosphere']['kzz']={}
@@ -5301,7 +5310,7 @@ class inputs():
         #fthin_cld = self.inputs['climate']['fthin_cld']
 
         # check the dimensions of the mieff grid  
-        if cloudy:
+        if cloudy == "selfconsistent":
             mieff_dir = virga_kwargs.get('directory',None)
             if mieff_dir is None:
                 raise Exception('Need to specify directory for cloudy runs via Virga function')
@@ -5325,6 +5334,10 @@ class inputs():
         opd_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         g0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
+        opd_cld_climate[:,:,0] += self.fixed_opd
+        g0_cld_climate[:,:,0] += self.fixed_g0
+        w0_cld_climate[:,:,0] += self.fixed_w0
+        
         #BUNDLING
         virga_specific =[['virga_'+i,val] for i ,val in virga_kwargs.items() if 'patchy' not in i]
         hole_specific =  [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
@@ -5335,7 +5348,12 @@ class inputs():
         CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate]
                                         +[i[1] for i in virga_specific]
                                         +[i[1] for i in hole_specific]))
-
+        
+        if cloudy == "fixed":
+            level_pressure = self.inputs['atmosphere']['profile']['pressure']
+            layer_pressure = np.sqrt(level_pressure.values[:-1] * level_pressure.values[1:])
+            df_cld = vj.picaso_format(CloudParameters.OPD[:,:,0], CloudParameters.W0[:,:,0], CloudParameters.G0[:,:,0],pressure=layer_pressure, wavenumber=opacityclass.wno)
+            self.clouds(df=df_cld)
 
         if verbose: self.interpret_run()
 
@@ -5383,12 +5401,16 @@ class inputs():
 
 
         #put cld output in all_out
-        if cloudy:
+        if cloudy == "selfconsistent":
             df_cld = vj.picaso_format(cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry'], 
                                       pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_df'] = df_cld
             all_out['virga_output'] = cld_out
             #all_out['cld_output_final'] = df_cld_final
+        elif cloudy == "fixed":
+            all_out['fixed_opd'] = self.fixed_opd
+            all_out['fixed_g0'] = self.fixed_g0
+            all_out['fixed_w0'] = self.fixed_w0
 
         if save_all_profiles: 
             all_out['all_profiles'] = all_profiles 
