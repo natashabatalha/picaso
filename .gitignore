@@ -12,6 +12,7 @@
 *.npy
 *.h5
 *.hdf5
+*.npz
 
 # Jupyter Notebooks
 .ipynb_checkpoints
