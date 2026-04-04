@@ -283,10 +283,15 @@ def _is_notebook():
         return False      # Another exception, assume not a notebook.
 
 
-def check_environ():
+def check_environ(return_html=False):
     """
     Checks user environment variables and provides feedback.
     This function will display its output as formatted HTML if run in a Jupyter notebook.
+
+    Parameters
+    ----------
+    return_html : bool
+        If True, return the HTML output as a string.
     """
     messages = []
     picaso_refdata = os.environ.get('picaso_refdata')
@@ -357,7 +362,7 @@ def check_environ():
                 messages.append(('warning', f'{icheck} folder found but they are empty. This data product is used for {info}. You might have this data product outside the default path. That is okay.'))
 
     # --- Display Messages ---
-    if _is_notebook():
+    if _is_notebook() or return_html:
         # Generate and display HTML output for Jupyter notebooks
         html_output = '<div style="border: 1px solid #e0e0e0; padding: 15px; border-radius: 5px; background-color: #f9f9f9; font-family: sans-serif; max-width: 800px; margin: auto;">'
         html_output += '<h3 style="margin-top: 0; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; font-size: 1.2em;">PICASO Environment Check</h3>'
@@ -388,6 +393,8 @@ def check_environ():
                 html_output += f'<div style="padding: 10px; margin: 5px 0; border-radius: 4px; {style}">{icon} {msg}</div>'
 
         html_output += '</div>'
+        if return_html:
+            return html_output
         display(HTML(html_output))
     else:
         # Keep the original text-based output for other environments
@@ -452,6 +459,8 @@ def get_reference(path_to_picaso_refdata):
 def get_data(category_download=None,target_download=None, final_destination_dir=None):
     input_config, data_config=get_data_config()
     __refdata__=os.environ.get('picaso_refdata')
+    PYSYN_CDBS = os.environ.get('PYSYN_CDBS', '')
+
     if ((category_download==None) and (target_download==None)):
         print('What data can I help you download? Options include:')
         options = [i for i in data_config.keys()]
@@ -481,7 +490,6 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
         if 'stellar' in category_download: 
             print("""Stellar gird models should go to the environment variable directory called PYSYN_CDBS. 
             """)
-            PYSYN_CDBS = os.environ.get('PYSYN_CDBS','')
             if os.path.isdir(PYSYN_CDBS):
                 print('It looks like you have set PYSYN_CDBS path as: ',PYSYN_CDBS)
             elif PYSYN_CDBS=='':
