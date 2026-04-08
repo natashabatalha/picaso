@@ -7,9 +7,6 @@ import ctypes
 import matplotlib.pyplot as plt
 import os 
 
-import numpy as np
-import time
-
 try:
     import cupy as cp
 except ImportError:
@@ -576,7 +573,7 @@ def get_reflected_1d(
         return get_reflected_1d_cpu(nlevel, wno, nwno, ng, nt, DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray, DTAU_OG, TAU_OG, W0_OG, COSB_OG, atm_surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, frac_a, frac_b, frac_c, constant_back, constant_forward, get_toa_intensity, get_lvl_flux, toon_coefficients, b_top)
 
 
-    return flux_at_top, flux_minus_all_out, flux_plus_all_out,flux_minus_midpt_all_out, flux_plus_midpt_all_out
+    return flux_at_top, (flux_minus_all_out, flux_plus_all_out,flux_minus_midpt_all_out, flux_plus_midpt_all_out)
 
 
 
