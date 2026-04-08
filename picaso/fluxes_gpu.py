@@ -5,34 +5,48 @@ import pickle as pk
 from scipy.linalg import solve_banded
 import ctypes
 import matplotlib.pyplot as plt
+import os 
 
-import ctypes
 import numpy as np
 import time
-import cupy as cp
+
+try:
+    import cupy as cp
+except ImportError:
+    cp = None
+
 # nvcc -o thermal_1d_kernel_at_top.so -shared -Xcompiler -fPIC thermal_1d_kernel_at_top.cu
 # nvcc -o thermal_1d_kernel_ver1.so -shared -Xcompiler -fPIC thermal_1d_kernel_ver1.cu
 # nvcc -o reflect_1d_kernel_ver1.so -shared -Xcompiler -fPIC reflect_1d_kernel_ver1.cu
 # nvcc -o transit_1d_kernel.so -shared -Xcompiler -fPIC transit_1d_kernel.cu
 
-cuda_lib_retrieval = ctypes.CDLL('./thermal_1d_kernel_at_top.so')
-cuda_lib = ctypes.CDLL('./thermal_1d_kernel_ver1.so')
-cuda_lib_reflected = ctypes.CDLL('./reflect_1d_kernel_ver1.so')
+#cuda_lib_retrieval = ctypes.CDLL('./thermal_1d_kernel_at_top.so')
+#cuda_lib = ctypes.CDLL('./thermal_1d_kernel_ver1.so')
+#cuda_lib_reflected = ctypes.CDLL('./reflect_1d_kernel_ver1.so')
 
+_gpu_dir_ = os.path.join(os.path.dirname(__file__), 'gpu')
 
+def _load_cuda_lib(libname):
+    libpath = os.path.join(_gpu_dir_, libname)
+    if os.path.exists(libpath):
+        return ctypes.CDLL(libpath)
+    return None
+
+cuda_lib_retrieval = _load_cuda_lib('thermal_1d_kernel_at_top.so')
+cuda_lib = _load_cuda_lib('thermal_1d_kernel_ver1.so')#thermal? 
+cuda_lib_reflected = _load_cuda_lib('reflect_1d_kernel_ver1.so')
+cuda_lib_transit = _load_cuda_lib("transit_1d_kernel.so")
 
 def get_thermal_1d_retrieval_allocate_buffers(nlevel,nwno,numg,numt):
-
+    if cuda_lib_retrieval is None: raise RuntimeError("CUDA library thermal_1d_kernel_at_top.so not found")
     cuda_lib_retrieval.get_thermal_1d_allocate_buffers.argtypes = [ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int]
     cuda_lib_retrieval.get_thermal_1d_allocate_buffers.restype  = None
     cuda_lib_retrieval.get_thermal_1d_allocate_buffers(nlevel,nwno,numg,numt)
 
 def get_thermal_1d_retrieval_free():
-
+    if cuda_lib_retrieval is None: raise RuntimeError("CUDA library thermal_1d_kernel_at_top.so not found")
     cuda_lib_retrieval.get_thermal_1d_free.argtypes = []
     cuda_lib_retrieval.get_thermal_1d_free.restype  = None
-
-
     cuda_lib_retrieval.get_thermal_1d_free()
 
 
@@ -137,11 +151,13 @@ def get_thermal_1d_free(calc_type):
 
 
     if calc_type == 0:
+        if cuda_lib_retrieval is None: raise RuntimeError("CUDA library thermal_1d_kernel_at_top.so not found")
         print('Spectrum only...')
         cuda_lib_retrieval.get_thermal_1d_free.argtypes = []
         cuda_lib_retrieval.get_thermal_1d_free.restype  = None
         cuda_lib_retrieval.get_thermal_1d_free()
     else:
+        if cuda_lib is None: raise RuntimeError("CUDA library thermal_1d_kernel_ver1.so not found")
         print('Climate only...')
         cuda_lib.get_thermal_1d_free.argtypes = []
         cuda_lib.get_thermal_1d_free.restype  = None
@@ -194,6 +210,7 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
         flux_at_top              = cp.zeros(nwno * numg * numt)
 
         if calc_type == 0:
+            if cuda_lib_retrieval is None: raise RuntimeError("CUDA library thermal_1d_kernel_at_top.so not found")
             print('Spectrum only...')
 
             flux_at_top_p   = ctypes.c_void_p(flux_at_top.data.ptr)
@@ -247,8 +264,9 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
             flux_plus_midpt_all      = np.nan
 
         else:
+            if cuda_lib is None: raise RuntimeError("CUDA library thermal_1d_kernel_ver1.so not found")
             print('Climate only...')
-            calc_type = 0
+            calc_type = 0 #NEB-Q why is this reset to 0?? 
             flux_minus_all           = cp.zeros(n_out)
             flux_plus_all            = cp.zeros(n_out)
             flux_minus_midpt_all     = cp.zeros(n_out)
@@ -315,12 +333,14 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
 
     else:
 
-        print('no cpu module yet...')
-        flux_at_top = np.nan
-        flux_minus_all = np.nan
-        flux_plus_all = np.nan
-        flux_minus_midpt_all = np.nan
-        flux_plus_midpt_all = np.nan
+        #print('no cpu module yet...')
+        #flux_at_top = np.nan
+        #flux_minus_all = np.nan
+        #flux_plus_all = np.nan
+        #flux_minus_midpt_all = np.nan
+        #flux_plus_midpt_all = np.nan
+        from .fluxes import get_thermal_1d as get_thermal_1d_cpu
+        return get_thermal_1d_cpu(nlevel, wno, nwno, numg, numt, tlevel, dtau, w0, cosb, plevel, ubar1, surf_reflect, hard_surface, dwno, calc_type)
 
     return (flux_at_top,(flux_minus_all, flux_plus_all,flux_minus_midpt_all, flux_plus_midpt_all))
 
@@ -362,7 +382,7 @@ def compress_thermal(nwno, flux_at_top, gweight, tweight):
 
 
 def get_reflected_1d_allocate_buffers(nlevel,nwno,numg,numt):
-
+    if cuda_lib_reflected is None: raise RuntimeError("CUDA library reflect_1d_kernel_ver1.so not found")
     cuda_lib_reflected.get_reflected_1d_allocate_buffers.argtypes = [ctypes.c_int,ctypes.c_int,ctypes.c_int, ctypes.c_int]
     cuda_lib_reflected.get_reflected_1d_allocate_buffers.restype = None
 
@@ -386,6 +406,7 @@ def get_reflected_1d(
     tweight, hardware = 'cpu'):
 
     if hardware == 'gpu':
+        if cuda_lib_reflected is None: raise RuntimeError("CUDA library reflect_1d_kernel_ver1.so not found")
 
         # --- required GPU inputs in a list ---
         gpu_required = [
@@ -545,12 +566,14 @@ def get_reflected_1d(
             flux_plus_midpt_all_out_p
          )
     else:
-        print('no cpu module yet...')
-        flux_at_top = np.nan
-        flux_minus_all_out = np.nan
-        flux_plus_all_out = np.nan
-        flux_minus_midpt_all_out = np.nan
-        flux_plus_midpt_all_out = np.nan
+        #print('no cpu module yet...')
+        #flux_at_top = np.nan
+        #flux_minus_all_out = np.nan
+        #flux_plus_all_out = np.nan
+        #flux_minus_midpt_all_out = np.nan
+        #flux_plus_midpt_all_out = np.nan
+        from .fluxes import get_reflected_1d as get_reflected_1d_cpu
+        return get_reflected_1d_cpu(nlevel, wno, nwno, ng, nt, DTAU, TAU, W0, COSB, GCOS2, ftau_cld, ftau_ray, DTAU_OG, TAU_OG, W0_OG, COSB_OG, atm_surf_reflect, ubar0, ubar1, cos_theta, F0PI, single_phase, multi_phase, frac_a, frac_b, frac_c, constant_back, constant_forward, get_toa_intensity, get_lvl_flux, toon_coefficients, b_top)
 
 
     return flux_at_top, flux_minus_all_out, flux_plus_all_out,flux_minus_midpt_all_out, flux_plus_midpt_all_out
@@ -558,16 +581,14 @@ def get_reflected_1d(
 
 
 def get_reflected_1d_free():
-
+    if cuda_lib_reflected is None: raise RuntimeError("CUDA library reflect_1d_kernel_ver1.so not found")
     cuda_lib_reflected.get_reflected_1d_free.argtypes = []
     cuda_lib_reflected.get_reflected_1d_free.restype = None
     cuda_lib_reflected.get_reflected_1d_free()
 
 
-cuda_lib_transit = ctypes.CDLL("./transit_1d_kernel.so")
-
-
 def get_transit_1d_allocate_buffers(nlevel, nwno):
+    if cuda_lib_transit is None: raise RuntimeError("CUDA library transit_1d_kernel.so not found")
     cuda_lib_transit.get_transit_1d_allocate_buffers.argtypes = [
         ctypes.c_int,
         ctypes.c_int,
@@ -579,6 +600,7 @@ def get_transit_1d_allocate_buffers(nlevel, nwno):
 
 
 def get_transit_1d_free():
+    if cuda_lib_transit is None: raise RuntimeError("CUDA library transit_1d_kernel.so not found")
     cuda_lib_transit.get_transit_1d_free.argtypes = []
     cuda_lib_transit.get_transit_1d_free.restype = None
     cuda_lib_transit.get_transit_1d_free()
@@ -684,21 +706,23 @@ def get_transit_1d(
     hardware="gpu",
 ):
     if hardware != "gpu":
-        raise NotImplementedError("CPU path not implemented here.")
+        #raise NotImplementedError("CPU path not implemented here.")
+        from .fluxes import get_transit_1d as get_transit_1d_cpu
+        return get_transit_1d_cpu(z, dz, nlevel, nwno, rstar, mmw, k_b, amu, player, tlayer, colden, DTAU)
+    else: 
+        get_transit_1d_set_inputs(
+            z,
+            dz,
+            player,
+            tlayer,
+            colden,
+            DTAU,
+            mmw,
+            k_b,
+            amu,
+            rstar,
+            nlevel,
+            nwno,
+        )
 
-    get_transit_1d_set_inputs(
-        z,
-        dz,
-        player,
-        tlayer,
-        colden,
-        DTAU,
-        mmw,
-        k_b,
-        amu,
-        rstar,
-        nlevel,
-        nwno,
-    )
-
-    return get_transit_1d_run(nwno)
+        return get_transit_1d_run(nwno)

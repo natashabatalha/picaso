@@ -47,6 +47,24 @@ __version__ = '5.0'#GPU VERSION
 #sets the hardware (Default is CPU)
 __hardware__ = os.environ.get('picaso_hardware','cpu')
 
+if __hardware__ == 'gpu':
+    try:
+        import cupy as cp
+        from .fluxes_gpu import (
+            get_reflected_1d as get_reflected_1d_gpu,
+            get_thermal_1d as get_thermal_1d_gpu,
+            get_transit_1d as get_transit_1d_gpu,
+            get_reflected_1d_allocate_buffers,
+            get_reflected_1d_free,
+            get_thermal_1d_allocate_buffers,
+            get_thermal_1d_free,
+            get_transit_1d_allocate_buffers,
+            get_transit_1d_free
+        )
+    except ImportError:
+        warnings.warn("GPU mode requested but cupy or fluxes_gpu dependencies not found. Falling back to CPU.")
+        __hardware__ = 'cpu'
+
 LODDERS2020_C_TO_O = 0.54939759398
 
 if not os.path.exists(__refdata__): 
@@ -254,6 +272,34 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 full_output=full_output, plot_opacity=plot_opacity, fthin_cld = fthin_cld, do_holes = True)
         
         if  'reflected' in calculation:
+            if __hardware__ == 'gpu':
+                get_reflected_1d_allocate_buffers(nlevel, nwno, ng, nt)
+                DTAU_gpu = cp.asarray(DTAU)
+                TAU_gpu = cp.asarray(TAU)
+                W0_gpu = cp.asarray(W0)
+                COSB_gpu = cp.asarray(COSB)
+                GCOS2_gpu = cp.asarray(GCOS2)
+                ftau_cld_gpu = cp.asarray(ftau_cld)
+                ftau_ray_gpu = cp.asarray(ftau_ray)
+                DTAU_OG_gpu = cp.asarray(DTAU_OG)
+                TAU_OG_gpu = cp.asarray(TAU_OG)
+                W0_OG_gpu = cp.asarray(W0_OG)
+                COSB_OG_gpu = cp.asarray(COSB_OG)
+                F0PI_gpu = cp.asarray(F0PI)
+                wno_gpu = cp.asarray(wno)
+                ubar0_gpu = ubar0.reshape(-1)
+                ubar1_gpu = ubar1.reshape(-1)
+                gweight_gpu = cp.asarray(gweight)
+                tweight_gpu = cp.asarray(tweight)
+                if do_holes:
+                    DTAU_clear_gpu = cp.asarray(DTAU_clear)
+                    TAU_clear_gpu = cp.asarray(TAU_clear)
+                    W0_clear_gpu = cp.asarray(W0_clear)
+                    COSB_clear_gpu = cp.asarray(COSB_clear)
+                    DTAU_OG_clear_gpu = cp.asarray(DTAU_OG_clear)
+                    TAU_OG_clear_gpu = cp.asarray(TAU_OG_clear)
+                    W0_OG_clear_gpu = cp.asarray(W0_OG_clear)
+                    COSB_OG_clear_gpu = cp.asarray(COSB_OG_clear)
             xint_at_top = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 nlevel = atm.c.nlevel
@@ -273,8 +319,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 else:
                     if get_lvl_flux: 
                         atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-                    
-                    xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                    if __hardware__ == 'gpu':
+                        xint, lvl_fluxes = get_reflected_1d_gpu(
+                                    nlevel, wno_gpu,nwno,ng,nt,
+                                    DTAU_gpu[:,:,ig].copy(), TAU_gpu[:,:,ig].copy(), W0_gpu[:,:,ig].copy(), COSB_gpu[:,:,ig].copy(),
+                                    GCOS2_gpu[:,:,ig].copy(),ftau_cld_gpu[:,:,ig].copy(),ftau_ray_gpu[:,:,ig].copy(),
+                                    DTAU_OG_gpu[:,:,ig].copy(), TAU_OG_gpu[:,:,ig].copy(), W0_OG_gpu[:,:,ig].copy(), COSB_OG_gpu[:,:,ig].copy(),
+                                    atm.surf_reflect, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
+                                    single_phase,multi_phase,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
+                                    toon_coefficients=toon_coefficients,b_top=b_top,
+                                    gweight=gweight_gpu, tweight=tweight_gpu, hardware='gpu')
+                        if int(atm.get_lvl_flux) == 1:
+                            lvl_fluxes = [l.reshape(ng, nt, nlevel, nwno) if isinstance(l, cp.ndarray) else l for l in lvl_fluxes]
+                    else:                    
+                        xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
@@ -287,7 +347,22 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = lvl_fluxes
 
                     if do_holes == True:
-                        xint_clear, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                        if __hardware__ == 'gpu':
+                            xint_clear, out_ref_fluxes_clear = get_reflected_1d_gpu(
+                                    nlevel, wno_gpu,nwno,ng,nt,
+                                    DTAU_clear_gpu[:,:,ig].copy(), TAU_clear_gpu[:,:,ig].copy(), W0_clear_gpu[:,:,ig].copy(), COSB_clear_gpu[:,:,ig].copy(),
+                                    GCOS2_gpu[:,:,ig].copy(),ftau_cld_gpu[:,:,ig].copy(),ftau_ray_gpu[:,:,ig].copy(),
+                                    DTAU_OG_clear_gpu[:,:,ig].copy(), TAU_OG_clear_gpu[:,:,ig].copy(), W0_OG_clear_gpu[:,:,ig].copy(), COSB_OG_clear_gpu[:,:,ig].copy(),
+                                    atm.surf_reflect, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
+                                    single_phase,multi_phase,
+                                    frac_a,frac_b,frac_c,constant_back,constant_forward,
+                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
+                                    toon_coefficients=toon_coefficients,b_top=b_top,
+                                    gweight=gweight_gpu, tweight=tweight_gpu, hardware='gpu')
+                            if int(atm.get_lvl_flux) == 1:
+                                out_ref_fluxes_clear = [l.reshape(ng, nt, nlevel, nwno) if isinstance(l, cp.ndarray) else l for l in out_ref_fluxes_clear]
+                        else:
+                            xint_clear, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                 DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
                                 GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                 DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
@@ -313,11 +388,32 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     atm.lvl_output_reflected['flux_plus']+=flux_plus_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_minus_mdpt']+=flux_minus_midpt_all_v*gauss_wts[ig]
                     atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
+
+            if __hardware__ == 'gpu':
+                get_reflected_1d_free()
+
             if full_output: 
                 atm.xint_at_top = xint_at_top
 
         
         if 'thermal' in calculation:
+            
+            if __hardware__ == 'gpu':
+                get_thermal_1d_allocate_buffers(nlevel, nwno, ng, nt, 1 if get_lvl_flux else 0)
+                wno_gpu = cp.asarray(wno)
+                DTAU_OG_gpu = cp.asarray(DTAU_OG)
+                W0_no_raman_gpu = cp.asarray(W0_no_raman)
+                COSB_OG_gpu = cp.asarray(COSB_OG)
+                lvl_T_gpu = cp.asarray(atm.level['temperature'])
+                lvl_P_gpu = cp.asarray(atm.level['pressure'])
+                ubar1_gpu = ubar1.reshape(-1)
+                wno0_gpu = wno_gpu * 0
+                if do_holes:
+                    DTAU_OG_clear_gpu = cp.asarray(DTAU_OG_clear)
+                    W0_no_raman_clear_gpu = cp.asarray(W0_no_raman_clear)
+                    COSB_OG_clear_gpu = cp.asarray(COSB_OG_clear)
+            
+            
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
 
@@ -336,7 +432,19 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     #                                    DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                     #                                    atm.level['pressure'],ubar1,
                     #                                    atm.surf_reflect, atm.hard_surface, tridiagonal)
-                    flux,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+
+                    if __hardware__ == 'gpu':
+                        flux, lvl_fluxes = get_thermal_1d_gpu(
+                                    nlevel, wno_gpu, nwno, ng, nt,
+                                    lvl_T_gpu, DTAU_OG_gpu[:,:,ig].copy(), W0_no_raman_gpu[:,:,ig].copy(), COSB_OG_gpu[:,:,ig].copy(),
+                                    lvl_P_gpu, ubar1_gpu,
+                                    atm.surf_reflect, atm.hard_surface,
+                                    wno0_gpu, calc_type, hardware='gpu')
+                        if calc_type == 1:
+                            lvl_fluxes = [l.reshape(ng, nt, nlevel, nwno) if isinstance(l, cp.ndarray) else l for l in lvl_fluxes]
+                        flux = flux.reshape(ng, nt, nwno)
+                    else:
+                        flux,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
@@ -346,8 +454,19 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = lvl_fluxes
                     
                     if do_holes == True:
-                        #clearsky case
-                        flux_clear,out_therm_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                      #clearsky case
+                        if __hardware__ == 'gpu':
+                            flux_clear, out_therm_fluxes_clear = get_thermal_1d_gpu(
+                                    nlevel, wno_gpu, nwno, ng, nt,
+                                    lvl_T_gpu, DTAU_OG_clear_gpu[:,:,ig].copy(), W0_no_raman_clear_gpu[:,:,ig].copy(), COSB_OG_clear_gpu[:,:,ig].copy(),
+                                    lvl_P_gpu, ubar1_gpu,
+                                    atm.surf_reflect, atm.hard_surface,
+                                    wno0_gpu, calc_type, hardware='gpu')
+                            if calc_type == 1:
+                                out_therm_fluxes_clear = [l.reshape(ng, nt, nlevel, nwno) if isinstance(l, cp.ndarray) else l for l in out_therm_fluxes_clear]
+                            flux_clear = flux_clear.reshape(ng, nt, nwno)
+                        else:
+                            flux_clear,out_therm_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                     DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
                                                     atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, atm.hard_surface,
@@ -381,24 +500,52 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 #ck-table gauss points 
                 flux_at_top += flux*gauss_wts[ig]
                 
-                
+            if __hardware__ == 'gpu':
+                get_thermal_1d_free(1 if get_lvl_flux else 0)
+
+
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
                 atm.flux_at_top = flux_at_top
 
         
         if 'transmission' in calculation:
+            if __hardware__ == 'gpu':
+                get_transit_1d_allocate_buffers(nlevel, nwno)
+                z_gpu = cp.asarray(atm.level['z'])
+                dz_gpu = cp.asarray(atm.level['dz'])
+                player_gpu = cp.asarray(atm.level['pressure'][:nlevel-1])
+                tlayer_gpu = cp.asarray(atm.level['temperature'][:nlevel-1])
+                colden_gpu = cp.asarray(atm.layer['colden'])
+                mmw_gpu = cp.asarray(atm.layer['mmw'])
+                DTAU_OG_gpu = cp.asarray(DTAU_OG)
+                if do_holes:
+                    DTAU_OG_clear_gpu = cp.asarray(DTAU_OG_clear)
+
             rprs2 = 0 
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
-
-                rprs2_g = get_transit_1d(atm.level['z'],atm.level['dz'],
+                if __hardware__ == 'gpu':
+                    rprs2_g = get_transit_1d_gpu(
+                                  z_gpu, dz_gpu, nlevel, nwno, radius_star, 
+                                  mmw_gpu, atm.c.k_b, atm.c.amu, 
+                                  player_gpu, tlayer_gpu, colden_gpu,
+                                  DTAU_OG_gpu[:,:,ig].copy(), hardware='gpu')
+                else:
+                    rprs2_g = get_transit_1d(atm.level['z'],atm.level['dz'],
                                   nlevel, nwno, radius_star, atm.layer['mmw'], 
                                   atm.c.k_b, atm.c.amu, atm.level['pressure'], 
                                   atm.level['temperature'], atm.layer['colden'],
                                   DTAU_OG[:,:,ig])
                 
                 if do_holes: 
-                    rprs2_g_clear = get_transit_1d(atm.level['z'],atm.level['dz'],
+                    if __hardware__ == 'gpu':
+                        rprs2_g_clear = get_transit_1d_gpu(
+                                  z_gpu, dz_gpu, nlevel, nwno, radius_star, 
+                                  mmw_gpu, atm.c.k_b, atm.c.amu, 
+                                  player_gpu, tlayer_gpu, colden_gpu,
+                                  DTAU_OG_clear_gpu[:,:,ig].copy(), hardware='gpu')
+                    else:
+                        rprs2_g_clear = get_transit_1d(atm.level['z'],atm.level['dz'],
                                   nlevel, nwno, radius_star, atm.layer['mmw'], 
                                   atm.c.k_b, atm.c.amu, atm.level['pressure'], 
                                   atm.level['temperature'], atm.layer['colden'],
@@ -406,6 +553,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     rprs2_g = (1.0 - fhole)*rprs2_g + fhole * rprs2_g_clear
                 
                 rprs2 += rprs2_g*gauss_wts[ig]
+
+            if __hardware__ == 'gpu':
+                get_transit_1d_free()
     elif dimension == '3d':
         #setup zero array to fill with opacities
         TAU_3d = np.zeros((nlevel, nwno, ng, nt, ngauss))
@@ -522,14 +672,23 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     returns['wavenumber'] = wno
     #returns['flux'] = flux
     if 'transmission' in calculation: 
-        returns['transit_depth'] = rprs2
+        if __hardware__ == 'gpu' and isinstance(rprs2, cp.ndarray):
+            returns['transit_depth'] = rprs2.get()
+        else: 
+            returns['transit_depth'] = rprs2
 
     #COMPRESS FULL TANGLE-GANGLE FLUX OUTPUT ONTO 1D FLUX GRID
 
     #for reflected light use compress_disco routine
     #this takes the intensity as a function of tangle/gangle and creates a 1d spectrum
     if  ('reflected' in calculation):
-        albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
+        if __hardware__ == 'gpu':
+            if isinstance(xint_at_top, cp.ndarray):
+                albedo = xint_at_top.get()
+            else:
+                albedo = xint_at_top
+        else:
+            albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
 
         # This is attempt to get the compress_disco to return the integrated fluxes
@@ -537,9 +696,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
         if ((rt_method == 'toon') & get_lvl_flux): 
             #for i in atm.lvl_output_reflected.keys():
-            for key, data in atm.lvl_output_reflected.items():
-                #atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
-
+            for key, data in atm.lvl_output_reflected.items():                
+                
+                if __hardware__ == 'gpu' and isinstance(data, cp.ndarray):
+                    data = data.get()
+                
                 # Get the number of layers to do the layer slicing
                 _, _, nlayer, nwno_data = data.shape
 
@@ -566,7 +727,11 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #for thermal light use the compress thermal routine
     #this takes the intensity as a functin of tangle/gangle and creates a 1d spectrum
     if ('thermal' in calculation):
-        thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
+        if __hardware__ == 'gpu' and isinstance(flux_at_top, cp.ndarray):
+            flux_at_top_np = flux_at_top.get().reshape(ng, nt, nwno)
+        else:
+            flux_at_top_np = flux_at_top
+        thermal = compress_thermal(nwno,flux_at_top_np, gweight, tweight)        
         returns['thermal'] = thermal
         returns['thermal_unit'] = 'erg/s/(cm^2)/(cm)'#'erg/s/(cm^2)/(cm^(-1))'
         returns['effective_temperature'] = (np.trapezoid(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
@@ -576,8 +741,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
         if ((rt_method == 'toon') & get_lvl_flux): 
             for i in atm.lvl_output_thermal.keys():
+                data = atm.lvl_output_thermal[i]
+                if __hardware__ == 'gpu' and isinstance(data, cp.ndarray):
+                    data = data.get().reshape(ng, nt, nlevel, nwno)                
                 delta_wno = getattr(opacityclass,'delta_wno', np.concatenate((np.diff(opacityclass.wno),[np.diff(opacityclass.wno)[-1]])))
-                disk_integrated_lvl_flux = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)  
+                
+                disk_integrated_lvl_flux = compress_thermal(nwno,data, gweight, tweight)  
+                
                 energy_per_wave_bin = disk_integrated_lvl_flux*delta_wno 
                 atm.lvl_output_thermal[i] = energy_per_wave_bin
 
