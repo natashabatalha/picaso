@@ -1,5 +1,5 @@
-Version 4.0 beta
-----------------
+Version 4.0
+-----------
 Major functionality:
 1. Cloudy equilibrium
 2. Cloudy/clear photochemistry
@@ -18,6 +18,11 @@ Enhancements:
 5. Deprecates pysynphot in place of stsynphot
 6. Opacity files starting with v3 now has zenodo DOI in meta data.
 
+Version 3.4
+-----------
+- updates requirement to virga v2 to include ability to do fractals from virga 
+- minor hot fix for sql queries
+
 Version 3.3
 -----------
 - Reflected light phase curves (Hamill et al. 2024) 
@@ -34,7 +39,7 @@ Version 3.1
 
 Version 3.0
 -----------
-- First version of climate code (Mukherjee et al. 2022)
+- First version of climate code (Mukherjee et al. 2023)
 - First version of grid fitting tools (JWST Transiting Exoplanet ERS et al. 2022)
 - Code help for xarrays
 - Reference/citation tools for opacities

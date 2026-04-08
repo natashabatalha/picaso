@@ -12,16 +12,20 @@ Primarily used for internal integration testing of the notebooks
 
 try:
     import nbformat
+    import jupytext
     from nbconvert.preprocessors import ExecutePreprocessor
 except ImportError:
-    print("Please install nbconvert and nbformat: pip install nbconvert nbformat")
+    print("Please install jupytext, nbconvert and nbformat: pip install jupytext nbconvert nbformat")
     sys.exit(1)
 
 def run_notebook(notebook_path,
                  github=False,picaso_refdata=None,PYSYN_CDBS=None, picaso_code = None, virga_code=None):
     """Executes a notebook and returns True if it runs without errors, False otherwise."""
     with open(notebook_path, "r", encoding="utf-8") as f:
-        nb = nbformat.read(f, as_version=4)
+        if notebook_path.endswith('.py'):
+            nb = jupytext.read(f)
+        else:
+            nb = nbformat.read(f, as_version=4)
 
         # Insert a code cell at the beginning to append the path if using a local github picaso installation
         if github == True:
@@ -72,7 +76,7 @@ def main():
 
     for root, _, files in os.walk(notebook_dir):
         for file in files:
-            if file.endswith('.ipynb'):
+            if file.endswith('.ipynb') or file.endswith('.py'):
                 notebook_path = os.path.join(root, file)
                 # Exclude WIP notebooks
                 if 'WIP' in notebook_path:

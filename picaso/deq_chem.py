@@ -2,7 +2,7 @@ from numba import jit
 import numpy as np
 from scipy.interpolate import interp1d
 
-def get_quench_levels(Atmosphere, kz, grav, PH3=True, H2O=None, H2=None):
+def get_quench_levels(Atmosphere, kz, grav, mh_linear, PH3=True, H2O=None, H2=None):
     """
     Quench Level Calculation from T. Karilidi (Quench_Level routine)
     
@@ -14,6 +14,8 @@ def get_quench_levels(Atmosphere, kz, grav, PH3=True, H2O=None, H2=None):
         array of Kz cm^2/s
     grav : float
         gravity cgs
+    mh_linear : float
+        metallicity in linear units (e.g. 3 for 3x solar)
     PH3 : bool 
         Quenches PH3 or not 
     H2O : array
@@ -74,7 +76,8 @@ def get_quench_levels(Atmosphere, kz, grav, PH3=True, H2O=None, H2=None):
 
     
     # this is the CO- CH4 - H2O quench level 
-    t_chem_co = (3.0e-6/pressure)*np.exp(42000/temp) ## level chemical timescale (Zahnle and Marley 2014)
+    # t_chem_co = (3.0e-6/pressure)*np.exp(42000/temp) ## level chemical timescale (Zahnle and Marley 2014) eq. 11
+    t_chem_co = (1.5e-6/pressure*mh_linear**-0.7)*np.exp(42000/temp) # eq 12 of Zahnle and Marley 2014, with M/H dependence. JM 03/19/26
     if np.max(t_mix) < np.min(t_chem_co):
         raise Exception("CO/H2O/CH4 mixing across Pressure Ranges, Start with deeper Pressure Grid")
     for j in range(nlevel-1,0,-1):
@@ -107,7 +110,7 @@ def get_quench_levels(Atmosphere, kz, grav, PH3=True, H2O=None, H2=None):
 
     # now calculate the HCN quench level
 
-    t_chem_hcn = (1.5e-4/(pressure*(3.**0.7)))*np.exp(36000./temp) #(Zahnle and Marley 2014)    
+    t_chem_hcn = (1.5e-4/(pressure*(mh_linear**0.7)))*np.exp(36000./temp) #(Zahnle and Marley 2014) *JM 03/19/26 eq. 40 in the paper has M/H dependence, previously hardcoded to 3x solar  
 
     if np.max(t_mix) < np.min(t_chem_hcn):
         raise Exception("HCN mixing across Pressure Ranges, Start with deeper Pressure Grid")
@@ -387,26 +390,10 @@ def do_mixing_mono_gasesfly(kappas_mono,mixes,gauss_pts,gauss_wts):
     Function which mixes all the gases together at a single wavenumber bin
     Parameters
     ----------
-    kappa1_mono : array
-        K-coefficients of gas mixture 1
-    kappa2_mono : array 
-        K-coefficients of gas mixture 2
-    kappa3_mono : array 
-        K-coefficients of gas mixture 3
-    kappa4_mono : array
-        K-coefficients of gas mixture 4
-    kappa5_mono : array
-        K-coefficients of gas mixture 5
-    mix1 : array
-        mixing ratios of gas mixture 1
-    mix2 : array 
-        mixing ratios of gas mixture 2
-    mix3 : array 
-        mixing ratios of gas mixture 3
-    mix4 : array
-        mixing ratios of gas mixture 4
-    mix5 : array
-        mixing ratios of gas mixture 5
+    kappas_mono : list of arrays
+        K-coefficients of gas mixtures
+    mixes : list of arrays
+        mixing ratios of gas mixtures
     gauss_pts : array
         Gauss points of the K-coefficients
     gauss_wts : array

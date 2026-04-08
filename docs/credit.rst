@@ -8,6 +8,7 @@ What to Cite
 
 - 1d reflected light 
 - 1d thermal emission 
+- 1d transmission spectra
 
 Retrievals
 ----------
@@ -26,26 +27,26 @@ Retrievals
 Phase curves
 ------------
 
-`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <http://arxiv.org/abs/2204.03545>`_
+`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022ApJ...930...93R/abstract>`_
 
 - Thermal phase curves 
 
-`Robbins-Blanch, Nina., et al. "Cloudy and Cloud-free Thermal Phase Curves with PICASO: Applications to WASP-43b." The Astrophysical Journal (2022): 157. <http://arxiv.org/abs/2204.03545>`_
+`Hamill C.~D., Johnson A.~V., Batalha N., Nag R., Gao P., Adams D., Kataria T., 2024, ApJ, 976, 181. doi:10.3847/1538-4357/ad7de6 <https://ui.adsabs.harvard.edu/abs/2024ApJ...976..181H/abstract>`_
 
 - Reflected phase curves 
 
-`Hamill C.~D., Johnson A.~V., Batalha N., Nag R., Gao P., Adams D., Kataria T., 2024, ApJ, 976, 181. doi:10.3847/1538-4357/ad7de6 <https://ui.adsabs.harvard.edu/abs/2024ApJ...976..181H/abstract>`_
-
 1D Climate Models
 -----------------
-`Mukherjee, et al. "PICASO 3.0: A One-Dimensional Climate Model for Giant Planets and Brown Dwarfs." The Astrophysical Journal (2022): 157. <https://ui.adsabs.harvard.edu/abs/2022arXiv220807836M/abstract>`_
+`Mukherjee, et al. "PICASO 3.0: A One-Dimensional Climate Model for Giant Planets and Brown Dwarfs." The Astrophysical Journal (2023): 157. <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_
 
-- 1d climate models of substellar atmospheres
+- 1D climate models of substellar atmospheres
 
-`Mang, et al. "PICASO 4.0: Coming Soon`_
+`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets"`_
 
-- 1d disequilibrium models of substellar atmospheres
-- 1d cloudy models of substellar atmospheres 
+- 1D disequilibrium models of substellar atmospheres
+- 1D cloudy models of substellar atmospheres 
+- 1D photochemical models of substellar atmospheres
+- 1D climate models with energy injection
 
 Grid fits
 ---------
@@ -59,4 +60,23 @@ Chemistry
 
 `Marley, Mark S.,Saumon, Didier, Visscher, Channon et al. "The Sonora Brown Dwarf Atmosphere and Evolution Models. I. Model Description and Application to Cloudless Atmospheres in Rainout Chemical Equilibrium" ApJ (2021). <https://ui.adsabs.harvard.edu/abs/2021ApJ...920...85M/abstract>`_
 
-- Use of the `chemeq_visscher()` function
+- Use of the `chemeq_visscher` functions 
+
+`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets"`_
+
+- Use of the 2121 chemistry grid (`chemeq_visscher_2121` chemistry)
+
+`Wogan, et al. "The Open-source Photochem Code: A General Chemical and Climate Model for Interpreting (Exo)Planet Observations" <https://ui.adsabs.harvard.edu/abs/2025PSJ.....6..256W/abstract>`_
+
+- 1D photochemical modeling
+
+Clouds
+------
+
+`Batalha, Natasha E., et al. "Condensation Clouds in Substellar Atmospheres with Virga." The Astrophysical Journal (2026) <https://ui.adsabs.harvard.edu/abs/2026AJ....171...98B/abstract>`_
+
+- Virga cloud models 
+
+`Moran, Sarah; Lodge, Matt, et al. "Fractal Aggregate Aerosols in the Virga Cloud Code. I. Model Description and Application to a Benchmark Cloudy Exoplanet." The Astrophysical Journal (2025) <https://ui.adsabs.harvard.edu/abs/2025ApJ...994..116M/abstract>`_
+
+- Virga cloud models with aggregate particles
