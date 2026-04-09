@@ -322,9 +322,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     if __hardware__ == 'gpu':
                         xint, lvl_fluxes = get_reflected_1d_gpu(
                                     nlevel, wno_gpu,nwno,ng,nt,
-                                    DTAU_gpu[:,:,ig].copy(), TAU_gpu[:,:,ig].copy(), W0_gpu[:,:,ig].copy(), COSB_gpu[:,:,ig].copy(),
-                                    GCOS2_gpu[:,:,ig].copy(),ftau_cld_gpu[:,:,ig].copy(),ftau_ray_gpu[:,:,ig].copy(),
-                                    DTAU_OG_gpu[:,:,ig].copy(), TAU_OG_gpu[:,:,ig].copy(), W0_OG_gpu[:,:,ig].copy(), COSB_OG_gpu[:,:,ig].copy(),
+                                    DTAU_gpu[:,:,ig].reshape(-1), TAU_gpu[:,:,ig].reshape(-1), W0_gpu[:,:,ig].reshape(-1), COSB_gpu[:,:,ig].reshape(-1),
+                                    GCOS2_gpu[:,:,ig].reshape(-1),ftau_cld_gpu[:,:,ig].reshape(-1),ftau_ray_gpu[:,:,ig].reshape(-1),
+                                    DTAU_OG_gpu[:,:,ig].reshape(-1), TAU_OG_gpu[:,:,ig].reshape(-1), W0_OG_gpu[:,:,ig].reshape(-1), COSB_OG_gpu[:,:,ig].reshape(-1),
                                     atm.surf_reflect, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
@@ -350,9 +350,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                         if __hardware__ == 'gpu':
                             xint_clear, out_ref_fluxes_clear = get_reflected_1d_gpu(
                                     nlevel, wno_gpu,nwno,ng,nt,
-                                    DTAU_clear_gpu[:,:,ig].copy(), TAU_clear_gpu[:,:,ig].copy(), W0_clear_gpu[:,:,ig].copy(), COSB_clear_gpu[:,:,ig].copy(),
-                                    GCOS2_gpu[:,:,ig].copy(),ftau_cld_gpu[:,:,ig].copy(),ftau_ray_gpu[:,:,ig].copy(),
-                                    DTAU_OG_clear_gpu[:,:,ig].copy(), TAU_OG_clear_gpu[:,:,ig].copy(), W0_OG_clear_gpu[:,:,ig].copy(), COSB_OG_clear_gpu[:,:,ig].copy(),
+                                    DTAU_clear_gpu[:,:,ig].reshape(-1), TAU_clear_gpu[:,:,ig].reshape(-1), W0_clear_gpu[:,:,ig].reshape(-1), COSB_clear_gpu[:,:,ig].reshape(-1),
+                                    GCOS2_gpu[:,:,ig].reshape(-1),ftau_cld_gpu[:,:,ig].reshape(-1),ftau_ray_gpu[:,:,ig].reshape(-1),
+                                    DTAU_OG_clear_gpu[:,:,ig].reshape(-1), TAU_OG_clear_gpu[:,:,ig].reshape(-1), W0_OG_clear_gpu[:,:,ig].reshape(-1), COSB_OG_clear_gpu[:,:,ig].reshape(-1),
                                     atm.surf_reflect, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
@@ -436,7 +436,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     if __hardware__ == 'gpu':
                         flux, lvl_fluxes = get_thermal_1d_gpu(
                                     nlevel, wno_gpu, nwno, ng, nt,
-                                    lvl_T_gpu, DTAU_OG_gpu[:,:,ig].copy(), W0_no_raman_gpu[:,:,ig].copy(), COSB_OG_gpu[:,:,ig].copy(),
+                                    lvl_T_gpu, DTAU_OG_gpu[:,:,ig].reshape(-1), W0_no_raman_gpu[:,:,ig].reshape(-1), COSB_OG_gpu[:,:,ig].reshape(-1),
                                     lvl_P_gpu, ubar1_gpu,
                                     atm.surf_reflect, atm.hard_surface,
                                     wno0_gpu, calc_type, hardware='gpu')
@@ -458,7 +458,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                         if __hardware__ == 'gpu':
                             flux_clear, out_therm_fluxes_clear = get_thermal_1d_gpu(
                                     nlevel, wno_gpu, nwno, ng, nt,
-                                    lvl_T_gpu, DTAU_OG_clear_gpu[:,:,ig].copy(), W0_no_raman_clear_gpu[:,:,ig].copy(), COSB_OG_clear_gpu[:,:,ig].copy(),
+                                    lvl_T_gpu, DTAU_OG_clear_gpu[:,:,ig].reshape(-1), W0_no_raman_clear_gpu[:,:,ig].reshape(-1), COSB_OG_clear_gpu[:,:,ig].reshape(-1),
                                     lvl_P_gpu, ubar1_gpu,
                                     atm.surf_reflect, atm.hard_surface,
                                     wno0_gpu, calc_type, hardware='gpu')
