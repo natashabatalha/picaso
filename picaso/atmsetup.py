@@ -666,7 +666,7 @@ class ATMSETUP():
         return
 
 
-    def get_surf_reflect(self,nwno):
+    def get_surf_reflect_deprecate(self,nwno):
         """
         Gets the surface reflectivity from input
 

@@ -1965,7 +1965,7 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     atm = ATMSETUP(inputs)
 
     #Add inputs to class 
-    atm.surf_reflect = inputs.get('surface_reflect', 0)
+    atm.surf_reflect = inputs.get('surface_reflect', np.zeros(len(wno)))
     atm.hard_surface = inputs.get('hard_surface', 0) #0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
