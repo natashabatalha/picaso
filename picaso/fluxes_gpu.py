@@ -133,13 +133,13 @@ def get_thermal_1d_allocate_buffers(nlevel,nwno,numg,numt,calc_type):
 
 
     if calc_type == 0:
-        print('Spectrum only...')
+        
         cuda_lib_retrieval.get_thermal_1d_allocate_buffers.argtypes = [ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int]
         cuda_lib_retrieval.get_thermal_1d_allocate_buffers.restype  = None
         cuda_lib_retrieval.get_thermal_1d_allocate_buffers(nlevel,nwno,numg,numt)
 
     else:
-        print('Climate only...')
+        
         cuda_lib.get_thermal_1d_allocate_buffers.argtypes = [ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int]
         cuda_lib.get_thermal_1d_allocate_buffers.restype  = None
         cuda_lib.get_thermal_1d_allocate_buffers(nlevel,nwno,numg,numt)
@@ -149,13 +149,13 @@ def get_thermal_1d_free(calc_type):
 
     if calc_type == 0:
         if cuda_lib_retrieval is None: raise RuntimeError("CUDA library thermal_1d_kernel_at_top.so not found")
-        print('Spectrum only...')
+        
         cuda_lib_retrieval.get_thermal_1d_free.argtypes = []
         cuda_lib_retrieval.get_thermal_1d_free.restype  = None
         cuda_lib_retrieval.get_thermal_1d_free()
     else:
         if cuda_lib is None: raise RuntimeError("CUDA library thermal_1d_kernel_ver1.so not found")
-        print('Climate only...')
+        
         cuda_lib.get_thermal_1d_free.argtypes = []
         cuda_lib.get_thermal_1d_free.restype  = None
         cuda_lib.get_thermal_1d_free()
@@ -208,7 +208,7 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
 
         if calc_type == 0:
             if cuda_lib_retrieval is None: raise RuntimeError("CUDA library thermal_1d_kernel_at_top.so not found")
-            print('Spectrum only...')
+            
 
             flux_at_top_p   = ctypes.c_void_p(flux_at_top.data.ptr)
 
@@ -262,7 +262,7 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
 
         else:
             if cuda_lib is None: raise RuntimeError("CUDA library thermal_1d_kernel_ver1.so not found")
-            print('Climate only...')
+            
             calc_type = 0 #NEB-Q why is this reset to 0?? 
             flux_minus_all           = cp.zeros(n_out)
             flux_plus_all            = cp.zeros(n_out)
