@@ -945,7 +945,7 @@ extern "C" void get_reflected_1d_set_inputs(
     ctx.ng     = ng;
     ctx.nt     = nt;
 
-    ctx.surf_reflect_dev  = surf_reflect;
+    
     ctx.single_phase      = single_phase;
     ctx.multi_phase       = multi_phase;
     ctx.frac_a            = frac_a;
@@ -958,6 +958,7 @@ extern "C" void get_reflected_1d_set_inputs(
     ctx.toon_coefficients = toon_coefficients;
 
     // *** Just store device pointers; NO cudaMalloc, NO cudaMemcpy ***
+    ctx.surf_reflect_dev  = (double*)surf_reflect;
     ctx.wno_dev      = (double*)wno;
     ctx.f0pi_dev     = (double*)f0pi;
     ctx.tau_dev      = (double*)tau;
