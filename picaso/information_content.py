@@ -83,7 +83,7 @@ def _resolve_param_path(config, param_path):
     return param_path
 
 def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=None, method='forward', d_param=1e-2, is_log=False, 
-             opacityclass=None, calculation=None):
+             opacityclass=None, calculation=None,def_kwargs=None):
     """
     Computes a Jacobian matrix for a set of model parameters.
 
@@ -165,14 +165,28 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
     resolved_paths = [_resolve_param_path(config, p) for p in params]
 
     # Check for numeric parameters
+    all_values = [0]*len(params)
+    requires_function_rerun=[False]*len(params)
     for i, path in enumerate(resolved_paths):
         val = _get_dict_value(config, path)
-        if val is None:
+        if ((val is None) and ('def' not in path)):
             raise Exception(f'Parameter path {path} not found in configuration')
+        elif ((val is None) and ('def' in path)):
+            assert isinstance(def_kwargs, dict), 'A dictionary for def_kwargs must be supplied when path starts with def.'
+            if path not in def_kwargs.keys(): 
+                raise Exception(f'Parameter path {path} not found in configuration. If this was intended to be a def.[input] then def_kwargs needs to be supplied with keyword matching def.fun.[input] and associated parameters that you want to stay constant in the function run. E.g., def.cloud.dp would require a dictionary with that as a keyword and all assocated inputs to cloud')
+            else: 
+                if path.split('.')[-1] not in def_kwargs[path].keys():
+                    raise Exception(f'Parameter {path.split('.')[-1]} was not included in the dictionary element {path} and is needed to set the initial state vector')
+                val = def_kwargs[path][path.split('.')[-1]]
+                requires_function_rerun[i] = True
         #if not isinstance(val, (int, float, np.int64, np.float64)):
         #    raise Exception(f'Jacobian can only be computed for numeric parameters. {path} is {type(val)}')
         if is_logs[i] and np.any(val <= 0):
             raise Exception(f'Cannot compute logarithmic Jacobian for non-positive parameter: {path}={val}')
+        
+        #collect values 
+        all_values[i] = val
 
     obs_type = config['observation_type']
     observation_key_mapping = {
@@ -184,14 +198,19 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
     if not spec_key:
         raise Exception(f'Observation type {obs_type} not supported for Jacobian')
 
-    def get_spec(cfg):
+    def get_spec(cfg,fun_name=None, fun_kwargs=None):
         if runtype == 'driver':
             out = run(driver_dict=cfg)
         else: 
             picaso_class.inputs = cfg 
+            if fun_name is not None: 
+                running = getattr(picaso_class,fun_name,None)
+                if running is None: 
+                    raise Exception(rf"uh oh, picaso_class does not have the function {fun_name}")
+                running(**fun_kwargs)
             out = picaso_class.spectrum(opacityclass, calculation=cfg['observation_type'])
         return out[spec_key]
-
+       
     jacobian_cols = []
     
     # Base spectrum for forward/backward
@@ -200,34 +219,44 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
 
     for i, path in enumerate(resolved_paths):
         dp = d_params[i]
-        val = _get_dict_value(config, path)
+        val = all_values[i] #_get_dict_value(config, path)
         log_pert = is_logs[i]
-
-        if method == 'forward':
+        fun_run_reqd = requires_function_rerun[i]
+        
+        if fun_run_reqd:
+            #get attribute name  
+            fun_name = path.split('.')[1]
+            #get function parameters 
+            fun_kwargs = def_kwargs[path]
+        
+        if (method == 'forward') or ( method == 'center'):
             cfg_plus = copy.deepcopy(config)
             new_val = val * 10**dp if log_pert else val + dp
-            set_dict_value(cfg_plus, path, new_val)
-            spec_plus = get_spec(cfg_plus)
+            if fun_run_reqd:
+                fun_kwargs_plus = copy.deepcopy(fun_kwargs)
+                fun_kwargs_plus[path.split('.')[-1]] = new_val 
+                spec_plus = get_spec(cfg_plus, fun_name = fun_name, fun_kwargs = fun_kwargs_plus)
+            else: 
+                set_dict_value(cfg_plus, path, new_val)
+                spec_plus = get_spec(cfg_plus)
             deriv = (spec_plus - base_spec) / dp
-        elif method == 'backward':
+        
+        if (method == 'backward') or ( method == 'center'):
             cfg_minus = copy.deepcopy(config)
             new_val = val / 10**dp if log_pert else val - dp
-            set_dict_value(cfg_minus, path, new_val)
+            if fun_run_reqd:
+                fun_kwargs_minus = copy.deepcopy(fun_kwargs)
+                fun_kwargs_minus[path.split('.')[-1]] = new_val 
+                spec_plus = get_spec(cfg_plus, fun_name = fun_name, fun_kwargs = fun_kwargs_minus)
+            else: 
+                set_dict_value(cfg_minus, path, new_val)
             spec_minus = get_spec(cfg_minus)
             deriv = (base_spec - spec_minus) / dp
-        elif method == 'center':
-            cfg_plus = copy.deepcopy(config)
-            new_val_plus = val * 10**dp if log_pert else val + dp
-            set_dict_value(cfg_plus, path, new_val_plus)
-            spec_plus = get_spec(cfg_plus)
-            
-            cfg_minus = copy.deepcopy(config)
-            new_val_minus = val / 10**dp if log_pert else val - dp
-            set_dict_value(cfg_minus, path, new_val_minus)
-            spec_minus = get_spec(cfg_minus)
-            
+        
+        if method == 'center':
             deriv = (spec_plus - spec_minus) / (2 * dp)
-        else:
+        
+        if method not in ['center','forward','backward']:
             raise Exception(f"Unknown derivative method: {method}")
         
         jacobian_cols.append(deriv)

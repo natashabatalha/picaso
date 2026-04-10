@@ -3,11 +3,12 @@
 #   jupytext:
 #     cell_metadata_filter: -all
 #     custom_cell_magics: kql
+#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.19.1
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -139,9 +140,6 @@ SIC = IC_analyzer.shannon_ic(prior)
 print(SIC)
 
 # %%
-import importlib;importlib.reload(ic)
-
-# %%
 IC_loss_per_wave, CI_loss_per_wave = IC_analyzer.loss_by_wave()
 
 # %% [markdown]
@@ -182,7 +180,46 @@ SIC = IC_analyzer_cl.shannon_ic(prior)
 # %%
 np.savez('jacobian_data.npz', jacobian=jac_mat, wno=spectrum['wavenumber'], params=jac_params)
 
+# %% [markdown]
+# ## Create Jacobian with a mix of .input parameters and function calls to picaso 
+#
+# In the first example with the driver file we were able to natively call all functions and adjust all parameters. But this relied on a fully parametric model. What about when we want to adjust somethings in the class (e.g., water abundance) and a parameter in virga where we would want to incur another function call? this example shows how to do that.
+
 # %%
-IC_analyzer.jacobian.shape
+#starting class (note could also build this from scratch)
+
+spectrum,cl = ic.run(driver_dict=simple_input,return_class=True)
+
+jac_params = ['atmosphere.profile.H2O','def.virga.fsed']
+is_log = [False,False]
+
+#here we specify all the input values to virga so we know what to keep constant 
+def_kwargs = {'def.virga.fsed':{'condensates': ['H2O'],
+                        'directory':f'{_default_}/virga/',
+                        'fsed': 2,
+                        'mh': 100,
+                        'mmw': 2.2,
+                        'sig': 2
+                        }
+            }
+cl.inputs['atmosphere']['profile']['kz']=1e8
+opacityclass =jdi.opannection(filename_db= simple_input['OpticalProperties']['opacity_file'], 
+                              **simple_input['OpticalProperties']['opacity_kwargs'])
+calculation = simple_input['observation_type']
+
+
+
+jac_mat_class = ic.jacobian(picaso_class = cl, params = jac_params, is_log=is_log, 
+                            calculation=calculation, opacityclass=opacityclass,
+                            def_kwargs = def_kwargs) 
+
+# %%
+import matplotlib.pyplot as plt
+K_rebin = []
+for i, ip in enumerate(jac_params):
+    x,y = jdi.mean_regrid(spectrum['wavenumber'], jac_mat_class[:,i],R=200)
+    K_rebin += [y]
+    plt.plot(1e4/x,jdi.np.abs(y/jdi.np.max(jdi.np.abs(y))), label=ip)
+plt.legend()
 
 # %%
