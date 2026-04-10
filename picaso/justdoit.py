@@ -514,12 +514,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         if 'transmission' in calculation:
             if __hardware__ == 'gpu':
                 get_transit_1d_allocate_buffers(nlevel, nwno)
-                z_gpu = cp.asarray(atm.level['z'])
-                dz_gpu = cp.asarray(atm.level['dz'])
-                player_gpu = cp.asarray(atm.level['pressure'][:nlevel-1])
-                tlayer_gpu = cp.asarray(atm.level['temperature'][:nlevel-1])
-                colden_gpu = cp.asarray(atm.layer['colden'])
-                mmw_gpu = cp.asarray(atm.layer['mmw'])
+                z_gpu = cp.asarray(atm.level['z']).reshape(-1)
+                dz_gpu = cp.asarray(atm.level['dz']).reshape(-1)
+                player_gpu = cp.asarray(atm.level['pressure'][:nlevel-1], dtype=cp.float64).reshape(-1)
+                tlayer_gpu = cp.asarray(atm.level['temperature'][:nlevel-1], dtype=cp.float64).reshape(-1)
+                colden_gpu = cp.asarray(atm.layer['colden'], dtype=cp.float64).reshape(-1)
+                mmw_gpu = cp.asarray(atm.layer['mmw'], dtype=cp.float64).reshape(-1)
                 DTAU_OG_gpu = cp.asarray(DTAU_OG)
                 if do_holes:
                     DTAU_OG_clear_gpu = cp.asarray(DTAU_OG_clear)
@@ -528,8 +528,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 if __hardware__ == 'gpu':
                     rprs2_g = get_transit_1d_gpu(
-                                  z_gpu, dz_gpu, nlevel, nwno, radius_star, 
-                                  mmw_gpu, atm.c.k_b, atm.c.amu, 
+                                  z_gpu, dz_gpu, nlevel, nwno, float(radius_star), 
+                                  mmw_gpu, float(atm.c.k_b), float(atm.c.amu), 
                                   player_gpu, tlayer_gpu, colden_gpu,
                                   DTAU_OG_gpu[:,:,ig].reshape(-1), hardware='gpu')
                 else:
