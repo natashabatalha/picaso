@@ -281,7 +281,7 @@ __global__ void initialize_parameters(
 
         double b_surf;
         if (hard_surface == 1.0) {
-            b_surf = (1.0 - surf_reflect_dev[idx]) * all_b_dev[idx_b] * pi;
+            b_surf = (1.0 - surf_reflect_dev[idx]) * all_b_dev[idx_allb] * pi;
         } else {
             b_surf = (all_b_dev[idx_allb] + b1_dev[idx_b] * mu1) * pi;
         }
