@@ -215,17 +215,34 @@ if 'jacobian_data' in st.session_state:
     )
     st.plotly_chart(fig1, width='stretch')
 
-    # 2) Plot of their SVD degrees of freedom as a function of resolution
     st.divider()
-    st.header("Are the parameters uniquely identifiable: SVD Degrees of Freedom")
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(x=resolutions, y=results_svd, mode='lines+markers', line=dict(color='blue'), marker=dict(symbol='circle')))
-    fig2.update_layout(
-        xaxis_title="Resolution (R)",
-        yaxis_title="SVD DFS",
-        title="SVD Degrees of Freedom for Signal"
+    # 1) Plot of their binned Jacobian values for their highest resolution input
+    st.header(f"What wavelengths are most important? (R={r_max})")
+    
+    #col5, col6 = st.columns(2)
+    
+    # DOF and H (Scalars)
+    #with col5:        
+    fig4a = go.Figure()
+    fig4a.add_trace(go.Scatter(x=1e4/rebinned_wno, y=lossH, mode='lines', name='H loss'))
+    fig4a.update_layout(
+        xaxis_title="Wavelength [um]",
+        yaxis_title="Delta IC/um",
+        title="H loss vs. W"
     )
-    st.plotly_chart(fig2, width='stretch')
+    st.plotly_chart(fig4a, width='stretch')
+
+    #with col6:
+    fig4b = go.Figure()
+    for i, p_name in enumerate(params):
+        fig4b.add_trace(go.Scatter(x=1e4/rebinned_wno, y=np.array(lossCI)[:,i], mode='lines', name=p_name))
+    fig4b.update_layout(
+        xaxis_title="Wavelength [um]",
+        yaxis_title="Delta Constraint Interval/um",
+        title="Loss in 1-sigma Constraint Interval vs. W"
+    )
+    st.plotly_chart(fig4b, width='stretch')
+
 
     # 3) Plot of each of the shannon_ic dictionary outputs as a function of resolution
     st.divider()
@@ -286,34 +303,18 @@ if 'jacobian_data' in st.session_state:
         )
         st.plotly_chart(fig3d, width='stretch')
     
-    
+    # 2) Plot of their SVD degrees of freedom as a function of resolution
     st.divider()
-    # 1) Plot of their binned Jacobian values for their highest resolution input
-    st.header(f"What wavelengths are most important? (R={r_max})")
+    st.header("Are the parameters uniquely identifiable: SVD Degrees of Freedom")
+    fig2 = go.Figure()
+    fig2.add_trace(go.Scatter(x=resolutions, y=results_svd, mode='lines+markers', line=dict(color='blue'), marker=dict(symbol='circle')))
+    fig2.update_layout(
+        xaxis_title="Resolution (R)",
+        yaxis_title="SVD DFS",
+        title="SVD Degrees of Freedom for Signal"
+    )
+    st.plotly_chart(fig2, width='stretch')    
     
-    col5, col6 = st.columns(2)
-    
-    # DOF and H (Scalars)
-    with col5:        
-        fig4a = go.Figure()
-        fig4a.add_trace(go.Scatter(x=1e4/rebinned_wno, y=lossH, mode='lines', name='H loss'))
-        fig4a.update_layout(
-            xaxis_title="Wavelength [um]",
-            yaxis_title="Delta IC/um",
-            title="H loss vs. W"
-        )
-        st.plotly_chart(fig4a, width='stretch')
-
-    with col6:
-        fig4b = go.Figure()
-        for i, p_name in enumerate(params):
-            fig4b.add_trace(go.Scatter(x=1e4/rebinned_wno, y=np.array(lossCI)[:,i], mode='lines', name=p_name))
-        fig4b.update_layout(
-            xaxis_title="Wavelength [um]",
-            yaxis_title="Delta Constraint Interval/um",
-            title="Loss in 1-sigma Constraint Interval vs. W"
-        )
-        st.plotly_chart(fig4b, width='stretch')
 
 else:
     st.warning("Please initialize example or provide Jacobian data to begin.")
