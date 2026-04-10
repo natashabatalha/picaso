@@ -291,6 +291,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 ubar1_gpu = ubar1.reshape(-1)
                 gweight_gpu = cp.asarray(gweight)
                 tweight_gpu = cp.asarray(tweight)
+                surf_reflect_gpu = cp.asarray(atm.surf_reflect)
                 if do_holes:
                     DTAU_clear_gpu = cp.asarray(DTAU_clear)
                     TAU_clear_gpu = cp.asarray(TAU_clear)
@@ -325,7 +326,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     DTAU_gpu[:,:,ig].reshape(-1), TAU_gpu[:,:,ig].reshape(-1), W0_gpu[:,:,ig].reshape(-1), COSB_gpu[:,:,ig].reshape(-1),
                                     GCOS2_gpu[:,:,ig].reshape(-1),ftau_cld_gpu[:,:,ig].reshape(-1),ftau_ray_gpu[:,:,ig].reshape(-1),
                                     DTAU_OG_gpu[:,:,ig].reshape(-1), TAU_OG_gpu[:,:,ig].reshape(-1), W0_OG_gpu[:,:,ig].reshape(-1), COSB_OG_gpu[:,:,ig].reshape(-1),
-                                    atm.surf_reflect, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
+                                    surf_reflect_gpu, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
                                     get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
@@ -353,7 +354,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     DTAU_clear_gpu[:,:,ig].reshape(-1), TAU_clear_gpu[:,:,ig].reshape(-1), W0_clear_gpu[:,:,ig].reshape(-1), COSB_clear_gpu[:,:,ig].reshape(-1),
                                     GCOS2_gpu[:,:,ig].reshape(-1),ftau_cld_gpu[:,:,ig].reshape(-1),ftau_ray_gpu[:,:,ig].reshape(-1),
                                     DTAU_OG_clear_gpu[:,:,ig].reshape(-1), TAU_OG_clear_gpu[:,:,ig].reshape(-1), W0_OG_clear_gpu[:,:,ig].reshape(-1), COSB_OG_clear_gpu[:,:,ig].reshape(-1),
-                                    atm.surf_reflect, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
+                                    surf_reflect_gpu, ubar0_gpu,ubar1_gpu,cos_theta, F0PI_gpu,
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
                                     get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
@@ -406,6 +407,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 COSB_OG_gpu = cp.asarray(COSB_OG)
                 lvl_T_gpu = cp.asarray(atm.level['temperature'])
                 lvl_P_gpu = cp.asarray(atm.level['pressure'])
+                surf_reflect_gpu = cp.asarray(atm.surf_reflect)
                 ubar1_gpu = ubar1.reshape(-1)
                 wno0_gpu = wno_gpu * 0
                 if do_holes:
@@ -438,7 +440,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     nlevel, wno_gpu, nwno, ng, nt,
                                     lvl_T_gpu, DTAU_OG_gpu[:,:,ig].reshape(-1), W0_no_raman_gpu[:,:,ig].reshape(-1), COSB_OG_gpu[:,:,ig].reshape(-1),
                                     lvl_P_gpu, ubar1_gpu,
-                                    atm.surf_reflect, atm.hard_surface,
+                                    surf_reflect_gpu, atm.hard_surface,
                                     wno0_gpu, calc_type, hardware='gpu')
                         if calc_type == 1:
                             lvl_fluxes = [l.reshape(ng, nt, nlevel, nwno) if isinstance(l, cp.ndarray) else l for l in lvl_fluxes]
@@ -460,7 +462,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     nlevel, wno_gpu, nwno, ng, nt,
                                     lvl_T_gpu, DTAU_OG_clear_gpu[:,:,ig].reshape(-1), W0_no_raman_clear_gpu[:,:,ig].reshape(-1), COSB_OG_clear_gpu[:,:,ig].reshape(-1),
                                     lvl_P_gpu, ubar1_gpu,
-                                    atm.surf_reflect, atm.hard_surface,
+                                    surf_reflect_gpu, atm.hard_surface,
                                     wno0_gpu, calc_type, hardware='gpu')
                             if calc_type == 1:
                                 out_therm_fluxes_clear = [l.reshape(ng, nt, nlevel, nwno) if isinstance(l, cp.ndarray) else l for l in out_therm_fluxes_clear]
@@ -529,7 +531,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                   z_gpu, dz_gpu, nlevel, nwno, radius_star, 
                                   mmw_gpu, atm.c.k_b, atm.c.amu, 
                                   player_gpu, tlayer_gpu, colden_gpu,
-                                  DTAU_OG_gpu[:,:,ig].copy(), hardware='gpu')
+                                  DTAU_OG_gpu[:,:,ig].reshape(-1), hardware='gpu')
                 else:
                     rprs2_g = get_transit_1d(atm.level['z'],atm.level['dz'],
                                   nlevel, nwno, radius_star, atm.layer['mmw'], 
@@ -543,7 +545,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                   z_gpu, dz_gpu, nlevel, nwno, radius_star, 
                                   mmw_gpu, atm.c.k_b, atm.c.amu, 
                                   player_gpu, tlayer_gpu, colden_gpu,
-                                  DTAU_OG_clear_gpu[:,:,ig].copy(), hardware='gpu')
+                                  DTAU_OG_clear_gpu[:,:,ig].reshape(-1), hardware='gpu')
                     else:
                         rprs2_g_clear = get_transit_1d(atm.level['z'],atm.level['dz'],
                                   nlevel, nwno, radius_star, atm.layer['mmw'], 
