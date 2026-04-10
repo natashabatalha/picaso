@@ -62,7 +62,7 @@ __global__ void setup_tri_diag_1st(int nlayer,int nwno,  double *c_plus_up_dev, 
 }
 
 __global__ void setup_tri_diag_last(int nlayer,int nwno,  double *c_plus_up_dev, double *c_minus_up_dev,double *c_plus_down_dev, double *c_minus_down_dev,
-                                  double *b_top, double *b_surface_dev, double atm_surf_reflect,
+                                  double *b_top, double *b_surface_dev, double *surf_reflect_dev,
                                  double *gama_dev, double *dtau_dev,  double *e1_dev,  double *e2_dev,double *e3_dev,  double *e4_dev,
                                   double *A_odd_dev, double *B_odd_dev, double *C_odd_dev, double *D_odd_dev){
 
