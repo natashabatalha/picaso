@@ -108,11 +108,14 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
     method : str, optional
         Finite difference method: 'forward', 'backward', or 'center'. Default is 'forward'.
     d_param : float or list of float, optional
-        The perturbation amount for each parameter. If a single float, the same amount 
+        The perturbation amount for each parameter, supplied as a fraction of the 
+        parameter value (e.g. 1e-2 for 1%). If a single float, the same amount 
         is used for all parameters. Default is 1e-2.
     is_log : bool or list of bool, optional
-        If True, the parameter is perturbed logarithmically (i.e., multiplied/divided by 10^d_param)
-        and the derivative is computed with respect to the base-10 logarithm of the parameter.
+        If True, the parameter is perturbed in log10 space by a percentage of 
+        its log10 value. For example, if val=1e-12 and d_param=1e-2, the 
+        log10(val)=-12 is perturbed by 1% (0.12). The derivative is computed 
+        with respect to the base-10 logarithm of the parameter.
         Set to False if the parameter in the configuration is already in log units.
         Default is False.
     opacityclass : picaso.justdoit.opannection
@@ -222,7 +225,14 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
         val = all_values[i] #_get_dict_value(config, path)
         log_pert = is_logs[i]
         fun_run_reqd = requires_function_rerun[i]
+
+        if log_pert:
+            actual_dp = np.abs(dp * np.mean(np.log10(val)))
+        else:
+            actual_dp = np.abs(dp * np.mean(val))
         
+        if actual_dp == 0: actual_dp = dp #fallback
+
         if fun_run_reqd:
             #get attribute name  
             fun_name = path.split('.')[1]
@@ -231,7 +241,11 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
         
         if (method == 'forward') or ( method == 'center'):
             cfg_plus = copy.deepcopy(config)
-            new_val = val * 10**dp if log_pert else val + dp
+            if log_pert:
+                new_val = 10**(np.log10(val) + actual_dp)
+            else:
+                new_val = val + actual_dp
+
             if fun_run_reqd:
                 fun_kwargs_plus = copy.deepcopy(fun_kwargs)
                 fun_kwargs_plus[path.split('.')[-1]] = new_val 
@@ -239,22 +253,26 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
             else: 
                 set_dict_value(cfg_plus, path, new_val)
                 spec_plus = get_spec(cfg_plus)
-            deriv = (spec_plus - base_spec) / dp
+            deriv = (spec_plus - base_spec) / actual_dp
         
         if (method == 'backward') or ( method == 'center'):
             cfg_minus = copy.deepcopy(config)
-            new_val = val / 10**dp if log_pert else val - dp
+            if log_pert:
+                new_val = 10**(np.log10(val) - actual_dp)
+            else:
+                new_val = val - actual_dp
+
             if fun_run_reqd:
                 fun_kwargs_minus = copy.deepcopy(fun_kwargs)
                 fun_kwargs_minus[path.split('.')[-1]] = new_val 
-                spec_plus = get_spec(cfg_plus, fun_name = fun_name, fun_kwargs = fun_kwargs_minus)
+                spec_minus = get_spec(cfg_minus, fun_name = fun_name, fun_kwargs = fun_kwargs_minus)
             else: 
                 set_dict_value(cfg_minus, path, new_val)
-            spec_minus = get_spec(cfg_minus)
-            deriv = (base_spec - spec_minus) / dp
+                spec_minus = get_spec(cfg_minus)
+            deriv = (base_spec - spec_minus) / actual_dp
         
         if method == 'center':
-            deriv = (spec_plus - spec_minus) / (2 * dp)
+            deriv = (spec_plus - spec_minus) / (2 * actual_dp)
         
         if method not in ['center','forward','backward']:
             raise Exception(f"Unknown derivative method: {method}")
