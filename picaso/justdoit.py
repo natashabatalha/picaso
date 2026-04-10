@@ -5166,7 +5166,7 @@ class inputs():
             if self.inputs.get('hard_surface',0)==1: 
                 raise Exception('The user is requesting a hard_surface boundary condition but the surface reflectivity has not been set by the function surface_reflect')
             else: 
-                self.inputs['surface_reflect'] = 0 
+                self.inputs['surface_reflect'] = np.zeros(opacityclass.wno)
                 self.inputs['hard_surface'] = 0 
 
             

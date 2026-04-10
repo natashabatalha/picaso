@@ -824,7 +824,6 @@ extern "C" void get_thermal_1d_allocate_buffers(
     CUDA_CHECK(cudaMalloc(&ctx.c_plus_down_dev,size_layer));
     CUDA_CHECK(cudaMalloc(&ctx.c_minus_down_dev,size_layer));
     CUDA_CHECK(cudaMalloc(&ctx.b_surface_dev,  size_wno));
-    CUDA_CHECK(cudaMalloc(&ctx.surf_reflect_dev,  size_wno));
     CUDA_CHECK(cudaMalloc(&ctx.exptrm_positive_dev, size_layer));
     CUDA_CHECK(cudaMalloc(&ctx.exptrm_minus_dev,    size_layer));
     CUDA_CHECK(cudaMalloc(&ctx.exptrm_dev,          size_layer));
