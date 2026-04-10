@@ -60,6 +60,7 @@ def get_thermal_1d_retrieval(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,p
     cosb_p     = ctypes.c_void_p(cosb.data.ptr)
     plevel_p   = ctypes.c_void_p(plevel.data.ptr)
     tlevel_p   = ctypes.c_void_p(tlevel.data.ptr)
+    surf_reflect_p = ctypes.c_void_p(surf_reflect.data.ptr)
 
 
     ubar1_p       = (ctypes.c_double * ubar1.size)(*ubar1)
@@ -76,11 +77,11 @@ def get_thermal_1d_retrieval(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,p
     flux_at_top_p   = ctypes.c_void_p(flux_at_top.data.ptr)
 
     cuda_lib_retrieval.get_thermal_1d_set_inputs.argtypes = [
-        ctypes.c_int,
+        ctypes.c_int,      # nlevel
         ctypes.c_void_p,   # wno
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
+        ctypes.c_int,      # nwno 
+        ctypes.c_int,      # ng
+        ctypes.c_int,      # nt
         ctypes.c_void_p,   # dtau
         ctypes.c_void_p,   # w0
         ctypes.c_void_p,   # cosb
@@ -92,7 +93,7 @@ def get_thermal_1d_retrieval(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,p
     cuda_lib_retrieval.get_thermal_1d_set_inputs.restype = None
 
     cuda_lib_retrieval.get_thermal_1d_run.argtypes = [c_double_p,
-        ctypes.c_double, ctypes.c_double, ctypes.c_int,ctypes.c_void_p]
+        ctypes.c_void_p, ctypes.c_double, ctypes.c_int,ctypes.c_void_p]
     cuda_lib_retrieval.get_thermal_1d_run.restype = None
 
 
@@ -119,7 +120,7 @@ def get_thermal_1d_retrieval(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,p
 
         cuda_lib_retrieval.get_thermal_1d_run(
             ubar1_p,
-            surf_reflect,
+            surf_reflect_p,
             hard_surface,
             calc_type,
             flux_at_top_p
@@ -198,6 +199,7 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
         cosb_p     = ctypes.c_void_p(cosb.data.ptr)
         plevel_p   = ctypes.c_void_p(plevel.data.ptr)
         tlevel_p   = ctypes.c_void_p(tlevel.data.ptr)
+        surf_reflect_p = ctypes.c_void_p(surf_reflect.data.ptr)
 
 
         ubar1_p       = (ctypes.c_double * ubar1.size)(*ubar1)
@@ -213,23 +215,24 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
             flux_at_top_p   = ctypes.c_void_p(flux_at_top.data.ptr)
 
             cuda_lib_retrieval.get_thermal_1d_set_inputs.argtypes = [
-                ctypes.c_int,
+                ctypes.c_int,      #nlevel
                 ctypes.c_void_p,   # wno
-                ctypes.c_int,
-                ctypes.c_int,
-                ctypes.c_int,
+                ctypes.c_int,      #nwno
+                ctypes.c_int,      # ng
+                ctypes.c_int,      # nt 
                 ctypes.c_void_p,   # dtau
                 ctypes.c_void_p,   # w0
                 ctypes.c_void_p,   # cosb
                 ctypes.c_void_p,   # plevel
                 ctypes.c_void_p,   # tlevel
-                ctypes.c_void_p    # wno0
+                ctypes.c_void_p,   # wno0
+                ctypes.c_void_p    #surf_reflect_p 
             ]
 
             cuda_lib_retrieval.get_thermal_1d_set_inputs.restype = None
 
             cuda_lib_retrieval.get_thermal_1d_run.argtypes = [c_double_p,
-                ctypes.c_double, ctypes.c_double, ctypes.c_int,ctypes.c_void_p]
+                ctypes.c_double, ctypes.c_int,ctypes.c_void_p]
             cuda_lib_retrieval.get_thermal_1d_run.restype = None
 
 
@@ -246,11 +249,11 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
                 plevel_p,
                 tlevel_p,
                 wno0_p,
+                surf_reflect_p
             )
 
             cuda_lib_retrieval.get_thermal_1d_run(
                 ubar1_p,
-                surf_reflect,
                 hard_surface,
                 calc_type,
                 flux_at_top_p)
@@ -289,13 +292,14 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
                 ctypes.c_void_p,   # cosb
                 ctypes.c_void_p,   # plevel
                 ctypes.c_void_p,   # tlevel
-                ctypes.c_void_p    # wno0
+                ctypes.c_void_p,    # wno0
+                ctypes.c_void_p    # surf_reflect_p
             ]
 
             cuda_lib.get_thermal_1d_set_inputs.restype = None
 
             cuda_lib.get_thermal_1d_run.argtypes = [c_double_p,
-                ctypes.c_double, ctypes.c_double, ctypes.c_int,ctypes.c_void_p, ctypes.c_void_p,
+                ctypes.c_double, ctypes.c_int,ctypes.c_void_p, ctypes.c_void_p,
                 ctypes.c_void_p,ctypes.c_void_p,ctypes.c_void_p]
             cuda_lib.get_thermal_1d_run.restype = None
 
@@ -313,13 +317,13 @@ def get_thermal_1d(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,plevel,ubar
                 plevel_p,
                 tlevel_p,
                 wno0_p,
+                surf_reflect_p
             )
 
 
 
             cuda_lib.get_thermal_1d_run(
                 ubar1_p,
-                surf_reflect,
                 hard_surface,
                 calc_type,
                 flux_at_top_p,
@@ -443,6 +447,7 @@ def get_reflected_1d(
         TAU_OG_ptr   = ctypes.c_void_p(TAU_OG.data.ptr)
         W0_OG_ptr    = ctypes.c_void_p(W0_OG.data.ptr)
         COSB_OG_ptr  = ctypes.c_void_p(COSB_OG.data.ptr)
+        atm_surf_reflect_ptr = ctypes.c_void_p(atm_surf_reflect.data.ptr)
 
 
         c_void_p = ctypes.c_void_p
@@ -465,7 +470,7 @@ def get_reflected_1d(
             c_void_p,       # w0_og
             c_void_p,       # cosb_og
             c_void_p,       # f0pi
-            ctypes.c_int,   # atm_surf_reflect
+            c_void_p,       # atm_surf_reflect
             ctypes.c_int,   # single_phase
             ctypes.c_int,   # multi_phase
             ctypes.c_double,# frac_a
@@ -486,7 +491,7 @@ def get_reflected_1d(
             c_double_p,      # ubar1
             ctypes.c_double, # cos_theta
             ctypes.c_double, # b_top
-            ctypes.c_double, # surf_reflect
+            c_void_p,        # surf_reflect
             c_double_p,      # gweight
             c_double_p,      # tweight
             c_void_p,      # test_out
@@ -515,7 +520,7 @@ def get_reflected_1d(
             W0_OG_ptr,
             COSB_OG_ptr,
             F0PI_ptr,
-            int(atm_surf_reflect),
+            atm_surf_reflect_ptr,
             int(single_phase),
             int(multi_phase),
             float(frac_a),
@@ -552,7 +557,7 @@ def get_reflected_1d(
             ubar0_pointer,
             ubar1_pointer,
             ctypes.c_double(cos_theta),
-            ctypes.c_double(atm_surf_reflect),
+            ctypes.c_double(atm_surf_reflect),#neb-q why is this also here in addition to  get_reflected_1d_set_inputs
             ctypes.c_double(b_top),
             gweight_pointer,
             tweight_pointer,
