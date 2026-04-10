@@ -1150,7 +1150,7 @@ extern "C" void get_reflected_1d_run(
             nlayer, nwno,
             ctx.c_plus_up_dev, ctx.c_minus_up_dev,
             ctx.c_plus_down_dev, ctx.c_minus_down_dev,
-            b_top, ctx.b_surface_dev, ctx.atm_surf_reflect,
+            b_top, ctx.b_surface_dev, ctx.surf_reflect_dev,
             ctx.gama_dev, ctx.dtau_dev,
             ctx.e1_dev, ctx.e2_dev, ctx.e3_dev, ctx.e4_dev,
             ctx.A_odd_dev, ctx.B_odd_dev, ctx.C_odd_dev, ctx.D_odd_dev);
