@@ -87,7 +87,8 @@ def get_thermal_1d_retrieval(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,p
         ctypes.c_void_p,   # cosb
         ctypes.c_void_p,   # plevel
         ctypes.c_void_p,   # tlevel
-        ctypes.c_void_p    # wno0
+        ctypes.c_void_p,    # wno0
+        ctypes.c_void_p    # surf_reflect
     ]
 
     cuda_lib_retrieval.get_thermal_1d_set_inputs.restype = None
@@ -110,6 +111,7 @@ def get_thermal_1d_retrieval(nlevel,wno, nwno,numg, numt,tlevel,dtau, w0, cosb,p
         plevel_p,
         tlevel_p,
         wno0_p,
+        surf_reflect_p
     )
 
 
