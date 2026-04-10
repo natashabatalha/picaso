@@ -120,7 +120,7 @@ __global__ void calculate_all(
     double * __restrict__ tau_dev,
     int wv_len,
     double * __restrict__ f0pi_dev,
-    double surf_reflect,
+    double * __restrict__ surf_reflect_dev,
     double * __restrict__ dtau_dev,
     double * __restrict__ exptrm_dev,
     double * __restrict__ a_minus_dev,
@@ -175,7 +175,7 @@ __global__ void calculate_all(
 
     if (index < wv_len) {
         // surface term
-        b_surface_dev[index] = 0.0 + surf_reflect * u0 * f0pi_dev[index] *
+        b_surface_dev[index] = 0.0 + surf_reflect_dev[index] * u0 * f0pi_dev[index] *
                                exp(-tau_dev[vec_size + index] * u0_inv);
     }
 }
@@ -213,7 +213,7 @@ __global__ void setup_tri_diag_1st(
     double * __restrict__ c_minus_down_dev,
     double b_top,
     double * __restrict__ b_surface_dev,
-    double atm_surf_reflect,
+    double * __restrict__ surf_reflect_dev,
     double * __restrict__ gama_dev,
     double * __restrict__ dtau_dev,
     double * __restrict__ e1_dev,
@@ -243,7 +243,7 @@ __global__ void setup_tri_diag_last(
     double * __restrict__ c_minus_down_dev,
     double b_top,
     double * __restrict__ b_surface_dev,
-    double atm_surf_reflect,
+    double * __restrict__ surf_reflect_dev,
     double * __restrict__ gama_dev,
     double * __restrict__ dtau_dev,
     double * __restrict__ e1_dev,
@@ -261,12 +261,12 @@ __global__ void setup_tri_diag_last(
 
     if ((index > (nlayer - 1) * nwno) && (index < nlayer * nwno)) {
         int idx = index + nlayer * nwno;
-        A_odd_dev[idx] = e1_dev[index] - atm_surf_reflect * e3_dev[index];
-        B_odd_dev[idx] = e2_dev[index] - atm_surf_reflect * e4_dev[index];
+        A_odd_dev[idx] = e1_dev[index] - surf_reflect_dev[index - (nlayer - 1) * nwno] * e3_dev[index];
+        B_odd_dev[idx] = e2_dev[index] - surf_reflect_dev[index - (nlayer - 1) * nwno] * e4_dev[index];
         C_odd_dev[idx] = 0.0;
         D_odd_dev[idx] = b_surface_dev[index - (nlayer - 1) * nwno]
                          - c_plus_down_dev[index]
-                         + atm_surf_reflect * c_minus_down_dev[index];
+                         + surf_reflect_dev[index - (nlayer - 1) * nwno] * c_minus_down_dev[index];
     }
 }
 
@@ -372,7 +372,7 @@ __global__ void setup_tri_diag_all(
     double * __restrict__ c_minus_down_dev,
     double b_top,
     double * __restrict__ b_surface_dev,
-    double atm_surf_reflect,
+    double * __restrict__ surf_reflect_dev,
     double * __restrict__ gama_dev,
     double * __restrict__ dtau_dev,
     double * __restrict__ e1_dev,
@@ -817,7 +817,6 @@ struct ReflectedContext {
     int    nt     = 0;
 
     // Configuration constants
-    int    atm_surf_reflect = 0;
     int    single_phase     = 0;
     int    multi_phase      = 0;
     int    get_toa_intensity = 0;
@@ -843,6 +842,7 @@ struct ReflectedContext {
     double *w0_og_dev    = nullptr;
     double *cosb_og_dev  = nullptr;
     double *dtau_og_dev  = nullptr;
+    double *surf_reflect_dev = nullptr;
 
     // Working arrays
     double *g1_dev   = nullptr;
@@ -925,7 +925,7 @@ extern "C" void get_reflected_1d_set_inputs(
     const double *w0_og,     // device
     const double *cosb_og,   // device
     const double *f0pi,      // device
-    int    atm_surf_reflect,
+    const double *surf_reflect,
     int    single_phase,
     int    multi_phase,
     double frac_a,
@@ -945,7 +945,7 @@ extern "C" void get_reflected_1d_set_inputs(
     ctx.ng     = ng;
     ctx.nt     = nt;
 
-    ctx.atm_surf_reflect  = atm_surf_reflect;
+    ctx.surf_reflect_dev  = surf_reflect;
     ctx.single_phase      = single_phase;
     ctx.multi_phase       = multi_phase;
     ctx.frac_a            = frac_a;
@@ -1067,7 +1067,6 @@ extern "C" void get_reflected_1d_run(
     const double *ubar0,
     const double *ubar1,
     double        cos_theta,
-    double        surf_reflect,
     double        b_top,
     const double *gweight,
     const double *tweight,
@@ -1130,7 +1129,7 @@ extern "C" void get_reflected_1d_run(
             ctx.b_surface_dev,
             ubar0[i_iter],
             ctx.tau_dev, nwno,
-            ctx.f0pi_dev, ctx.atm_surf_reflect,
+            ctx.f0pi_dev, ctx.surf_reflect_dev,
             ctx.dtau_dev, ctx.exptrm_dev,
             ctx.a_minus_dev, ctx.a_plus_dev);
 
@@ -1160,7 +1159,7 @@ extern "C" void get_reflected_1d_run(
             nlayer, nwno,
             ctx.c_plus_up_dev, ctx.c_minus_up_dev,
             ctx.c_plus_down_dev, ctx.c_minus_down_dev,
-            b_top, ctx.b_surface_dev, ctx.atm_surf_reflect,
+            b_top, ctx.b_surface_dev, ctx.surf_reflect_dev,
             ctx.gama_dev, ctx.dtau_dev,
             ctx.e1_dev, ctx.e2_dev, ctx.e3_dev, ctx.e4_dev,
             ctx.A_odd_dev, ctx.B_odd_dev, ctx.C_odd_dev, ctx.D_odd_dev);
@@ -1169,7 +1168,7 @@ extern "C" void get_reflected_1d_run(
             nlayer, nwno,
             ctx.c_plus_up_dev, ctx.c_minus_up_dev,
             ctx.c_plus_down_dev, ctx.c_minus_down_dev,
-            b_top, ctx.b_surface_dev, ctx.atm_surf_reflect,
+            b_top, ctx.b_surface_dev, ctx.surf_reflect_dev,
             ctx.gama_dev, ctx.dtau_dev,
             ctx.e1_dev, ctx.e2_dev, ctx.e3_dev, ctx.e4_dev,
             ctx.A_odd_dev, ctx.B_odd_dev, ctx.C_odd_dev, ctx.D_odd_dev);
@@ -1338,6 +1337,7 @@ extern "C" void get_reflected_1d_free()
     FREE(ctx.c_minus_down_dev);
 
     FREE(ctx.b_surface_dev);
+    FREE(ctx.surf_reflect_dev);
     FREE(ctx.exptrm_positive_dev);
     FREE(ctx.exptrm_minus_dev);
     FREE(ctx.exptrm_dev);

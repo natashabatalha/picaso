@@ -491,7 +491,6 @@ def get_reflected_1d(
             c_double_p,      # ubar1
             ctypes.c_double, # cos_theta
             ctypes.c_double, # b_top
-            c_void_p,        # surf_reflect
             c_double_p,      # gweight
             c_double_p,      # tweight
             c_void_p,      # test_out
@@ -557,7 +556,6 @@ def get_reflected_1d(
             ubar0_pointer,
             ubar1_pointer,
             ctypes.c_double(cos_theta),
-            ctypes.c_double(atm_surf_reflect),#neb-q why is this also here in addition to  get_reflected_1d_set_inputs
             ctypes.c_double(b_top),
             gweight_pointer,
             tweight_pointer,
