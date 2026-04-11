@@ -289,7 +289,7 @@ if 'jacobian_data' in st.session_state:
         title=f"Binned Jacobian for {case_names[0]}",
         legend_title="Parameters"
     )
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width='stretch')
 
     st.divider()
     # 1) Plot of their binned Jacobian values for their first case
@@ -302,7 +302,7 @@ if 'jacobian_data' in st.session_state:
         yaxis_title="Delta IC/um",
         title="H loss vs. W"
     )
-    st.plotly_chart(fig4a, use_container_width=True)
+    st.plotly_chart(fig4a, width='stretch')
 
     fig4b = go.Figure()
     for i, p_name in enumerate(params):
@@ -312,7 +312,7 @@ if 'jacobian_data' in st.session_state:
         yaxis_title="Delta Constraint Interval/um",
         title="Loss in 1-sigma Constraint Interval vs. W"
     )
-    st.plotly_chart(fig4b, use_container_width=True)
+    st.plotly_chart(fig4b, width='stretch')
 
 
     # 3) Plot of each of the shannon_ic dictionary outputs as a function of resolution
@@ -332,7 +332,7 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="DOF",
             title="Shannon DOF"
         )
-        st.plotly_chart(fig3a, use_container_width=True)
+        st.plotly_chart(fig3a, width='stretch')
         
     with col2:
         hs = [r['H'] for r in results_shannon]
@@ -344,7 +344,7 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="H [bits]",
             title="Shannon Information (H)"
         )
-        st.plotly_chart(fig3b, use_container_width=True)
+        st.plotly_chart(fig3b, width='stretch')
         
     # Averaging Kernel and Constraint Interval (Vectors)
     st.subheader("Parameter-specific Shannon Stats Comparison")
@@ -360,7 +360,7 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="Averaging Kernel Diagonal",
             title="Averaging Kernel vs. Case"
         )
-        st.plotly_chart(fig3c, use_container_width=True)
+        st.plotly_chart(fig3c, width='stretch')
 
     with col4:
         fig3d = go.Figure()
@@ -372,7 +372,7 @@ if 'jacobian_data' in st.session_state:
             yaxis_title="Constraint Interval",
             title="1-sigma Constraint Interval vs. Case"
         )
-        st.plotly_chart(fig3d, use_container_width=True)
+        st.plotly_chart(fig3d, width='stretch')
     
     # 2) Plot of their SVD degrees of freedom as a function of case
     st.divider()
@@ -384,7 +384,7 @@ if 'jacobian_data' in st.session_state:
         yaxis_title="SVD DFS",
         title="SVD Degrees of Freedom for Signal"
     )
-    st.plotly_chart(fig2, use_container_width=True)    
+    st.plotly_chart(fig2, width='stretch')    
     
 
 else:
