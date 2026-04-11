@@ -174,14 +174,15 @@ if 'jacobian_data' in st.session_state:
     #GET PRIORS
     st.subheader('Input Priors for your Parameter Set')
     params = st.session_state['jacobian_data']['params']
+    
+    # Initialize computation results in session state if not present
+    if 'computation_results' not in st.session_state:
+        st.session_state.computation_results = None
+
     df_prior = pd.DataFrame([{i:'float' for i in params}])
     df_prior = st.data_editor(df_prior)
     
-
-    if not st.button('Finalize Priors'):
-        st.info("Please edit the table above and click 'Finalize Priors' to continue.")
-        st.stop()
-    else:
+    if st.button('Finalize Priors'):
         priors = [df_prior.loc[0,i] for i in df_prior]
         passes = True
         for i,p in enumerate(priors): 
@@ -196,72 +197,99 @@ if 'jacobian_data' in st.session_state:
         if not passes: 
             st.stop()
 
+        data = st.session_state.jacobian_data
+        wno = data['wno']
+        jac_mat = data['jacobian']
+        params = data['params']
 
-    data = st.session_state.jacobian_data
-    wno = data['wno']
-    jac_mat = data['jacobian']
-    params = data['params']
+        cases = st.session_state.get('cases', [])
+        if not cases:
+            st.warning("Please add at least one case in the sidebar.")
+            st.stop()
 
-    cases = st.session_state.get('cases', [])
-    if not cases:
-        st.warning("Please add at least one case in the sidebar.")
+        results_svd = []
+        results_shannon = []
+        case_names = []
+        
+        all_lossH = []
+        all_lossCI = []
+        all_analyzers = []
+
+        progress_bar = st.progress(0)
+        for i, case in enumerate(cases):
+            if case['method'] == 'Manual':
+                new_wno = ic.create_grid(case['min_wave'], case['max_wave'], case['res'])
+                analyzer = ic.Analyze(wno, jac_mat, case['error'], new_wno=new_wno)
+            else:
+                if case['csv_file'] is None:
+                    st.error(f"Please upload a CSV file for {case['name']}")
+                    st.stop()
+                df_csv = pd.read_csv(case['csv_file'])
+                if 'wavelength' not in df_csv.columns or 'error' not in df_csv.columns:
+                    st.error(f"CSV for {case['name']} must have 'wavelength' and 'error' columns.")
+                    st.stop()
+                
+                csv_wavelength = df_csv['wavelength'].values
+                csv_error = df_csv['error'].values
+                
+                # ic.Analyze expects error on original wno grid for rebinning
+                # wavelength typically increasing, wno decreasing. 
+                # np.interp expects increasing xp
+                xp = 1e4/csv_wavelength[::-1]
+                fp = csv_error[::-1]
+                if np.all(np.diff(wno) < 0):
+                    interpolated_error = np.interp(wno[::-1], xp, fp)[::-1]
+                else:
+                    interpolated_error = np.interp(wno, xp, fp)
+                
+                new_wno = 1e4/csv_wavelength
+                # Sort wno descending for ic.Analyze
+                idx = np.argsort(new_wno)[::-1]
+                new_wno = new_wno[idx]
+                final_csv_error = csv_error[idx]
+
+                analyzer = ic.Analyze(wno, jac_mat, interpolated_error, new_wno=new_wno)
+                # Ensure the error used is exactly what was in the CSV
+                analyzer.error = final_csv_error
+
+            dfs = analyzer.degrees_of_freedom_svd()
+            sic = analyzer.shannon_ic(priors)
+            
+            results_svd.append(dfs)
+            results_shannon.append(sic)
+            case_names.append(case['name'])
+            
+            lossH, lossCI = analyzer.loss_by_wave()
+            all_lossH.append(lossH)
+            all_lossCI.append(lossCI)
+            all_analyzers.append(copy.copy(analyzer))
+            
+            progress_bar.progress((i + 1) / len(cases))
+
+        st.session_state.computation_results = {
+            'results_svd': results_svd,
+            'results_shannon': results_shannon,
+            'case_names': case_names,
+            'all_lossH': all_lossH,
+            'all_lossCI': all_lossCI,
+            'all_analyzers': all_analyzers
+        }
+
+    if st.session_state.computation_results is None:
+        st.info("Please edit the table above and click 'Finalize Priors' to continue.")
         st.stop()
 
-    results_svd = []
-    results_shannon = []
-    case_names = []
-    
-    first_case_analyzer = None
+    if st.button('Reset/Recompute Results'):
+        st.session_state.computation_results = None
+        st.rerun()
 
-    progress_bar = st.progress(0)
-    for i, case in enumerate(cases):
-        if case['method'] == 'Manual':
-            new_wno = ic.create_grid(case['min_wave'], case['max_wave'], case['res'])
-            analyzer = ic.Analyze(wno, jac_mat, case['error'], new_wno=new_wno)
-        else:
-            if case['csv_file'] is None:
-                st.error(f"Please upload a CSV file for {case['name']}")
-                st.stop()
-            df_csv = pd.read_csv(case['csv_file'])
-            if 'wavelength' not in df_csv.columns or 'error' not in df_csv.columns:
-                st.error(f"CSV for {case['name']} must have 'wavelength' and 'error' columns.")
-                st.stop()
-            
-            csv_wavelength = df_csv['wavelength'].values
-            csv_error = df_csv['error'].values
-            
-            # ic.Analyze expects error on original wno grid for rebinning
-            # wavelength typically increasing, wno decreasing. 
-            # np.interp expects increasing xp
-            xp = 1e4/csv_wavelength[::-1]
-            fp = csv_error[::-1]
-            if np.all(np.diff(wno) < 0):
-                interpolated_error = np.interp(wno[::-1], xp, fp)[::-1]
-            else:
-                interpolated_error = np.interp(wno, xp, fp)
-            
-            new_wno = 1e4/csv_wavelength
-            # Sort wno descending for ic.Analyze
-            idx = np.argsort(new_wno)[::-1]
-            new_wno = new_wno[idx]
-            final_csv_error = csv_error[idx]
-
-            analyzer = ic.Analyze(wno, jac_mat, interpolated_error, new_wno=new_wno)
-            # Ensure the error used is exactly what was in the CSV
-            analyzer.error = final_csv_error
-
-        dfs = analyzer.degrees_of_freedom_svd()
-        sic = analyzer.shannon_ic(priors)
-        
-        results_svd.append(dfs)
-        results_shannon.append(sic)
-        case_names.append(case['name'])
-        
-        if i == 0:
-            first_case_analyzer = copy.copy(analyzer)
-            lossH, lossCI = first_case_analyzer.loss_by_wave()
-        
-        progress_bar.progress((i + 1) / len(cases))
+    res = st.session_state.computation_results
+    results_svd = res['results_svd']
+    results_shannon = res['results_shannon']
+    case_names = res['case_names']
+    all_lossH = res['all_lossH']
+    all_lossCI = res['all_lossCI']
+    all_analyzers = res['all_analyzers']
 
     # =======================================
     # VISUALIZATIONS
@@ -269,48 +297,56 @@ if 'jacobian_data' in st.session_state:
     
     st.divider()
     
-    # Only display fig1, fig4a, fig4b for the first case
-    st.header(f"Reference Case Analysis: {case_names[0]}")
+    # CASE SELECTION FOR INDIVIDUAL PLOTS
+    selected_case_name = st.selectbox("Select Case for Detailed Analysis (Figs 1, 4b)", case_names)
+    selected_idx = case_names.index(selected_case_name)
+    selected_analyzer = all_analyzers[selected_idx]
+    selected_lossCI = all_lossCI[selected_idx]
     
-    # 1) Plot of their binned Jacobian values for their first case
+    st.header(f"Detailed Analysis: {selected_case_name}")
+    
+    # 1) Plot of their binned Jacobian values for their selected case
     st.subheader(f"Binned Jacobian")
     
     fig1 = go.Figure()
-    rebinned_wno = first_case_analyzer.new_wno if first_case_analyzer.new_wno is not None else wno
+    rebinned_wno = selected_analyzer.new_wno if selected_analyzer.new_wno is not None else wno
     
     for i, p_name in enumerate(params):
-        y_val = np.array(first_case_analyzer.jacobian[i, :]).flatten()
+        y_val = np.array(selected_analyzer.jacobian[i, :]).flatten()
         norm_y = np.abs(y_val) / np.max(np.abs(y_val)) if np.max(np.abs(y_val)) != 0 else y_val
         fig1.add_trace(go.Scatter(x=1e4/rebinned_wno, y=norm_y, name=p_name, mode='lines'))
     
     fig1.update_layout(
         xaxis_title="Wavelength [um]",
         yaxis_title="Normalized |Jacobian|",
-        title=f"Binned Jacobian for {case_names[0]}",
+        title=f"Binned Jacobian for {selected_case_name}",
         legend_title="Parameters"
     )
     st.plotly_chart(fig1, width='stretch')
 
     st.divider()
-    # 1) Plot of their binned Jacobian values for their first case
-    st.header(f"What wavelengths are most important? (Reference Case: {case_names[0]})")
+    # 2) Plot of information loss for all cases
+    st.header(f"What wavelengths are most important?")
     
     fig4a = go.Figure()
-    fig4a.add_trace(go.Scatter(x=1e4/rebinned_wno, y=lossH, mode='lines', name='H loss'))
+    for i, (name, lossH) in enumerate(zip(case_names, all_lossH)):
+        case_wno = all_analyzers[i].new_wno if all_analyzers[i].new_wno is not None else wno
+        fig4a.add_trace(go.Scatter(x=1e4/case_wno, y=lossH, mode='lines', name=name))
+    
     fig4a.update_layout(
         xaxis_title="Wavelength [um]",
         yaxis_title="Delta IC/um",
-        title="H loss vs. W"
+        title="H loss vs. W (All Cases)"
     )
     st.plotly_chart(fig4a, width='stretch')
 
     fig4b = go.Figure()
     for i, p_name in enumerate(params):
-        fig4b.add_trace(go.Scatter(x=1e4/rebinned_wno, y=np.array(lossCI)[:,i], mode='lines', name=p_name))
+        fig4b.add_trace(go.Scatter(x=1e4/rebinned_wno, y=np.array(selected_lossCI)[:,i], mode='lines', name=p_name))
     fig4b.update_layout(
         xaxis_title="Wavelength [um]",
         yaxis_title="Delta Constraint Interval/um",
-        title="Loss in 1-sigma Constraint Interval vs. W"
+        title=f"Loss in 1-sigma Constraint Interval vs. W for {selected_case_name}"
     )
     st.plotly_chart(fig4b, width='stretch')
 
