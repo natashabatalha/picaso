@@ -356,16 +356,15 @@ class Parameterize():
         total_sum_of_gases = 0*pressure_grid
         assert len(temp_grid)==len(pressure_grid), 'Len of t grid does not match len of p grid. likely t grid has not been set yet '
         mixingratio_df = pd.DataFrame(dict(pressure=pressure_grid, temperature=temp_grid))
-        for i in species.keys(): 
-            #make sure its not the background
-            if i !='background':
-                if isinstance(species[i], dict): #abundance of the chemistry input per molecule
-                    profile = species[i]['profile']
-                    profile_fun = getattr(self, f'vmr_{profile}')
-                    mixingratio_df[i] = profile_fun(species[i])  
-                else: #each molecule input manually
-                    mixingratio_df[i] = species[i]   
-
+        molecules = species['species']
+        for i in molecules: 
+            assert 'profile' in species[i].keys(), 'Need profile key to define how to treat each molecule: either: constant, 2gradients, knots'
+            profile = species[i]['profile']
+            if profile != 'constant': #need function to get the vmr profile
+                profile_fun = getattr(self, f'vmr_{profile}')
+                mixingratio_df[i] = profile_fun(species[i])  
+            else: #each molecule input manually
+                mixingratio_df[i] = species[i]['value']   
                 total_sum_of_gases += mixingratio_df[i].values
         #add background gas if it is requested
         if 'background' in species.keys():

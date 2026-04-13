@@ -53,6 +53,7 @@ def prep_master_config():
 # %%
 #do all the PT options work?
 for i in go.pt_options:
+    print(i)
     config = prep_master_config()
     config['temperature']['PT_method'] = i
     test1 = go.run(driver_dict =config)

@@ -703,7 +703,9 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
         df_mixingratio = pd.merge(A.inputs['atmosphere']['profile'].loc[:,['temperature', 'pressure']], 
                                   df_cleaned, left_index=True, right_index=True, how='inner')
     elif chem_type!='': 
+        print(chem_type, f'chem_{chem_type}')
         chemistry_function = getattr(param_tools, f'chem_{chem_type}')
+        print(chem_config[chem_type])
         df_mixingratio  = chemistry_function(**chem_config[chem_type])#note, this includes P and T already
     #set final with chem
     A.atmosphere(df = df_mixingratio)
