@@ -5545,6 +5545,13 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
         start_case.guillot_pt(Tirr) 
 
     return start_case
+def earth_icrccm_pt():
+    """
+    Return the path to the Earth ICRCCM mid-latitude summer P-T-X profile.
+    The file is a PICASO-formatted rewrite of "icrccm_62_v2.atm", from the
+    rfast code.
+    """
+    return os.path.join(__refdata__, 'base_cases', 'earth_icrccm.pt')
 def jupiter_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','jupiter.pt')
