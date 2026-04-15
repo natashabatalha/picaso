@@ -1342,7 +1342,7 @@ def opannection(
     ck_db=None, 
     raman_db=None, 
     preload_gases='all',
-    query_method='linear',
+    query_method='nearest',
     verbose=False,
 ):
     """
@@ -1374,7 +1374,6 @@ def opannection(
         Options are:
         - ``'nearest'``: nearest-neighbor selection in PT space
         - ``'linear'``: bilinear interpolation in PT space
-        Default is ``'linear'``.
     ck_db : str 
         Can be: 
         - (required if method is preweighted) ASCII dir of ck file
