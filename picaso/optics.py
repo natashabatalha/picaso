@@ -2162,6 +2162,8 @@ class RetrieveOpacities():
         """
         Get queried continuum 
         """
+        tcia = tuple(float(i) for i in np.asarray(tcia, dtype=np.float64).tolist())
+        cia_mol = tuple(str(i) for i in cia_mol)
         #if user only runs a single molecule or temperature
         #if len(tcia) ==1: 
         #    query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
@@ -2188,7 +2190,7 @@ class RetrieveOpacities():
             query_mol = "WHERE molecule IN ({})".format(','.join(['?'] * len(cia_mol)))
 
 
-        query_params = tuple(cia_mol) + tuple(tcia)
+        query_params = cia_mol + tcia
 
         cur.execute("""
             SELECT molecule, temperature, opacity 
@@ -2205,6 +2207,8 @@ class RetrieveOpacities():
         """
         submits query
         """
+        ind_pt = tuple(int(i) for i in np.asarray(ind_pt).tolist())
+        molecules = tuple(str(i) for i in molecules)
         #query molecular opacities from sqlite3
         #if len(molecules) ==1: 
         #    query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
@@ -2223,7 +2227,7 @@ class RetrieveOpacities():
 
         query_pt = "AND ptid IN ({})".format(','.join(['?'] * len(ind_pt)))
 
-        query_params = tuple(molecules) + tuple(ind_pt)
+        query_params = molecules + ind_pt
 
         cur.execute("""SELECT molecule,ptid,opacity 
                     FROM molecular 
@@ -2396,6 +2400,360 @@ class RetrieveOpacities():
             all_shifted_spec[:,i] = shifted_flux/unshifted
 
         self.raman_stellar_shifts = all_shifted_spec
+
+
+def _decode_hdf5_string(value):
+    if isinstance(value, bytes):
+        return value.decode("utf-8")
+    if isinstance(value, np.ndarray):
+        if value.shape == ():
+            return _decode_hdf5_string(value.item())
+        return [_decode_hdf5_string(i) for i in value.tolist()]
+    return str(value)
+
+
+def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None):
+    storage_format = _decode_hdf5_string(storage_format)
+    if storage_format == 'log10_float32':
+        return 10**(np.asarray(raw_block, dtype=np.float64))
+    if storage_format == 'log10_uint16':
+        if y_min is None or y_max is None:
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = np.asarray(y_min)
+        y_max = np.asarray(y_max)
+        if y_min.shape != () or y_max.shape != ():
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = float(y_min)
+        y_max = float(y_max)
+        if y_max == y_min:
+            log_block = np.zeros(np.asarray(raw_block).shape, dtype=np.float64) + y_min
+        else:
+            log_block = y_min + (y_max - y_min) * (
+                np.asarray(raw_block, dtype=np.float64) / 65535.0
+            )
+        return 10**log_block
+    raise Exception(
+        f"Do not recognize HDF5 opacity storage format: {storage_format}. "
+        "Supported formats are log10_uint16 and log10_float32."
+    )
+
+
+def _decode_hdf5_log_block(raw_block, storage_format, y_min=None, y_max=None):
+    storage_format = _decode_hdf5_string(storage_format)
+    if storage_format == 'log10_float32':
+        return np.asarray(raw_block, dtype=np.float64)
+    if storage_format == 'log10_uint16':
+        if y_min is None or y_max is None:
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = np.asarray(y_min)
+        y_max = np.asarray(y_max)
+        if y_min.shape != () or y_max.shape != ():
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = float(y_min)
+        y_max = float(y_max)
+        if y_max == y_min:
+            return np.zeros(np.asarray(raw_block).shape, dtype=np.float64) + y_min
+        return y_min + (y_max - y_min) * (
+            np.asarray(raw_block, dtype=np.float64) / 65535.0
+        )
+    raise Exception(
+        f"Do not recognize HDF5 opacity storage format: {storage_format}. "
+        "Supported formats are log10_uint16 and log10_float32."
+    )
+
+
+class RetrieveOpacitiesHDF5(RetrieveOpacities):
+    """
+    HDF5 reader for resampled opacity databases.
+    """
+    def __init__(self, db_filename, raman_data, wave_range=None, location='local', resample=1,
+        query_method='nearest'):
+
+        self.ngauss = 1
+        self.gauss_wts = np.array([1])
+        self.db_filename = db_filename
+        self._h5 = h5py.File(self.db_filename, "r")
+
+        try:
+            self._header = self._h5["header"]
+            self._molecular_group = self._h5["molecular"]
+            self._continuum_group = self._h5["continuum"]
+        except KeyError as exc:
+            self.close()
+            raise Exception(
+                f"The HDF5 opacity file does not match the expected resampled layout: missing {exc}"
+            )
+
+        self.get_available_data(wave_range, resample)
+
+        self.raman_db = pd.read_csv(
+            raman_data,
+            sep=r'\s+',
+            skiprows=16,
+            header=None,
+            names=['ji','jf','vf','c','deltanu'],
+        )
+
+        self.get_available_rayleigh()
+        self.preload = False
+        self.query_method = query_method
+
+        if query_method == 'nearest':
+            self.get_opacities = self.get_opacities_nearest
+        elif query_method == 'linear':
+            self.get_opacities = self.__class__.get_opacities.__get__(self)
+        else:
+            self.close()
+            raise Exception(
+                f'Do not recognize query method for opacities: {query_method}. Options are nearest or linear'
+            )
+
+    def close(self):
+        h5 = getattr(self, "_h5", None)
+        if h5 is not None:
+            try:
+                h5.close()
+            except Exception:
+                pass
+            self._h5 = None
+
+    def __del__(self):
+        self.close()
+
+    def _get_storage_format(self, dataset, default_value):
+        raw = dataset.attrs.get("storage_format", default_value)
+        return _decode_hdf5_string(raw)
+
+    def _decode_dataset_rows(self, dataset, row_indices, default_storage_format):
+        row_indices = np.asarray(row_indices, dtype=np.int64)
+        raw_block = dataset[row_indices, self._dataset_wave_slice]
+        storage_format = self._get_storage_format(dataset, default_storage_format)
+        if storage_format == 'log10_uint16':
+            decoded = _decode_hdf5_opacity_block(
+                raw_block,
+                storage_format,
+                y_min=dataset.attrs.get("y_min"),
+                y_max=dataset.attrs.get("y_max"),
+            )
+        else:
+            decoded = _decode_hdf5_opacity_block(raw_block, storage_format)
+        return np.asarray(decoded, dtype=np.float64)
+
+    def _decode_dataset_rows_log(self, dataset, row_indices, default_storage_format):
+        row_indices = np.asarray(row_indices, dtype=np.int64)
+        raw_block = dataset[row_indices, self._dataset_wave_slice]
+        storage_format = self._get_storage_format(dataset, default_storage_format)
+        decoded = _decode_hdf5_log_block(
+            raw_block,
+            storage_format,
+            y_min=dataset.attrs.get("y_min"),
+            y_max=dataset.attrs.get("y_max"),
+        )
+        return np.asarray(decoded, dtype=np.float64)
+
+    def get_available_data(self, wave_range, resample):
+        self.resample = resample
+
+        self.cia_temps = np.asarray(self._header["continuum_temperatures"][:], dtype=np.float64)
+        self.avail_continuum = list(_decode_hdf5_string(self._header["continuum_molecules"][:]))
+        self.molecules = list(_decode_hdf5_string(self._header["molecules"][:]))
+
+        pt_pairs = np.asarray(self._header["pt_pairs"][:], dtype=np.float64)
+        if pt_pairs.ndim != 2 or pt_pairs.shape[1] < 3:
+            raise Exception("HDF5 header/pt_pairs must be a 2D array with columns ptid, pressure, temperature")
+
+        self.pt_pairs = [(int(row[0]), float(row[1]), float(row[2])) for row in pt_pairs]
+        df = pd.DataFrame(self.pt_pairs, columns=['ptid','pressure','temperature'])
+        self.nc_p = df.groupby('temperature').size().values
+        self.pressures = df['pressure'].unique()
+        self.p_log_grid = log10(self.pressures)
+        self.temps = df['temperature'].unique()
+        self.t_inv_grid = 1/self.temps
+
+        native_wno = np.asarray(self._header["wavenumber_grid"][:], dtype=np.float64)
+        resampled_wno = native_wno[::self.resample]
+        resampled_wave = 1e4/resampled_wno
+        if wave_range is None:
+            selected_resampled_indices = np.arange(resampled_wno.size, dtype=np.int64)
+        else:
+            selected_resampled_indices = np.where(
+                ((resampled_wave > min(wave_range)) & (resampled_wave < max(wave_range)))
+            )[0]
+        if selected_resampled_indices.size == 0:
+            raise Exception("The requested wave_range does not overlap the opacity grid")
+
+        start = int(selected_resampled_indices[0]) * self.resample
+        stop = (int(selected_resampled_indices[-1]) + 1) * self.resample
+        self._dataset_wave_slice = slice(start, stop, self.resample)
+
+        self.wno = resampled_wno[selected_resampled_indices]
+        self.wave = resampled_wave[selected_resampled_indices]
+        self.nwno = np.size(self.wno)
+
+        self._default_molecular_storage_format = _decode_hdf5_string(self._header["storage_format"][()])
+        self._default_continuum_storage_format = _decode_hdf5_string(
+            self._header["continuum_storage_format"][()]
+        )
+        self._ptid_to_row = {int(row[0]): idx for idx, row in enumerate(self.pt_pairs)}
+        self._continuum_temp_to_row = {
+            float(temp): idx for idx, temp in enumerate(self.cia_temps.tolist())
+        }
+
+    def preload_opacities(self,molecules,p_range,t_range):
+        self.preload=True
+        ind_pt = np.array(self.pt_pairs)
+        ind_pt = ind_pt[np.where(((ind_pt[:,1] >p_range[0]) &
+                           (ind_pt[:,1] <p_range[1])))]
+        ind_pt = ind_pt[np.where(((ind_pt[:,2] >t_range[0]) &
+                           (ind_pt[:,2] <t_range[1])))][:,0]
+        if self.query_method == 'linear':
+            self.loaded_molecules = self._get_query_molecular(ind_pt,molecules,None, decode_log=True)
+        else:
+            self.loaded_molecules = self._get_query_molecular(ind_pt,molecules,None)
+
+        tcia = self.cia_temps[np.where(((self.cia_temps > t_range[0]) &
+                                        (self.cia_temps < t_range[1])
+                ))]
+
+        cia_mol = self.avail_continuum
+        self.loaded_continuum = self._get_query_continuum(tcia,cia_mol,None)
+
+    def _get_query_continuum(self, tcia, cia_mol, cur):
+        data = {}
+        requested_temps = sorted({float(t) for t in np.asarray(tcia, dtype=np.float64).tolist()})
+        for molecule in cia_mol:
+            if molecule not in self._continuum_group:
+                raise Exception(f"Continuum species {molecule} not found in HDF5 opacity file")
+            dataset = self._continuum_group[molecule]
+            row_pairs = sorted(
+                (self._continuum_temp_to_row[float(temp)], float(temp))
+                for temp in requested_temps
+            )
+            row_indices = [row_index for row_index, _ in row_pairs]
+            block = self._decode_dataset_rows(
+                dataset,
+                row_indices,
+                self._default_continuum_storage_format,
+            )
+            for i_row, (_, temp_value) in enumerate(row_pairs):
+                data[molecule+'_'+str(temp_value)] = block[i_row]
+        return data
+
+    def _get_query_molecular(self,ind_pt,molecules,cur, decode_log=False):
+        data = {}
+        requested_ptids = sorted({int(ptid) for ptid in np.asarray(ind_pt).tolist()})
+        for molecule in molecules:
+            if molecule not in self._molecular_group:
+                raise Exception(f"Molecule {molecule} not found in HDF5 opacity file")
+            dataset = self._molecular_group[molecule]
+            row_pairs = sorted(
+                (self._ptid_to_row[int(ptid)], int(ptid))
+                for ptid in requested_ptids
+            )
+            row_indices = [row_index for row_index, _ in row_pairs]
+            if decode_log:
+                # The interpolated path operates in log-space, so keep HDF5
+                # molecular opacities in log10 form here to avoid redundant
+                # linear->log10 conversions in the hot interpolation loop.
+                block = self._decode_dataset_rows_log(
+                    dataset,
+                    row_indices,
+                    self._default_molecular_storage_format,
+                )
+            else:
+                block = self._decode_dataset_rows(
+                    dataset,
+                    row_indices,
+                    self._default_molecular_storage_format,
+                )
+            for i_row, (_, ptid_value) in enumerate(row_pairs):
+                data[molecule+'_'+str(ptid_value)] = block[i_row]
+        return data
+
+    def get_opacities(self, atmosphere, exclude_mol=1):
+        nlayer = atmosphere.c.nlayer
+        tlayer = atmosphere.layer['temperature']
+        player = atmosphere.layer['pressure']/atmosphere.c.pconv
+        molecules = atmosphere.molecules
+        cia_molecules = atmosphere.continuum_molecules
+
+        self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
+        self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer, self.nwno)) for key in cia_molecules}
+
+        t_interp , p_interp, i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi = self.find_needed_pts(tlayer,player)
+        ind_pt = 1+np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
+        atmosphere.layer['pt_opa_index'] = ind_pt
+
+        if self.preload:
+            data = self.loaded_molecules
+        else:
+            data = self._get_query_molecular(ind_pt,molecules,None, decode_log=True)
+
+        for i in self.molecular_opa.keys():
+            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
+            for ind in range(nlayer):
+                # HDF5 linear interpolation is intentionally done in log-space
+                # for speed: the datasets are already stored as log10 opacity, so
+                # we interpolate those values directly and exponentiate once.
+                log_abunds1 = data[i+'_'+str(1+i_t_low_p_low[ind])]
+                log_abunds2 = data[i+'_'+str(1+i_t_hi_p_low[ind])]
+                log_abunds3 = data[i+'_'+str(1+i_t_hi_p_hi[ind])]
+                log_abunds4 = data[i+'_'+str(1+i_t_low_p_hi[ind])]
+                cx = 10**(((1-t_interp[ind])* (1-p_interp[ind]) * log_abunds1) +
+                     ((t_interp[ind])  * (1-p_interp[ind]) * log_abunds2) +
+                     ((t_interp[ind])  * (p_interp[ind])   * log_abunds3) +
+                     ((1-t_interp[ind])* (p_interp[ind])   * log_abunds4) )
+                self.molecular_opa[i][ind, :] = fac*cx*6.02214086e+23
+
+        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+        cia_mol = list(self.continuum_opa.keys())
+
+        if self.preload:
+            data = self.loaded_continuum
+        else:
+            data = self._get_query_continuum(tcia, cia_mol, None)
+
+        for i in self.continuum_opa.keys():
+            for j,ind in zip(tcia,range(nlayer)):
+                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)]
+
+    def get_opacities_nearest(self, atmosphere, exclude_mol=1):
+        nlayer =atmosphere.c.nlayer
+        tlayer =atmosphere.layer['temperature']
+        player = atmosphere.layer['pressure']/atmosphere.c.pconv
+
+        molecules = atmosphere.molecules
+        cia_molecules = atmosphere.continuum_molecules
+
+        self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
+        self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer, self.nwno)) for key in cia_molecules}
+
+        ind_pt=[min(self.pt_pairs,
+            key=lambda c: math.hypot(np.log(c[1])- np.log(coordinate[0]), c[2]-coordinate[1]))[0]
+                for coordinate in  zip(player,tlayer)]
+        atmosphere.layer['pt_opa_index'] = ind_pt
+
+        if self.preload:
+            data = self.loaded_molecules
+        else:
+            data = self._get_query_molecular(ind_pt,molecules,None)
+
+        for i in self.molecular_opa.keys():
+            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
+            for j,ind in zip(ind_pt,range(nlayer)):
+                self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23
+
+        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+        cia_mol = list(self.continuum_opa.keys())
+
+        if self.preload:
+            data = self.loaded_continuum
+        else:
+            data = self._get_query_continuum(tcia, cia_mol, None)
+
+        for i in self.continuum_opa.keys():
+            for j,ind in zip(tcia,range(nlayer)):
+                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)]
 
 def adapt_array(arr):
     """needed to interpret bytes to array"""

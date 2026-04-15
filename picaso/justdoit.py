@@ -5,7 +5,7 @@ from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_w
 
 
 from .wavelength import get_cld_input_grid
-from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
+from .optics import RetrieveOpacities, RetrieveOpacitiesHDF5, compute_opacity, RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
@@ -1334,13 +1334,17 @@ def find_press(at_tau, a, b, c):
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
 
-def opannection(wave_range = None, filename_db = None, 
-                resample=1, method='resampled',
-                ck_db=None, raman_db = None, 
-                preload_gases='all',
-                #deq= False, on_fly=False,
-                #gases_fly =None,ck=False,
-                verbose=False):
+def opannection(
+    wave_range=None, 
+    filename_db=None, 
+    resample=1, 
+    method='resampled',
+    ck_db=None, 
+    raman_db=None, 
+    preload_gases='all',
+    query_method='linear',
+    verbose=False,
+):
     """
     Sets up database connection to opacities. 
 
@@ -1364,6 +1368,13 @@ def opannection(wave_range = None, filename_db = None,
     method : str 
         By default method='resampled'
         Other options include: ['preweighted','resortrebin']
+    query_method : str
+        Only used when ``method='resampled'``. Controls how molecular opacities
+        are fetched from the resampled database.
+        Options are:
+        - ``'nearest'``: nearest-neighbor selection in PT space
+        - ``'linear'``: bilinear interpolation in PT space
+        Default is ``'linear'``.
     ck_db : str 
         Can be: 
         - (required if method is preweighted) ASCII dir of ck file
@@ -1402,10 +1413,22 @@ def opannection(wave_range = None, filename_db = None,
         if resample != 1:
             if verbose:print("YOU ARE REQUESTING RESAMPLING!! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html")
 
-        opacityclass=RetrieveOpacities(
-                    filename_db, 
-                    raman_db,
-                    wave_range = wave_range, resample = resample)  
+        if filename_db.lower().endswith(('.h5', '.hdf5')):
+            opacityclass = RetrieveOpacitiesHDF5(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )
+        else:
+            opacityclass = RetrieveOpacities(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )  
         if verbose: print("verbose=True; Molecule set=",opacityclass.molecules) 
     elif ((method == 'resampled') & isinstance(ck_db,str)):
         raise Exception("ck_db was supplied but method is set to resampled. Change kwarg method='preweighted' to use the preweighted ck tables")
