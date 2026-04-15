@@ -18,7 +18,6 @@ from .io_utils import read_visscher_2121
 
 __refdata__ = os.environ.get('picaso_refdata')
 
-
 def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
     """
     The continuum factory takes the CIA opacity file and adds in extra sources of 
@@ -737,6 +736,249 @@ def create_grid(min_wavelength, max_wavelength, constant_R):
         newwl[j] = newwl[j-1]*spacing
     
     return 1e4/newwl[::-1]
+
+
+def _encode_log10_uint16(opacity, floor):
+    arr = np.asarray(opacity, dtype=np.float64)
+    if np.any(~np.isfinite(arr)):
+        raise ValueError("Opacity array contains NaN or inf values")
+    if np.any(arr < 0.0):
+        raise ValueError("Opacity array contains negative values")
+
+    log_arr = np.log10(np.maximum(arr, floor))
+    y_min = float(np.min(log_arr))
+    y_max = float(np.max(log_arr))
+
+    if y_max == y_min:
+        encoded = np.zeros(log_arr.shape, dtype=np.uint16)
+    else:
+        scaled = (log_arr - y_min) / (y_max - y_min)
+        encoded = np.rint(scaled * float(np.iinfo(np.uint16).max)).astype(np.uint16)
+
+    return encoded, y_min, y_max
+
+
+def _encode_log10_uint16_stacked(opacity_rows, floor):
+    stacked = np.vstack([np.asarray(row, dtype=np.float64) for row in opacity_rows])
+    return _encode_log10_uint16(stacked, floor=floor)
+
+
+def _encode_log10_float32_stacked(opacity_rows, floor):
+    stacked = np.vstack([np.asarray(row, dtype=np.float64) for row in opacity_rows])
+    if np.any(~np.isfinite(stacked)):
+        raise ValueError("Opacity array contains NaN or inf values")
+    if np.any(stacked < 0.0):
+        raise ValueError("Opacity array contains negative values")
+    return np.log10(np.maximum(stacked, floor)).astype(np.float32)
+
+
+def convert_sqlite_to_hdf5(
+    input_db,
+    output_hdf5,
+    compression='lzf',
+    shuffle=True,
+    storage_format="log10_uint16",
+    chunks=(1, 4096),
+    molecular_log10_floor=1e-50,
+    continuum_log10_floor=1e-100,
+    verbose=True,
+):
+    """
+    Convert a resampled PICASO SQLite opacity database to the HDF5 layout used by
+    the runtime HDF5 resampled-opacity backend.
+
+    The output file contains:
+
+    - ``/header`` metadata for the PT grid, continuum temperatures, and wavenumber grid
+    - ``/molecular/<molecule>`` datasets with shape ``(n_pt, n_wno)``
+    - ``/continuum/<species>`` datasets with shape ``(n_temp, n_wno)``
+
+    Supported storage formats are:
+
+    - ``log10_uint16``: quantized ``log10(opacity)`` plus per-dataset ``y_min``/``y_max``
+    - ``log10_float32``: raw ``log10(opacity)`` stored as ``float32``
+
+    Parameters
+    ----------
+    input_db : str
+        Path to the input SQLite resampled-opacity database.
+    output_hdf5 : str
+        Path to the output HDF5 file.
+    compression : {None, 'lzf'}, optional
+        Optional HDF5 dataset compression. ``None`` writes uncompressed datasets.
+    shuffle : bool, optional
+        If ``True``, enable the HDF5 shuffle filter on written datasets.
+    storage_format : {'log10_uint16', 'log10_float32'}, optional
+        On-disk opacity representation for both molecular and continuum datasets.
+    chunks : tuple of int, optional
+        HDF5 chunk shape used when writing compressed datasets. Defaults to
+        ``(1, 4096)``.
+    molecular_log10_floor : float, optional
+        Positive floor applied to molecular opacities before taking ``log10``.
+        Defaults to ``1e-50``.
+    continuum_log10_floor : float, optional
+        Positive floor applied to continuum opacities before taking ``log10``.
+        Defaults to ``1e-100``.
+    verbose : bool, optional
+        If ``True``, print progress while writing molecular and continuum datasets.
+        Defaults to ``True``.
+
+    Notes
+    -----
+    This function preserves the row ordering from the SQLite database. The HDF5
+    runtime backend uses row indices directly, so the important invariant is that
+    the stored dataset row order matches the ``pt_pairs`` metadata written into
+    the file.
+    """
+    if compression not in {None, "lzf"}:
+        raise ValueError(f"Unsupported compression: {compression}")
+    if chunks is not None:
+        if len(chunks) != 2:
+            raise ValueError("chunks must be a length-2 tuple like (1, 4096)")
+        chunks = tuple(int(i) for i in chunks)
+        if chunks[0] <= 0 or chunks[1] <= 0:
+            raise ValueError("chunk dimensions must be positive")
+    if molecular_log10_floor <= 0.0:
+        raise ValueError("molecular_log10_floor must be positive")
+    if continuum_log10_floor <= 0.0:
+        raise ValueError("continuum_log10_floor must be positive")
+    if storage_format not in {"log10_uint16", "log10_float32"}:
+        raise ValueError(f"Unsupported storage_format: {storage_format}")
+
+    string_dtype = h5py.string_dtype(encoding="utf-8")
+
+    cur, conn = open_local(input_db)
+
+    cur.execute(
+        "SELECT pressure_unit, temperature_unit, wavenumber_grid, continuum_unit, molecular_unit FROM header LIMIT 1"
+    )
+    pressure_unit, temperature_unit, wavenumber_grid, continuum_unit, molecular_unit = cur.fetchone()
+    wavenumber_grid = np.asarray(wavenumber_grid, dtype=np.float64)
+
+    cur.execute("SELECT ptid, pressure, temperature FROM molecular")
+    pt_pairs = sorted(list(set(cur.fetchall())), key=lambda x: x[0])
+    pt_pairs_array = np.asarray(pt_pairs, dtype=np.float64)
+    ptids = pt_pairs_array[:, 0].astype(int)
+    pressures = pt_pairs_array[:, 1].astype(np.float64)
+    temperatures = pt_pairs_array[:, 2].astype(np.float64)
+
+    cur.execute("SELECT DISTINCT molecule FROM molecular ORDER BY molecule")
+    molecule_names = [row[0] for row in cur.fetchall()]
+
+    cur.execute("SELECT DISTINCT molecule FROM continuum ORDER BY molecule")
+    continuum_names = [row[0] for row in cur.fetchall()]
+    cur.execute("SELECT DISTINCT temperature FROM continuum ORDER BY temperature")
+    continuum_temperatures = np.asarray([row[0] for row in cur.fetchall()], dtype=np.float64)
+
+    with h5py.File(output_hdf5, "w") as f:
+        header = f.create_group("header")
+        header.create_dataset("wavenumber_grid", data=wavenumber_grid)
+        header.create_dataset("pressure", data=pressures)
+        header.create_dataset("temperature", data=temperatures)
+        header.create_dataset("ptid", data=ptids)
+        header.create_dataset("pt_pairs", data=pt_pairs_array)
+        header.create_dataset("molecules", data=np.asarray(molecule_names, dtype=object), dtype=string_dtype)
+        header.create_dataset(
+            "continuum_molecules",
+            data=np.asarray(continuum_names, dtype=object),
+            dtype=string_dtype,
+        )
+        header.create_dataset("continuum_temperatures", data=continuum_temperatures)
+        header.create_dataset("storage_format", data=np.array(storage_format, dtype=string_dtype))
+        header.create_dataset("continuum_storage_format", data=np.array(storage_format, dtype=string_dtype))
+        header.attrs["pressure_unit"] = str(pressure_unit)
+        header.attrs["temperature_unit"] = str(temperature_unit)
+        header.attrs["continuum_unit"] = str(continuum_unit)
+        header.attrs["molecular_unit"] = str(molecular_unit)
+        header.attrs["molecular_log10_floor"] = float(molecular_log10_floor)
+        header.attrs["continuum_log10_floor"] = float(continuum_log10_floor)
+
+        molecular_group = f.create_group("molecular")
+        total_molecules = len(molecule_names)
+        for i_molecule, molecule in enumerate(molecule_names, start=1):
+            if verbose:
+                print(f"[molecular {i_molecule}/{total_molecules}] Writing {molecule}")
+            cur.execute(
+                "SELECT ptid, opacity FROM molecular WHERE molecule = ? ORDER BY ptid",
+                (molecule,),
+            )
+            rows = cur.fetchall()
+            if len(rows) != len(ptids):
+                raise RuntimeError(
+                    f"Molecule {molecule} has {len(rows)} PT rows, expected {len(ptids)}"
+                )
+
+            opacity_rows = [np.asarray(opacity, dtype=np.float64) for _, opacity in rows]
+            if storage_format == "log10_uint16":
+                encoded, y_min, y_max = _encode_log10_uint16_stacked(
+                    opacity_rows,
+                    floor=molecular_log10_floor,
+                )
+            else:
+                encoded = _encode_log10_float32_stacked(
+                    opacity_rows,
+                    floor=molecular_log10_floor,
+                )
+
+            dataset_kwargs = {}
+            if compression is not None:
+                dataset_kwargs["compression"] = compression
+                dataset_kwargs["chunks"] = chunks
+            if shuffle:
+                dataset_kwargs["shuffle"] = True
+
+            dataset = molecular_group.create_dataset(molecule, data=encoded, **dataset_kwargs)
+            dataset.attrs["storage_format"] = storage_format
+            if storage_format == "log10_uint16":
+                dataset.attrs["y_min"] = np.float64(y_min)
+                dataset.attrs["y_max"] = np.float64(y_max)
+            dataset.attrs["log10_floor"] = float(molecular_log10_floor)
+
+        continuum_group = f.create_group("continuum")
+        total_continuum = len(continuum_names)
+        for i_continuum, molecule in enumerate(continuum_names, start=1):
+            if verbose:
+                print(f"[continuum {i_continuum}/{total_continuum}] Writing {molecule}")
+            cur.execute(
+                "SELECT temperature, opacity FROM continuum WHERE molecule = ? ORDER BY temperature",
+                (molecule,),
+            )
+            rows = cur.fetchall()
+            row_map = {float(temp): np.asarray(opacity, dtype=np.float64) for temp, opacity in rows}
+            opacity_rows = []
+            for temperature in continuum_temperatures:
+                if float(temperature) not in row_map:
+                    raise RuntimeError(
+                        f"Continuum molecule {molecule} is missing temperature {temperature}"
+                    )
+                opacity_rows.append(row_map[float(temperature)])
+
+            if storage_format == "log10_uint16":
+                encoded, y_min, y_max = _encode_log10_uint16_stacked(
+                    opacity_rows,
+                    floor=continuum_log10_floor,
+                )
+            else:
+                encoded = _encode_log10_float32_stacked(
+                    opacity_rows,
+                    floor=continuum_log10_floor,
+                )
+
+            dataset_kwargs = {}
+            if compression is not None:
+                dataset_kwargs["compression"] = compression
+                dataset_kwargs["chunks"] = chunks
+            if shuffle:
+                dataset_kwargs["shuffle"] = True
+
+            dataset = continuum_group.create_dataset(molecule, data=encoded, **dataset_kwargs)
+            dataset.attrs["storage_format"] = storage_format
+            if storage_format == "log10_uint16":
+                dataset.attrs["y_min"] = np.float64(y_min)
+                dataset.attrs["y_max"] = np.float64(y_max)
+            dataset.attrs["log10_floor"] = float(continuum_log10_floor)
+
+    conn.close()
     
 def insert_molecular_1060(molecule, min_wavelength, max_wavelength, new_R, 
             og_directory, new_db,dir_kark_ch4=None, dir_optical_o3=None):

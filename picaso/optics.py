@@ -2429,7 +2429,7 @@ def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None
             log_block = np.zeros(np.asarray(raw_block).shape, dtype=np.float64) + y_min
         else:
             log_block = y_min + (y_max - y_min) * (
-                np.asarray(raw_block, dtype=np.float64) / 65535.0
+                np.asarray(raw_block, dtype=np.float64) / float(np.iinfo(np.uint16).max)
             )
         return 10**log_block
     raise Exception(
@@ -2454,7 +2454,7 @@ def _decode_hdf5_log_block(raw_block, storage_format, y_min=None, y_max=None):
         if y_max == y_min:
             return np.zeros(np.asarray(raw_block).shape, dtype=np.float64) + y_min
         return y_min + (y_max - y_min) * (
-            np.asarray(raw_block, dtype=np.float64) / 65535.0
+            np.asarray(raw_block, dtype=np.float64) / float(np.iinfo(np.uint16).max)
         )
     raise Exception(
         f"Do not recognize HDF5 opacity storage format: {storage_format}. "
