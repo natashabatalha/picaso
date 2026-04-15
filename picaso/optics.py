@@ -2462,6 +2462,133 @@ def _decode_hdf5_log_block(raw_block, storage_format, y_min=None, y_max=None):
     )
 
 
+@jit(nopython=True, cache=True)
+def _interpolate_hdf5_log_opacity(output, log_block, idx1, idx2, idx3, idx4, t_interp, p_interp, scale):
+    """Interpolate log10 opacity rows into a preallocated linear-opacity output buffer."""
+    nlayer, nwno = output.shape
+    for i in range(nlayer):
+        w1 = (1.0 - t_interp[i]) * (1.0 - p_interp[i])
+        w2 = t_interp[i] * (1.0 - p_interp[i])
+        w3 = t_interp[i] * p_interp[i]
+        w4 = (1.0 - t_interp[i]) * p_interp[i]
+        row1 = idx1[i]
+        row2 = idx2[i]
+        row3 = idx3[i]
+        row4 = idx4[i]
+        for j in range(nwno):
+            log_val = (
+                w1 * log_block[row1, j]
+                + w2 * log_block[row2, j]
+                + w3 * log_block[row3, j]
+                + w4 * log_block[row4, j]
+            )
+            output[i, j] = scale * (10.0 ** log_val)
+
+
+@jit(nopython=True, cache=True)
+def _find_needed_pts_hdf5(tlayer, player, t_inv_grid, p_log_grid, nc_p, temp_row_offsets):
+    nlayer = tlayer.size
+    t_interp = np.empty(nlayer, dtype=np.float64)
+    p_interp = np.empty(nlayer, dtype=np.float64)
+    row_low_low = np.empty(nlayer, dtype=np.int64)
+    row_hi_low = np.empty(nlayer, dtype=np.int64)
+    row_low_hi = np.empty(nlayer, dtype=np.int64)
+    row_hi_hi = np.empty(nlayer, dtype=np.int64)
+
+    for i in range(nlayer):
+        t_inv = 1.0 / tlayer[i]
+        p_log = np.log10(player[i])
+
+        t_low = 0
+        found = False
+        for j in range(t_inv_grid.size):
+            if t_inv_grid[j] > t_inv:
+                t_low = j
+                found = True
+        if not found:
+            t_low = 0
+        if t_low == t_inv_grid.size - 1:
+            t_low = t_inv_grid.size - 2
+        t_hi = t_low + 1
+
+        p_low = 0
+        found = False
+        for j in range(p_log_grid.size):
+            if p_log_grid[j] <= p_log:
+                p_low = j
+                found = True
+        if not found:
+            p_low = 0
+
+        max_avail_p = p_low
+        hi_limit = nc_p[t_hi] - 3
+        if hi_limit < max_avail_p:
+            max_avail_p = hi_limit
+        if max_avail_p < 0:
+            max_avail_p = 0
+        p_low = max_avail_p
+        p_hi = p_low + 1
+
+        t_inv_low = t_inv_grid[t_low]
+        t_inv_hi = t_inv_grid[t_hi]
+        p_log_low = p_log_grid[p_low]
+        p_log_hi = p_log_grid[p_hi]
+
+        row_low_low[i] = temp_row_offsets[t_low] + p_low
+        row_hi_low[i] = temp_row_offsets[t_hi] + p_low
+        row_low_hi[i] = temp_row_offsets[t_low] + p_hi
+        row_hi_hi[i] = temp_row_offsets[t_hi] + p_hi
+
+        t_interp[i] = (t_inv - t_inv_low) / (t_inv_hi - t_inv_low)
+        p_interp[i] = (p_log - p_log_low) / (p_log_hi - p_log_low)
+
+    return t_interp, p_interp, row_low_low, row_hi_low, row_low_hi, row_hi_hi
+
+
+@jit(nopython=True, cache=True)
+def _find_nearest_pt_rows_hdf5(player, tlayer, pt_pressures, pt_temperatures, pt_ids):
+    nlayer = tlayer.size
+    row_indices = np.empty(nlayer, dtype=np.int64)
+    ptid_indices = np.empty(nlayer, dtype=np.int64)
+    for i in range(nlayer):
+        player_log = np.log(player[i])
+        best_row = 0
+        best_metric = math.hypot(np.log(pt_pressures[0]) - player_log, pt_temperatures[0] - tlayer[i])
+        for j in range(1, pt_pressures.size):
+            metric = math.hypot(np.log(pt_pressures[j]) - player_log, pt_temperatures[j] - tlayer[i])
+            if metric < best_metric:
+                best_metric = metric
+                best_row = j
+        row_indices[i] = best_row
+        ptid_indices[i] = pt_ids[best_row]
+    return row_indices, ptid_indices
+
+
+@jit(nopython=True, cache=True)
+def _find_nearest_temperature_rows_hdf5(tlayer, cia_temps):
+    nlayer = tlayer.size
+    row_indices = np.empty(nlayer, dtype=np.int64)
+    for i in range(nlayer):
+        best_row = 0
+        best_metric = abs(cia_temps[0] - tlayer[i])
+        for j in range(1, cia_temps.size):
+            metric = abs(cia_temps[j] - tlayer[i])
+            if metric < best_metric:
+                best_metric = metric
+                best_row = j
+        row_indices[i] = best_row
+    return row_indices
+
+
+@jit(nopython=True, cache=True)
+def _fill_hdf5_nearest_block(output, block, local_rows, scale):
+    nlayer, nwno = output.shape
+    for i in range(nlayer):
+        row = local_rows[i]
+        for j in range(nwno):
+            output[i, j] = scale * block[row, j]
+
+
 class RetrieveOpacitiesHDF5(RetrieveOpacities):
     """
     HDF5 reader for resampled opacity databases.
@@ -2569,6 +2696,12 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         self.p_log_grid = log10(self.pressures)
         self.temps = df['temperature'].unique()
         self.t_inv_grid = 1/self.temps
+        self._pt_ids = np.asarray(pt_pairs[:, 0], dtype=np.int64)
+        self._pt_pressures = np.asarray(pt_pairs[:, 1], dtype=np.float64)
+        self._pt_temperatures = np.asarray(pt_pairs[:, 2], dtype=np.float64)
+        self._temp_row_offsets = np.zeros(self.nc_p.size, dtype=np.int64)
+        if self.nc_p.size > 1:
+            self._temp_row_offsets[1:] = np.cumsum(self.nc_p[:-1], dtype=np.int64)
 
         native_wno = np.asarray(self._header["wavenumber_grid"][:], dtype=np.float64)
         resampled_wno = native_wno[::self.resample]
@@ -2598,6 +2731,10 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         self._continuum_temp_to_row = {
             float(temp): idx for idx, temp in enumerate(self.cia_temps.tolist())
         }
+        self._molecular_opa = {}
+        self._continuum_opa = {}
+        self.loaded_molecules = None
+        self.loaded_continuum = None
 
     def preload_opacities(self,molecules,p_range,t_range):
         self.preload=True
@@ -2606,69 +2743,119 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
                            (ind_pt[:,1] <p_range[1])))]
         ind_pt = ind_pt[np.where(((ind_pt[:,2] >t_range[0]) &
                            (ind_pt[:,2] <t_range[1])))][:,0]
-        if self.query_method == 'linear':
-            self.loaded_molecules = self._get_query_molecular(ind_pt,molecules,None, decode_log=True)
-        else:
-            self.loaded_molecules = self._get_query_molecular(ind_pt,molecules,None)
+        row_indices = np.array(
+            [self._ptid_to_row[int(ptid)] for ptid in np.asarray(ind_pt, dtype=np.int64)],
+            dtype=np.int64,
+        )
+        self.loaded_molecules = self._load_molecular_blocks(
+            row_indices,
+            molecules,
+            decode_log=(self.query_method == 'linear'),
+        )
 
-        tcia = self.cia_temps[np.where(((self.cia_temps > t_range[0]) &
-                                        (self.cia_temps < t_range[1])
-                ))]
+        continuum_rows = np.where(
+            ((self.cia_temps > t_range[0]) & (self.cia_temps < t_range[1]))
+        )[0]
+        self.loaded_continuum = self._load_continuum_blocks(continuum_rows, self.avail_continuum)
 
-        cia_mol = self.avail_continuum
-        self.loaded_continuum = self._get_query_continuum(tcia,cia_mol,None)
+    def _prepare_output_buffers(self, molecules, cia_molecules, nlayer):
+        continuum_keys = [key[0] + key[1] for key in cia_molecules]
+        self.molecular_opa = self._reuse_or_allocate_output_dict(
+            getattr(self, "molecular_opa", None),
+            molecules,
+            nlayer,
+        )
+        self.continuum_opa = self._reuse_or_allocate_output_dict(
+            getattr(self, "continuum_opa", None),
+            continuum_keys,
+            nlayer,
+        )
 
-    def _get_query_continuum(self, tcia, cia_mol, cur):
-        data = {}
-        requested_temps = sorted({float(t) for t in np.asarray(tcia, dtype=np.float64).tolist()})
-        for molecule in cia_mol:
-            if molecule not in self._continuum_group:
-                raise Exception(f"Continuum species {molecule} not found in HDF5 opacity file")
-            dataset = self._continuum_group[molecule]
-            row_pairs = sorted(
-                (self._continuum_temp_to_row[float(temp)], float(temp))
-                for temp in requested_temps
-            )
-            row_indices = [row_index for row_index, _ in row_pairs]
-            block = self._decode_dataset_rows(
-                dataset,
-                row_indices,
-                self._default_continuum_storage_format,
-            )
-            for i_row, (_, temp_value) in enumerate(row_pairs):
-                data[molecule+'_'+str(temp_value)] = block[i_row]
-        return data
+    def _reuse_or_allocate_output_dict(self, existing, keys, nlayer):
+        shape = (nlayer, self.nwno)
+        if existing is None:
+            existing = {}
+        if list(existing.keys()) != list(keys):
+            return {key: np.empty(shape, dtype=np.float64) for key in keys}
+        for key in keys:
+            arr = existing.get(key)
+            if arr is None or arr.shape != shape or arr.dtype != np.float64:
+                return {key: np.empty(shape, dtype=np.float64) for key in keys}
+        return existing
 
-    def _get_query_molecular(self,ind_pt,molecules,cur, decode_log=False):
-        data = {}
-        requested_ptids = sorted({int(ptid) for ptid in np.asarray(ind_pt).tolist()})
+    def _build_row_lookup(self, row_indices, total_rows):
+        requested_rows = np.unique(np.asarray(row_indices, dtype=np.int64))
+        row_lookup = np.full(total_rows, -1, dtype=np.int64)
+        row_lookup[requested_rows] = np.arange(requested_rows.size, dtype=np.int64)
+        return requested_rows, row_lookup
+
+    def _load_molecular_blocks(self, row_indices, molecules, decode_log=False):
+        requested_rows, row_lookup = self._build_row_lookup(row_indices, self._pt_ids.size)
+        dense_blocks = {}
         for molecule in molecules:
             if molecule not in self._molecular_group:
                 raise Exception(f"Molecule {molecule} not found in HDF5 opacity file")
             dataset = self._molecular_group[molecule]
-            row_pairs = sorted(
-                (self._ptid_to_row[int(ptid)], int(ptid))
-                for ptid in requested_ptids
-            )
-            row_indices = [row_index for row_index, _ in row_pairs]
             if decode_log:
-                # The interpolated path operates in log-space, so keep HDF5
-                # molecular opacities in log10 form here to avoid redundant
-                # linear->log10 conversions in the hot interpolation loop.
-                block = self._decode_dataset_rows_log(
+                dense_blocks[molecule] = self._decode_dataset_rows_log(
                     dataset,
-                    row_indices,
+                    requested_rows,
                     self._default_molecular_storage_format,
                 )
             else:
-                block = self._decode_dataset_rows(
+                dense_blocks[molecule] = self._decode_dataset_rows(
                     dataset,
-                    row_indices,
+                    requested_rows,
                     self._default_molecular_storage_format,
                 )
-            for i_row, (_, ptid_value) in enumerate(row_pairs):
-                data[molecule+'_'+str(ptid_value)] = block[i_row]
-        return data
+        return dense_blocks, row_lookup
+
+    def _load_continuum_blocks(self, row_indices, continuum_species):
+        requested_rows, row_lookup = self._build_row_lookup(row_indices, self.cia_temps.size)
+        dense_blocks = {}
+        for molecule in continuum_species:
+            if molecule not in self._continuum_group:
+                raise Exception(f"Continuum species {molecule} not found in HDF5 opacity file")
+            dense_blocks[molecule] = self._decode_dataset_rows(
+                self._continuum_group[molecule],
+                requested_rows,
+                self._default_continuum_storage_format,
+            )
+        return dense_blocks, row_lookup
+
+    def _dense_cache_covers(self, loaded, names, row_indices):
+        if loaded is None:
+            return False
+        dense_blocks, row_lookup = loaded
+        for name in names:
+            if name not in dense_blocks:
+                return False
+        row_indices = np.asarray(row_indices, dtype=np.int64)
+        if row_indices.size == 0:
+            return True
+        if row_lookup.shape[0] <= int(np.max(row_indices)):
+            return False
+        return np.all(row_lookup[row_indices] >= 0)
+
+    def _get_molecular_blocks(self, row_indices, molecules, decode_log=False):
+        if self.preload and self._dense_cache_covers(self.loaded_molecules, molecules, row_indices):
+            return self.loaded_molecules
+        return self._load_molecular_blocks(row_indices, molecules, decode_log=decode_log)
+
+    def _get_continuum_blocks(self, row_indices, continuum_species):
+        if self.preload and self._dense_cache_covers(self.loaded_continuum, continuum_species, row_indices):
+            return self.loaded_continuum
+        return self._load_continuum_blocks(row_indices, continuum_species)
+
+    def _prepare_linear_pt_state(self, tlayer, player):
+        return _find_needed_pts_hdf5(
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(player, dtype=np.float64),
+            np.asarray(self.t_inv_grid, dtype=np.float64),
+            np.asarray(self.p_log_grid, dtype=np.float64),
+            np.asarray(self.nc_p, dtype=np.int64),
+            np.asarray(self._temp_row_offsets, dtype=np.int64),
+        )
 
     def get_opacities(self, atmosphere, exclude_mol=1):
         nlayer = atmosphere.c.nlayer
@@ -2677,45 +2864,55 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         molecules = atmosphere.molecules
         cia_molecules = atmosphere.continuum_molecules
 
-        self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
-        self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer, self.nwno)) for key in cia_molecules}
+        self._prepare_output_buffers(molecules, cia_molecules, nlayer)
 
-        t_interp , p_interp, i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi = self.find_needed_pts(tlayer,player)
-        ind_pt = 1+np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
-        atmosphere.layer['pt_opa_index'] = ind_pt
+        t_interp, p_interp, row_low_low, row_hi_low, row_low_hi, row_hi_hi = self._prepare_linear_pt_state(
+            tlayer,
+            player,
+        )
+        required_rows = np.unique(
+            np.concatenate([row_low_low, row_hi_low, row_low_hi, row_hi_hi])
+        )
+        atmosphere.layer['pt_opa_index'] = (1 + required_rows).tolist()
 
-        if self.preload:
-            data = self.loaded_molecules
-        else:
-            data = self._get_query_molecular(ind_pt,molecules,None, decode_log=True)
+        dense_blocks, row_lookup = self._get_molecular_blocks(required_rows, molecules, decode_log=True)
 
-        for i in self.molecular_opa.keys():
-            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
-            for ind in range(nlayer):
-                # HDF5 linear interpolation is intentionally done in log-space
-                # for speed: the datasets are already stored as log10 opacity, so
-                # we interpolate those values directly and exponentiate once.
-                log_abunds1 = data[i+'_'+str(1+i_t_low_p_low[ind])]
-                log_abunds2 = data[i+'_'+str(1+i_t_hi_p_low[ind])]
-                log_abunds3 = data[i+'_'+str(1+i_t_hi_p_hi[ind])]
-                log_abunds4 = data[i+'_'+str(1+i_t_low_p_hi[ind])]
-                cx = 10**(((1-t_interp[ind])* (1-p_interp[ind]) * log_abunds1) +
-                     ((t_interp[ind])  * (1-p_interp[ind]) * log_abunds2) +
-                     ((t_interp[ind])  * (p_interp[ind])   * log_abunds3) +
-                     ((1-t_interp[ind])* (p_interp[ind])   * log_abunds4) )
-                self.molecular_opa[i][ind, :] = fac*cx*6.02214086e+23
+        local_low_low = row_lookup[row_low_low]
+        local_hi_low = row_lookup[row_hi_low]
+        local_low_hi = row_lookup[row_low_hi]
+        local_hi_hi = row_lookup[row_hi_hi]
 
-        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
-        cia_mol = list(self.continuum_opa.keys())
+        for molecule in molecules:
+            fac = 0 if is_opacity_excluded(exclude_mol, molecule, 'line') else 1
+            # The HDF5 linear path stays entirely in log-space until the final
+            # write into the reusable output buffer, which removes redundant
+            # decode/re-encode work and keeps temporary memory flat.
+            _interpolate_hdf5_log_opacity(
+                self.molecular_opa[molecule],
+                dense_blocks[molecule],
+                local_low_low,
+                local_hi_low,
+                local_hi_hi,
+                local_low_hi,
+                t_interp,
+                p_interp,
+                fac * 6.02214086e+23,
+            )
 
-        if self.preload:
-            data = self.loaded_continuum
-        else:
-            data = self._get_query_continuum(tcia, cia_mol, None)
-
-        for i in self.continuum_opa.keys():
-            for j,ind in zip(tcia,range(nlayer)):
-                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)]
+        continuum_species = list(self.continuum_opa.keys())
+        continuum_rows = _find_nearest_temperature_rows_hdf5(
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(self.cia_temps, dtype=np.float64),
+        )
+        dense_continuum, continuum_lookup = self._get_continuum_blocks(continuum_rows, continuum_species)
+        continuum_local_rows = continuum_lookup[continuum_rows]
+        for molecule in continuum_species:
+            _fill_hdf5_nearest_block(
+                self.continuum_opa[molecule],
+                dense_continuum[molecule],
+                continuum_local_rows,
+                1.0,
+            )
 
     def get_opacities_nearest(self, atmosphere, exclude_mol=1):
         nlayer =atmosphere.c.nlayer
@@ -2725,35 +2922,44 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         molecules = atmosphere.molecules
         cia_molecules = atmosphere.continuum_molecules
 
-        self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
-        self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer, self.nwno)) for key in cia_molecules}
+        self._prepare_output_buffers(molecules, cia_molecules, nlayer)
 
-        ind_pt=[min(self.pt_pairs,
-            key=lambda c: math.hypot(np.log(c[1])- np.log(coordinate[0]), c[2]-coordinate[1]))[0]
-                for coordinate in  zip(player,tlayer)]
-        atmosphere.layer['pt_opa_index'] = ind_pt
+        nearest_rows, nearest_ptids = _find_nearest_pt_rows_hdf5(
+            np.asarray(player, dtype=np.float64),
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(self._pt_pressures, dtype=np.float64),
+            np.asarray(self._pt_temperatures, dtype=np.float64),
+            np.asarray(self._pt_ids, dtype=np.int64),
+        )
+        atmosphere.layer['pt_opa_index'] = nearest_ptids.tolist()
 
-        if self.preload:
-            data = self.loaded_molecules
-        else:
-            data = self._get_query_molecular(ind_pt,molecules,None)
+        dense_blocks, row_lookup = self._get_molecular_blocks(nearest_rows, molecules, decode_log=False)
+        local_rows = row_lookup[nearest_rows]
 
-        for i in self.molecular_opa.keys():
-            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
-            for j,ind in zip(ind_pt,range(nlayer)):
-                self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23
+        for molecule in molecules:
+            fac = 0 if is_opacity_excluded(exclude_mol, molecule, 'line') else 1
+            _fill_hdf5_nearest_block(
+                self.molecular_opa[molecule],
+                dense_blocks[molecule],
+                local_rows,
+                fac * 6.02214086e+23,
+            )
 
-        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
-        cia_mol = list(self.continuum_opa.keys())
+        continuum_species = list(self.continuum_opa.keys())
+        continuum_rows = _find_nearest_temperature_rows_hdf5(
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(self.cia_temps, dtype=np.float64),
+        )
+        dense_continuum, continuum_lookup = self._get_continuum_blocks(continuum_rows, continuum_species)
+        continuum_local_rows = continuum_lookup[continuum_rows]
 
-        if self.preload:
-            data = self.loaded_continuum
-        else:
-            data = self._get_query_continuum(tcia, cia_mol, None)
-
-        for i in self.continuum_opa.keys():
-            for j,ind in zip(tcia,range(nlayer)):
-                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)]
+        for molecule in continuum_species:
+            _fill_hdf5_nearest_block(
+                self.continuum_opa[molecule],
+                dense_continuum[molecule],
+                continuum_local_rows,
+                1.0,
+            )
 
 def adapt_array(arr):
     """needed to interpret bytes to array"""
