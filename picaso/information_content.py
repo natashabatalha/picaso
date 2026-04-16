@@ -174,7 +174,7 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
         val = _get_dict_value(config, path)
         if ((val is None) and ('def' not in path)):
             raise Exception(f'Parameter path {path} not found in configuration')
-        elif ((val is None) and ('def' in path)):
+        elif 'def' in path:
             assert isinstance(def_kwargs, dict), 'A dictionary for def_kwargs must be supplied when path starts with def.'
             if path not in def_kwargs.keys(): 
                 raise Exception(f'Parameter path {path} not found in configuration. If this was intended to be a def.[input] then def_kwargs needs to be supplied with keyword matching def.fun.[input] and associated parameters that you want to stay constant in the function run. E.g., def.cloud.dp would require a dictionary with that as a keyword and all assocated inputs to cloud')
@@ -185,8 +185,9 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
                 requires_function_rerun[i] = True
         #if not isinstance(val, (int, float, np.int64, np.float64)):
         #    raise Exception(f'Jacobian can only be computed for numeric parameters. {path} is {type(val)}')
-        if is_logs[i] and np.any(val <= 0):
-            raise Exception(f'Cannot compute logarithmic Jacobian for non-positive parameter: {path}={val}')
+        #print(is_logs[i], val, path)
+        #if is_logs[i] and np.any(val <= 0):
+        #    raise Exception(f'Cannot compute logarithmic Jacobian for non-positive parameter: {path}={val}')
         
         #collect values 
         all_values[i] = val
@@ -205,13 +206,14 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
         if runtype == 'driver':
             out = run(driver_dict=cfg)
         else: 
-            picaso_class.inputs = cfg 
+            class_modified = copy.deepcopy(picaso_class)
+            class_modified.inputs = cfg 
             if fun_name is not None: 
-                running = getattr(picaso_class,fun_name,None)
+                running = getattr(class_modified,fun_name,None)
                 if running is None: 
                     raise Exception(rf"uh oh, picaso_class does not have the function {fun_name}")
                 running(**fun_kwargs)
-            out = picaso_class.spectrum(opacityclass, calculation=cfg['observation_type'])
+            out = class_modified.spectrum(opacityclass, calculation=cfg['observation_type'])
         return out[spec_key]
        
     jacobian_cols = []
@@ -253,7 +255,7 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
             else: 
                 set_dict_value(cfg_plus, path, new_val)
                 spec_plus = get_spec(cfg_plus)
-            deriv = (spec_plus - base_spec) / actual_dp
+            
         
         if (method == 'backward') or ( method == 'center'):
             cfg_minus = copy.deepcopy(config)
@@ -269,10 +271,14 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
             else: 
                 set_dict_value(cfg_minus, path, new_val)
                 spec_minus = get_spec(cfg_minus)
-            deriv = (base_spec - spec_minus) / actual_dp
+            
         
         if method == 'center':
             deriv = (spec_plus - spec_minus) / (2 * actual_dp)
+        elif method == 'forward':
+            deriv = (spec_plus - base_spec) / actual_dp
+        elif method == 'backward':
+            deriv = (base_spec - spec_minus) / actual_dp
         
         if method not in ['center','forward','backward']:
             raise Exception(f"Unknown derivative method: {method}")
@@ -289,9 +295,14 @@ class Analyze():
         jacobian : numpy.matrix 
             number of molecules by number of parameters
         error : numpy.array or float 
-            absolute error on spectrum. could be constant or an input array
-            input array must be on same grid as wno_grid. Any binning requests 
-            will also bin the error according to spectres.spectres error binning. 
+            absolute error on spectrum. 
+            Options: 
+                1 - could be constant (if any binning is requested it is assumed that the error input is associated 
+                with those new requests. e.g., if R=70 is requested the constant error will be applied to the new R=70 wavenumber grid, not the original.)
+                2 - input array on the same coordinate system as wno_grid. In this case, any binning requests 
+                will also bin the error according to spectres.spectres error binning. 
+                3 - a list [wno_error, error]. in this case wno_error becomes the new wavenumber grid 
+                and the jacobian will be binned to this error accordingly.
         newx : numpy.array
             new x axis
         R : float 
@@ -324,11 +335,24 @@ class Analyze():
             jacobian = np.matrix(K_rebin)
 
             if not isinstance(error,(float,int)):
-                assert len(error)==len(self.og_wno_grid), 'Error and wavenumber grid are not on the same axis'
-                _,error = spectres(newx, self.og_wno_grid, self.og_wno_grid, spec_errs = error)
+                #if the length of the error array is the same as the input 
+                #wavenumber let's assume that we need to bin it as well 
+                if len(error)==len(self.og_wno_grid):#, 'Error and wavenumber grid are not on the same axis'
+                    _,error = spectres(newx, self.og_wno_grid, self.og_wno_grid, spec_errs = error)
             
             nwno = len(newx)
             self.new_wno = newx
+        #if error is supplied as a list with two arrays then we bin the jacobian 
+        #to that new error 
+        elif (isinstance(error, list) and (len(error)==2)):
+            assert len(error[0]) == len(error[1]), 'error[0] and error[1] need to be the same length'
+            self.new_wno = error[0]
+            error = error[1]
+            K_rebin = []
+            for i in range(jacobian.shape[1]):
+                newx,y = mean_regrid(self.og_wno_grid, jacobian[:,i], newx=self.new_wno)
+                K_rebin += [y]
+            jacobian = np.matrix(K_rebin)
         else: 
             jacobian=jacobian.T
 
