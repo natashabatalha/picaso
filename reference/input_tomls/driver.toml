@@ -228,7 +228,7 @@ uniform_kwargs={min=0.5, max=2}
 gaussian_kwargs={mean=1, std=0.5}
 log=false
 
-[retrieval.chemistry.free.H2O]
+[retrieval.chemistry.free.H2O.vmr_switch]
 prior='uniform'
 uniform_kwargs={min=-12, max=0}
 log=false
