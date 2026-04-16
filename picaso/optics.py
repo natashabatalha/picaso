@@ -2412,10 +2412,11 @@ def _decode_hdf5_string(value):
     return str(value)
 
 
-def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None):
+def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None, return_log=False):
     storage_format = _decode_hdf5_string(storage_format)
     if storage_format == 'log10_float32':
-        return 10**(np.asarray(raw_block, dtype=np.float64))
+        decoded = np.asarray(raw_block, dtype=np.float64)
+        return decoded if return_log else 10**decoded
     if storage_format == 'log10_uint16':
         if y_min is None or y_max is None:
             raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
@@ -2425,37 +2426,12 @@ def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None
             raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
         y_min = float(y_min)
         y_max = float(y_max)
+        raw_block = np.asarray(raw_block, dtype=np.float64)
         if y_max == y_min:
-            log_block = np.zeros(np.asarray(raw_block).shape, dtype=np.float64) + y_min
+            decoded = np.zeros(raw_block.shape, dtype=np.float64) + y_min
         else:
-            log_block = y_min + (y_max - y_min) * (
-                np.asarray(raw_block, dtype=np.float64) / float(np.iinfo(np.uint16).max)
-            )
-        return 10**log_block
-    raise Exception(
-        f"Do not recognize HDF5 opacity storage format: {storage_format}. "
-        "Supported formats are log10_uint16 and log10_float32."
-    )
-
-
-def _decode_hdf5_log_block(raw_block, storage_format, y_min=None, y_max=None):
-    storage_format = _decode_hdf5_string(storage_format)
-    if storage_format == 'log10_float32':
-        return np.asarray(raw_block, dtype=np.float64)
-    if storage_format == 'log10_uint16':
-        if y_min is None or y_max is None:
-            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
-        y_min = np.asarray(y_min)
-        y_max = np.asarray(y_max)
-        if y_min.shape != () or y_max.shape != ():
-            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
-        y_min = float(y_min)
-        y_max = float(y_max)
-        if y_max == y_min:
-            return np.zeros(np.asarray(raw_block).shape, dtype=np.float64) + y_min
-        return y_min + (y_max - y_min) * (
-            np.asarray(raw_block, dtype=np.float64) / float(np.iinfo(np.uint16).max)
-        )
+            decoded = y_min + (y_max - y_min) * (raw_block / float(np.iinfo(np.uint16).max))
+        return decoded if return_log else 10**decoded
     raise Exception(
         f"Do not recognize HDF5 opacity storage format: {storage_format}. "
         "Supported formats are log10_uint16 and log10_float32."
@@ -2648,33 +2624,18 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         self.close()
 
     def _get_storage_format(self, dataset, default_value):
-        raw = dataset.attrs.get("storage_format", default_value)
-        return _decode_hdf5_string(raw)
+        return dataset.attrs.get("storage_format", default_value)
 
-    def _decode_dataset_rows(self, dataset, row_indices, default_storage_format):
+    def _decode_dataset_rows(self, dataset, row_indices, default_storage_format, return_log=False):
         row_indices = np.asarray(row_indices, dtype=np.int64)
         raw_block = dataset[row_indices, self._dataset_wave_slice]
         storage_format = self._get_storage_format(dataset, default_storage_format)
-        if storage_format == 'log10_uint16':
-            decoded = _decode_hdf5_opacity_block(
-                raw_block,
-                storage_format,
-                y_min=dataset.attrs.get("y_min"),
-                y_max=dataset.attrs.get("y_max"),
-            )
-        else:
-            decoded = _decode_hdf5_opacity_block(raw_block, storage_format)
-        return np.asarray(decoded, dtype=np.float64)
-
-    def _decode_dataset_rows_log(self, dataset, row_indices, default_storage_format):
-        row_indices = np.asarray(row_indices, dtype=np.int64)
-        raw_block = dataset[row_indices, self._dataset_wave_slice]
-        storage_format = self._get_storage_format(dataset, default_storage_format)
-        decoded = _decode_hdf5_log_block(
+        decoded = _decode_hdf5_opacity_block(
             raw_block,
             storage_format,
             y_min=dataset.attrs.get("y_min"),
             y_max=dataset.attrs.get("y_max"),
+            return_log=return_log,
         )
         return np.asarray(decoded, dtype=np.float64)
 
@@ -2737,26 +2698,10 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         self.loaded_continuum = None
 
     def preload_opacities(self,molecules,p_range,t_range):
-        self.preload=True
-        ind_pt = np.array(self.pt_pairs)
-        ind_pt = ind_pt[np.where(((ind_pt[:,1] >p_range[0]) &
-                           (ind_pt[:,1] <p_range[1])))]
-        ind_pt = ind_pt[np.where(((ind_pt[:,2] >t_range[0]) &
-                           (ind_pt[:,2] <t_range[1])))][:,0]
-        row_indices = np.array(
-            [self._ptid_to_row[int(ptid)] for ptid in np.asarray(ind_pt, dtype=np.int64)],
-            dtype=np.int64,
+        raise NotImplementedError(
+            "HDF5 preload_opacities() is no longer supported. The backend now "
+            "loads dense row blocks directly on demand and does not use a preload cache."
         )
-        self.loaded_molecules = self._load_molecular_blocks(
-            row_indices,
-            molecules,
-            decode_log=(self.query_method == 'linear'),
-        )
-
-        continuum_rows = np.where(
-            ((self.cia_temps > t_range[0]) & (self.cia_temps < t_range[1]))
-        )[0]
-        self.loaded_continuum = self._load_continuum_blocks(continuum_rows, self.avail_continuum)
 
     def _prepare_output_buffers(self, molecules, cia_molecules, nlayer):
         continuum_keys = [key[0] + key[1] for key in cia_molecules]
@@ -2789,25 +2734,19 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         row_lookup[requested_rows] = np.arange(requested_rows.size, dtype=np.int64)
         return requested_rows, row_lookup
 
-    def _load_molecular_blocks(self, row_indices, molecules, decode_log=False):
+    def _load_molecular_blocks(self, row_indices, molecules, return_log=False):
         requested_rows, row_lookup = self._build_row_lookup(row_indices, self._pt_ids.size)
         dense_blocks = {}
         for molecule in molecules:
             if molecule not in self._molecular_group:
                 raise Exception(f"Molecule {molecule} not found in HDF5 opacity file")
             dataset = self._molecular_group[molecule]
-            if decode_log:
-                dense_blocks[molecule] = self._decode_dataset_rows_log(
-                    dataset,
-                    requested_rows,
-                    self._default_molecular_storage_format,
-                )
-            else:
-                dense_blocks[molecule] = self._decode_dataset_rows(
-                    dataset,
-                    requested_rows,
-                    self._default_molecular_storage_format,
-                )
+            dense_blocks[molecule] = self._decode_dataset_rows(
+                dataset,
+                requested_rows,
+                self._default_molecular_storage_format,
+                return_log=return_log,
+            )
         return dense_blocks, row_lookup
 
     def _load_continuum_blocks(self, row_indices, continuum_species):
@@ -2822,30 +2761,6 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
                 self._default_continuum_storage_format,
             )
         return dense_blocks, row_lookup
-
-    def _dense_cache_covers(self, loaded, names, row_indices):
-        if loaded is None:
-            return False
-        dense_blocks, row_lookup = loaded
-        for name in names:
-            if name not in dense_blocks:
-                return False
-        row_indices = np.asarray(row_indices, dtype=np.int64)
-        if row_indices.size == 0:
-            return True
-        if row_lookup.shape[0] <= int(np.max(row_indices)):
-            return False
-        return np.all(row_lookup[row_indices] >= 0)
-
-    def _get_molecular_blocks(self, row_indices, molecules, decode_log=False):
-        if self.preload and self._dense_cache_covers(self.loaded_molecules, molecules, row_indices):
-            return self.loaded_molecules
-        return self._load_molecular_blocks(row_indices, molecules, decode_log=decode_log)
-
-    def _get_continuum_blocks(self, row_indices, continuum_species):
-        if self.preload and self._dense_cache_covers(self.loaded_continuum, continuum_species, row_indices):
-            return self.loaded_continuum
-        return self._load_continuum_blocks(row_indices, continuum_species)
 
     def _prepare_linear_pt_state(self, tlayer, player):
         return _find_needed_pts_hdf5(
@@ -2875,7 +2790,7 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         )
         atmosphere.layer['pt_opa_index'] = (1 + required_rows).tolist()
 
-        dense_blocks, row_lookup = self._get_molecular_blocks(required_rows, molecules, decode_log=True)
+        dense_blocks, row_lookup = self._load_molecular_blocks(required_rows, molecules, return_log=True)
 
         local_low_low = row_lookup[row_low_low]
         local_hi_low = row_lookup[row_hi_low]
@@ -2904,7 +2819,7 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
             np.asarray(tlayer, dtype=np.float64),
             np.asarray(self.cia_temps, dtype=np.float64),
         )
-        dense_continuum, continuum_lookup = self._get_continuum_blocks(continuum_rows, continuum_species)
+        dense_continuum, continuum_lookup = self._load_continuum_blocks(continuum_rows, continuum_species)
         continuum_local_rows = continuum_lookup[continuum_rows]
         for molecule in continuum_species:
             _fill_hdf5_nearest_block(
@@ -2933,7 +2848,7 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         )
         atmosphere.layer['pt_opa_index'] = nearest_ptids.tolist()
 
-        dense_blocks, row_lookup = self._get_molecular_blocks(nearest_rows, molecules, decode_log=False)
+        dense_blocks, row_lookup = self._load_molecular_blocks(nearest_rows, molecules, return_log=False)
         local_rows = row_lookup[nearest_rows]
 
         for molecule in molecules:
@@ -2950,7 +2865,7 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
             np.asarray(tlayer, dtype=np.float64),
             np.asarray(self.cia_temps, dtype=np.float64),
         )
-        dense_continuum, continuum_lookup = self._get_continuum_blocks(continuum_rows, continuum_species)
+        dense_continuum, continuum_lookup = self._load_continuum_blocks(continuum_rows, continuum_species)
         continuum_local_rows = continuum_lookup[continuum_rows]
 
         for molecule in continuum_species:
