@@ -40,7 +40,7 @@ __global__ void calculate_e_matrix(double *exptrm_positive_dev, double *exptrm_m
 
 
 __global__ void setup_tri_diag_1st(int nlayer,int nwno,  double *c_plus_up_dev, double *c_minus_up_dev,double *c_plus_down_dev, double *c_minus_down_dev,
-                                  double *b_top, double *b_surface_dev, double *surf_reflect_dev,
+                                  double *b_top, double *b_surface_dev, double* atm_surf_reflect_dev,
                                  double *gama_dev, double *dtau_dev,  double *e1_dev,  double *e2_dev,double *e3_dev,  double *e4_dev,
                                   double *A_odd_dev, double *B_odd_dev, double *C_odd_dev, double *D_odd_dev){
 
@@ -62,7 +62,7 @@ __global__ void setup_tri_diag_1st(int nlayer,int nwno,  double *c_plus_up_dev, 
 }
 
 __global__ void setup_tri_diag_last(int nlayer,int nwno,  double *c_plus_up_dev, double *c_minus_up_dev,double *c_plus_down_dev, double *c_minus_down_dev,
-                                  double *b_top, double *b_surface_dev, double *surf_reflect_dev,
+                                  double *b_top, double *b_surface_dev, double* atm_surf_reflect_dev,
                                  double *gama_dev, double *dtau_dev,  double *e1_dev,  double *e2_dev,double *e3_dev,  double *e4_dev,
                                   double *A_odd_dev, double *B_odd_dev, double *C_odd_dev, double *D_odd_dev){
 
@@ -74,10 +74,10 @@ __global__ void setup_tri_diag_last(int nlayer,int nwno,  double *c_plus_up_dev,
 
    if ( (index > (nlayer-1)*nwno) && (index < nlayer*nwno) ){
 
-     A_odd_dev[index+nlayer*nwno] = e1_dev[index]-surf_reflect_dev[index -(nlayer-1)*nwno ]*e3_dev[index];
-     B_odd_dev[index+nlayer*nwno] = e2_dev[index]-surf_reflect_dev[index -(nlayer-1)*nwno ]*e4_dev[index];
+     A_odd_dev[index+nlayer*nwno] = e1_dev[index]-atm_surf_reflect_dev[index]*e3_dev[index];
+     B_odd_dev[index+nlayer*nwno] = e2_dev[index]-atm_surf_reflect_dev[index]*e4_dev[index];
      C_odd_dev[index+nlayer*nwno] = 0.0;
-     D_odd_dev[index+nlayer*nwno] = b_surface_dev[index -(nlayer-1)*nwno ]-c_plus_down_dev[index] + surf_reflect_dev[index -(nlayer-1)*nwno ]*c_minus_down_dev[index];
+     D_odd_dev[index+nlayer*nwno] = b_surface_dev[index -(nlayer-1)*nwno ]-c_plus_down_dev[index] + atm_surf_reflect_dev[index]*c_minus_down_dev[index];
 
    }
 
@@ -87,7 +87,7 @@ __global__ void setup_tri_diag_last(int nlayer,int nwno,  double *c_plus_up_dev,
 
 
 __global__ void setup_tri_diag_all(int nlayer,int nwno,  double *c_plus_up_dev, double *c_minus_up_dev,double *c_plus_down_dev, double *c_minus_down_dev,
-                                  double *b_top, double *b_surface_dev, double *surf_reflect_dev,
+                                  double *b_top, double *b_surface_dev, double* atm_surf_reflect_dev,
                                  double *gama_dev, double *dtau_dev,  double *e1_dev,  double *e2_dev,double *e3_dev,  double *e4_dev,
                                   double *A_odd_dev, double *B_odd_dev, double *C_odd_dev, double *D_odd_dev){
 
@@ -189,7 +189,6 @@ __global__ void initialize_parameters(
     double * __restrict__ tau_top_dev,
     double * __restrict__ b_top_dev,
     double * __restrict__ b_surface_dev,
-    double * __restrict__ surf_reflect_dev, //neb-q does this need a __restrict? 
     double mu1,
     double hard_surface,
     int nlevel,
@@ -281,7 +280,7 @@ __global__ void initialize_parameters(
 
         double b_surf;
         if (hard_surface == 1.0) {
-            b_surf = (1.0 - surf_reflect_dev[idx]) * all_b_dev[idx_allb] * pi;
+            b_surf = all_b_dev[idx_b] * pi;
         } else {
             b_surf = (all_b_dev[idx_allb] + b1_dev[idx_b] * mu1) * pi;
         }
@@ -300,13 +299,13 @@ __global__ void initialize_and_solve_tridiagonal(
     const double * __restrict__ B_odd_dev,
     const double * __restrict__ C_odd_dev,
     const double * __restrict__ D_odd_dev,
-    int nlayer,      // this should be (nlevel-1) as you pass it now
+    int nlayer,
     int nwno)
 {
     int wn = blockIdx.x * blockDim.x + threadIdx.x;
     if (wn >= nwno) return;
 
-    // NOTE: this matches your original "2*(nlayer-1)" behavior
+
     int total_layers = 2 * (nlayer - 1);
     int stride = nwno;
 
@@ -439,7 +438,7 @@ __global__ void calculate_matrices_and_exponents(
 
 
 
-__global__ void fill_flux_plus_minus(double *all_b_dev, double *b1_dev, double *tau_top_dev, double *surf_reflect_dev, double ubar1,double *flux_plus_dev, double hard_surface,
+__global__ void fill_flux_plus_minus(double *all_b_dev, double *b1_dev, double *tau_top_dev, double ubar1,double *flux_plus_dev, double hard_surface,
                                     int nlevel, int nwno){
 
   int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -451,7 +450,7 @@ __global__ void fill_flux_plus_minus(double *all_b_dev, double *b1_dev, double *
 
   if ( (index >= 0) && (index < nwno) ){
     if (hard_surface == 1.0){
-      flux_plus_dev[index_allb] = (1.0 - surf_reflect_dev[index]) * all_b_dev[index_allb]*2*pi;
+      flux_plus_dev[index_allb] = all_b_dev[index_allb]*2*pi;
 
     }else{
       flux_plus_dev[index_allb] = (all_b_dev[index_allb] + b1_dev[index_out]*ubar1)*2*pi;
@@ -600,7 +599,7 @@ struct ThermalContext {
     int    ng     = 0;
     int    nt     = 0;
 
-    // Device arrays (mirror what you had in get_thermal_1d)
+
     double *wno_dev = nullptr;
     double *wno0_dev = nullptr;
     double *dtau_og_dev = nullptr;
@@ -702,8 +701,7 @@ extern "C" void get_thermal_1d_set_inputs(
     ctx.cosb_og_dev    = (double*)cosb_og;
     ctx.lvl_P_dev      = (double*)lvl_P;
     ctx.lvl_T_dev      = (double*)lvl_T;
-    ctx.surf_reflect_dev = (double*)surf_reflect;
-
+    ctx.surf_reflect_dev      = (double*)surf_reflect;
 }
 
 
@@ -802,6 +800,7 @@ extern "C" void get_thermal_1d_allocate_buffers(
 
 extern "C" void get_thermal_1d_run(
     const double *ubar1,
+    // double surf_reflect,
     double hard_surface,
     int    calc_type,
     double *test_out
@@ -852,7 +851,7 @@ extern "C" void get_thermal_1d_run(
         ctx.c_plus_down_dev, ctx.c_minus_down_dev,
         ctx.lvl_T_dev, ctx.lvl_P_dev,
         ctx.exptrm_dev, ctx.exptrm_positive_dev, ctx.exptrm_minus_dev,
-        ctx.tau_top_dev, ctx.b_top_dev, ctx.b_surface_dev,ctx.surf_reflect_dev,//neb-q shoudl this be ??  (double*)surf_reflect
+        ctx.tau_top_dev, ctx.b_top_dev, ctx.b_surface_dev,
         mu1, hard_surface, nlevel, nwno
     );
 
@@ -934,7 +933,7 @@ extern "C" void get_thermal_1d_run(
         // boundary fluxes
         fill_flux_plus_minus<<<grid_wn, blockSize>>>(
             ctx.all_b_dev, ctx.b1_dev,
-            ctx.tau_top_dev, ctx.surf_reflect_dev, ubar1_i,
+            ctx.tau_top_dev, ubar1_i,
             ctx.flux_plus_dev,
             hard_surface, nlevel, nwno
         );
@@ -992,7 +991,6 @@ extern "C" void get_thermal_1d_free()
     FREE(ctx.c_plus_down_dev);
     FREE(ctx.c_minus_down_dev);
     FREE(ctx.b_surface_dev);
-    FREE(ctx.surf_reflect_dev);
     FREE(ctx.exptrm_positive_dev);
     FREE(ctx.exptrm_minus_dev);
     FREE(ctx.exptrm_dev);
