@@ -296,10 +296,11 @@ def test_setup_tri_diag_matches_inplace():
         exptrm_minus.copy(),
     )
 
-    A = np.zeros((nwno, 2 * nlayer))
-    B = np.zeros((nwno, 2 * nlayer))
-    C = np.zeros((nwno, 2 * nlayer))
-    D = np.zeros((nwno, 2 * nlayer))
+    w = 2
+    A = np.zeros(2 * nlayer)
+    B = np.zeros(2 * nlayer)
+    C = np.zeros(2 * nlayer)
+    D = np.zeros(2 * nlayer)
 
     result = setup_tri_diag_inplace(
         A,
@@ -307,25 +308,23 @@ def test_setup_tri_diag_matches_inplace():
         C,
         D,
         nlayer,
-        nwno,
-        c_plus_up.copy(),
-        c_minus_up.copy(),
-        c_plus_down.copy(),
-        c_minus_down.copy(),
+        c_plus_up[:, w].copy(),
+        c_minus_up[:, w].copy(),
+        c_plus_down[:, w].copy(),
+        c_minus_down[:, w].copy(),
         b_top,
-        b_surface.copy(),
-        surf_reflect,
-        gama.copy(),
-        dtau.copy(),
-        exptrm_positive.copy(),
-        exptrm_minus.copy(),
+        b_surface[w],
+        surf_reflect[w],
+        gama[:, w].copy(),
+        exptrm_positive[:, w].copy(),
+        exptrm_minus[:, w].copy(),
     )
 
     assert result is None
-    np.testing.assert_allclose(A, expected[0].T)
-    np.testing.assert_allclose(B, expected[1].T)
-    np.testing.assert_allclose(C, expected[2].T)
-    np.testing.assert_allclose(D, expected[3].T)
+    np.testing.assert_allclose(A, expected[0][:, w])
+    np.testing.assert_allclose(B, expected[1][:, w])
+    np.testing.assert_allclose(C, expected[2][:, w])
+    np.testing.assert_allclose(D, expected[3][:, w])
 
 
 @pytest.mark.parametrize(

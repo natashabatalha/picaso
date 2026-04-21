@@ -88,58 +88,56 @@ def numba_cumsum(mat):
     return new_mat
 
 @jit(nopython=True, cache=True)
-def setup_tri_diag_inplace(A, B, C, D, nlayer, nwno, c_plus_up, c_minus_up,
+def setup_tri_diag_inplace(A, B, C, D, nlayer, c_plus_up, c_minus_up,
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
-    gama, dtau, exptrm_positive, exptrm_minus):
+    gama, exptrm_positive, exptrm_minus):
     """
     Build the tridiagonal coefficients in place with no temporary allocations.
 
     Parameters
     ----------
     A, B, C, D : array
-        Preallocated output arrays with shape ``(nwno, 2 * nlayer)``.
+        Preallocated output arrays with shape ``(2 * nlayer,)``.
     Other parameters match :func:`setup_tri_diag`.
     """
-    for w in range(nwno):
-        A[w, 0] = 0.0
-        B[w, 0] = gama[0, w] + 1.0
-        C[w, 0] = gama[0, w] - 1.0
-        D[w, 0] = b_top - c_minus_up[0, w]
+    A[0] = 0.0
+    B[0] = gama[0] + 1.0
+    C[0] = gama[0] - 1.0
+    D[0] = b_top - c_minus_up[0]
 
-        for k in range(nlayer - 1):
-            e1 = exptrm_positive[k, w] + gama[k, w] * exptrm_minus[k, w]
-            e2 = exptrm_positive[k, w] - gama[k, w] * exptrm_minus[k, w]
-            e3 = gama[k, w] * exptrm_positive[k, w] + exptrm_minus[k, w]
-            e4 = gama[k, w] * exptrm_positive[k, w] - exptrm_minus[k, w]
+    for k in range(nlayer - 1):
+        e1 = exptrm_positive[k] + gama[k] * exptrm_minus[k]
+        e2 = exptrm_positive[k] - gama[k] * exptrm_minus[k]
+        e3 = gama[k] * exptrm_positive[k] + exptrm_minus[k]
+        e4 = gama[k] * exptrm_positive[k] - exptrm_minus[k]
 
-            g = gama[k + 1, w]
-            cp_up = c_plus_up[k + 1, w]
-            cp_down = c_plus_down[k, w]
-            cm_up = c_minus_up[k + 1, w]
-            cm_down = c_minus_down[k, w]
+        g = gama[k + 1]
+        cp_up = c_plus_up[k + 1]
+        cp_down = c_plus_down[k]
+        cm_up = c_minus_up[k + 1]
+        cm_down = c_minus_down[k]
 
-            row = 2 * k + 1
-            A[w, row] = (e1 + e3) * (g - 1.0)
-            B[w, row] = (e2 + e4) * (g - 1.0)
-            C[w, row] = 2.0 * (1.0 - g * g)
-            D[w, row] = (g - 1.0) * (cp_up - cp_down) + (1.0 - g) * (cm_down - cm_up)
+        row = 2 * k + 1
+        A[row] = (e1 + e3) * (g - 1.0)
+        B[row] = (e2 + e4) * (g - 1.0)
+        C[row] = 2.0 * (1.0 - g * g)
+        D[row] = (g - 1.0) * (cp_up - cp_down) + (1.0 - g) * (cm_down - cm_up)
 
-            row = 2 * k + 2
-            A[w, row] = 2.0 * (1.0 - gama[k, w] * gama[k, w])
-            B[w, row] = (e1 - e3) * (g + 1.0)
-            C[w, row] = (e1 + e3) * (g - 1.0)
-            D[w, row] = e3 * (cp_up - cp_down) + e1 * (cm_down - cm_up)
+        row = 2 * k + 2
+        A[row] = 2.0 * (1.0 - gama[k] * gama[k])
+        B[row] = (e1 - e3) * (g + 1.0)
+        C[row] = (e1 + e3) * (g - 1.0)
+        D[row] = e3 * (cp_up - cp_down) + e1 * (cm_down - cm_up)
 
-        e1 = exptrm_positive[nlayer - 1, w] + gama[nlayer - 1, w] * exptrm_minus[nlayer - 1, w]
-        e2 = exptrm_positive[nlayer - 1, w] - gama[nlayer - 1, w] * exptrm_minus[nlayer - 1, w]
-        e3 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] + exptrm_minus[nlayer - 1, w]
-        e4 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] - exptrm_minus[nlayer - 1, w]
+    e1 = exptrm_positive[nlayer - 1] + gama[nlayer - 1] * exptrm_minus[nlayer - 1]
+    e2 = exptrm_positive[nlayer - 1] - gama[nlayer - 1] * exptrm_minus[nlayer - 1]
+    e3 = gama[nlayer - 1] * exptrm_positive[nlayer - 1] + exptrm_minus[nlayer - 1]
+    e4 = gama[nlayer - 1] * exptrm_positive[nlayer - 1] - exptrm_minus[nlayer - 1]
 
-        surf_reflect_w = surf_reflect[w]
-        A[w, 2 * nlayer - 1] = e1 - surf_reflect_w * e3
-        B[w, 2 * nlayer - 1] = e2 - surf_reflect_w * e4
-        C[w, 2 * nlayer - 1] = 0.0
-        D[w, 2 * nlayer - 1] = b_surface[w] - c_plus_down[nlayer - 1, w] + surf_reflect_w * c_minus_down[nlayer - 1, w]
+    A[2 * nlayer - 1] = e1 - surf_reflect * e3
+    B[2 * nlayer - 1] = e2 - surf_reflect * e4
+    C[2 * nlayer - 1] = 0.0
+    D[2 * nlayer - 1] = b_surface - c_plus_down[nlayer - 1] + surf_reflect * c_minus_down[nlayer - 1]
 
     return
 
@@ -1108,33 +1106,32 @@ class GetReflectedWorkspace:
     numt : types.int64
     get_lvl_flux : types.int64
     get_toa_intensity : types.int64
-    g1 : types.double[:, :]
-    g2 : types.double[:, :]
-    lamda : types.double[:, :]
-    gama : types.double[:, :]
-    g3 : types.double[:, :]
-    a_minus : types.double[:, :]
-    a_plus : types.double[:, :]
-    c_minus_up : types.double[:, :]
-    c_plus_up : types.double[:, :]
-    c_minus_down : types.double[:, :]
-    c_plus_down : types.double[:, :]
-    exptrm : types.double[:, :]
-    exptrm_positive : types.double[:, :]
-    exptrm_minus : types.double[:, :]
-    p_single : types.double[:, :]
-    A : types.double[:, :]
-    B : types.double[:, :]
-    C : types.double[:, :]
-    D : types.double[:, :]
-    positive : types.double[:, :]
-    negative : types.double[:, :]
-    b_surface : types.double[:]
+    g1 : types.double[:]
+    g2 : types.double[:]
+    lamda : types.double[:]
+    gama : types.double[:]
+    g3 : types.double[:]
+    a_minus : types.double[:]
+    a_plus : types.double[:]
+    c_minus_up : types.double[:]
+    c_plus_up : types.double[:]
+    c_minus_down : types.double[:]
+    c_plus_down : types.double[:]
+    exptrm : types.double[:]
+    exptrm_positive : types.double[:]
+    exptrm_minus : types.double[:]
+    p_single : types.double[:]
+    A : types.double[:]
+    B : types.double[:]
+    C : types.double[:]
+    D : types.double[:]
+    positive : types.double[:]
+    negative : types.double[:]
     flux_minus_all : types.double[:, :, :, :]
     flux_plus_all : types.double[:, :, :, :]
     flux_minus_midpt_all : types.double[:, :, :, :]
     flux_plus_midpt_all : types.double[:, :, :, :]
-    xint : types.double[:, :]
+    xint : types.double[:]
     xint_at_top : types.double[:, :, :]
 
     def __init__(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
@@ -1144,28 +1141,27 @@ class GetReflectedWorkspace:
         self.numt = numt
         self.get_lvl_flux = get_lvl_flux
         self.get_toa_intensity = get_toa_intensity
-        self.g1 = np.empty((nlayer, nwno), dtype=np.float64)
-        self.g2 = np.empty((nlayer, nwno), dtype=np.float64)
-        self.lamda = np.empty((nlayer, nwno), dtype=np.float64)
-        self.gama = np.empty((nlayer, nwno), dtype=np.float64)
-        self.g3 = np.empty((nlayer, nwno), dtype=np.float64)
-        self.a_minus = np.empty((nlayer, nwno), dtype=np.float64)
-        self.a_plus = np.empty((nlayer, nwno), dtype=np.float64)
-        self.c_minus_up = np.empty((nlayer, nwno), dtype=np.float64)
-        self.c_plus_up = np.empty((nlayer, nwno), dtype=np.float64)
-        self.c_minus_down = np.empty((nlayer, nwno), dtype=np.float64)
-        self.c_plus_down = np.empty((nlayer, nwno), dtype=np.float64)
-        self.exptrm = np.empty((nlayer, nwno), dtype=np.float64)
-        self.exptrm_positive = np.empty((nlayer, nwno), dtype=np.float64)
-        self.exptrm_minus = np.empty((nlayer, nwno), dtype=np.float64)
-        self.p_single = np.empty((nlayer, nwno), dtype=np.float64)
-        self.A = np.empty((nwno, 2 * nlayer), dtype=np.float64)
-        self.B = np.empty((nwno, 2 * nlayer), dtype=np.float64)
-        self.C = np.empty((nwno, 2 * nlayer), dtype=np.float64)
-        self.D = np.empty((nwno, 2 * nlayer), dtype=np.float64)
-        self.positive = np.empty((nwno, nlayer), dtype=np.float64)
-        self.negative = np.empty((nwno, nlayer), dtype=np.float64)
-        self.b_surface = np.empty((nwno), dtype=np.float64)
+        self.g1 = np.empty(nlayer, dtype=np.float64)
+        self.g2 = np.empty(nlayer, dtype=np.float64)
+        self.lamda = np.empty(nlayer, dtype=np.float64)
+        self.gama = np.empty(nlayer, dtype=np.float64)
+        self.g3 = np.empty(nlayer, dtype=np.float64)
+        self.a_minus = np.empty(nlayer, dtype=np.float64)
+        self.a_plus = np.empty(nlayer, dtype=np.float64)
+        self.c_minus_up = np.empty(nlayer, dtype=np.float64)
+        self.c_plus_up = np.empty(nlayer, dtype=np.float64)
+        self.c_minus_down = np.empty(nlayer, dtype=np.float64)
+        self.c_plus_down = np.empty(nlayer, dtype=np.float64)
+        self.exptrm = np.empty(nlayer, dtype=np.float64)
+        self.exptrm_positive = np.empty(nlayer, dtype=np.float64)
+        self.exptrm_minus = np.empty(nlayer, dtype=np.float64)
+        self.p_single = np.empty(nlayer, dtype=np.float64)
+        self.A = np.empty(2 * nlayer, dtype=np.float64)
+        self.B = np.empty(2 * nlayer, dtype=np.float64)
+        self.C = np.empty(2 * nlayer, dtype=np.float64)
+        self.D = np.empty(2 * nlayer, dtype=np.float64)
+        self.positive = np.empty(nlayer, dtype=np.float64)
+        self.negative = np.empty(nlayer, dtype=np.float64)
         if get_lvl_flux:
             self.flux_minus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
             self.flux_plus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
@@ -1177,10 +1173,10 @@ class GetReflectedWorkspace:
             self.flux_minus_midpt_all = np.empty((0,0,0,0), dtype=np.float64)
             self.flux_plus_midpt_all = np.empty((0,0,0,0), dtype=np.float64)
         if get_toa_intensity:
-            self.xint = np.empty((nlayer + 1, nwno), dtype=np.float64)
+            self.xint = np.empty(nlayer + 1, dtype=np.float64)
             self.xint_at_top = np.empty((numg, numt, nwno), dtype=np.float64)
         else:
-            self.xint = np.empty((0,0), dtype=np.float64)
+            self.xint = np.empty(0, dtype=np.float64)
             self.xint_at_top = np.empty((0,0,0), dtype=np.float64)
 
     def needs_reallocation(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
@@ -1197,272 +1193,262 @@ class GetReflectedWorkspace:
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d_inplace(
-    nlevel, 
+    nlevel,
     wno,
-    nwno, 
+    nwno,
     numg,
-    numt, 
-    dtau, 
-    tau, 
-    w0, 
+    numt,
+    dtau,
+    tau,
+    w0,
     cosb,
-    gcos2, 
-    ftau_cld, 
+    gcos2,
+    ftau_cld,
     ftau_ray,
-    dtau_og, 
-    tau_og, 
-    w0_og, 
-    cosb_og, 
+    dtau_og,
+    tau_og,
+    w0_og,
+    cosb_og,
     surf_reflect,
-    ubar0, 
+    ubar0,
     ubar1,
-    cos_theta, 
+    cos_theta,
     F0PI,
-    single_phase, 
+    single_phase,
     multi_phase,
-    frac_a, 
-    frac_b, 
-    frac_c, 
-    constant_back, 
-    constant_forward, 
+    frac_a,
+    frac_b,
+    frac_c,
+    constant_back,
+    constant_forward,
     get_toa_intensity,
     get_lvl_flux,
     toon_coefficients,
     b_top,
-    wrk
+    wrk,
 ):
-    
-    nlayer = nlevel - 1 
-
-    # terms not dependent on incident angle
+    nlayer = nlevel - 1
     sq3 = sqrt(3.0)
+
     g1 = wrk.g1
     g2 = wrk.g2
     lamda = wrk.lamda
     gama = wrk.gama
-    if toon_coefficients == 1: # eddington
-        for i in range(nlayer):
-            for j in range(nwno):
-                w0ij = w0[i, j]
-                ftij = ftau_cld[i, j]
-                cbij = cosb[i, j]
-                g1[i, j] = (7.0 - w0ij * (4.0 + 3.0 * ftij * cbij)) / 4.0
-                g2[i, j] = -(1.0 - w0ij * (4.0 - 3.0 * ftij * cbij)) / 4.0
-    elif toon_coefficients == 0: # quadrature
-        for i in range(nlayer):
-            for j in range(nwno):
-                w0ij = w0[i, j]
-                ftij = ftau_cld[i, j]
-                cbij = cosb[i, j]
-                g1[i, j] = (sq3 * 0.5) * (2.0 - w0ij * (1.0 + ftij * cbij))
-                g2[i, j] = (sq3 * w0ij * 0.5) * (1.0 - ftij * cbij)
+    g3 = wrk.g3
+    a_minus = wrk.a_minus
+    a_plus = wrk.a_plus
+    c_minus_up = wrk.c_minus_up
+    c_plus_up = wrk.c_plus_up
+    c_minus_down = wrk.c_minus_down
+    c_plus_down = wrk.c_plus_down
+    exptrm = wrk.exptrm
+    exptrm_positive = wrk.exptrm_positive
+    exptrm_minus = wrk.exptrm_minus
+    p_single = wrk.p_single
+    A = wrk.A
+    B = wrk.B
+    C = wrk.C
+    D = wrk.D
+    positive = wrk.positive
+    negative = wrk.negative
 
-    for i in range(nlayer):
-        for j in range(nwno):
-            lamda_ij = sqrt(g1[i, j] * g1[i, j] - g2[i, j] * g2[i, j])
-            lamda[i, j] = lamda_ij
-            gama[i, j] = (g1[i, j] - lamda_ij) / g2[i, j] # eqn 22
+    for w in range(nwno):
+        f0pi_w = F0PI[w]
+        surf_reflect_w = surf_reflect[w]
 
-    if get_toa_intensity:
+        if toon_coefficients == 1:
+            for i in range(nlayer):
+                w0_iw = w0[i, w]
+                ft_iw = ftau_cld[i, w]
+                cb_iw = cosb[i, w]
+                g1[i] = (7.0 - w0_iw * (4.0 + 3.0 * ft_iw * cb_iw)) / 4.0
+                g2[i] = -(1.0 - w0_iw * (4.0 - 3.0 * ft_iw * cb_iw)) / 4.0
+        elif toon_coefficients == 0:
+            for i in range(nlayer):
+                w0_iw = w0[i, w]
+                ft_iw = ftau_cld[i, w]
+                cb_iw = cosb[i, w]
+                g1[i] = (sq3 * 0.5) * (2.0 - w0_iw * (1.0 + ft_iw * cb_iw))
+                g2[i] = (sq3 * w0_iw * 0.5) * (1.0 - ft_iw * cb_iw)
+
         for i in range(nlayer):
-            for j in range(nwno):
+            lamda_i = sqrt(g1[i] * g1[i] - g2[i] * g2[i])
+            lamda[i] = lamda_i
+            gama[i] = (g1[i] - lamda_i) / g2[i]
+
+        if get_toa_intensity:
+            for i in range(nlayer):
+                g_forward = 0.0
+                g_back = 0.0
+                f = 0.0
                 if single_phase != 1:
-                    g_forward = constant_forward * cosb_og[i, j]
-                    g_back = constant_back * cosb_og[i, j]
+                    g_forward = constant_forward * cosb_og[i, w]
+                    g_back = constant_back * cosb_og[i, w]
                     f = frac_a + frac_b * g_back ** frac_c
 
                 if single_phase == 0:
                     HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
                     HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
-                    wrk.p_single[i, j] = f * HG_forward + (1.0 - f) * HG_backward + gcos2[i, j]
+                    p_single[i] = f * HG_forward + (1.0 - f) * HG_backward + gcos2[i, w]
                 elif single_phase == 1:
-                    wrk.p_single[i, j] = (1.0 - cosb_og[i, j] * cosb_og[i, j]) / sqrt((1.0 + cosb_og[i, j] * cosb_og[i, j] + 2.0 * cosb_og[i, j] * cos_theta) ** 3)
+                    cb = cosb_og[i, w]
+                    p_single[i] = (1.0 - cb * cb) / sqrt((1.0 + cb * cb + 2.0 * cb * cos_theta) ** 3)
                 elif single_phase == 2:
                     HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
                     HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
-                    wrk.p_single[i, j] = f * HG_forward + (1.0 - f) * HG_backward
+                    p_single[i] = f * HG_forward + (1.0 - f) * HG_backward
                 elif single_phase == 3:
                     HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
                     HG_back = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
-                    wrk.p_single[i, j] = ftau_cld[i, j] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, j] * (0.75 * (1.0 + cos_theta * cos_theta))
+                    p_single[i] = ftau_cld[i, w] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, w] * (0.75 * (1.0 + cos_theta * cos_theta))
 
-    #================ START CRAZE LOOP OVER ANGLE #================
-    for ng in range(numg):
-        for nt in range(numt):
-            u1 = ubar1[ng,nt]
-            u0 = ubar0[ng,nt]
-            inv_u0 = 1.0 / u0
-            inv_u0_sq = inv_u0 * inv_u0
-            inv_u1 = 1.0 / u1
-            sum_u = u0 + u1
-            inv_sum_u = 1.0 / sum_u
-            inv_u0u1 = inv_u0 * inv_u1
-            g3 = wrk.g3
-            if toon_coefficients == 1: # eddington
+        for ng in range(numg):
+            for nt in range(numt):
+                u1 = ubar1[ng, nt]
+                u0 = ubar0[ng, nt]
+                inv_u0 = 1.0 / u0
+                inv_u0_sq = inv_u0 * inv_u0
+                inv_u1 = 1.0 / u1
+                sum_u = u0 + u1
+                inv_sum_u = 1.0 / sum_u
+                inv_u0u1 = inv_u0 * inv_u1
+
+                if toon_coefficients == 1:
+                    for i in range(nlayer):
+                        g3[i] = (2.0 - 3.0 * ftau_cld[i, w] * cosb[i, w] * u0) / 4.0
+                elif toon_coefficients == 0:
+                    for i in range(nlayer):
+                        g3[i] = 0.5 * (1.0 - sq3 * ftau_cld[i, w] * cosb[i, w] * u0)
+
                 for i in range(nlayer):
-                    for j in range(nwno):
-                        g3[i,j] = (2.0 - 3.0 * ftau_cld[i,j] * cosb[i,j] * u0) / 4.0
-            elif toon_coefficients == 0: # quadrature
-                for i in range(nlayer):
-                    for j in range(nwno):
-                        g3[i,j] = 0.5 * (1.0 - sq3 * ftau_cld[i,j] * cosb[i,j] * u0)
-    
-            # now calculate c_plus and c_minus (equation 23 and 24 toon)
-            for i in range(nlayer):
-                for j in range(nwno):
-                    g4 = 1.0 - g3[i,j]
-                    denom = lamda[i,j] * lamda[i,j] - inv_u0_sq
-                    w0ij = w0[i,j]
-                    f0pi_j = F0PI[j]
+                    g4 = 1.0 - g3[i]
+                    denom = lamda[i] * lamda[i] - inv_u0_sq
+                    w0_iw = w0[i, w]
+                    a_minus[i] = f0pi_w * w0_iw * (g4 * (g1[i] + inv_u0) + g2[i] * g3[i]) / denom
+                    a_plus[i] = f0pi_w * w0_iw * (g3[i] * (g1[i] - inv_u0) + g2[i] * g4) / denom
 
-                    wrk.a_minus[i,j] = f0pi_j * w0ij * (g4 * (g1[i,j] + inv_u0) + g2[i,j] * g3[i,j]) / denom
-                    wrk.a_plus[i,j] = f0pi_j * w0ij * (g3[i,j] * (g1[i,j] - inv_u0) + g2[i,j] * g4) / denom
+                    exp_up = exp(-tau[i, w] / u0)
+                    exp_down = exp(-tau[i + 1, w] / u0)
+                    c_minus_up[i] = a_minus[i] * exp_up
+                    c_plus_up[i] = a_plus[i] * exp_up
+                    c_minus_down[i] = a_minus[i] * exp_down
+                    c_plus_down[i] = a_plus[i] * exp_down
 
-                    tau_up = tau[i,j]
-                    tau_down = tau[i + 1, j]
-                    exp_up = exp(-tau_up / u0)
-                    exp_down = exp(-tau_down / u0)
-                    wrk.c_minus_up[i,j] = wrk.a_minus[i,j] * exp_up
-                    wrk.c_plus_up[i,j] = wrk.a_plus[i,j] * exp_up
-                    wrk.c_minus_down[i,j] = wrk.a_minus[i,j] * exp_down
-                    wrk.c_plus_down[i,j] = wrk.a_plus[i,j] * exp_down
-
-                    exptrm_val = lamda[i,j] * dtau[i,j]
+                    exptrm_val = lamda[i] * dtau[i, w]
                     if exptrm_val > 35.0:
                         exptrm_val = 35.0
-                    wrk.exptrm[i,j] = exptrm_val
-                    wrk.exptrm_positive[i,j] = exp(exptrm_val)
-                    wrk.exptrm_minus[i,j] = 1.0 / wrk.exptrm_positive[i,j]
+                    exptrm[i] = exptrm_val
+                    exptrm_positive[i] = exp(exptrm_val)
+                    exptrm_minus[i] = 1.0 / exptrm_positive[i]
 
-            # boundary conditions
-            for j in range(nwno):
-                f0pi_j = F0PI[j]
-                u0_scale = u0 * f0pi_j
-                wrk.b_surface[j] = surf_reflect[j] * u0_scale * exp(-tau[nlevel - 1, j] * inv_u0)
+                b_surface = surf_reflect_w * u0 * f0pi_w * exp(-tau[nlevel - 1, w] * inv_u0)
+                setup_tri_diag_inplace(
+                    A,
+                    B,
+                    C,
+                    D,
+                    nlayer,
+                    c_plus_up,
+                    c_minus_up,
+                    c_plus_down,
+                    c_minus_down,
+                    b_top,
+                    b_surface,
+                    surf_reflect_w,
+                    gama,
+                    exptrm_positive,
+                    exptrm_minus,
+                )
+                tri_diag_solve_inplace(2 * nlayer, A, B, C, D)
 
-            # Now we need the terms for the tridiagonal rotated layered method
-            setup_tri_diag_inplace(
-                wrk.A,
-                wrk.B,
-                wrk.C,
-                wrk.D,
-                nlayer,
-                nwno,
-                wrk.c_plus_up,
-                wrk.c_minus_up,
-                wrk.c_plus_down,
-                wrk.c_minus_down,
-                b_top,
-                wrk.b_surface,
-                surf_reflect,
-                gama,
-                dtau,
-                wrk.exptrm_positive,
-                wrk.exptrm_minus,
-            )
-
-            #========================= Start loop over wavelength =========================
-            L = 2*nlayer
-            for w in range(nwno):
-                # coefficient of posive and negative exponential terms 
-                tri_diag_solve_inplace(L, wrk.A[w], wrk.B[w], wrk.C[w], wrk.D[w])
-                
-                # unmix the coefficients
                 for i in range(nlayer):
-                    wrk.positive[w, i] = wrk.D[w, 2 * i] + wrk.D[w, 2 * i + 1]
-                    wrk.negative[w, i] = wrk.D[w, 2 * i] - wrk.D[w, 2 * i + 1]
-            #========================= End loop over wavelength =========================
-            
-            #========================= Get fluxes if needed for climate =========================
-            if get_lvl_flux:
-                for j in range(nwno):
-                    f0pi_j = F0PI[j]
-                    u0_scale = u0 * f0pi_j
+                    positive[i] = D[2 * i] + D[2 * i + 1]
+                    negative[i] = D[2 * i] - D[2 * i + 1]
+
+                if get_lvl_flux:
                     for i in range(nlevel):
-                        wrk.flux_minus_all[ng, nt, i, j] = 0.0
-                        wrk.flux_plus_all[ng, nt, i, j] = 0.0
-                        wrk.flux_minus_midpt_all[ng, nt, i, j] = 0.0
-                        wrk.flux_plus_midpt_all[ng, nt, i, j] = 0.0
+                        wrk.flux_minus_all[ng, nt, i, w] = 0.0
+                        wrk.flux_plus_all[ng, nt, i, w] = 0.0
+                        wrk.flux_minus_midpt_all[ng, nt, i, w] = 0.0
+                        wrk.flux_plus_midpt_all[ng, nt, i, w] = 0.0
 
                     for i in range(nlayer):
-                        wrk.flux_minus_all[ng, nt, i, j] = wrk.positive[j, i] * gama[i, j] + wrk.negative[j, i] + wrk.c_minus_up[i, j]
-                        wrk.flux_plus_all[ng, nt, i, j] = wrk.positive[j, i] + gama[i, j] * wrk.negative[j, i] + wrk.c_plus_up[i, j]
+                        wrk.flux_minus_all[ng, nt, i, w] = positive[i] * gama[i] + negative[i] + c_minus_up[i]
+                        wrk.flux_plus_all[ng, nt, i, w] = positive[i] + gama[i] * negative[i] + c_plus_up[i]
 
-                    wrk.flux_minus_all[ng, nt, nlayer, j] = (
-                        gama[nlayer - 1, j] * wrk.positive[j, nlayer - 1] * wrk.exptrm_positive[nlayer - 1, j]
-                        + wrk.negative[j, nlayer - 1] * wrk.exptrm_minus[nlayer - 1, j]
-                        + wrk.c_minus_down[nlayer - 1, j]
+                    wrk.flux_minus_all[ng, nt, nlayer, w] = (
+                        gama[nlayer - 1] * positive[nlayer - 1] * exptrm_positive[nlayer - 1]
+                        + negative[nlayer - 1] * exptrm_minus[nlayer - 1]
+                        + c_minus_down[nlayer - 1]
                     )
-                    wrk.flux_plus_all[ng, nt, nlayer, j] = (
-                        wrk.positive[j, nlayer - 1] * wrk.exptrm_positive[nlayer - 1, j]
-                        + gama[nlayer - 1, j] * wrk.negative[j, nlayer - 1] * wrk.exptrm_minus[nlayer - 1, j]
-                        + wrk.c_plus_down[nlayer - 1, j]
+                    wrk.flux_plus_all[ng, nt, nlayer, w] = (
+                        positive[nlayer - 1] * exptrm_positive[nlayer - 1]
+                        + gama[nlayer - 1] * negative[nlayer - 1] * exptrm_minus[nlayer - 1]
+                        + c_plus_down[nlayer - 1]
                     )
 
+                    u0_scale = u0 * f0pi_w
                     for i in range(nlevel):
-                        wrk.flux_minus_all[ng, nt, i, j] = wrk.flux_minus_all[ng, nt, i, j] + u0_scale * exp(-tau[i, j] * inv_u0)
+                        wrk.flux_minus_all[ng, nt, i, w] = wrk.flux_minus_all[ng, nt, i, w] + u0_scale * exp(-tau[i, w] * inv_u0)
 
                     for i in range(nlayer):
-                        exptrm_positive_midpt = exp(0.5 * wrk.exptrm[i, j])
+                        exptrm_positive_midpt = exp(0.5 * exptrm[i])
                         exptrm_minus_midpt = 1.0 / exptrm_positive_midpt
-                        taumid = tau[i, j] + 0.5 * dtau[i, j]
-                        c_plus_mid = wrk.a_plus[i, j] * exp(-taumid / ubar0[ng, nt])
-                        c_minus_mid = wrk.a_minus[i, j] * exp(-taumid / ubar0[ng, nt])
+                        taumid = tau[i, w] + 0.5 * dtau[i, w]
+                        c_plus_mid = a_plus[i] * exp(-taumid / ubar0[ng, nt])
+                        c_minus_mid = a_minus[i] * exp(-taumid / ubar0[ng, nt])
 
-                        wrk.flux_minus_midpt_all[ng, nt, i, j] = (
-                            gama[i, j] * wrk.positive[j, i] * exptrm_positive_midpt
-                            + wrk.negative[j, i] * exptrm_minus_midpt
+                        wrk.flux_minus_midpt_all[ng, nt, i, w] = (
+                            gama[i] * positive[i] * exptrm_positive_midpt
+                            + negative[i] * exptrm_minus_midpt
                             + c_minus_mid
-                            + ubar0[ng, nt] * f0pi_j * exp(-taumid / ubar0[ng, nt])
+                            + ubar0[ng, nt] * f0pi_w * exp(-taumid / ubar0[ng, nt])
                         )
-                        wrk.flux_plus_midpt_all[ng, nt, i, j] = (
-                            wrk.positive[j, i] * exptrm_positive_midpt
-                            + gama[i, j] * wrk.negative[j, i] * exptrm_minus_midpt
+                        wrk.flux_plus_midpt_all[ng, nt, i, w] = (
+                            positive[i] * exptrm_positive_midpt
+                            + gama[i] * negative[i] * exptrm_minus_midpt
                             + c_plus_mid
                         )
-                # The last midpoint row remains zero, matching the allocating version.
-            #========================= End get fluxes if needed for climate =========================
+                    wrk.flux_minus_midpt_all[ng, nt, nlayer, w] = 0.0
+                    wrk.flux_plus_midpt_all[ng, nt, nlayer, w] = 0.0
 
-            #========================= Get intensities if needed for spectrum =========================
-            if get_toa_intensity:
-                for j in range(nwno):
-                    f0pi_j = F0PI[j]
+                if get_toa_intensity:
                     flux_zero = (
-                        wrk.positive[j, nlayer - 1] * wrk.exptrm_positive[nlayer - 1, j]
-                        + gama[nlayer - 1, j] * wrk.negative[j, nlayer - 1] * wrk.exptrm_minus[nlayer - 1, j]
-                        + wrk.c_plus_down[nlayer - 1, j]
+                        positive[nlayer - 1] * exptrm_positive[nlayer - 1]
+                        + gama[nlayer - 1] * negative[nlayer - 1] * exptrm_minus[nlayer - 1]
+                        + c_plus_down[nlayer - 1]
                     )
-                    wrk.xint[nlayer, j] = flux_zero / pi
+                    wrk.xint[nlayer] = flux_zero / pi
 
                     for i in range(nlayer - 1, -1, -1):
                         if multi_phase == 0:
                             ubar2 = 0.767
                             phase_term = 3.0 * ubar2 * ubar2 * u1 * u1 - 1.0
-                            multi_plus = 1.0 + 1.5 * ftau_cld[i, j] * cosb[i, j] * u1 + gcos2[i, j] * phase_term / 2.0
-                            multi_minus = 1.0 - 1.5 * ftau_cld[i, j] * cosb[i, j] * u1 + gcos2[i, j] * phase_term / 2.0
+                            multi_plus = 1.0 + 1.5 * ftau_cld[i, w] * cosb[i, w] * u1 + gcos2[i, w] * phase_term / 2.0
+                            multi_minus = 1.0 - 1.5 * ftau_cld[i, w] * cosb[i, w] * u1 + gcos2[i, w] * phase_term / 2.0
                         elif multi_phase == 1:
-                            multi_plus = 1.0 + 1.5 * ftau_cld[i, j] * cosb[i, j] * u1
-                            multi_minus = 1.0 - 1.5 * ftau_cld[i, j] * cosb[i, j] * u1
+                            multi_plus = 1.0 + 1.5 * ftau_cld[i, w] * cosb[i, w] * u1
+                            multi_minus = 1.0 - 1.5 * ftau_cld[i, w] * cosb[i, w] * u1
 
-                        G = wrk.positive[j, i] * (multi_plus + gama[i, j] * multi_minus) * w0[i, j] * 0.5 / pi
-                        H = wrk.negative[j, i] * (gama[i, j] * multi_plus + multi_minus) * w0[i, j] * 0.5 / pi
-                        source_A = (multi_plus * wrk.c_plus_up[i, j] + multi_minus * wrk.c_minus_up[i, j]) * w0[i, j] * 0.5 / pi
+                        G = positive[i] * (multi_plus + gama[i] * multi_minus) * w0[i, w] * 0.5 / pi
+                        H = negative[i] * (gama[i] * multi_plus + multi_minus) * w0[i, w] * 0.5 / pi
+                        source_A = (multi_plus * c_plus_up[i] + multi_minus * c_minus_up[i]) * w0[i, w] * 0.5 / pi
 
-                        wrk.xint[i, j] = (
-                            wrk.xint[i + 1, j] * exp(-dtau[i, j] * inv_u1)
-                            + (w0_og[i, j] * (f0pi_j * 0.25 / pi))
-                            * wrk.p_single[i, j]
-                            * exp(-tau_og[i, j] * inv_u0)
-                            * (1.0 - exp(-dtau_og[i, j] * sum_u * inv_u0u1))
+                        wrk.xint[i] = (
+                            wrk.xint[i + 1] * exp(-dtau[i, w] * inv_u1)
+                            + (w0_og[i, w] * (f0pi_w * 0.25 / pi))
+                            * p_single[i]
+                            * exp(-tau_og[i, w] * inv_u0)
+                            * (1.0 - exp(-dtau_og[i, w] * sum_u * inv_u0u1))
                             * (u0 * inv_sum_u)
-                            + source_A * (1.0 - exp(-dtau[i, j] * sum_u * inv_u0u1))
+                            + source_A * (1.0 - exp(-dtau[i, w] * sum_u * inv_u0u1))
                             * (u0 * inv_sum_u)
-                            + G * (exp(wrk.exptrm[i, j] - dtau[i, j] * inv_u1) - 1.0) / (lamda[i, j] * u1 - 1.0)
-                            + H * (1.0 - exp(-(wrk.exptrm[i, j] + dtau[i, j] * inv_u1))) / (lamda[i, j] * u1 + 1.0)
+                            + G * (exp(exptrm[i] - dtau[i, w] * inv_u1) - 1.0) / (lamda[i] * u1 - 1.0)
+                            + H * (1.0 - exp(-(exptrm[i] + dtau[i, w] * inv_u1))) / (lamda[i] * u1 + 1.0)
                         )
 
-                    wrk.xint_at_top[ng, nt, j] = wrk.xint[0, j]
-            #========================= End get intensities if needed for spectrum =========================
+                    wrk.xint_at_top[ng, nt, w] = wrk.xint[0]
+
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
