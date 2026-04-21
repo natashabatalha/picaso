@@ -1115,6 +1115,7 @@ class GetReflectedWorkspace:
     exptrm : types.double[:, :]
     exptrm_positive : types.double[:, :]
     exptrm_minus : types.double[:, :]
+    p_single : types.double[:, :]
     A : types.double[:, :]
     B : types.double[:, :]
     C : types.double[:, :]
@@ -1144,6 +1145,7 @@ class GetReflectedWorkspace:
         self.exptrm = np.empty((nlayer, nwno), dtype=np.float64)
         self.exptrm_positive = np.empty((nlayer, nwno), dtype=np.float64)
         self.exptrm_minus = np.empty((nlayer, nwno), dtype=np.float64)
+        self.p_single = np.empty((nlayer, nwno), dtype=np.float64)
         self.A = np.empty((nwno, 2 * nlayer), dtype=np.float64)
         self.B = np.empty((nwno, 2 * nlayer), dtype=np.float64)
         self.C = np.empty((nwno, 2 * nlayer), dtype=np.float64)
@@ -1227,6 +1229,29 @@ def get_reflected_1d_inplace(
             lamda_ij = sqrt(g1[i, j] * g1[i, j] - g2[i, j] * g2[i, j])
             lamda[i, j] = lamda_ij
             gama[i, j] = (g1[i, j] - lamda_ij) / g2[i, j] # eqn 22
+
+    if get_toa_intensity:
+        for i in range(nlayer):
+            for j in range(nwno):
+                if single_phase != 1:
+                    g_forward = constant_forward * cosb_og[i, j]
+                    g_back = constant_back * cosb_og[i, j]
+                    f = frac_a + frac_b * g_back ** frac_c
+
+                if single_phase == 0:
+                    HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                    HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                    wrk.p_single[i, j] = f * HG_forward + (1.0 - f) * HG_backward + gcos2[i, j]
+                elif single_phase == 1:
+                    wrk.p_single[i, j] = (1.0 - cosb_og[i, j] * cosb_og[i, j]) / sqrt((1.0 + cosb_og[i, j] * cosb_og[i, j] + 2.0 * cosb_og[i, j] * cos_theta) ** 3)
+                elif single_phase == 2:
+                    HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                    HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                    wrk.p_single[i, j] = f * HG_forward + (1.0 - f) * HG_backward
+                elif single_phase == 3:
+                    HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                    HG_back = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                    wrk.p_single[i, j] = ftau_cld[i, j] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, j] * (0.75 * (1.0 + cos_theta * cos_theta))
 
     #================ START CRAZE LOOP OVER ANGLE #================
     for ng in range(numg):
@@ -1379,30 +1404,10 @@ def get_reflected_1d_inplace(
                         H = wrk.negative[j, i] * (gama[i, j] * multi_plus + multi_minus) * w0[i, j] * 0.5 / pi
                         source_A = (multi_plus * wrk.c_plus_up[i, j] + multi_minus * wrk.c_minus_up[i, j]) * w0[i, j] * 0.5 / pi
 
-                        if single_phase != 1:
-                            g_forward = constant_forward * cosb_og[i, j]
-                            g_back = constant_back * cosb_og[i, j]
-                            f = frac_a + frac_b * g_back ** frac_c
-
-                        if single_phase == 0:
-                            HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
-                            HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
-                            p_single = f * HG_forward + (1.0 - f) * HG_backward + gcos2[i, j]
-                        elif single_phase == 1:
-                            p_single = (1.0 - cosb_og[i, j] * cosb_og[i, j]) / sqrt((1.0 + cosb_og[i, j] * cosb_og[i, j] + 2.0 * cosb_og[i, j] * cos_theta) ** 3)
-                        elif single_phase == 2:
-                            HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
-                            HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
-                            p_single = f * HG_forward + (1.0 - f) * HG_backward
-                        elif single_phase == 3:
-                            HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
-                            HG_back = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
-                            p_single = ftau_cld[i, j] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, j] * (0.75 * (1.0 + cos_theta * cos_theta))
-
                         wrk.xint[i, j] = (
                             wrk.xint[i + 1, j] * exp(-dtau[i, j] / u1)
                             + (w0_og[i, j] * F0PI / (4.0 * pi))
-                            * p_single
+                            * wrk.p_single[i, j]
                             * exp(-tau_og[i, j] / u0)
                             * (1.0 - exp(-dtau_og[i, j] * (u0 + u1) / (u0 * u1)))
                             * (u0 / (u0 + u1))
