@@ -1,4 +1,6 @@
 from numba import jit, objmode
+from numba.experimental import jitclass
+from numba import types
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10,ones, array_equal
 import numpy as np
 import time
@@ -84,6 +86,63 @@ def numba_cumsum(mat):
     for i in range(mat.shape[1]):
         new_mat[:,i] = cumsum(mat[:,i])
     return new_mat
+
+@jit(nopython=True, cache=True)
+def setup_tri_diag_inplace(A, B, C, D, nlayer, nwno, c_plus_up, c_minus_up,
+    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
+    gama, dtau, exptrm_positive, exptrm_minus):
+    """
+    Build the tridiagonal coefficients in place with no temporary allocations.
+
+    Parameters
+    ----------
+    A, B, C, D : array
+        Preallocated output arrays with shape ``(2 * nlayer, nwno)``.
+    Other parameters match :func:`setup_tri_diag`.
+    """
+    L = 2 * nlayer
+
+    for w in range(nwno):
+        A[0, w] = 0.0
+        B[0, w] = gama[0, w] + 1.0
+        C[0, w] = gama[0, w] - 1.0
+        D[0, w] = b_top - c_minus_up[0, w]
+
+        for k in range(nlayer - 1):
+            e1 = exptrm_positive[k, w] + gama[k, w] * exptrm_minus[k, w]
+            e2 = exptrm_positive[k, w] - gama[k, w] * exptrm_minus[k, w]
+            e3 = gama[k, w] * exptrm_positive[k, w] + exptrm_minus[k, w]
+            e4 = gama[k, w] * exptrm_positive[k, w] - exptrm_minus[k, w]
+
+            g = gama[k + 1, w]
+            cp_up = c_plus_up[k + 1, w]
+            cp_down = c_plus_down[k, w]
+            cm_up = c_minus_up[k + 1, w]
+            cm_down = c_minus_down[k, w]
+
+            row = 2 * k + 1
+            A[row, w] = (e1 + e3) * (g - 1.0)
+            B[row, w] = (e2 + e4) * (g - 1.0)
+            C[row, w] = 2.0 * (1.0 - g * g)
+            D[row, w] = (g - 1.0) * (cp_up - cp_down) + (1.0 - g) * (cm_down - cm_up)
+
+            row = 2 * k + 2
+            A[row, w] = 2.0 * (1.0 - gama[k, w] * gama[k, w])
+            B[row, w] = (e1 - e3) * (g + 1.0)
+            C[row, w] = (e1 + e3) * (g - 1.0)
+            D[row, w] = e3 * (cp_up - cp_down) + e1 * (cm_down - cm_up)
+
+        e1 = exptrm_positive[nlayer - 1, w] + gama[nlayer - 1, w] * exptrm_minus[nlayer - 1, w]
+        e2 = exptrm_positive[nlayer - 1, w] - gama[nlayer - 1, w] * exptrm_minus[nlayer - 1, w]
+        e3 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] + exptrm_minus[nlayer - 1, w]
+        e4 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] - exptrm_minus[nlayer - 1, w]
+
+        A[L - 1, w] = e1 - surf_reflect * e3
+        B[L - 1, w] = e2 - surf_reflect * e4
+        C[L - 1, w] = 0.0
+        D[L - 1, w] = b_surface[w] - c_plus_down[nlayer - 1, w] + surf_reflect * c_minus_down[nlayer - 1, w]
+
+    return
 
 @jit(nopython=True, cache=True)
 def setup_tri_diag(nlayer,nwno ,c_plus_up, c_minus_up, 
@@ -284,6 +343,42 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
 
     return A, B, C, D, E, F
 
+@jit(nopython=True, cache=True)
+def tri_diag_solve_inplace(l, a, b, c, d):
+    """
+    Solve a tridiagonal system in place with no temporary array allocations.
+
+    The solution is written back into ``d``. The ``c`` array is also overwritten
+    with the modified superdiagonal coefficients used during the forward sweep.
+
+    Parameters
+    ----------
+    l : int
+        System size.
+    a : array-like
+        Lower diagonal, with ``a[0]`` unused.
+    b : array-like
+        Main diagonal.
+    c : array-like
+        Upper diagonal, with ``c[l - 1]`` unused.
+    d : array-like
+        Right-hand side. Overwritten with the solution.
+    """
+    d[0] = d[0] / b[0]
+    c[0] = c[0] / b[0]
+
+    for i in range(1, l - 1):
+        denom = b[i] - a[i] * c[i - 1]
+        inv_denom = 1.0 / denom
+        c[i] = c[i] * inv_denom
+        d[i] = (d[i] - a[i] * d[i - 1]) * inv_denom
+
+    if l > 1:
+        denom = b[l - 1] - a[l - 1] * c[l - 2]
+        d[l - 1] = (d[l - 1] - a[l - 1] * d[l - 2]) / denom
+
+        for i in range(l - 2, -1, -1):
+            d[i] = d[i] - c[i] * d[i + 1]
 
 @jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
@@ -1004,6 +1099,88 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
             #intensity[ng,nt,:,:] = xint
 
     return xint_at_top 
+
+@jitclass
+class GetReflectedWorkspace:
+
+    g1 : types.double[:, :]
+    g2 : types.double[:, :]
+    lamda : types.double[:, :]
+    gama : types.double[:, :]
+
+    def __init__(self, nlayer, nwno):
+        self.g1 = np.empty((nlayer, nwno), dtype=np.float64)
+        self.g2 = np.empty((nlayer, nwno), dtype=np.float64)
+        self.lamda = np.empty((nlayer, nwno), dtype=np.float64)
+        self.gama = np.empty((nlayer, nwno), dtype=np.float64)
+
+@jit(nopython=True, cache=True)
+def get_reflected_1d_inplace(
+    nlevel, 
+    wno,
+    nwno, 
+    numg,
+    numt, 
+    dtau, 
+    tau, 
+    w0, 
+    cosb,
+    gcos2, 
+    ftau_cld, 
+    ftau_ray,
+    dtau_og, 
+    tau_og, 
+    w0_og, 
+    cosb_og, 
+    surf_reflect,
+    ubar0, 
+    ubar1,
+    cos_theta, 
+    F0PI,
+    single_phase, 
+    multi_phase,
+    frac_a, 
+    frac_b, 
+    frac_c, 
+    constant_back, 
+    constant_forward, 
+    get_toa_intensity,
+    get_lvl_flux,
+    toon_coefficients,
+    b_top,
+    wrk
+):
+    
+    nlayer = nlevel - 1 
+
+    # terms not dependent on incident angle
+    sq3 = sqrt(3.0)
+    g1 = wrk.g1
+    g2 = wrk.g2
+    lamda = wrk.lamda
+    gama = wrk.gama
+    if toon_coefficients == 1: # eddington
+        for i in range(nlayer):
+            for j in range(nwno):
+                w0ij = w0[i, j]
+                ftij = ftau_cld[i, j]
+                cbij = cosb[i, j]
+                g1[i, j] = (7.0 - w0ij * (4.0 + 3.0 * ftij * cbij)) / 4.0
+                g2[i, j] = -(1.0 - w0ij * (4.0 - 3.0 * ftij * cbij)) / 4.0
+    elif toon_coefficients == 0: # quadrature
+        for i in range(nlayer):
+            for j in range(nwno):
+                w0ij = w0[i, j]
+                ftij = ftau_cld[i, j]
+                cbij = cosb[i, j]
+                g1[i, j] = (sq3 * 0.5) * (2.0 - w0ij * (1.0 + ftij * cbij))
+                g2[i, j] = (sq3 * w0ij * 0.5) * (1.0 - ftij * cbij)
+
+    for i in range(nlayer):
+        for j in range(nwno):
+            lamda_ij = sqrt(g1[i, j] * g1[i, j] - g2[i, j] * g2[i, j])
+            lamda[i, j] = lamda_ij
+            gama[i, j] = (g1[i, j] - lamda_ij) / g2[i, j] # eqn 22
 
 
 @jit(nopython=True, cache=True)
@@ -3896,4 +4073,3 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
             blackbody_array[itemp, iwave] = planck_rad_deprecate(iwave, temp[itemp], dT ,  tmin, tmax, bb , y2, tp)
 
     return blackbody_array
-
