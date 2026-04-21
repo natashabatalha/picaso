@@ -1258,6 +1258,14 @@ def get_reflected_1d_inplace(
         for nt in range(numt):
             u1 = ubar1[ng,nt]
             u0 = ubar0[ng,nt]
+            inv_u0 = 1.0 / u0
+            inv_u0_sq = inv_u0 * inv_u0
+            inv_u1 = 1.0 / u1
+            sum_u = u0 + u1
+            inv_sum_u = 1.0 / sum_u
+            inv_u0u1 = inv_u0 * inv_u1
+            direct_scale = F0PI * 0.25 / pi
+            u0_scale = u0 * F0PI
             g3 = wrk.g3
             if toon_coefficients == 1: # eddington
                 for i in range(nlayer):
@@ -1272,8 +1280,7 @@ def get_reflected_1d_inplace(
             for i in range(nlayer):
                 for j in range(nwno):
                     g4 = 1.0 - g3[i,j]
-                    denom = lamda[i,j] * lamda[i,j] - 1.0 / (u0 * u0)
-                    inv_u0 = 1.0 / u0
+                    denom = lamda[i,j] * lamda[i,j] - inv_u0_sq
                     w0ij = w0[i,j]
 
                     wrk.a_minus[i,j] = F0PI * w0ij * (g4 * (g1[i,j] + inv_u0) + g2[i,j] * g3[i,j]) / denom
@@ -1297,7 +1304,7 @@ def get_reflected_1d_inplace(
 
             # boundary conditions
             for j in range(nwno):
-                wrk.b_surface[j] = surf_reflect * u0 * F0PI * exp(-tau[nlevel - 1, j] / u0)
+                wrk.b_surface[j] = surf_reflect * u0_scale * exp(-tau[nlevel - 1, j] * inv_u0)
 
             # Now we need the terms for the tridiagonal rotated layered method
             setup_tri_diag_inplace(
@@ -1357,7 +1364,7 @@ def get_reflected_1d_inplace(
                     )
 
                     for i in range(nlevel):
-                        wrk.flux_minus_all[ng, nt, i, j] = wrk.flux_minus_all[ng, nt, i, j] + u0 * F0PI * exp(-tau[i, j] / u0)
+                        wrk.flux_minus_all[ng, nt, i, j] = wrk.flux_minus_all[ng, nt, i, j] + u0_scale * exp(-tau[i, j] * inv_u0)
 
                     for i in range(nlayer):
                         exptrm_positive_midpt = exp(0.5 * wrk.exptrm[i, j])
@@ -1405,16 +1412,16 @@ def get_reflected_1d_inplace(
                         source_A = (multi_plus * wrk.c_plus_up[i, j] + multi_minus * wrk.c_minus_up[i, j]) * w0[i, j] * 0.5 / pi
 
                         wrk.xint[i, j] = (
-                            wrk.xint[i + 1, j] * exp(-dtau[i, j] / u1)
-                            + (w0_og[i, j] * F0PI / (4.0 * pi))
+                            wrk.xint[i + 1, j] * exp(-dtau[i, j] * inv_u1)
+                            + (w0_og[i, j] * direct_scale)
                             * wrk.p_single[i, j]
-                            * exp(-tau_og[i, j] / u0)
-                            * (1.0 - exp(-dtau_og[i, j] * (u0 + u1) / (u0 * u1)))
-                            * (u0 / (u0 + u1))
-                            + source_A * (1.0 - exp(-dtau[i, j] * (u0 + u1) / (u0 * u1)))
-                            * (u0 / (u0 + u1))
-                            + G * (exp(wrk.exptrm[i, j] - dtau[i, j] / u1) - 1.0) / (lamda[i, j] * u1 - 1.0)
-                            + H * (1.0 - exp(-(wrk.exptrm[i, j] + dtau[i, j] / u1))) / (lamda[i, j] * u1 + 1.0)
+                            * exp(-tau_og[i, j] * inv_u0)
+                            * (1.0 - exp(-dtau_og[i, j] * sum_u * inv_u0u1))
+                            * (u0 * inv_sum_u)
+                            + source_A * (1.0 - exp(-dtau[i, j] * sum_u * inv_u0u1))
+                            * (u0 * inv_sum_u)
+                            + G * (exp(wrk.exptrm[i, j] - dtau[i, j] * inv_u1) - 1.0) / (lamda[i, j] * u1 - 1.0)
+                            + H * (1.0 - exp(-(wrk.exptrm[i, j] + dtau[i, j] * inv_u1))) / (lamda[i, j] * u1 + 1.0)
                         )
 
                     wrk.xint_at_top[ng, nt, j] = wrk.xint[0, j]
