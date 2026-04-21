@@ -135,10 +135,11 @@ def setup_tri_diag_inplace(A, B, C, D, nlayer, nwno, c_plus_up, c_minus_up,
         e3 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] + exptrm_minus[nlayer - 1, w]
         e4 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] - exptrm_minus[nlayer - 1, w]
 
-        A[w, 2 * nlayer - 1] = e1 - surf_reflect * e3
-        B[w, 2 * nlayer - 1] = e2 - surf_reflect * e4
+        surf_reflect_w = surf_reflect[w]
+        A[w, 2 * nlayer - 1] = e1 - surf_reflect_w * e3
+        B[w, 2 * nlayer - 1] = e2 - surf_reflect_w * e4
         C[w, 2 * nlayer - 1] = 0.0
-        D[w, 2 * nlayer - 1] = b_surface[w] - c_plus_down[nlayer - 1, w] + surf_reflect * c_minus_down[nlayer - 1, w]
+        D[w, 2 * nlayer - 1] = b_surface[w] - c_plus_down[nlayer - 1, w] + surf_reflect_w * c_minus_down[nlayer - 1, w]
 
     return
 
@@ -1101,6 +1102,12 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
 @jitclass
 class GetReflectedWorkspace:
 
+    nlayer : types.int64
+    nwno : types.int64
+    numg : types.int64
+    numt : types.int64
+    get_lvl_flux : types.int64
+    get_toa_intensity : types.int64
     g1 : types.double[:, :]
     g2 : types.double[:, :]
     lamda : types.double[:, :]
@@ -1131,6 +1138,12 @@ class GetReflectedWorkspace:
     xint_at_top : types.double[:, :, :]
 
     def __init__(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+        self.nlayer = nlayer
+        self.nwno = nwno
+        self.numg = numg
+        self.numt = numt
+        self.get_lvl_flux = get_lvl_flux
+        self.get_toa_intensity = get_toa_intensity
         self.g1 = np.empty((nlayer, nwno), dtype=np.float64)
         self.g2 = np.empty((nlayer, nwno), dtype=np.float64)
         self.lamda = np.empty((nlayer, nwno), dtype=np.float64)
@@ -1158,9 +1171,29 @@ class GetReflectedWorkspace:
             self.flux_plus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
             self.flux_minus_midpt_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
             self.flux_plus_midpt_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
+        else:
+            self.flux_minus_all = np.empty((0,0,0,0), dtype=np.float64)
+            self.flux_plus_all = np.empty((0,0,0,0), dtype=np.float64)
+            self.flux_minus_midpt_all = np.empty((0,0,0,0), dtype=np.float64)
+            self.flux_plus_midpt_all = np.empty((0,0,0,0), dtype=np.float64)
         if get_toa_intensity:
             self.xint = np.empty((nlayer + 1, nwno), dtype=np.float64)
             self.xint_at_top = np.empty((numg, numt, nwno), dtype=np.float64)
+        else:
+            self.xint = np.empty((0,0), dtype=np.float64)
+            self.xint_at_top = np.empty((0,0,0), dtype=np.float64)
+
+    def needs_reallocation(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+        out = self.nlayer == nlayer
+        out = out and self.nwno == nwno
+        out = out and self.numg == numg
+        out = out and self.numt == numt
+        out = out and self.get_lvl_flux == get_lvl_flux
+        out = out and self.get_toa_intensity == get_toa_intensity
+        return not out
+
+    def should_be_reallocated(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+        return self.needs_reallocation(nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d_inplace(
@@ -1264,8 +1297,6 @@ def get_reflected_1d_inplace(
             sum_u = u0 + u1
             inv_sum_u = 1.0 / sum_u
             inv_u0u1 = inv_u0 * inv_u1
-            direct_scale = F0PI * 0.25 / pi
-            u0_scale = u0 * F0PI
             g3 = wrk.g3
             if toon_coefficients == 1: # eddington
                 for i in range(nlayer):
@@ -1282,9 +1313,10 @@ def get_reflected_1d_inplace(
                     g4 = 1.0 - g3[i,j]
                     denom = lamda[i,j] * lamda[i,j] - inv_u0_sq
                     w0ij = w0[i,j]
+                    f0pi_j = F0PI[j]
 
-                    wrk.a_minus[i,j] = F0PI * w0ij * (g4 * (g1[i,j] + inv_u0) + g2[i,j] * g3[i,j]) / denom
-                    wrk.a_plus[i,j] = F0PI * w0ij * (g3[i,j] * (g1[i,j] - inv_u0) + g2[i,j] * g4) / denom
+                    wrk.a_minus[i,j] = f0pi_j * w0ij * (g4 * (g1[i,j] + inv_u0) + g2[i,j] * g3[i,j]) / denom
+                    wrk.a_plus[i,j] = f0pi_j * w0ij * (g3[i,j] * (g1[i,j] - inv_u0) + g2[i,j] * g4) / denom
 
                     tau_up = tau[i,j]
                     tau_down = tau[i + 1, j]
@@ -1304,7 +1336,9 @@ def get_reflected_1d_inplace(
 
             # boundary conditions
             for j in range(nwno):
-                wrk.b_surface[j] = surf_reflect * u0_scale * exp(-tau[nlevel - 1, j] * inv_u0)
+                f0pi_j = F0PI[j]
+                u0_scale = u0 * f0pi_j
+                wrk.b_surface[j] = surf_reflect[j] * u0_scale * exp(-tau[nlevel - 1, j] * inv_u0)
 
             # Now we need the terms for the tridiagonal rotated layered method
             setup_tri_diag_inplace(
@@ -1342,6 +1376,8 @@ def get_reflected_1d_inplace(
             #========================= Get fluxes if needed for climate =========================
             if get_lvl_flux:
                 for j in range(nwno):
+                    f0pi_j = F0PI[j]
+                    u0_scale = u0 * f0pi_j
                     for i in range(nlevel):
                         wrk.flux_minus_all[ng, nt, i, j] = 0.0
                         wrk.flux_plus_all[ng, nt, i, j] = 0.0
@@ -1377,7 +1413,7 @@ def get_reflected_1d_inplace(
                             gama[i, j] * wrk.positive[j, i] * exptrm_positive_midpt
                             + wrk.negative[j, i] * exptrm_minus_midpt
                             + c_minus_mid
-                            + ubar0[ng, nt] * F0PI * exp(-taumid / ubar0[ng, nt])
+                            + ubar0[ng, nt] * f0pi_j * exp(-taumid / ubar0[ng, nt])
                         )
                         wrk.flux_plus_midpt_all[ng, nt, i, j] = (
                             wrk.positive[j, i] * exptrm_positive_midpt
@@ -1390,6 +1426,7 @@ def get_reflected_1d_inplace(
             #========================= Get intensities if needed for spectrum =========================
             if get_toa_intensity:
                 for j in range(nwno):
+                    f0pi_j = F0PI[j]
                     flux_zero = (
                         wrk.positive[j, nlayer - 1] * wrk.exptrm_positive[nlayer - 1, j]
                         + gama[nlayer - 1, j] * wrk.negative[j, nlayer - 1] * wrk.exptrm_minus[nlayer - 1, j]
@@ -1413,7 +1450,7 @@ def get_reflected_1d_inplace(
 
                         wrk.xint[i, j] = (
                             wrk.xint[i + 1, j] * exp(-dtau[i, j] * inv_u1)
-                            + (w0_og[i, j] * direct_scale)
+                            + (w0_og[i, j] * (f0pi_j * 0.25 / pi))
                             * wrk.p_single[i, j]
                             * exp(-tau_og[i, j] * inv_u0)
                             * (1.0 - exp(-dtau_og[i, j] * sum_u * inv_u0u1))
