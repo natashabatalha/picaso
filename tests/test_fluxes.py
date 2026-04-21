@@ -84,7 +84,7 @@ def _make_reflected_case():
              [0.24, 0.25, 0.26],
              [0.34, 0.35, 0.36]]
         ),
-        surf_reflect=0.23,
+        surf_reflect=np.array([0.23, 0.24, 0.25]),
         ubar0=np.array(
             [[0.41, 0.42],
              [0.51, 0.52]]
@@ -94,7 +94,7 @@ def _make_reflected_case():
              [0.71, 0.72]]
         ),
         cos_theta=0.37,
-        F0PI=1.11,
+        F0PI=np.array([1.11, 1.12, 1.13]),
         frac_a=0.17,
         frac_b=0.27,
         frac_c=1.3,
@@ -258,7 +258,7 @@ def test_setup_tri_diag_matches_inplace():
     )
     b_top = 0.19
     b_surface = np.array([1.01, 1.02, 1.03, 1.04])
-    surf_reflect = 0.27
+    surf_reflect = np.array([0.27, 0.28, 0.29, 0.30])
     gama = np.array(
         [[0.41, 0.42, 0.43, 0.44],
          [0.51, 0.52, 0.53, 0.54],
