@@ -1128,8 +1128,10 @@ class GetReflectedWorkspace:
     flux_plus_all : types.double[:, :, :, :]
     flux_minus_midpt_all : types.double[:, :, :, :]
     flux_plus_midpt_all : types.double[:, :, :, :]
+    xint : types.double[:, :]
+    xint_at_top : types.double[:, :, :]
 
-    def __init__(self, nlayer, nwno, numg, numt, get_lvl_flux):
+    def __init__(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
         self.g1 = np.empty((nlayer, nwno), dtype=np.float64)
         self.g2 = np.empty((nlayer, nwno), dtype=np.float64)
         self.lamda = np.empty((nlayer, nwno), dtype=np.float64)
@@ -1156,6 +1158,9 @@ class GetReflectedWorkspace:
             self.flux_plus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
             self.flux_minus_midpt_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
             self.flux_plus_midpt_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
+        if get_toa_intensity:
+            self.xint = np.empty((nlayer + 1, nwno), dtype=np.float64)
+            self.xint_at_top = np.empty((numg, numt, nwno), dtype=np.float64)
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d_inplace(
@@ -1352,7 +1357,65 @@ def get_reflected_1d_inplace(
                 # The last midpoint row remains zero, matching the allocating version.
             #========================= End get fluxes if needed for climate =========================
 
+            #========================= Get intensities if needed for spectrum =========================
+            if get_toa_intensity:
+                for j in range(nwno):
+                    flux_zero = (
+                        wrk.positive[nlayer - 1, j] * wrk.exptrm_positive[nlayer - 1, j]
+                        + gama[nlayer - 1, j] * wrk.negative[nlayer - 1, j] * wrk.exptrm_minus[nlayer - 1, j]
+                        + wrk.c_plus_down[nlayer - 1, j]
+                    )
+                    wrk.xint[nlayer, j] = flux_zero / pi
 
+                    for i in range(nlayer - 1, -1, -1):
+                        if multi_phase == 0:
+                            ubar2 = 0.767
+                            phase_term = 3.0 * ubar2 * ubar2 * u1 * u1 - 1.0
+                            multi_plus = 1.0 + 1.5 * ftau_cld[i, j] * cosb[i, j] * u1 + gcos2[i, j] * phase_term / 2.0
+                            multi_minus = 1.0 - 1.5 * ftau_cld[i, j] * cosb[i, j] * u1 + gcos2[i, j] * phase_term / 2.0
+                        elif multi_phase == 1:
+                            multi_plus = 1.0 + 1.5 * ftau_cld[i, j] * cosb[i, j] * u1
+                            multi_minus = 1.0 - 1.5 * ftau_cld[i, j] * cosb[i, j] * u1
+
+                        G = wrk.positive[i, j] * (multi_plus + gama[i, j] * multi_minus) * w0[i, j] * 0.5 / pi
+                        H = wrk.negative[i, j] * (gama[i, j] * multi_plus + multi_minus) * w0[i, j] * 0.5 / pi
+                        source_A = (multi_plus * wrk.c_plus_up[i, j] + multi_minus * wrk.c_minus_up[i, j]) * w0[i, j] * 0.5 / pi
+
+                        if single_phase != 1:
+                            g_forward = constant_forward * cosb_og[i, j]
+                            g_back = constant_back * cosb_og[i, j]
+                            f = frac_a + frac_b * g_back ** frac_c
+
+                        if single_phase == 0:
+                            HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                            HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                            p_single = f * HG_forward + (1.0 - f) * HG_backward + gcos2[i, j]
+                        elif single_phase == 1:
+                            p_single = (1.0 - cosb_og[i, j] * cosb_og[i, j]) / sqrt((1.0 + cosb_og[i, j] * cosb_og[i, j] + 2.0 * cosb_og[i, j] * cos_theta) ** 3)
+                        elif single_phase == 2:
+                            HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                            HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                            p_single = f * HG_forward + (1.0 - f) * HG_backward
+                        elif single_phase == 3:
+                            HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                            HG_back = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                            p_single = ftau_cld[i, j] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, j] * (0.75 * (1.0 + cos_theta * cos_theta))
+
+                        wrk.xint[i, j] = (
+                            wrk.xint[i + 1, j] * exp(-dtau[i, j] / u1)
+                            + (w0_og[i, j] * F0PI / (4.0 * pi))
+                            * p_single
+                            * exp(-tau_og[i, j] / u0)
+                            * (1.0 - exp(-dtau_og[i, j] * (u0 + u1) / (u0 * u1)))
+                            * (u0 / (u0 + u1))
+                            + source_A * (1.0 - exp(-dtau[i, j] * (u0 + u1) / (u0 * u1)))
+                            * (u0 / (u0 + u1))
+                            + G * (exp(wrk.exptrm[i, j] - dtau[i, j] / u1) - 1.0) / (lamda[i, j] * u1 - 1.0)
+                            + H * (1.0 - exp(-(wrk.exptrm[i, j] + dtau[i, j] / u1))) / (lamda[i, j] * u1 + 1.0)
+                        )
+
+                    wrk.xint_at_top[ng, nt, j] = wrk.xint[0, j]
+            #========================= End get intensities if needed for spectrum =========================
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
