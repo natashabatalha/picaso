@@ -67,17 +67,18 @@ __global__ void setup_tri_diag_last(int nlayer,int nwno,  double *c_plus_up_dev,
                                   double *A_odd_dev, double *B_odd_dev, double *C_odd_dev, double *D_odd_dev){
 
 
-   //
-   // int blockId = blockIdx.x + blockIdx.y * gridDim.x;
-   // int index = blockId * (blockDim.x * blockDim.y) + (threadIdx.y * blockDim.x) + threadIdx.x;
-   int index = blockIdx.x * blockDim.x + threadIdx.x;
 
-   if ( (index > (nlayer-1)*nwno) && (index < nlayer*nwno) ){
+   int index_wn = blockIdx.x * blockDim.x + threadIdx.x;
 
-     A_odd_dev[index+nlayer*nwno] = e1_dev[index]-atm_surf_reflect_dev[index]*e3_dev[index];
-     B_odd_dev[index+nlayer*nwno] = e2_dev[index]-atm_surf_reflect_dev[index]*e4_dev[index];
-     C_odd_dev[index+nlayer*nwno] = 0.0;
-     D_odd_dev[index+nlayer*nwno] = b_surface_dev[index -(nlayer-1)*nwno ]-c_plus_down_dev[index] + atm_surf_reflect_dev[index]*c_minus_down_dev[index];
+   if ( index_wn < nwno ){
+     int index_layer = nlayer - 1;
+     int index = index_layer * nwno + index_wn;
+     int index_tri = (2 * nlayer - 1) * nwno + index_wn;
+
+     A_odd_dev[index_tri] = e1_dev[index]-atm_surf_reflect_dev[index_wn]*e3_dev[index];
+     B_odd_dev[index_tri] = e2_dev[index]-atm_surf_reflect_dev[index_wn]*e4_dev[index];
+     C_odd_dev[index_tri] = 0.0;
+     D_odd_dev[index_tri] = b_surface_dev[index_wn]-c_plus_down_dev[index] + atm_surf_reflect_dev[index_wn]*c_minus_down_dev[index];
 
    }
 
@@ -154,6 +155,7 @@ __global__ void calculate_blackbody(double *lvl_T_dev, double *wno_dev, double *
         } else if (calc_type == 1) {
             // Blackbody integrated calculation
             int nbb = 1; // Assuming nbb is 1; adjust as needed
+            all_b_dev[index] = 0.0;
             for (int i_iter = -nbb; i_iter < nbb + 1; i_iter++) {
                 double wavenum = wno_dev[index_wn] + i_iter * wno0_dev[index_wn] / (2.0 * nbb);
                 all_b_dev[index] += c1 * pow(wavenum, 3) / (exp(c2 * wavenum / lvl_T_dev[index_layer]) - 1.0);
@@ -306,7 +308,7 @@ __global__ void initialize_and_solve_tridiagonal(
     if (wn >= nwno) return;
 
 
-    int total_layers = 2 * (nlayer - 1);
+    int total_layers = 2 * nlayer;
     int stride = nwno;
 
     // --------------------------
@@ -706,6 +708,8 @@ extern "C" void get_thermal_1d_set_inputs(
 
 
 
+extern "C" void get_thermal_1d_free();
+
 extern "C" void get_thermal_1d_allocate_buffers(
     int    nlevel,
     int    nwno,
@@ -715,9 +719,7 @@ extern "C" void get_thermal_1d_allocate_buffers(
     ThermalContext &ctx = g_ctx;
 
     if (ctx.initialized) {
-        // already initialized – could free and re-init, or just return
-        fprintf(stderr, "get_thermal_1d_init: already initialized, ignoring.\n");
-        return;
+        get_thermal_1d_free();
     }
 
     ctx.nlevel = nlevel;
@@ -1039,6 +1041,16 @@ extern "C" void get_thermal_1d_free()
 
     FREE(ctx.exptrm_angle_dev);
     FREE(ctx.exptrm_angle_mdpt_dev);
+
+    ctx.wno_dev = nullptr;
+    ctx.wno0_dev = nullptr;
+    ctx.dtau_og_dev = nullptr;
+    ctx.w0_no_raman_dev = nullptr;
+    ctx.cosb_og_dev = nullptr;
+    ctx.lvl_T_dev = nullptr;
+    ctx.lvl_P_dev = nullptr;
+    ctx.surf_reflect_dev = nullptr;
+    ctx.flux_at_top_dev = nullptr;
 
     ctx.initialized = false;
 }

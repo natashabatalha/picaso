@@ -255,19 +255,19 @@ __global__ void setup_tri_diag_last(
     double * __restrict__ C_odd_dev,
     double * __restrict__ D_odd_dev)
 {
-    int index = global_idx_1d();
-    int total = nlayer * nwno;
-    if (index >= total) return;
+    int index_wn = global_idx_1d();
+    if (index_wn >= nwno) return;
 
-    if ((index > (nlayer - 1) * nwno) && (index < nlayer * nwno)) {
-        int idx = index + nlayer * nwno;
-        A_odd_dev[idx] = e1_dev[index] - atm_surf_reflect_dev[index] * e3_dev[index];
-        B_odd_dev[idx] = e2_dev[index] - atm_surf_reflect_dev[index] * e4_dev[index];
-        C_odd_dev[idx] = 0.0;
-        D_odd_dev[idx] = b_surface_dev[index - (nlayer - 1) * nwno]
+    int index_layer = nlayer - 1;
+    int index = index_layer * nwno + index_wn;
+    int index_tri = (2 * nlayer - 1) * nwno + index_wn;
+
+    A_odd_dev[index_tri] = e1_dev[index] - atm_surf_reflect_dev[index_wn] * e3_dev[index];
+    B_odd_dev[index_tri] = e2_dev[index] - atm_surf_reflect_dev[index_wn] * e4_dev[index];
+    C_odd_dev[index_tri] = 0.0;
+    D_odd_dev[index_tri] = b_surface_dev[index_wn]
                          - c_plus_down_dev[index]
-                         + atm_surf_reflect_dev[index] * c_minus_down_dev[index];
-    }
+                         + atm_surf_reflect_dev[index_wn] * c_minus_down_dev[index];
 }
 
 
@@ -635,13 +635,13 @@ __global__ void calculate_xint(
 __global__ void compute_disco(
     double * __restrict__ albedo_dev,
     double * __restrict__ xint_dev,
-    double gweight, double tweight,
+    double weight,
     int nwno)
 {
     int index = global_idx_1d();
     if (index >= nwno) return;
 
-    albedo_dev[index] += xint_dev[index] * gweight * tweight;
+    albedo_dev[index] += xint_dev[index] * weight;
 }
 
 
@@ -977,6 +977,8 @@ extern "C" void get_reflected_1d_set_inputs(
 }
 
 
+extern "C" void get_reflected_1d_free();
+
 extern "C" void get_reflected_1d_allocate_buffers(
     int    nlevel,
     int    nwno,
@@ -986,8 +988,7 @@ extern "C" void get_reflected_1d_allocate_buffers(
     ReflectedContext &ctx = g_ref_ctx;
 
     if (ctx.initialized) {
-        fprintf(stderr, "get_reflected_1d_init: already initialized, ignoring.\n");
-        return;
+        get_reflected_1d_free();
     }
 
     ctx.nlevel = nlevel;
@@ -1072,8 +1073,7 @@ extern "C" void get_reflected_1d_run(
     double        cos_theta,
     // double        surf_reflect,
     double        b_top,
-    const double *gweight,
-    const double *tweight,
+    const double *combined_weights,
     double *test_out,
     double *flux_minus_all_out,
     double *flux_plus_all_out,
@@ -1292,7 +1292,7 @@ extern "C" void get_reflected_1d_run(
         compute_disco<<<make_grid(nwno), BLOCK_SIZE>>>(
             ctx.albedo_dev,
             ctx.xint_dev,
-            gweight[i_iter], tweight[0], // if nt>1, adjust index
+            combined_weights[i_iter],
             nwno);
     }
 
@@ -1311,21 +1311,6 @@ extern "C" void get_reflected_1d_free()
     auto FREE = [](double *&p) {
         if (p) { CUDA_CHECK(cudaFree(p)); p = nullptr; }
     };
-
-    // Static inputs
-    // FREE(ctx.wno_dev);
-    // FREE(ctx.f0pi_dev);
-    // FREE(ctx.tau_dev);
-    // FREE(ctx.tau_og_dev);
-    // FREE(ctx.dtau_dev);
-    // FREE(ctx.w0_dev);
-    // FREE(ctx.cosb_dev);
-    // FREE(ctx.gcos2_dev);
-    // FREE(ctx.ftau_cld_dev);
-    // FREE(ctx.ftau_ray_dev);
-    // FREE(ctx.w0_og_dev);
-    // FREE(ctx.cosb_og_dev);
-    // FREE(ctx.dtau_og_dev);
 
     // Working arrays
     FREE(ctx.g1_dev);
@@ -1367,7 +1352,6 @@ extern "C" void get_reflected_1d_free()
     FREE(ctx.A_matrix_dev);
 
     FREE(ctx.p_single_dev);
-    // FREE(ctx.albedo_dev);
 
     FREE(ctx.xint_dev);
     FREE(ctx.xint_out_dev);
@@ -1380,10 +1364,26 @@ extern "C" void get_reflected_1d_free()
     FREE(ctx.flux_minus_midpt_dev);
     FREE(ctx.flux_plus_midpt_dev);
 
-    // FREE(ctx.flux_minus_all_dev);
-    // FREE(ctx.flux_plus_all_dev);
-    // FREE(ctx.flux_minus_midpt_all_dev);
-    // FREE(ctx.flux_plus_midpt_all_dev);
+    // Static inputs (CuPy managed, reset pointers)
+    ctx.wno_dev      = nullptr;
+    ctx.f0pi_dev     = nullptr;
+    ctx.tau_dev      = nullptr;
+    ctx.tau_og_dev   = nullptr;
+    ctx.dtau_dev     = nullptr;
+    ctx.w0_dev       = nullptr;
+    ctx.cosb_dev     = nullptr;
+    ctx.gcos2_dev    = nullptr;
+    ctx.ftau_cld_dev = nullptr;
+    ctx.ftau_ray_dev = nullptr;
+    ctx.w0_og_dev    = nullptr;
+    ctx.cosb_og_dev  = nullptr;
+    ctx.dtau_og_dev  = nullptr;
+    ctx.atm_surf_reflect_dev = nullptr;
+    ctx.albedo_dev   = nullptr;
+    ctx.flux_minus_all_dev       = nullptr;
+    ctx.flux_plus_all_dev        = nullptr;
+    ctx.flux_minus_midpt_all_dev = nullptr;
+    ctx.flux_plus_midpt_all_dev  = nullptr;
 
     ctx.initialized = false;
 }

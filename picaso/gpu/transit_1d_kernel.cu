@@ -170,6 +170,8 @@ struct TransitContext {
 
 static TransitContext g_ctx;
 
+extern "C" void get_transit_1d_free();
+
 extern "C" void get_transit_1d_allocate_buffers(
     int nlevel,
     int nwno
@@ -177,8 +179,7 @@ extern "C" void get_transit_1d_allocate_buffers(
     TransitContext& ctx = g_ctx;
 
     if (ctx.initialized) {
-        fprintf(stderr, "get_transit_1d_allocate_buffers: already initialized, ignoring.\n");
-        return;
+        get_transit_1d_free();
     }
 
     ctx.nlevel = nlevel;

@@ -495,8 +495,7 @@ def get_reflected_1d(
             ctypes.c_double, # cos_theta
             ctypes.c_double, # b_top
             # ctypes.c_double, # surf_reflect
-            c_double_p,      # gweight
-            c_double_p,      # tweight
+            c_double_p,      # combined_weights
             c_void_p,      # test_out
             c_void_p,      # flux_minus_all_out
             c_void_p,      # flux_plus_all_out
@@ -536,10 +535,15 @@ def get_reflected_1d(
             float(toon_coefficients)
         )
 
-        ubar0_pointer = (ctypes.c_double*ubar0.size)(*ubar0)
-        ubar1_pointer = (ctypes.c_double*ubar1.size)(*ubar1)
-        gweight_pointer = (ctypes.c_double*gweight.size)(*gweight)
-        tweight_pointer = (ctypes.c_double*tweight.size)(*tweight)
+        ubar0_pointer = (ctypes.c_double*ubar0.size)(*ubar0.flatten())
+        ubar1_pointer = (ctypes.c_double*ubar1.size)(*ubar1.flatten())
+
+        # Pre-calculate combined weights for the disco integration
+        # gweight is ng, tweight is nt. ubar0/1 are (ng, nt) flattened.
+        # The loop in CUDA is over i_iter = 0 to ng*nt.
+        # We need weight[i_iter] = gweight[ig] * tweight[it]
+        weights = np.outer(gweight, tweight).flatten()
+        weights_pointer = (ctypes.c_double*weights.size)(*weights)
 
         flux_at_top  = cp.zeros(F0PI.size)
         flux_at_top_p   = ctypes.c_void_p(flux_at_top.data.ptr)
@@ -562,8 +566,7 @@ def get_reflected_1d(
             ctypes.c_double(cos_theta),
             ctypes.c_double(b_top),
             # ctypes.c_double(atm_surf_reflect),
-            gweight_pointer,
-            tweight_pointer,
+            weights_pointer,
             flux_at_top_p,
             flux_minus_all_out_p,
             flux_plus_all_out_p,
