@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 
 import numpy as np
+import pytest
 
 # Get the root of the repo and prepend to path.
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +18,203 @@ setup_tri_diag_inplace = fluxes.setup_tri_diag_inplace
 get_reflected_1d = fluxes.get_reflected_1d
 get_reflected_1d_inplace = fluxes.get_reflected_1d_inplace
 GetReflectedWorkspace = fluxes.GetReflectedWorkspace
+
+
+def _make_reflected_case():
+    return dict(
+        nlevel=4,
+        nwno=3,
+        numg=2,
+        numt=2,
+        wno=np.array([1.0, 2.0, 3.0]),
+        dtau=np.array(
+            [[0.11, 0.12, 0.13],
+             [0.21, 0.22, 0.23],
+             [0.31, 0.32, 0.33]]
+        ),
+        tau=np.array(
+            [[0.01, 0.02, 0.03],
+             [0.14, 0.15, 0.16],
+             [0.37, 0.38, 0.39],
+             [0.70, 0.71, 0.72]]
+        ),
+        w0=np.array(
+            [[0.61, 0.62, 0.63],
+             [0.64, 0.65, 0.66],
+             [0.67, 0.68, 0.69]]
+        ),
+        cosb=np.array(
+            [[0.11, 0.12, 0.13],
+             [0.21, 0.22, 0.23],
+             [0.31, 0.32, 0.33]]
+        ),
+        gcos2=np.array(
+            [[0.05, 0.06, 0.07],
+             [0.08, 0.09, 0.10],
+             [0.11, 0.12, 0.13]]
+        ),
+        ftau_cld=np.array(
+            [[0.41, 0.42, 0.43],
+             [0.44, 0.45, 0.46],
+             [0.47, 0.48, 0.49]]
+        ),
+        ftau_ray=np.array(
+            [[0.19, 0.20, 0.21],
+             [0.22, 0.23, 0.24],
+             [0.25, 0.26, 0.27]]
+        ),
+        dtau_og=np.array(
+            [[0.09, 0.10, 0.11],
+             [0.12, 0.13, 0.14],
+             [0.15, 0.16, 0.17]]
+        ),
+        tau_og=np.array(
+            [[0.02, 0.03, 0.04],
+             [0.18, 0.19, 0.20],
+             [0.42, 0.43, 0.44],
+             [0.77, 0.78, 0.79]]
+        ),
+        w0_og=np.array(
+            [[0.51, 0.52, 0.53],
+             [0.54, 0.55, 0.56],
+             [0.57, 0.58, 0.59]]
+        ),
+        cosb_og=np.array(
+            [[0.14, 0.15, 0.16],
+             [0.24, 0.25, 0.26],
+             [0.34, 0.35, 0.36]]
+        ),
+        surf_reflect=0.23,
+        ubar0=np.array(
+            [[0.41, 0.42],
+             [0.51, 0.52]]
+        ),
+        ubar1=np.array(
+            [[0.61, 0.62],
+             [0.71, 0.72]]
+        ),
+        cos_theta=0.37,
+        F0PI=1.11,
+        frac_a=0.17,
+        frac_b=0.27,
+        frac_c=1.3,
+        constant_back=0.29,
+        constant_forward=0.39,
+        b_top=0.07,
+    )
+
+
+def _call_reflected_alloc(case, single_phase, multi_phase, get_toa_intensity, get_lvl_flux, toon_coefficients):
+    return get_reflected_1d(
+        case["nlevel"],
+        case["wno"].copy(),
+        case["nwno"],
+        case["numg"],
+        case["numt"],
+        case["dtau"].copy(),
+        case["tau"].copy(),
+        case["w0"].copy(),
+        case["cosb"].copy(),
+        case["gcos2"].copy(),
+        case["ftau_cld"].copy(),
+        case["ftau_ray"].copy(),
+        case["dtau_og"].copy(),
+        case["tau_og"].copy(),
+        case["w0_og"].copy(),
+        case["cosb_og"].copy(),
+        case["surf_reflect"],
+        case["ubar0"].copy(),
+        case["ubar1"].copy(),
+        case["cos_theta"],
+        case["F0PI"],
+        single_phase,
+        multi_phase,
+        case["frac_a"],
+        case["frac_b"],
+        case["frac_c"],
+        case["constant_back"],
+        case["constant_forward"],
+        get_toa_intensity=get_toa_intensity,
+        get_lvl_flux=get_lvl_flux,
+        toon_coefficients=toon_coefficients,
+        b_top=case["b_top"],
+    )
+
+
+def _zero_workspace_outputs(wrk):
+    for array in (
+        wrk.xint,
+        wrk.xint_at_top,
+        wrk.flux_minus_all,
+        wrk.flux_plus_all,
+        wrk.flux_minus_midpt_all,
+        wrk.flux_plus_midpt_all,
+    ):
+        array.fill(0.0)
+
+
+def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity, get_lvl_flux, toon_coefficients):
+    expected_xint, expected_fluxes = _call_reflected_alloc(
+        case,
+        single_phase,
+        multi_phase,
+        get_toa_intensity,
+        get_lvl_flux,
+        toon_coefficients,
+    )
+
+    wrk = GetReflectedWorkspace(
+        case["nlevel"] - 1,
+        case["nwno"],
+        case["numg"],
+        case["numt"],
+        get_lvl_flux=True,
+        get_toa_intensity=True,
+    )
+    _zero_workspace_outputs(wrk)
+
+    result = get_reflected_1d_inplace(
+        case["nlevel"],
+        case["wno"].copy(),
+        case["nwno"],
+        case["numg"],
+        case["numt"],
+        case["dtau"].copy(),
+        case["tau"].copy(),
+        case["w0"].copy(),
+        case["cosb"].copy(),
+        case["gcos2"].copy(),
+        case["ftau_cld"].copy(),
+        case["ftau_ray"].copy(),
+        case["dtau_og"].copy(),
+        case["tau_og"].copy(),
+        case["w0_og"].copy(),
+        case["cosb_og"].copy(),
+        case["surf_reflect"],
+        case["ubar0"].copy(),
+        case["ubar1"].copy(),
+        case["cos_theta"],
+        case["F0PI"],
+        single_phase,
+        multi_phase,
+        case["frac_a"],
+        case["frac_b"],
+        case["frac_c"],
+        case["constant_back"],
+        case["constant_forward"],
+        get_toa_intensity=get_toa_intensity,
+        get_lvl_flux=get_lvl_flux,
+        toon_coefficients=toon_coefficients,
+        b_top=case["b_top"],
+        wrk=wrk,
+    )
+
+    assert result is None
+    np.testing.assert_allclose(wrk.xint_at_top, expected_xint)
+    np.testing.assert_allclose(wrk.flux_minus_all, expected_fluxes[0])
+    np.testing.assert_allclose(wrk.flux_plus_all, expected_fluxes[1])
+    np.testing.assert_allclose(wrk.flux_minus_midpt_all, expected_fluxes[2])
+    np.testing.assert_allclose(wrk.flux_plus_midpt_all, expected_fluxes[3])
 
 def test_tri_diag_solve_matches_inplace():
     l = 5
@@ -130,175 +328,29 @@ def test_setup_tri_diag_matches_inplace():
     np.testing.assert_allclose(D, expected[3].T)
 
 
-def test_get_reflected_1d_matches_inplace():
-    nlevel = 4
-    nwno = 3
-    numg = 2
-    numt = 2
-    nlayer = nlevel - 1
-
-    wno = np.array([1.0, 2.0, 3.0])
-    dtau = np.array(
-        [[0.11, 0.12, 0.13],
-         [0.21, 0.22, 0.23],
-         [0.31, 0.32, 0.33]]
-    )
-    tau = np.array(
-        [[0.01, 0.02, 0.03],
-         [0.14, 0.15, 0.16],
-         [0.37, 0.38, 0.39],
-         [0.70, 0.71, 0.72]]
-    )
-    w0 = np.array(
-        [[0.61, 0.62, 0.63],
-         [0.64, 0.65, 0.66],
-         [0.67, 0.68, 0.69]]
-    )
-    cosb = np.array(
-        [[0.11, 0.12, 0.13],
-         [0.21, 0.22, 0.23],
-         [0.31, 0.32, 0.33]]
-    )
-    gcos2 = np.array(
-        [[0.05, 0.06, 0.07],
-         [0.08, 0.09, 0.10],
-         [0.11, 0.12, 0.13]]
-    )
-    ftau_cld = np.array(
-        [[0.41, 0.42, 0.43],
-         [0.44, 0.45, 0.46],
-         [0.47, 0.48, 0.49]]
-    )
-    ftau_ray = np.array(
-        [[0.19, 0.20, 0.21],
-         [0.22, 0.23, 0.24],
-         [0.25, 0.26, 0.27]]
-    )
-    dtau_og = np.array(
-        [[0.09, 0.10, 0.11],
-         [0.12, 0.13, 0.14],
-         [0.15, 0.16, 0.17]]
-    )
-    tau_og = np.array(
-        [[0.02, 0.03, 0.04],
-         [0.18, 0.19, 0.20],
-         [0.42, 0.43, 0.44],
-         [0.77, 0.78, 0.79]]
-    )
-    w0_og = np.array(
-        [[0.51, 0.52, 0.53],
-         [0.54, 0.55, 0.56],
-         [0.57, 0.58, 0.59]]
-    )
-    cosb_og = np.array(
-        [[0.14, 0.15, 0.16],
-         [0.24, 0.25, 0.26],
-         [0.34, 0.35, 0.36]]
-    )
-    surf_reflect = 0.23
-    ubar0 = np.array(
-        [[0.41, 0.42],
-         [0.51, 0.52]]
-    )
-    ubar1 = np.array(
-        [[0.61, 0.62],
-         [0.71, 0.72]]
-    )
-    cos_theta = 0.37
-    F0PI = 1.11
-    single_phase = 3
-    multi_phase = 0
-    frac_a = 0.17
-    frac_b = 0.27
-    frac_c = 1.3
-    constant_back = 0.29
-    constant_forward = 0.39
-    toon_coefficients = 0
-    b_top = 0.07
-
-    expected_xint, expected_fluxes = get_reflected_1d(
-        nlevel,
-        wno.copy(),
-        nwno,
-        numg,
-        numt,
-        dtau.copy(),
-        tau.copy(),
-        w0.copy(),
-        cosb.copy(),
-        gcos2.copy(),
-        ftau_cld.copy(),
-        ftau_ray.copy(),
-        dtau_og.copy(),
-        tau_og.copy(),
-        w0_og.copy(),
-        cosb_og.copy(),
-        surf_reflect,
-        ubar0.copy(),
-        ubar1.copy(),
-        cos_theta,
-        F0PI,
+@pytest.mark.parametrize(
+    "single_phase,multi_phase,get_toa_intensity,get_lvl_flux,toon_coefficients",
+    [
+        (0, 0, 1, 1, 0),
+        (1, 1, 1, 1, 1),
+        (2, 1, 1, 0, 0),
+        (3, 0, 0, 1, 1),
+        (2, 0, 0, 0, 1),
+    ],
+)
+def test_get_reflected_1d_matches_inplace(
+    single_phase,
+    multi_phase,
+    get_toa_intensity,
+    get_lvl_flux,
+    toon_coefficients,
+):
+    case = _make_reflected_case()
+    _assert_reflected_parity(
+        case,
         single_phase,
         multi_phase,
-        frac_a,
-        frac_b,
-        frac_c,
-        constant_back,
-        constant_forward,
-        get_toa_intensity=1,
-        get_lvl_flux=1,
-        toon_coefficients=toon_coefficients,
-        b_top=b_top,
+        get_toa_intensity,
+        get_lvl_flux,
+        toon_coefficients,
     )
-
-    wrk = GetReflectedWorkspace(
-        nlayer,
-        nwno,
-        numg,
-        numt,
-        get_lvl_flux=True,
-        get_toa_intensity=True,
-    )
-
-    result = get_reflected_1d_inplace(
-        nlevel,
-        wno.copy(),
-        nwno,
-        numg,
-        numt,
-        dtau.copy(),
-        tau.copy(),
-        w0.copy(),
-        cosb.copy(),
-        gcos2.copy(),
-        ftau_cld.copy(),
-        ftau_ray.copy(),
-        dtau_og.copy(),
-        tau_og.copy(),
-        w0_og.copy(),
-        cosb_og.copy(),
-        surf_reflect,
-        ubar0.copy(),
-        ubar1.copy(),
-        cos_theta,
-        F0PI,
-        single_phase,
-        multi_phase,
-        frac_a,
-        frac_b,
-        frac_c,
-        constant_back,
-        constant_forward,
-        get_toa_intensity=1,
-        get_lvl_flux=1,
-        toon_coefficients=toon_coefficients,
-        b_top=b_top,
-        wrk=wrk,
-    )
-
-    assert result is None
-    np.testing.assert_allclose(wrk.xint_at_top, expected_xint)
-    np.testing.assert_allclose(wrk.flux_minus_all, expected_fluxes[0])
-    np.testing.assert_allclose(wrk.flux_plus_all, expected_fluxes[1])
-    np.testing.assert_allclose(wrk.flux_minus_midpt_all, expected_fluxes[2])
-    np.testing.assert_allclose(wrk.flux_plus_midpt_all, expected_fluxes[3])
