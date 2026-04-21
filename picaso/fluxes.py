@@ -1124,8 +1124,12 @@ class GetReflectedWorkspace:
     positive : types.double[:, :]
     negative : types.double[:, :]
     b_surface : types.double[:]
+    flux_minus_all : types.double[:, :, :, :]
+    flux_plus_all : types.double[:, :, :, :]
+    flux_minus_midpt_all : types.double[:, :, :, :]
+    flux_plus_midpt_all : types.double[:, :, :, :]
 
-    def __init__(self, nlayer, nwno):
+    def __init__(self, nlayer, nwno, numg, numt, get_lvl_flux):
         self.g1 = np.empty((nlayer, nwno), dtype=np.float64)
         self.g2 = np.empty((nlayer, nwno), dtype=np.float64)
         self.lamda = np.empty((nlayer, nwno), dtype=np.float64)
@@ -1147,6 +1151,11 @@ class GetReflectedWorkspace:
         self.positive = np.empty((nlayer, nwno), dtype=np.float64)
         self.negative = np.empty((nlayer, nwno), dtype=np.float64)
         self.b_surface = np.empty((nwno), dtype=np.float64)
+        if get_lvl_flux:
+            self.flux_minus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
+            self.flux_plus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
+            self.flux_minus_midpt_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
+            self.flux_plus_midpt_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d_inplace(
@@ -1294,6 +1303,54 @@ def get_reflected_1d_inplace(
                     wrk.positive[i,w] = wrk.D[2 * i, w] + wrk.D[2 * i + 1, w]
                     wrk.negative[i,w] = wrk.D[2 * i, w] - wrk.D[2 * i + 1, w]
             #========================= End loop over wavelength =========================
+            
+            #========================= Get fluxes if needed for climate =========================
+            if get_lvl_flux:
+                for j in range(nwno):
+                    for i in range(nlevel):
+                        wrk.flux_minus_all[ng, nt, i, j] = 0.0
+                        wrk.flux_plus_all[ng, nt, i, j] = 0.0
+                        wrk.flux_minus_midpt_all[ng, nt, i, j] = 0.0
+                        wrk.flux_plus_midpt_all[ng, nt, i, j] = 0.0
+
+                    for i in range(nlayer):
+                        wrk.flux_minus_all[ng, nt, i, j] = wrk.positive[i, j] * gama[i, j] + wrk.negative[i, j] + wrk.c_minus_up[i, j]
+                        wrk.flux_plus_all[ng, nt, i, j] = wrk.positive[i, j] + gama[i, j] * wrk.negative[i, j] + wrk.c_plus_up[i, j]
+
+                    wrk.flux_minus_all[ng, nt, nlayer, j] = (
+                        gama[nlayer - 1, j] * wrk.positive[nlayer - 1, j] * wrk.exptrm_positive[nlayer - 1, j]
+                        + wrk.negative[nlayer - 1, j] * wrk.exptrm_minus[nlayer - 1, j]
+                        + wrk.c_minus_down[nlayer - 1, j]
+                    )
+                    wrk.flux_plus_all[ng, nt, nlayer, j] = (
+                        wrk.positive[nlayer - 1, j] * wrk.exptrm_positive[nlayer - 1, j]
+                        + gama[nlayer - 1, j] * wrk.negative[nlayer - 1, j] * wrk.exptrm_minus[nlayer - 1, j]
+                        + wrk.c_plus_down[nlayer - 1, j]
+                    )
+
+                    for i in range(nlevel):
+                        wrk.flux_minus_all[ng, nt, i, j] = wrk.flux_minus_all[ng, nt, i, j] + u0 * F0PI * exp(-tau[i, j] / u0)
+
+                    for i in range(nlayer):
+                        exptrm_positive_midpt = exp(0.5 * wrk.exptrm[i, j])
+                        exptrm_minus_midpt = 1.0 / exptrm_positive_midpt
+                        taumid = tau[i, j] + 0.5 * dtau[i, j]
+                        c_plus_mid = wrk.a_plus[i, j] * exp(-taumid / ubar0[ng, nt])
+                        c_minus_mid = wrk.a_minus[i, j] * exp(-taumid / ubar0[ng, nt])
+
+                        wrk.flux_minus_midpt_all[ng, nt, i, j] = (
+                            gama[i, j] * wrk.positive[i, j] * exptrm_positive_midpt
+                            + wrk.negative[i, j] * exptrm_minus_midpt
+                            + c_minus_mid
+                            + ubar0[ng, nt] * F0PI * exp(-taumid / ubar0[ng, nt])
+                        )
+                        wrk.flux_plus_midpt_all[ng, nt, i, j] = (
+                            wrk.positive[i, j] * exptrm_positive_midpt
+                            + gama[i, j] * wrk.negative[i, j] * exptrm_minus_midpt
+                            + c_plus_mid
+                        )
+                # The last midpoint row remains zero, matching the allocating version.
+            #========================= End get fluxes if needed for climate =========================
 
 
 
