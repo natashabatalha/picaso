@@ -1,5 +1,6 @@
 from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes import get_reflected_1d_inplace, GetReflectedWorkspace
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
@@ -46,6 +47,29 @@ __refdata__ = os.environ.get('picaso_refdata')
 __version__ = '4.0.1'
 
 LODDERS2020_C_TO_O = 0.54939759398
+
+
+class RTWorkspaces:
+    """Persistent RT workspace registry attached to the long-lived bundle."""
+
+    def __init__(self):
+        self.reflected = None
+        self.thermal = None
+        self.transmission = None
+
+    def ensure_reflected(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+        if self.reflected is None or self.reflected.needs_reallocation(
+            nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity
+        ):
+            self.reflected = GetReflectedWorkspace(
+                nlayer,
+                nwno,
+                numg,
+                numt,
+                get_lvl_flux,
+                get_toa_intensity,
+            )
+        return self.reflected
 
 
 def _molecule_has_continuum_support(opacityclass, simple_name, active_simple_names):
@@ -311,7 +335,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     if get_lvl_flux: 
                         atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
                     
-                    xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
+                    wrk = bundle.workspaces.ensure_reflected(
+                        nlayer,
+                        nwno,
+                        ng,
+                        nt,
+                        get_lvl_flux,
+                        get_toa_intensity=1,
+                    )
+                    get_reflected_1d_inplace(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
                                     DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
@@ -319,37 +351,42 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
                                     get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
-                                    toon_coefficients=toon_coefficients,b_top=b_top)
-                    
-                    flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = lvl_fluxes
+                                    toon_coefficients=toon_coefficients,b_top=b_top,wrk=wrk)
+                    xint = wrk.xint_at_top
+                    flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = wrk.flux_minus_all, wrk.flux_plus_all, wrk.flux_minus_midpt_all, wrk.flux_plus_midpt_all
 
-                    if do_holes == True:
-                        xint_clear, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng,nt,
-                                DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
-                                GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                                DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
-                                atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
-                                single_phase,multi_phase,
-                                frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                                get_toa_intensity=1, get_lvl_flux=int(atm.get_lvl_flux),
-                                toon_coefficients=toon_coefficients,b_top=b_top)
-                    
-                        flux_minus_all_v_clear, flux_plus_all_v_clear, flux_minus_midpt_all_v_clear, flux_plus_midpt_all_v_clear = out_ref_fluxes_clear
-                        
-                        #weighted average of cloudy and clearsky
-                        flux_plus_midpt_all_v = (1.0 - fhole)* flux_plus_midpt_all_v + fhole * flux_plus_midpt_all_v_clear
-                        flux_minus_midpt_all_v = (1.0 - fhole)* flux_minus_midpt_all_v + fhole * flux_minus_midpt_all_v_clear
-                        flux_plus_all_v = (1.0 - fhole)* flux_plus_all_v + fhole * flux_plus_all_v_clear
-                        flux_minus_all_v = (1.0 - fhole)* flux_minus_all_v + fhole * flux_minus_all_v_clear
-                        xint = (1.0 - fhole)* xint + fhole * xint_clear
+                    if do_holes:
+                        xint_at_top += (1.0 - fhole) * xint * gauss_wts[ig]
+                        if get_lvl_flux:
+                            atm.lvl_output_reflected['flux_minus'] += (1.0 - fhole) * flux_minus_all_v * gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_plus'] += (1.0 - fhole) * flux_plus_all_v * gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_minus_mdpt'] += (1.0 - fhole) * flux_minus_midpt_all_v * gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_plus_mdpt'] += (1.0 - fhole) * flux_plus_midpt_all_v * gauss_wts[ig]
 
-                xint_at_top += xint*gauss_wts[ig]
+                        get_reflected_1d_inplace(nlevel, wno,nwno,ng,nt,
+                                        DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
+                                        GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                        DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
+                                        atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
+                                        single_phase,multi_phase,
+                                        frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                                        get_toa_intensity=1, get_lvl_flux=int(atm.get_lvl_flux),
+                                        toon_coefficients=toon_coefficients,b_top=b_top,wrk=wrk)
 
-                if get_lvl_flux: 
-                    atm.lvl_output_reflected['flux_minus']+=flux_minus_all_v*gauss_wts[ig]
-                    atm.lvl_output_reflected['flux_plus']+=flux_plus_all_v*gauss_wts[ig]
-                    atm.lvl_output_reflected['flux_minus_mdpt']+=flux_minus_midpt_all_v*gauss_wts[ig]
-                    atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
+                        xint_at_top += fhole * wrk.xint_at_top * gauss_wts[ig]
+                        if get_lvl_flux:
+                            atm.lvl_output_reflected['flux_minus'] += fhole * wrk.flux_minus_all * gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_plus'] += fhole * wrk.flux_plus_all * gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_minus_mdpt'] += fhole * wrk.flux_minus_midpt_all * gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_plus_mdpt'] += fhole * wrk.flux_plus_midpt_all * gauss_wts[ig]
+                    else:
+                        xint_at_top += xint * gauss_wts[ig]
+
+                        if get_lvl_flux: 
+                            atm.lvl_output_reflected['flux_minus'] += flux_minus_all_v*gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_plus'] += flux_plus_all_v*gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_minus_mdpt'] += flux_minus_midpt_all_v*gauss_wts[ig]
+                            atm.lvl_output_reflected['flux_plus_mdpt'] += flux_plus_midpt_all_v*gauss_wts[ig]
             if full_output: 
                 atm.xint_at_top = xint_at_top
 
@@ -1484,6 +1521,7 @@ class inputs():
     def __init__(self, calculation='planet', climate=False):
 
         self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
+        self.workspaces = RTWorkspaces()
         
         if 'brown' in calculation:
             self.setup_nostar()
