@@ -98,10 +98,10 @@ def test_setup_tri_diag_matches_inplace():
         exptrm_minus.copy(),
     )
 
-    A = np.zeros((2 * nlayer, nwno))
-    B = np.zeros((2 * nlayer, nwno))
-    C = np.zeros((2 * nlayer, nwno))
-    D = np.zeros((2 * nlayer, nwno))
+    A = np.zeros((nwno, 2 * nlayer))
+    B = np.zeros((nwno, 2 * nlayer))
+    C = np.zeros((nwno, 2 * nlayer))
+    D = np.zeros((nwno, 2 * nlayer))
 
     result = setup_tri_diag_inplace(
         A,
@@ -124,10 +124,10 @@ def test_setup_tri_diag_matches_inplace():
     )
 
     assert result is None
-    np.testing.assert_allclose(A, expected[0])
-    np.testing.assert_allclose(B, expected[1])
-    np.testing.assert_allclose(C, expected[2])
-    np.testing.assert_allclose(D, expected[3])
+    np.testing.assert_allclose(A, expected[0].T)
+    np.testing.assert_allclose(B, expected[1].T)
+    np.testing.assert_allclose(C, expected[2].T)
+    np.testing.assert_allclose(D, expected[3].T)
 
 
 def test_get_reflected_1d_matches_inplace():

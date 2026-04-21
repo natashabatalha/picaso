@@ -97,16 +97,14 @@ def setup_tri_diag_inplace(A, B, C, D, nlayer, nwno, c_plus_up, c_minus_up,
     Parameters
     ----------
     A, B, C, D : array
-        Preallocated output arrays with shape ``(2 * nlayer, nwno)``.
+        Preallocated output arrays with shape ``(nwno, 2 * nlayer)``.
     Other parameters match :func:`setup_tri_diag`.
     """
-    L = 2 * nlayer
-
     for w in range(nwno):
-        A[0, w] = 0.0
-        B[0, w] = gama[0, w] + 1.0
-        C[0, w] = gama[0, w] - 1.0
-        D[0, w] = b_top - c_minus_up[0, w]
+        A[w, 0] = 0.0
+        B[w, 0] = gama[0, w] + 1.0
+        C[w, 0] = gama[0, w] - 1.0
+        D[w, 0] = b_top - c_minus_up[0, w]
 
         for k in range(nlayer - 1):
             e1 = exptrm_positive[k, w] + gama[k, w] * exptrm_minus[k, w]
@@ -121,26 +119,26 @@ def setup_tri_diag_inplace(A, B, C, D, nlayer, nwno, c_plus_up, c_minus_up,
             cm_down = c_minus_down[k, w]
 
             row = 2 * k + 1
-            A[row, w] = (e1 + e3) * (g - 1.0)
-            B[row, w] = (e2 + e4) * (g - 1.0)
-            C[row, w] = 2.0 * (1.0 - g * g)
-            D[row, w] = (g - 1.0) * (cp_up - cp_down) + (1.0 - g) * (cm_down - cm_up)
+            A[w, row] = (e1 + e3) * (g - 1.0)
+            B[w, row] = (e2 + e4) * (g - 1.0)
+            C[w, row] = 2.0 * (1.0 - g * g)
+            D[w, row] = (g - 1.0) * (cp_up - cp_down) + (1.0 - g) * (cm_down - cm_up)
 
             row = 2 * k + 2
-            A[row, w] = 2.0 * (1.0 - gama[k, w] * gama[k, w])
-            B[row, w] = (e1 - e3) * (g + 1.0)
-            C[row, w] = (e1 + e3) * (g - 1.0)
-            D[row, w] = e3 * (cp_up - cp_down) + e1 * (cm_down - cm_up)
+            A[w, row] = 2.0 * (1.0 - gama[k, w] * gama[k, w])
+            B[w, row] = (e1 - e3) * (g + 1.0)
+            C[w, row] = (e1 + e3) * (g - 1.0)
+            D[w, row] = e3 * (cp_up - cp_down) + e1 * (cm_down - cm_up)
 
         e1 = exptrm_positive[nlayer - 1, w] + gama[nlayer - 1, w] * exptrm_minus[nlayer - 1, w]
         e2 = exptrm_positive[nlayer - 1, w] - gama[nlayer - 1, w] * exptrm_minus[nlayer - 1, w]
         e3 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] + exptrm_minus[nlayer - 1, w]
         e4 = gama[nlayer - 1, w] * exptrm_positive[nlayer - 1, w] - exptrm_minus[nlayer - 1, w]
 
-        A[L - 1, w] = e1 - surf_reflect * e3
-        B[L - 1, w] = e2 - surf_reflect * e4
-        C[L - 1, w] = 0.0
-        D[L - 1, w] = b_surface[w] - c_plus_down[nlayer - 1, w] + surf_reflect * c_minus_down[nlayer - 1, w]
+        A[w, 2 * nlayer - 1] = e1 - surf_reflect * e3
+        B[w, 2 * nlayer - 1] = e2 - surf_reflect * e4
+        C[w, 2 * nlayer - 1] = 0.0
+        D[w, 2 * nlayer - 1] = b_surface[w] - c_plus_down[nlayer - 1, w] + surf_reflect * c_minus_down[nlayer - 1, w]
 
     return
 
@@ -1146,10 +1144,10 @@ class GetReflectedWorkspace:
         self.exptrm = np.empty((nlayer, nwno), dtype=np.float64)
         self.exptrm_positive = np.empty((nlayer, nwno), dtype=np.float64)
         self.exptrm_minus = np.empty((nlayer, nwno), dtype=np.float64)
-        self.A = np.empty((2 * nlayer, nwno), dtype=np.float64)
-        self.B = np.empty((2 * nlayer, nwno), dtype=np.float64)
-        self.C = np.empty((2 * nlayer, nwno), dtype=np.float64)
-        self.D = np.empty((2 * nlayer, nwno), dtype=np.float64)
+        self.A = np.empty((nwno, 2 * nlayer), dtype=np.float64)
+        self.B = np.empty((nwno, 2 * nlayer), dtype=np.float64)
+        self.C = np.empty((nwno, 2 * nlayer), dtype=np.float64)
+        self.D = np.empty((nwno, 2 * nlayer), dtype=np.float64)
         self.positive = np.empty((nlayer, nwno), dtype=np.float64)
         self.negative = np.empty((nlayer, nwno), dtype=np.float64)
         self.b_surface = np.empty((nwno), dtype=np.float64)
@@ -1301,12 +1299,12 @@ def get_reflected_1d_inplace(
             L = 2*nlayer
             for w in range(nwno):
                 # coefficient of posive and negative exponential terms 
-                tri_diag_solve_inplace(L, wrk.A[:,w], wrk.B[:,w], wrk.C[:,w], wrk.D[:,w])
+                tri_diag_solve_inplace(L, wrk.A[w], wrk.B[w], wrk.C[w], wrk.D[w])
                 
                 # unmix the coefficients
                 for i in range(nlayer):
-                    wrk.positive[i,w] = wrk.D[2 * i, w] + wrk.D[2 * i + 1, w]
-                    wrk.negative[i,w] = wrk.D[2 * i, w] - wrk.D[2 * i + 1, w]
+                    wrk.positive[i,w] = wrk.D[w, 2 * i] + wrk.D[w, 2 * i + 1]
+                    wrk.negative[i,w] = wrk.D[w, 2 * i] - wrk.D[w, 2 * i + 1]
             #========================= End loop over wavelength =========================
             
             #========================= Get fluxes if needed for climate =========================
