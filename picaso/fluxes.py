@@ -1148,8 +1148,8 @@ class GetReflectedWorkspace:
         self.B = np.empty((nwno, 2 * nlayer), dtype=np.float64)
         self.C = np.empty((nwno, 2 * nlayer), dtype=np.float64)
         self.D = np.empty((nwno, 2 * nlayer), dtype=np.float64)
-        self.positive = np.empty((nlayer, nwno), dtype=np.float64)
-        self.negative = np.empty((nlayer, nwno), dtype=np.float64)
+        self.positive = np.empty((nwno, nlayer), dtype=np.float64)
+        self.negative = np.empty((nwno, nlayer), dtype=np.float64)
         self.b_surface = np.empty((nwno), dtype=np.float64)
         if get_lvl_flux:
             self.flux_minus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
@@ -1303,8 +1303,8 @@ def get_reflected_1d_inplace(
                 
                 # unmix the coefficients
                 for i in range(nlayer):
-                    wrk.positive[i,w] = wrk.D[w, 2 * i] + wrk.D[w, 2 * i + 1]
-                    wrk.negative[i,w] = wrk.D[w, 2 * i] - wrk.D[w, 2 * i + 1]
+                    wrk.positive[w, i] = wrk.D[w, 2 * i] + wrk.D[w, 2 * i + 1]
+                    wrk.negative[w, i] = wrk.D[w, 2 * i] - wrk.D[w, 2 * i + 1]
             #========================= End loop over wavelength =========================
             
             #========================= Get fluxes if needed for climate =========================
@@ -1317,17 +1317,17 @@ def get_reflected_1d_inplace(
                         wrk.flux_plus_midpt_all[ng, nt, i, j] = 0.0
 
                     for i in range(nlayer):
-                        wrk.flux_minus_all[ng, nt, i, j] = wrk.positive[i, j] * gama[i, j] + wrk.negative[i, j] + wrk.c_minus_up[i, j]
-                        wrk.flux_plus_all[ng, nt, i, j] = wrk.positive[i, j] + gama[i, j] * wrk.negative[i, j] + wrk.c_plus_up[i, j]
+                        wrk.flux_minus_all[ng, nt, i, j] = wrk.positive[j, i] * gama[i, j] + wrk.negative[j, i] + wrk.c_minus_up[i, j]
+                        wrk.flux_plus_all[ng, nt, i, j] = wrk.positive[j, i] + gama[i, j] * wrk.negative[j, i] + wrk.c_plus_up[i, j]
 
                     wrk.flux_minus_all[ng, nt, nlayer, j] = (
-                        gama[nlayer - 1, j] * wrk.positive[nlayer - 1, j] * wrk.exptrm_positive[nlayer - 1, j]
-                        + wrk.negative[nlayer - 1, j] * wrk.exptrm_minus[nlayer - 1, j]
+                        gama[nlayer - 1, j] * wrk.positive[j, nlayer - 1] * wrk.exptrm_positive[nlayer - 1, j]
+                        + wrk.negative[j, nlayer - 1] * wrk.exptrm_minus[nlayer - 1, j]
                         + wrk.c_minus_down[nlayer - 1, j]
                     )
                     wrk.flux_plus_all[ng, nt, nlayer, j] = (
-                        wrk.positive[nlayer - 1, j] * wrk.exptrm_positive[nlayer - 1, j]
-                        + gama[nlayer - 1, j] * wrk.negative[nlayer - 1, j] * wrk.exptrm_minus[nlayer - 1, j]
+                        wrk.positive[j, nlayer - 1] * wrk.exptrm_positive[nlayer - 1, j]
+                        + gama[nlayer - 1, j] * wrk.negative[j, nlayer - 1] * wrk.exptrm_minus[nlayer - 1, j]
                         + wrk.c_plus_down[nlayer - 1, j]
                     )
 
@@ -1342,14 +1342,14 @@ def get_reflected_1d_inplace(
                         c_minus_mid = wrk.a_minus[i, j] * exp(-taumid / ubar0[ng, nt])
 
                         wrk.flux_minus_midpt_all[ng, nt, i, j] = (
-                            gama[i, j] * wrk.positive[i, j] * exptrm_positive_midpt
-                            + wrk.negative[i, j] * exptrm_minus_midpt
+                            gama[i, j] * wrk.positive[j, i] * exptrm_positive_midpt
+                            + wrk.negative[j, i] * exptrm_minus_midpt
                             + c_minus_mid
                             + ubar0[ng, nt] * F0PI * exp(-taumid / ubar0[ng, nt])
                         )
                         wrk.flux_plus_midpt_all[ng, nt, i, j] = (
-                            wrk.positive[i, j] * exptrm_positive_midpt
-                            + gama[i, j] * wrk.negative[i, j] * exptrm_minus_midpt
+                            wrk.positive[j, i] * exptrm_positive_midpt
+                            + gama[i, j] * wrk.negative[j, i] * exptrm_minus_midpt
                             + c_plus_mid
                         )
                 # The last midpoint row remains zero, matching the allocating version.
@@ -1359,8 +1359,8 @@ def get_reflected_1d_inplace(
             if get_toa_intensity:
                 for j in range(nwno):
                     flux_zero = (
-                        wrk.positive[nlayer - 1, j] * wrk.exptrm_positive[nlayer - 1, j]
-                        + gama[nlayer - 1, j] * wrk.negative[nlayer - 1, j] * wrk.exptrm_minus[nlayer - 1, j]
+                        wrk.positive[j, nlayer - 1] * wrk.exptrm_positive[nlayer - 1, j]
+                        + gama[nlayer - 1, j] * wrk.negative[j, nlayer - 1] * wrk.exptrm_minus[nlayer - 1, j]
                         + wrk.c_plus_down[nlayer - 1, j]
                     )
                     wrk.xint[nlayer, j] = flux_zero / pi
@@ -1375,8 +1375,8 @@ def get_reflected_1d_inplace(
                             multi_plus = 1.0 + 1.5 * ftau_cld[i, j] * cosb[i, j] * u1
                             multi_minus = 1.0 - 1.5 * ftau_cld[i, j] * cosb[i, j] * u1
 
-                        G = wrk.positive[i, j] * (multi_plus + gama[i, j] * multi_minus) * w0[i, j] * 0.5 / pi
-                        H = wrk.negative[i, j] * (gama[i, j] * multi_plus + multi_minus) * w0[i, j] * 0.5 / pi
+                        G = wrk.positive[j, i] * (multi_plus + gama[i, j] * multi_minus) * w0[i, j] * 0.5 / pi
+                        H = wrk.negative[j, i] * (gama[i, j] * multi_plus + multi_minus) * w0[i, j] * 0.5 / pi
                         source_A = (multi_plus * wrk.c_plus_up[i, j] + multi_minus * wrk.c_minus_up[i, j]) * w0[i, j] * 0.5 / pi
 
                         if single_phase != 1:
