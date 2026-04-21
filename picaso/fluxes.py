@@ -1107,12 +1107,46 @@ class GetReflectedWorkspace:
     g2 : types.double[:, :]
     lamda : types.double[:, :]
     gama : types.double[:, :]
+    g3 : types.double[:, :]
+    a_minus : types.double[:, :]
+    a_plus : types.double[:, :]
+    c_minus_up : types.double[:, :]
+    c_plus_up : types.double[:, :]
+    c_minus_down : types.double[:, :]
+    c_plus_down : types.double[:, :]
+    exptrm : types.double[:, :]
+    exptrm_positive : types.double[:, :]
+    exptrm_minus : types.double[:, :]
+    A : types.double[:, :]
+    B : types.double[:, :]
+    C : types.double[:, :]
+    D : types.double[:, :]
+    positive : types.double[:, :]
+    negative : types.double[:, :]
+    b_surface : types.double[:]
 
     def __init__(self, nlayer, nwno):
         self.g1 = np.empty((nlayer, nwno), dtype=np.float64)
         self.g2 = np.empty((nlayer, nwno), dtype=np.float64)
         self.lamda = np.empty((nlayer, nwno), dtype=np.float64)
         self.gama = np.empty((nlayer, nwno), dtype=np.float64)
+        self.g3 = np.empty((nlayer, nwno), dtype=np.float64)
+        self.a_minus = np.empty((nlayer, nwno), dtype=np.float64)
+        self.a_plus = np.empty((nlayer, nwno), dtype=np.float64)
+        self.c_minus_up = np.empty((nlayer, nwno), dtype=np.float64)
+        self.c_plus_up = np.empty((nlayer, nwno), dtype=np.float64)
+        self.c_minus_down = np.empty((nlayer, nwno), dtype=np.float64)
+        self.c_plus_down = np.empty((nlayer, nwno), dtype=np.float64)
+        self.exptrm = np.empty((nlayer, nwno), dtype=np.float64)
+        self.exptrm_positive = np.empty((nlayer, nwno), dtype=np.float64)
+        self.exptrm_minus = np.empty((nlayer, nwno), dtype=np.float64)
+        self.A = np.empty((2 * nlayer, nwno), dtype=np.float64)
+        self.B = np.empty((2 * nlayer, nwno), dtype=np.float64)
+        self.C = np.empty((2 * nlayer, nwno), dtype=np.float64)
+        self.D = np.empty((2 * nlayer, nwno), dtype=np.float64)
+        self.positive = np.empty((nlayer, nwno), dtype=np.float64)
+        self.negative = np.empty((nlayer, nwno), dtype=np.float64)
+        self.b_surface = np.empty((nwno), dtype=np.float64)
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d_inplace(
@@ -1181,6 +1215,86 @@ def get_reflected_1d_inplace(
             lamda_ij = sqrt(g1[i, j] * g1[i, j] - g2[i, j] * g2[i, j])
             lamda[i, j] = lamda_ij
             gama[i, j] = (g1[i, j] - lamda_ij) / g2[i, j] # eqn 22
+
+    #================ START CRAZE LOOP OVER ANGLE #================
+    for ng in range(numg):
+        for nt in range(numt):
+            u1 = ubar1[ng,nt]
+            u0 = ubar0[ng,nt]
+            g3 = wrk.g3
+            if toon_coefficients == 1: # eddington
+                for i in range(nlayer):
+                    for j in range(nwno):
+                        g3[i,j] = (2.0 - 3.0 * ftau_cld[i,j] * cosb[i,j] * u0) / 4.0
+            elif toon_coefficients == 0: # quadrature
+                for i in range(nlayer):
+                    for j in range(nwno):
+                        g3[i,j] = 0.5 * (1.0 - sq3 * ftau_cld[i,j] * cosb[i,j] * u0)
+    
+            # now calculate c_plus and c_minus (equation 23 and 24 toon)
+            for i in range(nlayer):
+                for j in range(nwno):
+                    g4 = 1.0 - g3[i,j]
+                    denom = lamda[i,j] * lamda[i,j] - 1.0 / (u0 * u0)
+                    inv_u0 = 1.0 / u0
+                    w0ij = w0[i,j]
+
+                    wrk.a_minus[i,j] = F0PI * w0ij * (g4 * (g1[i,j] + inv_u0) + g2[i,j] * g3[i,j]) / denom
+                    wrk.a_plus[i,j] = F0PI * w0ij * (g3[i,j] * (g1[i,j] - inv_u0) + g2[i,j] * g4) / denom
+
+                    tau_up = tau[i,j]
+                    tau_down = tau[i + 1, j]
+                    exp_up = exp(-tau_up / u0)
+                    exp_down = exp(-tau_down / u0)
+                    wrk.c_minus_up[i,j] = wrk.a_minus[i,j] * exp_up
+                    wrk.c_plus_up[i,j] = wrk.a_plus[i,j] * exp_up
+                    wrk.c_minus_down[i,j] = wrk.a_minus[i,j] * exp_down
+                    wrk.c_plus_down[i,j] = wrk.a_plus[i,j] * exp_down
+
+                    exptrm_val = lamda[i,j] * dtau[i,j]
+                    if exptrm_val > 35.0:
+                        exptrm_val = 35.0
+                    wrk.exptrm[i,j] = exptrm_val
+                    wrk.exptrm_positive[i,j] = exp(exptrm_val)
+                    wrk.exptrm_minus[i,j] = 1.0 / wrk.exptrm_positive[i,j]
+
+            # boundary conditions
+            for j in range(nwno):
+                wrk.b_surface[j] = surf_reflect * u0 * F0PI * exp(-tau[nlevel - 1, j] / u0)
+
+            # Now we need the terms for the tridiagonal rotated layered method
+            setup_tri_diag_inplace(
+                wrk.A,
+                wrk.B,
+                wrk.C,
+                wrk.D,
+                nlayer,
+                nwno,
+                wrk.c_plus_up,
+                wrk.c_minus_up,
+                wrk.c_plus_down,
+                wrk.c_minus_down,
+                b_top,
+                wrk.b_surface,
+                surf_reflect,
+                gama,
+                dtau,
+                wrk.exptrm_positive,
+                wrk.exptrm_minus,
+            )
+
+            #========================= Start loop over wavelength =========================
+            L = 2*nlayer
+            for w in range(nwno):
+                # coefficient of posive and negative exponential terms 
+                tri_diag_solve_inplace(L, wrk.A[:,w], wrk.B[:,w], wrk.C[:,w], wrk.D[:,w])
+                
+                # unmix the coefficients
+                for i in range(nlayer):
+                    wrk.positive[i,w] = wrk.D[2 * i, w] + wrk.D[2 * i + 1, w]
+                    wrk.negative[i,w] = wrk.D[2 * i, w] - wrk.D[2 * i + 1, w]
+            #========================= End loop over wavelength =========================
+
 
 
 @jit(nopython=True, cache=True)
