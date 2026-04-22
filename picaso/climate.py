@@ -6,7 +6,8 @@ from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, 
 import astropy.units as u
 import virga.justdoit as vj
 
-from .fluxes import get_reflected_1d,get_thermal_1d
+from .fluxes import get_thermal_1d
+from .fluxes_noalloc import GetReflected1D, get_reflected_1d
 #from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi,get_reflected_1d_gfluxv #deprecated
 from .atmsetup import ATMSETUP
 from .optics import compute_opacity
@@ -1795,6 +1796,8 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
     if reflected:
         #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
         b_top = 0.0
+        reflected_1d = GetReflected1D(nlevel - 1, nwno, 1, 1, 1, 0)
+        surf_reflect_clima = np.full(nwno, surf_reflect)
         for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
             #"""
             #<<<<<<< NEWCLIMA
@@ -1803,32 +1806,44 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
             ng_clima,nt_clima=1,1
             ubar0_clima = ubar0*0+0.5
             ubar1_clima = ubar1*0+0.5
-            _, out_ref_fluxes = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
-                                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
-                                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
-                                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
-                                    surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
-                                    single_phase,multi_phase,
-                                    frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                                    get_toa_intensity=0, get_lvl_flux=1)
+            get_reflected_1d(reflected_1d, nlevel, wno,nwno,ng_clima,nt_clima,
+                    DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
+                    GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                    DTAU_OG[:,:,ig], TAU_OG[:,:,ig], W0_OG[:,:,ig], COSB_OG[:,:,ig],
+                    surf_reflect_clima, ubar0_clima,ubar1_clima,cos_theta, F0PI,
+                    single_phase,multi_phase,
+                    frac_a,frac_b,frac_c,constant_back,constant_forward, 
+                    get_toa_intensity=0, get_lvl_flux=1, toon_coefficients=0, b_top=0)
 
-            flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = out_ref_fluxes
+            if do_holes:
+                flux_minus_all_v = reflected_1d.flux_minus_all.copy()
+                flux_plus_all_v = reflected_1d.flux_plus_all.copy()
+                flux_minus_midpt_all_v = reflected_1d.flux_minus_midpt_all.copy()
+                flux_plus_midpt_all_v = reflected_1d.flux_plus_midpt_all.copy()
+            else:
+                flux_minus_all_v = reflected_1d.flux_minus_all
+                flux_plus_all_v = reflected_1d.flux_plus_all
+                flux_minus_midpt_all_v = reflected_1d.flux_minus_midpt_all
+                flux_plus_midpt_all_v = reflected_1d.flux_plus_midpt_all
             
             #import pickle as pk
             #pk.dump([flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v], open('newclima.pk','wb'))
 
             # call radiation for clearsky case
-            if do_holes == True:
-                _, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng_clima,nt_clima,
+            if do_holes:
+                get_reflected_1d(reflected_1d, nlevel, wno,nwno,ng_clima,nt_clima,
                         DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
                         GCOS2_clear[:,:,ig],ftau_cld_clear[:,:,ig],ftau_ray_clear[:,:,ig],
                         DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
-                        surf_reflect, ubar0_clima,ubar1_clima,cos_theta, F0PI,
+                        surf_reflect_clima, ubar0_clima,ubar1_clima,cos_theta, F0PI,
                         single_phase,multi_phase,
                         frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                        get_toa_intensity=0, get_lvl_flux=1)
+                        get_toa_intensity=0, get_lvl_flux=1, toon_coefficients=0, b_top=0)
             
-                flux_minus_all_v_clear, flux_plus_all_v_clear, flux_minus_midpt_all_v_clear, flux_plus_midpt_all_v_clear = out_ref_fluxes_clear
+                flux_minus_all_v_clear = reflected_1d.flux_minus_all
+                flux_plus_all_v_clear = reflected_1d.flux_plus_all
+                flux_minus_midpt_all_v_clear = reflected_1d.flux_minus_midpt_all
+                flux_plus_midpt_all_v_clear = reflected_1d.flux_plus_midpt_all
                 
                 #weighted average of cloudy and clearsky
                 flux_plus_midpt_all_v = (1.0 - fhole)* flux_plus_midpt_all_v + fhole * flux_plus_midpt_all_v_clear
@@ -3247,4 +3262,3 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         if verbose: print("Profile converged after itmx hit")
     
     return RETURNS
-
