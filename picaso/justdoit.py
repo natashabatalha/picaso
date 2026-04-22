@@ -321,7 +321,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     if get_lvl_flux: 
                         atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
                     
-                    if bundle.solvers.reflected_1d is None:
+                    if not isinstance(bundle.solvers.reflected_1d, GetReflected1D):
                         bundle.solvers.reflected_1d = GetReflected1D(
                             nlayer,
                             nwno,
