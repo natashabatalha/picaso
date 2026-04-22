@@ -7,9 +7,6 @@ import time
 import pickle as pk
 from scipy.linalg import solve_banded
 
-# Import new routines
-from .fluxes_noalloc import *
-
 @jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit

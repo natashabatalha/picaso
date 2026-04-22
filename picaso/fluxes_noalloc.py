@@ -14,13 +14,37 @@ def setup_tri_diag_inplace(A, B, C, D, nlayer, c_plus_up, c_minus_up,
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, exptrm_positive, exptrm_minus):
     """
-    Build the tridiagonal coefficients in place with no temporary allocations.
+    Build the tridiagonal coefficients for one wavelength row in place.
+    This routine operates on a single wavelength at a time and writes the
+    coefficients directly into preallocated 1D work arrays.
 
     Parameters
     ----------
-    A, B, C, D : array
-        Preallocated output arrays with shape ``(2 * nlayer,)``.
-    Other parameters match :func:`setup_tri_diag`.
+    A, B, C, D : ndarray of float64, shape (2 * nlayer,)
+        Preallocated tridiagonal coefficient arrays. The entries are overwritten
+        in place.
+    nlayer : int
+        Number of atmospheric layers for the current solve.
+    c_plus_up : ndarray of float64, shape (nlayer,)
+        Upward ``c_plus`` coefficients evaluated at the top of each layer.
+    c_minus_up : ndarray of float64, shape (nlayer,)
+        Upward ``c_minus`` coefficients evaluated at the top of each layer.
+    c_plus_down : ndarray of float64, shape (nlayer,)
+        Downward ``c_plus`` coefficients evaluated at the bottom of each layer.
+    c_minus_down : ndarray of float64, shape (nlayer,)
+        Downward ``c_minus`` coefficients evaluated at the bottom of each layer.
+    b_top : float
+        Diffuse radiation entering the atmosphere at the top boundary.
+    b_surface : float
+        Diffuse radiation entering the atmosphere at the lower boundary.
+    surf_reflect : float
+        Surface reflectivity for the current wavelength.
+    gama : ndarray of float64, shape (nlayer,)
+        Toon et al. coefficient from Eq. 22.
+    exptrm_positive : ndarray of float64, shape (nlayer,)
+        Positive exponential factors from Eq. 44.
+    exptrm_minus : ndarray of float64, shape (nlayer,)
+        Inverse exponential factors from Eq. 44.
     """
     A[0] = 0.0
     B[0] = gama[0] + 1.0
@@ -66,7 +90,6 @@ def setup_tri_diag_inplace(A, B, C, D, nlayer, c_plus_up, c_minus_up,
 def tri_diag_solve_inplace(l, a, b, c, d):
     """
     Solve a tridiagonal system in place with no temporary array allocations.
-
     The solution is written back into ``d``. The ``c`` array is also overwritten
     with the modified superdiagonal coefficients used during the forward sweep.
 
@@ -101,6 +124,7 @@ def tri_diag_solve_inplace(l, a, b, c, d):
 
 @jitclass
 class GetReflected1DWorkspace:
+    "Per-thread scratch space for the reflected-light solver."
 
     g1 : types.double[:]
     g2 : types.double[:]
@@ -153,6 +177,28 @@ GetReflected1DWorkspaceType = GetReflected1DWorkspace.class_type.instance_type
 
 @jitclass
 class GetReflected1D:
+    """Persistent reflected-light solver state and outputs.
+
+    The constructor allocates the result arrays needed for the requested
+    output modes and creates a typed list of per-thread
+    :class:`GetReflected1DWorkspace` instances for the parallel wavelength
+    loop.
+
+    Parameters
+    ----------
+    nlayer : int
+        Number of atmospheric layers.
+    nwno : int
+        Number of wavelength points.
+    numg : int
+        Number of Gauss angles.
+    numt : int
+        Number of Chebyshev angles.
+    get_lvl_flux : int
+        Flag indicating whether level flux outputs should be allocated.
+    get_toa_intensity : int
+        Flag indicating whether TOA intensity outputs should be allocated.
+    """
 
     # Dimensions and settings
     nlayer : types.int64
@@ -241,6 +287,7 @@ class GetReflected1D:
         "Calls core solver"
         get_reflected_1d(self, *args)
 
+# Do not cache this function, as Numba says I should not.
 @nb.njit(parallel=True)
 def get_reflected_1d(
     self,
@@ -277,6 +324,90 @@ def get_reflected_1d(
     toon_coefficients,
     b_top
 ):
+    """Compute reflected-light fluxes and intensities in place.
+
+    The solver iterates over wavelength in parallel and writes results into the
+    persistent output arrays owned by ``self``. Per-thread scratch space is
+    taken from ``self.workspace`` so the wavelength loop can reuse memory
+    without allocating inside the hot path.
+
+    Parameters
+    ----------
+    self : GetReflected1D
+        Persistent solver container holding the output arrays and per-thread
+        workspace objects.
+    nlevel : int
+        Number of atmospheric levels.
+    wno : ndarray of float64
+        Wavenumber grid. Retained for API compatibility with the allocating
+        solver.
+    nwno : int
+        Number of wavelength points.
+    numg : int
+        Number of Gauss angles.
+    numt : int
+        Number of Chebyshev angles.
+    dtau : ndarray of float64, shape (nlevel - 1, nwno)
+        Layer optical depths with the D-Eddington correction applied.
+    tau : ndarray of float64, shape (nlevel, nwno)
+        Cumulative optical depths with the D-Eddington correction applied.
+    w0 : ndarray of float64, shape (nlevel - 1, nwno)
+        Single-scattering albedo with the D-Eddington correction applied.
+    cosb : ndarray of float64, shape (nlevel - 1, nwno)
+        Asymmetry factor with the D-Eddington correction applied.
+    gcos2 : ndarray of float64, shape (nlevel - 1, nwno)
+        Rayleigh-scattering correction term used in the single-scattering phase
+        function.
+    ftau_cld : ndarray of float64, shape (nlevel - 1, nwno)
+        Fraction of extinction contributed by clouds.
+    ftau_ray : ndarray of float64, shape (nlevel - 1, nwno)
+        Fraction of extinction contributed by Rayleigh scattering.
+    dtau_og : ndarray of float64, shape (nlevel - 1, nwno)
+        Uncorrected layer optical depths.
+    tau_og : ndarray of float64, shape (nlevel, nwno)
+        Uncorrected cumulative optical depths.
+    w0_og : ndarray of float64, shape (nlevel - 1, nwno)
+        Uncorrected single-scattering albedo.
+    cosb_og : ndarray of float64, shape (nlevel - 1, nwno)
+        Uncorrected asymmetry factor.
+    surf_reflect : ndarray of float64, shape (nwno,)
+        Wavelength-dependent surface reflectivity.
+    ubar0 : ndarray of float64, shape (numg, numt)
+        Cosine of the incident angle for each Gauss/Chebyshev pair.
+    ubar1 : ndarray of float64, shape (numg, numt)
+        Cosine of the observer angle for each Gauss/Chebyshev pair.
+    cos_theta : float
+        Cosine of the phase angle.
+    F0PI : ndarray of float64, shape (nwno,)
+        Incident solar flux divided by pi.
+    single_phase : int
+        Selector for the single-scattering phase function.
+    multi_phase : int
+        Selector for the multiple-scattering phase function.
+    frac_a : float
+        TTHG forward/back-scattering mix coefficient.
+    frac_b : float
+        TTHG forward/back-scattering mix coefficient.
+    frac_c : float
+        TTHG forward/back-scattering mix coefficient exponent.
+    constant_back : float
+        Back-scattering asymmetry parameter for the phase function.
+    constant_forward : float
+        Forward-scattering asymmetry parameter for the phase function.
+    get_toa_intensity : int
+        If nonzero, compute and store TOA intensities.
+    get_lvl_flux : int
+        If nonzero, compute and store level and midpoint fluxes.
+    toon_coefficients : int
+        Selects the Toon et al. coefficient set.
+    b_top : float
+        Diffuse radiation incident at the top of the atmosphere.
+
+    Returns
+    -------
+    None
+        Results are written into ``self`` in place.
+    """
     
     nlayer = nlevel - 1
     
@@ -373,6 +504,7 @@ def get_reflected_1d_w(
     flux_plus_midpt_all,
     xint_at_top
 ):
+    "Per-wavelength reflected-light solve used by :func:`get_reflected_1d`."
     
     # Some constants
     nlayer = nlevel - 1
