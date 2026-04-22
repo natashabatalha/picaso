@@ -1,3 +1,6 @@
+# Comment below helps ignore linting false-positives.
+# type: ignore
+
 import numba as nb
 from numba.experimental import jitclass
 from numba import types
@@ -101,14 +104,8 @@ def tri_diag_solve_inplace(l, a, b, c, d):
             d[i] = d[i] - c[i] * d[i + 1]
 
 @jitclass
-class GetReflectedWorkspace:
+class GetReflected1DWorkspace:
 
-    nlayer : types.int64
-    nwno : types.int64
-    numg : types.int64
-    numt : types.int64
-    get_lvl_flux : types.int64
-    get_toa_intensity : types.int64
     g1 : types.double[:]
     g2 : types.double[:]
     lamda : types.double[:]
@@ -130,20 +127,10 @@ class GetReflectedWorkspace:
     D : types.double[:]
     positive : types.double[:]
     negative : types.double[:]
-    flux_minus_all : types.double[:, :, :, :]
-    flux_plus_all : types.double[:, :, :, :]
-    flux_minus_midpt_all : types.double[:, :, :, :]
-    flux_plus_midpt_all : types.double[:, :, :, :]
     xint : types.double[:]
-    xint_at_top : types.double[:, :, :]
 
-    def __init__(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
-        self.nlayer = nlayer
-        self.nwno = nwno
-        self.numg = numg
-        self.numt = numt
-        self.get_lvl_flux = get_lvl_flux
-        self.get_toa_intensity = get_toa_intensity
+    def __init__(self, nlayer):
+
         self.g1 = np.empty(nlayer, dtype=np.float64)
         self.g2 = np.empty(nlayer, dtype=np.float64)
         self.lamda = np.empty(nlayer, dtype=np.float64)
@@ -165,6 +152,66 @@ class GetReflectedWorkspace:
         self.D = np.empty(2 * nlayer, dtype=np.float64)
         self.positive = np.empty(nlayer, dtype=np.float64)
         self.negative = np.empty(nlayer, dtype=np.float64)
+        self.xint = np.empty(nlayer + 1, dtype=np.float64)
+
+
+@jitclass
+class GetReflected1D:
+
+    # Dimensions and settings
+    nlayer : types.int64
+    nwno : types.int64
+    numg : types.int64
+    numt : types.int64
+    get_lvl_flux : types.int64
+    get_toa_intensity : types.int64
+
+    # Results
+    flux_minus_all : types.double[:, :, :, :]
+    flux_plus_all : types.double[:, :, :, :]
+    flux_minus_midpt_all : types.double[:, :, :, :]
+    flux_plus_midpt_all : types.double[:, :, :, :]
+    xint_at_top : types.double[:, :, :]
+
+    # Workspace
+    workspace : types.ListType(GetReflected1DWorkspace.class_type.instance_type)
+
+    def __init__(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+
+        self.allocate_results(nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+        self.allocate_workspace(nlayer)
+
+    def _ensure(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+        "Re-allocates work and result arrays if necessary."
+
+        self._ensure_results(nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+        self._ensure_workspace(nlayer)
+        
+    def _ensure_results(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+        "Re-allocates result arrays if necessary."
+
+        ok = self.nlayer == nlayer
+        ok = ok and self.nwno == nwno
+        ok = ok and self.numg == numg
+        ok = ok and self.numt == numt
+        ok = ok and self.get_lvl_flux == get_lvl_flux
+        ok = ok and self.get_toa_intensity == get_toa_intensity
+
+        if not ok:
+            self._allocate_results(nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+
+    def _allocate_results(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
+        "Allocates result arrays."
+
+        # Dimensions and settings
+        self.nlayer = nlayer
+        self.nwno = nwno
+        self.numg = numg
+        self.numt = numt
+        self.get_lvl_flux = get_lvl_flux
+        self.get_toa_intensity = get_toa_intensity
+
+        # Results
         if get_lvl_flux:
             self.flux_minus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
             self.flux_plus_all = np.empty((numg, numt, nlayer + 1, nwno), dtype=np.float64)
@@ -176,24 +223,25 @@ class GetReflectedWorkspace:
             self.flux_minus_midpt_all = np.empty((0,0,0,0), dtype=np.float64)
             self.flux_plus_midpt_all = np.empty((0,0,0,0), dtype=np.float64)
         if get_toa_intensity:
-            self.xint = np.empty(nlayer + 1, dtype=np.float64)
             self.xint_at_top = np.empty((numg, numt, nwno), dtype=np.float64)
         else:
-            self.xint = np.empty(0, dtype=np.float64)
             self.xint_at_top = np.empty((0,0,0), dtype=np.float64)
 
-    def needs_reallocation(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
-        out = self.nlayer == nlayer
-        out = out and self.nwno == nwno
-        out = out and self.numg == numg
-        out = out and self.numt == numt
-        out = out and self.get_lvl_flux == get_lvl_flux
-        out = out and self.get_toa_intensity == get_toa_intensity
-        return not out
+    def _ensure_workspace(self, nlayer):
+        "Re-allocates work list/arrays if necessary."
 
-    def should_be_reallocated(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
-        return self.needs_reallocation(nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+        if nlayer != self.nlayer or len(self.workspace) != nb.get_num_threads():
+            self._allocate_workspace(nlayer)
 
+    def _allocate_workspace(self, nlayer):
+        "Allocates work list/arrays."
+
+        nthreads = nb.get_num_threads()
+        workspace_type = GetReflected1DWorkspace.class_type.instance_type
+        self.workspace = nb.typed.List.empty_list(workspace_type)
+        for i in range(nthreads):
+            self.workspace.append(GetReflected1DWorkspace(nlayer))
+        
 @nb.njit(cache=True)
 def get_reflected_1d_inplace(
     nlevel,
