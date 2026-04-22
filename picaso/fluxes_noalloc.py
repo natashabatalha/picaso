@@ -537,6 +537,7 @@ def get_reflected_1d_w(
     f0pi_w = F0PI[w]
     surf_reflect_w = surf_reflect[w]
 
+    # Toon et al. (1989), Table 1: angle-independent coefficients.
     if toon_coefficients == 1:
         for i in range(nlayer):
             w0_iw = w0[i, w]
@@ -553,11 +554,13 @@ def get_reflected_1d_w(
             g2[i] = (sq3 * w0_iw * 0.5) * (1.0 - ft_iw * cb_iw)
 
     for i in range(nlayer):
+        # Toon et al. (1989), Eq. 21 and Eq. 22.
         lamda_i = np.sqrt(g1[i] * g1[i] - g2[i] * g2[i])
         lamda[i] = lamda_i
         gama[i] = (g1[i] - lamda_i) / g2[i]
 
     if get_toa_intensity:
+        # Phase function for the direct beam and single-scattering term.
         for i in range(nlayer):
             g_forward = 0.0
             g_back = 0.0
@@ -567,22 +570,27 @@ def get_reflected_1d_w(
                 g_back = constant_back * cosb_og[i, w]
                 f = frac_a + frac_b * g_back ** frac_c
 
+            # 0: two-term HG plus Rayleigh correction.
             if single_phase == 0:
                 HG_forward = (1.0 - g_forward * g_forward) / np.sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
                 HG_backward = (1.0 - g_back * g_back) / np.sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
                 p_single[i] = f * HG_forward + (1.0 - f) * HG_backward + gcos2[i, w]
+            # 1: single HG from the cloud-base cosine.
             elif single_phase == 1:
                 cb = cosb_og[i, w]
                 p_single[i] = (1.0 - cb * cb) / np.sqrt((1.0 + cb * cb + 2.0 * cb * cos_theta) ** 3)
+            # 2: two-term HG only.
             elif single_phase == 2:
                 HG_forward = (1.0 - g_forward * g_forward) / np.sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
                 HG_backward = (1.0 - g_back * g_back) / np.sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
                 p_single[i] = f * HG_forward + (1.0 - f) * HG_backward
+            # 3: mixed cloud HG plus Rayleigh term.
             elif single_phase == 3:
                 HG_forward = (1.0 - g_forward * g_forward) / np.sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
                 HG_back = (1.0 - g_back * g_back) / np.sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
                 p_single[i] = ftau_cld[i, w] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, w] * (0.75 * (1.0 + cos_theta * cos_theta))
 
+    # Toon et al. (1989), Table 1: angle-dependent coefficient g3.
     for ng in range(numg):
         for nt in range(numt):
             u1 = ubar1[ng, nt]
@@ -596,11 +604,14 @@ def get_reflected_1d_w(
 
             if toon_coefficients == 1:
                 for i in range(nlayer):
+                    # Toon et al. (1989), Table 1: angle-dependent g3 term.
                     g3[i] = (2.0 - 3.0 * ftau_cld[i, w] * cosb[i, w] * u0) / 4.0
             elif toon_coefficients == 0:
                 for i in range(nlayer):
+                    # Toon et al. (1989), Table 1: quadrature form for g3.
                     g3[i] = 0.5 * (1.0 - sq3 * ftau_cld[i, w] * cosb[i, w] * u0)
 
+            # Toon et al. (1989), Eq. 23 and Eq. 24.
             for i in range(nlayer):
                 g4 = 1.0 - g3[i]
                 denom = lamda[i] * lamda[i] - inv_u0_sq
@@ -608,6 +619,7 @@ def get_reflected_1d_w(
                 a_minus[i] = f0pi_w * w0_iw * (g4 * (g1[i] + inv_u0) + g2[i] * g3[i]) / denom
                 a_plus[i] = f0pi_w * w0_iw * (g3[i] * (g1[i] - inv_u0) + g2[i] * g4) / denom
 
+                # Add in the exponential attenuation to get the full terms.
                 exp_up = np.exp(-tau[i, w] / u0)
                 exp_down = np.exp(-tau[i + 1, w] / u0)
                 c_minus_up[i] = a_minus[i] * exp_up
@@ -615,6 +627,7 @@ def get_reflected_1d_w(
                 c_minus_down[i] = a_minus[i] * exp_down
                 c_plus_down[i] = a_plus[i] * exp_down
 
+                # Toon et al. (1989), Eq. 44: exponential terms for the rotated layered solve.
                 exptrm_val = lamda[i] * dtau[i, w]
                 if exptrm_val > 35.0:
                     exptrm_val = 35.0
@@ -622,7 +635,9 @@ def get_reflected_1d_w(
                 exptrm_positive[i] = np.exp(exptrm_val)
                 exptrm_minus[i] = 1.0 / exptrm_positive[i]
 
+            # Boundary conditions at the lower surface.
             b_surface = surf_reflect_w * u0 * f0pi_w * np.exp(-tau[nlevel - 1, w] * inv_u0)
+            # Toon et al. (1989), rotated layered tridiagonal system.
             setup_tri_diag_inplace(
                 A,
                 B,
@@ -642,11 +657,13 @@ def get_reflected_1d_w(
             )
             tri_diag_solve_inplace(2 * nlayer, A, B, C, D)
 
+            # Unmix the positive and negative exponential coefficients.
             for i in range(nlayer):
                 positive[i] = D[2 * i] + D[2 * i + 1]
                 negative[i] = D[2 * i] - D[2 * i + 1]
 
             if get_lvl_flux:
+                # Level and midpoint fluxes for climate calculations.
                 for i in range(nlevel):
                     flux_minus_all[ng, nt, i, w] = 0.0
                     flux_plus_all[ng, nt, i, w] = 0.0
@@ -694,6 +711,7 @@ def get_reflected_1d_w(
                 flux_plus_midpt_all[ng, nt, nlayer, w] = 0.0
 
             if get_toa_intensity:
+                # Top-of-atmosphere intensity for the reflected spectrum.
                 flux_zero = (
                     positive[nlayer - 1] * exptrm_positive[nlayer - 1]
                     + gama[nlayer - 1] * negative[nlayer - 1] * exptrm_minus[nlayer - 1]
@@ -701,12 +719,15 @@ def get_reflected_1d_w(
                 )
                 xint[nlayer] = flux_zero / np.pi
 
+                # Multiple-scattering source terms.
                 for i in range(nlayer - 1, -1, -1):
+                    # 0: two-term HG plus a small Rayleigh-like correction.
                     if multi_phase == 0:
                         ubar2 = 0.767
                         phase_term = 3.0 * ubar2 * ubar2 * u1 * u1 - 1.0
                         multi_plus = 1.0 + 1.5 * ftau_cld[i, w] * cosb[i, w] * u1 + gcos2[i, w] * phase_term / 2.0
                         multi_minus = 1.0 - 1.5 * ftau_cld[i, w] * cosb[i, w] * u1 + gcos2[i, w] * phase_term / 2.0
+                    # 1: single-term cloud-only multiple scattering.
                     elif multi_phase == 1:
                         multi_plus = 1.0 + 1.5 * ftau_cld[i, w] * cosb[i, w] * u1
                         multi_minus = 1.0 - 1.5 * ftau_cld[i, w] * cosb[i, w] * u1
@@ -715,6 +736,7 @@ def get_reflected_1d_w(
                     H = negative[i] * (gama[i] * multi_plus + multi_minus) * w0[i, w] * 0.5 / np.pi
                     source_A = (multi_plus * c_plus_up[i] + multi_minus * c_minus_up[i]) * w0[i, w] * 0.5 / np.pi
 
+                    # Direct beam plus single- and multiple-scattering source terms.
                     xint[i] = (
                         xint[i + 1] * np.exp(-dtau[i, w] * inv_u1)
                         + (w0_og[i, w] * (f0pi_w * 0.25 / np.pi))
