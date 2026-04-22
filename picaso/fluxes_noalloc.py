@@ -1,7 +1,6 @@
 from numba import jit, objmode
 from numba.experimental import jitclass
 from numba import types
-from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10,ones, array_equal
 import numpy as np
 
 __all__ = [
@@ -232,7 +231,7 @@ def get_reflected_1d_inplace(
     wrk,
 ):
     nlayer = nlevel - 1
-    sq3 = sqrt(3.0)
+    sq3 = np.sqrt(3.0)
 
     g1 = wrk.g1
     g2 = wrk.g2
@@ -276,7 +275,7 @@ def get_reflected_1d_inplace(
                 g2[i] = (sq3 * w0_iw * 0.5) * (1.0 - ft_iw * cb_iw)
 
         for i in range(nlayer):
-            lamda_i = sqrt(g1[i] * g1[i] - g2[i] * g2[i])
+            lamda_i = np.sqrt(g1[i] * g1[i] - g2[i] * g2[i])
             lamda[i] = lamda_i
             gama[i] = (g1[i] - lamda_i) / g2[i]
 
@@ -291,19 +290,19 @@ def get_reflected_1d_inplace(
                     f = frac_a + frac_b * g_back ** frac_c
 
                 if single_phase == 0:
-                    HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
-                    HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                    HG_forward = (1.0 - g_forward * g_forward) / np.sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                    HG_backward = (1.0 - g_back * g_back) / np.sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
                     p_single[i] = f * HG_forward + (1.0 - f) * HG_backward + gcos2[i, w]
                 elif single_phase == 1:
                     cb = cosb_og[i, w]
-                    p_single[i] = (1.0 - cb * cb) / sqrt((1.0 + cb * cb + 2.0 * cb * cos_theta) ** 3)
+                    p_single[i] = (1.0 - cb * cb) / np.sqrt((1.0 + cb * cb + 2.0 * cb * cos_theta) ** 3)
                 elif single_phase == 2:
-                    HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
-                    HG_backward = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                    HG_forward = (1.0 - g_forward * g_forward) / np.sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                    HG_backward = (1.0 - g_back * g_back) / np.sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
                     p_single[i] = f * HG_forward + (1.0 - f) * HG_backward
                 elif single_phase == 3:
-                    HG_forward = (1.0 - g_forward * g_forward) / sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
-                    HG_back = (1.0 - g_back * g_back) / sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
+                    HG_forward = (1.0 - g_forward * g_forward) / np.sqrt((1.0 + g_forward * g_forward + 2.0 * g_forward * cos_theta) ** 3)
+                    HG_back = (1.0 - g_back * g_back) / np.sqrt((1.0 + g_back * g_back + 2.0 * g_back * cos_theta) ** 3)
                     p_single[i] = ftau_cld[i, w] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, w] * (0.75 * (1.0 + cos_theta * cos_theta))
 
         for ng in range(numg):
@@ -331,8 +330,8 @@ def get_reflected_1d_inplace(
                     a_minus[i] = f0pi_w * w0_iw * (g4 * (g1[i] + inv_u0) + g2[i] * g3[i]) / denom
                     a_plus[i] = f0pi_w * w0_iw * (g3[i] * (g1[i] - inv_u0) + g2[i] * g4) / denom
 
-                    exp_up = exp(-tau[i, w] / u0)
-                    exp_down = exp(-tau[i + 1, w] / u0)
+                    exp_up = np.exp(-tau[i, w] / u0)
+                    exp_down = np.exp(-tau[i + 1, w] / u0)
                     c_minus_up[i] = a_minus[i] * exp_up
                     c_plus_up[i] = a_plus[i] * exp_up
                     c_minus_down[i] = a_minus[i] * exp_down
@@ -342,10 +341,10 @@ def get_reflected_1d_inplace(
                     if exptrm_val > 35.0:
                         exptrm_val = 35.0
                     exptrm[i] = exptrm_val
-                    exptrm_positive[i] = exp(exptrm_val)
+                    exptrm_positive[i] = np.exp(exptrm_val)
                     exptrm_minus[i] = 1.0 / exptrm_positive[i]
 
-                b_surface = surf_reflect_w * u0 * f0pi_w * exp(-tau[nlevel - 1, w] * inv_u0)
+                b_surface = surf_reflect_w * u0 * f0pi_w * np.exp(-tau[nlevel - 1, w] * inv_u0)
                 setup_tri_diag_inplace(
                     A,
                     B,
@@ -393,20 +392,20 @@ def get_reflected_1d_inplace(
 
                     u0_scale = u0 * f0pi_w
                     for i in range(nlevel):
-                        wrk.flux_minus_all[ng, nt, i, w] = wrk.flux_minus_all[ng, nt, i, w] + u0_scale * exp(-tau[i, w] * inv_u0)
+                        wrk.flux_minus_all[ng, nt, i, w] = wrk.flux_minus_all[ng, nt, i, w] + u0_scale * np.exp(-tau[i, w] * inv_u0)
 
                     for i in range(nlayer):
-                        exptrm_positive_midpt = exp(0.5 * exptrm[i])
+                        exptrm_positive_midpt = np.exp(0.5 * exptrm[i])
                         exptrm_minus_midpt = 1.0 / exptrm_positive_midpt
                         taumid = tau[i, w] + 0.5 * dtau[i, w]
-                        c_plus_mid = a_plus[i] * exp(-taumid / ubar0[ng, nt])
-                        c_minus_mid = a_minus[i] * exp(-taumid / ubar0[ng, nt])
+                        c_plus_mid = a_plus[i] * np.exp(-taumid / ubar0[ng, nt])
+                        c_minus_mid = a_minus[i] * np.exp(-taumid / ubar0[ng, nt])
 
                         wrk.flux_minus_midpt_all[ng, nt, i, w] = (
                             gama[i] * positive[i] * exptrm_positive_midpt
                             + negative[i] * exptrm_minus_midpt
                             + c_minus_mid
-                            + ubar0[ng, nt] * f0pi_w * exp(-taumid / ubar0[ng, nt])
+                            + ubar0[ng, nt] * f0pi_w * np.exp(-taumid / ubar0[ng, nt])
                         )
                         wrk.flux_plus_midpt_all[ng, nt, i, w] = (
                             positive[i] * exptrm_positive_midpt
@@ -422,7 +421,7 @@ def get_reflected_1d_inplace(
                         + gama[nlayer - 1] * negative[nlayer - 1] * exptrm_minus[nlayer - 1]
                         + c_plus_down[nlayer - 1]
                     )
-                    wrk.xint[nlayer] = flux_zero / pi
+                    wrk.xint[nlayer] = flux_zero / np.pi
 
                     for i in range(nlayer - 1, -1, -1):
                         if multi_phase == 0:
@@ -434,21 +433,21 @@ def get_reflected_1d_inplace(
                             multi_plus = 1.0 + 1.5 * ftau_cld[i, w] * cosb[i, w] * u1
                             multi_minus = 1.0 - 1.5 * ftau_cld[i, w] * cosb[i, w] * u1
 
-                        G = positive[i] * (multi_plus + gama[i] * multi_minus) * w0[i, w] * 0.5 / pi
-                        H = negative[i] * (gama[i] * multi_plus + multi_minus) * w0[i, w] * 0.5 / pi
-                        source_A = (multi_plus * c_plus_up[i] + multi_minus * c_minus_up[i]) * w0[i, w] * 0.5 / pi
+                        G = positive[i] * (multi_plus + gama[i] * multi_minus) * w0[i, w] * 0.5 / np.pi
+                        H = negative[i] * (gama[i] * multi_plus + multi_minus) * w0[i, w] * 0.5 / np.pi
+                        source_A = (multi_plus * c_plus_up[i] + multi_minus * c_minus_up[i]) * w0[i, w] * 0.5 / np.pi
 
                         wrk.xint[i] = (
-                            wrk.xint[i + 1] * exp(-dtau[i, w] * inv_u1)
-                            + (w0_og[i, w] * (f0pi_w * 0.25 / pi))
+                            wrk.xint[i + 1] * np.exp(-dtau[i, w] * inv_u1)
+                            + (w0_og[i, w] * (f0pi_w * 0.25 / np.pi))
                             * p_single[i]
-                            * exp(-tau_og[i, w] * inv_u0)
-                            * (1.0 - exp(-dtau_og[i, w] * sum_u * inv_u0u1))
+                            * np.exp(-tau_og[i, w] * inv_u0)
+                            * (1.0 - np.exp(-dtau_og[i, w] * sum_u * inv_u0u1))
                             * (u0 * inv_sum_u)
-                            + source_A * (1.0 - exp(-dtau[i, w] * sum_u * inv_u0u1))
+                            + source_A * (1.0 - np.exp(-dtau[i, w] * sum_u * inv_u0u1))
                             * (u0 * inv_sum_u)
-                            + G * (exp(exptrm[i] - dtau[i, w] * inv_u1) - 1.0) / (lamda[i] * u1 - 1.0)
-                            + H * (1.0 - exp(-(exptrm[i] + dtau[i, w] * inv_u1))) / (lamda[i] * u1 + 1.0)
+                            + G * (np.exp(exptrm[i] - dtau[i, w] * inv_u1) - 1.0) / (lamda[i] * u1 - 1.0)
+                            + H * (1.0 - np.exp(-(exptrm[i] + dtau[i, w] * inv_u1))) / (lamda[i] * u1 + 1.0)
                         )
 
                     wrk.xint_at_top[ng, nt, w] = wrk.xint[0]
