@@ -6,12 +6,8 @@ from numba.experimental import jitclass
 from numba import types
 import numpy as np
 
-__all__ = [
-    'setup_tri_diag_inplace', 
-    'tri_diag_solve_inplace',
-    'GetReflectedWorkspace',
-    'get_reflected_1d_inplace'
-]
+# By default we will set threads to 1
+nb.set_num_threads(1)
 
 @nb.njit(cache=True)
 def setup_tri_diag_inplace(A, B, C, D, nlayer, c_plus_up, c_minus_up,
@@ -245,7 +241,7 @@ class GetReflected1D:
         "Calls core solver"
         get_reflected_1d(self, *args)
 
-@nb.njit(cache=True, parallel=True)
+@nb.njit(parallel=True)
 def get_reflected_1d(
     self,
     nlevel,

@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
 
+import numba as nb
 import numpy as np
 import pytest
 
@@ -10,14 +11,15 @@ sys.path.insert(0, str(REPO_ROOT))
 
 # Import fluxes
 from picaso import fluxes
+from picaso.fluxes_noalloc import (
+    GetReflected1D,
+    setup_tri_diag_inplace,
+    tri_diag_solve_inplace,
+)
 
 tri_diag_solve = fluxes.tri_diag_solve
-tri_diag_solve_inplace = fluxes.tri_diag_solve_inplace
 setup_tri_diag = fluxes.setup_tri_diag
-setup_tri_diag_inplace = fluxes.setup_tri_diag_inplace
 get_reflected_1d = fluxes.get_reflected_1d
-get_reflected_1d_inplace = fluxes.get_reflected_1d_inplace
-GetReflectedWorkspace = fluxes.GetReflectedWorkspace
 
 
 def _make_reflected_case():
@@ -141,18 +143,6 @@ def _call_reflected_alloc(case, single_phase, multi_phase, get_toa_intensity, ge
     )
 
 
-def _zero_workspace_outputs(wrk):
-    for array in (
-        wrk.xint,
-        wrk.xint_at_top,
-        wrk.flux_minus_all,
-        wrk.flux_plus_all,
-        wrk.flux_minus_midpt_all,
-        wrk.flux_plus_midpt_all,
-    ):
-        array.fill(0.0)
-
-
 def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity, get_lvl_flux, toon_coefficients):
     expected_xint, expected_fluxes = _call_reflected_alloc(
         case,
@@ -163,17 +153,16 @@ def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity,
         toon_coefficients,
     )
 
-    wrk = GetReflectedWorkspace(
+    reflected = GetReflected1D(
         case["nlevel"] - 1,
         case["nwno"],
         case["numg"],
         case["numt"],
-        get_lvl_flux=True,
-        get_toa_intensity=True,
+        get_lvl_flux,
+        get_toa_intensity,
     )
-    _zero_workspace_outputs(wrk)
 
-    result = get_reflected_1d_inplace(
+    reflected.call(
         case["nlevel"],
         case["wno"].copy(),
         case["nwno"],
@@ -202,19 +191,27 @@ def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity,
         case["frac_c"],
         case["constant_back"],
         case["constant_forward"],
-        get_toa_intensity=get_toa_intensity,
-        get_lvl_flux=get_lvl_flux,
-        toon_coefficients=toon_coefficients,
-        b_top=case["b_top"],
-        wrk=wrk,
+        get_toa_intensity,
+        get_lvl_flux,
+        toon_coefficients,
+        case["b_top"],
     )
 
-    assert result is None
-    np.testing.assert_allclose(wrk.xint_at_top, expected_xint)
-    np.testing.assert_allclose(wrk.flux_minus_all, expected_fluxes[0])
-    np.testing.assert_allclose(wrk.flux_plus_all, expected_fluxes[1])
-    np.testing.assert_allclose(wrk.flux_minus_midpt_all, expected_fluxes[2])
-    np.testing.assert_allclose(wrk.flux_plus_midpt_all, expected_fluxes[3])
+    if get_toa_intensity:
+        np.testing.assert_allclose(reflected.xint_at_top, expected_xint)
+    else:
+        assert reflected.xint_at_top.size == 0
+
+    if get_lvl_flux:
+        np.testing.assert_allclose(reflected.flux_minus_all, expected_fluxes[0])
+        np.testing.assert_allclose(reflected.flux_plus_all, expected_fluxes[1])
+        np.testing.assert_allclose(reflected.flux_minus_midpt_all, expected_fluxes[2])
+        np.testing.assert_allclose(reflected.flux_plus_midpt_all, expected_fluxes[3])
+    else:
+        assert reflected.flux_minus_all.size == 0
+        assert reflected.flux_plus_all.size == 0
+        assert reflected.flux_minus_midpt_all.size == 0
+        assert reflected.flux_plus_midpt_all.size == 0
 
 def test_tri_diag_solve_matches_inplace():
     l = 5
@@ -353,3 +350,20 @@ def test_get_reflected_1d_matches_inplace(
         get_lvl_flux,
         toon_coefficients,
     )
+
+
+def test_get_reflected_1d_matches_inplace_two_threads():
+    case = _make_reflected_case()
+    previous_threads = nb.get_num_threads()
+    nb.set_num_threads(2)
+    try:
+        _assert_reflected_parity(
+            case,
+            single_phase=0,
+            multi_phase=0,
+            get_toa_intensity=1,
+            get_lvl_flux=1,
+            toon_coefficients=0,
+        )
+    finally:
+        nb.set_num_threads(previous_threads)
