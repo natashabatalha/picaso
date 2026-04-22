@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -38,6 +38,9 @@ dependencies = [
 [tool.setuptools.packages.find]
 include = ["picaso*"]
 exclude = ["reference*"]
+
+[tool.setuptools.package-data]
+"picaso.gpu" = ["*.cu", "*.so"]
 
 [project.urls]
 Homepage = "https://natashabatalha.github.io/picaso"
