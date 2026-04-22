@@ -283,10 +283,6 @@ class GetReflected1D:
         for i in range(nthreads):
             self.workspace.append(GetReflected1DWorkspace(nlayer))
 
-    def call(self, *args):
-        "Calls core solver"
-        get_reflected_1d(self, *args)
-
 # Do not cache this function, as Numba says I should not.
 @nb.njit(parallel=True)
 def get_reflected_1d(

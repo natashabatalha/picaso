@@ -11,16 +11,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 # Import fluxes
 from picaso import fluxes
-from picaso.fluxes_noalloc import (
-    GetReflected1D,
-    setup_tri_diag_inplace,
-    tri_diag_solve_inplace,
-)
-
-tri_diag_solve = fluxes.tri_diag_solve
-setup_tri_diag = fluxes.setup_tri_diag
-get_reflected_1d = fluxes.get_reflected_1d
-
+from picaso import fluxes_noalloc
 
 def _make_reflected_case():
     return dict(
@@ -107,7 +98,7 @@ def _make_reflected_case():
 
 
 def _call_reflected_alloc(case, single_phase, multi_phase, get_toa_intensity, get_lvl_flux, toon_coefficients):
-    return get_reflected_1d(
+    return fluxes.get_reflected_1d(
         case["nlevel"],
         case["wno"].copy(),
         case["nwno"],
@@ -153,7 +144,7 @@ def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity,
         toon_coefficients,
     )
 
-    reflected = GetReflected1D(
+    reflected = fluxes_noalloc.GetReflected1D(
         case["nlevel"] - 1,
         case["nwno"],
         case["numg"],
@@ -162,7 +153,8 @@ def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity,
         get_toa_intensity,
     )
 
-    reflected.call(
+    fluxes_noalloc.get_reflected_1d(
+        reflected,
         case["nlevel"],
         case["wno"].copy(),
         case["nwno"],
@@ -220,10 +212,10 @@ def test_tri_diag_solve_matches_inplace():
     c = np.array([-1.0, -1.0, -1.0, -1.0, 0.0])
     d = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
 
-    expected = tri_diag_solve(l, a.copy(), b.copy(), c.copy(), d.copy())
+    expected = fluxes.tri_diag_solve(l, a.copy(), b.copy(), c.copy(), d.copy())
 
     d_inplace = d.copy()
-    result = tri_diag_solve_inplace(l, a.copy(), b.copy(), c.copy(), d_inplace)
+    result = fluxes_noalloc.tri_diag_solve_inplace(l, a.copy(), b.copy(), c.copy(), d_inplace)
 
     assert result is None
     np.testing.assert_allclose(d_inplace, expected)
@@ -277,7 +269,7 @@ def test_setup_tri_diag_matches_inplace():
          [0.61, 0.62, 0.63, 0.64]]
     )
 
-    expected = setup_tri_diag(
+    expected = fluxes.setup_tri_diag(
         nlayer,
         nwno,
         c_plus_up.copy(),
@@ -299,7 +291,7 @@ def test_setup_tri_diag_matches_inplace():
     C = np.zeros(2 * nlayer)
     D = np.zeros(2 * nlayer)
 
-    result = setup_tri_diag_inplace(
+    result = fluxes_noalloc.setup_tri_diag_inplace(
         A,
         B,
         C,
