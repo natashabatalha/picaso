@@ -1,4 +1,4 @@
-from numba import jit, objmode
+import numba as nb
 from numba.experimental import jitclass
 from numba import types
 import numpy as np
@@ -10,7 +10,7 @@ __all__ = [
     'get_reflected_1d_inplace'
 ]
 
-@jit(nopython=True, cache=True)
+@nb.njit(cache=True)
 def setup_tri_diag_inplace(A, B, C, D, nlayer, c_plus_up, c_minus_up,
     c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
     gama, exptrm_positive, exptrm_minus):
@@ -63,7 +63,7 @@ def setup_tri_diag_inplace(A, B, C, D, nlayer, c_plus_up, c_minus_up,
     D[2 * nlayer - 1] = b_surface - c_plus_down[nlayer - 1] + surf_reflect * c_minus_down[nlayer - 1]
 
 
-@jit(nopython=True, cache=True)
+@nb.njit(cache=True)
 def tri_diag_solve_inplace(l, a, b, c, d):
     """
     Solve a tridiagonal system in place with no temporary array allocations.
@@ -194,7 +194,7 @@ class GetReflectedWorkspace:
     def should_be_reallocated(self, nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity):
         return self.needs_reallocation(nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
 
-@jit(nopython=True, cache=True)
+@nb.njit(cache=True)
 def get_reflected_1d_inplace(
     nlevel,
     wno,
