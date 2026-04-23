@@ -54,13 +54,38 @@ if __hardware__ == 'gpu':
             get_reflected_1d as get_reflected_1d_gpu,
             get_thermal_1d as get_thermal_1d_gpu,
             get_transit_1d as get_transit_1d_gpu,
-            get_reflected_1d_allocate_buffers,
-            get_reflected_1d_free,
-            get_thermal_1d_allocate_buffers,
-            get_thermal_1d_free,
-            get_transit_1d_allocate_buffers,
-            get_transit_1d_free
+            get_reflected_1d_allocate_buffers as _get_reflected_1d_allocate_buffers,
+            get_reflected_1d_free as _get_reflected_1d_free,
+            get_thermal_1d_allocate_buffers as _get_thermal_1d_allocate_buffers,
+            get_thermal_1d_free as _get_thermal_1d_free,
+            get_transit_1d_allocate_buffers as _get_transit_1d_allocate_buffers,
+            get_transit_1d_free as _get_transit_1d_free
         )
+        memory_allocated = {'reflected': False, 'thermal': False, 'transmission': False}
+        def get_reflected_1d_allocate_buffers(nlevel, nwno, ng, nt):
+            global memory_allocated
+            _get_reflected_1d_allocate_buffers(nlevel, nwno, ng, nt)
+            memory_allocated['reflected'] = True
+        def get_reflected_1d_free():
+            global memory_allocated
+            _get_reflected_1d_free()
+            memory_allocated['reflected'] = False
+        def get_thermal_1d_allocate_buffers(nlevel, nwno, ng, nt, calc_type):
+            global memory_allocated
+            _get_thermal_1d_allocate_buffers(nlevel, nwno, ng, nt, calc_type)
+            memory_allocated['thermal'] = True
+        def get_thermal_1d_free(calc_type):
+            global memory_allocated
+            _get_thermal_1d_free(calc_type)
+            memory_allocated['thermal'] = False
+        def get_transit_1d_allocate_buffers(nlevel, nwno):
+            global memory_allocated
+            _get_transit_1d_allocate_buffers(nlevel, nwno)
+            memory_allocated['transmission'] = True
+        def get_transit_1d_free():
+            global memory_allocated
+            _get_transit_1d_free()
+            memory_allocated['transmission'] = False
     except ImportError:
         warnings.warn("GPU mode requested but cupy or fluxes_gpu dependencies not found. Falling back to CPU.")
         __hardware__ = 'cpu'
@@ -273,7 +298,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         
         if  'reflected' in calculation:
             if __hardware__ == 'gpu':
-                get_reflected_1d_allocate_buffers(nlevel, nwno, ng, nt)
+                auto_free_reflected = False
+                if not memory_allocated['reflected']:
+                    get_reflected_1d_allocate_buffers(nlevel, nwno, ng, nt)
+                    auto_free_reflected = True
                 DTAU_gpu = cp.asarray(DTAU)
                 TAU_gpu = cp.asarray(TAU)
                 W0_gpu = cp.asarray(W0)
@@ -391,7 +419,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                     atm.lvl_output_reflected['flux_plus_mdpt']+=flux_plus_midpt_all_v*gauss_wts[ig]
 
             if __hardware__ == 'gpu':
-                get_reflected_1d_free()
+                if auto_free_reflected:
+                    get_reflected_1d_free()
 
             if full_output: 
                 atm.xint_at_top = xint_at_top
@@ -400,7 +429,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         if 'thermal' in calculation:
             
             if __hardware__ == 'gpu':
-                get_thermal_1d_allocate_buffers(nlevel, nwno, ng, nt, 1 if get_lvl_flux else 0)
+                auto_free_thermal = False
+                if not memory_allocated['thermal']:
+                    get_thermal_1d_allocate_buffers(nlevel, nwno, ng, nt, 1 if get_lvl_flux else 0)
+                    auto_free_thermal = True
                 wno_gpu = cp.asarray(wno)
                 DTAU_OG_gpu = cp.asarray(DTAU_OG)
                 W0_no_raman_gpu = cp.asarray(W0_no_raman)
@@ -503,8 +535,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 flux_at_top += flux*gauss_wts[ig]
                 
             if __hardware__ == 'gpu':
-                get_thermal_1d_free(1 if get_lvl_flux else 0)
-
+                if auto_free_thermal:
+                    get_thermal_1d_free(1 if get_lvl_flux else 0)
 
             #if full output is requested add in flux at top for 3d plots
             if full_output: 
@@ -513,7 +545,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         
         if 'transmission' in calculation:
             if __hardware__ == 'gpu':
-                get_transit_1d_allocate_buffers(nlevel, nwno)
+                auto_free_transmission = False
+                if not memory_allocated['transmission']:
+                    get_transit_1d_allocate_buffers(nlevel, nwno)
+                    auto_free_transmission = True
                 z_gpu = cp.asarray(atm.level['z']).reshape(-1)
                 dz_gpu = cp.asarray(atm.level['dz']).reshape(-1)
                 player_gpu = cp.asarray(atm.level['pressure'][:nlevel-1], dtype=cp.float64).reshape(-1)
@@ -557,7 +592,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 rprs2 += rprs2_g*gauss_wts[ig]
 
             if __hardware__ == 'gpu':
-                get_transit_1d_free()
+                if auto_free_transmission:
+                    get_transit_1d_free()
     elif dimension == '3d':
         #setup zero array to fill with opacities
         TAU_3d = np.zeros((nlevel, nwno, ng, nt, ngauss))
@@ -6032,3 +6068,4 @@ def convert_flux_units(xgrid,flux, to_f_unit, xgrid_unit='cm^(-1)',f_unit='erg*c
         y = y[::-1]
         
     return y
+

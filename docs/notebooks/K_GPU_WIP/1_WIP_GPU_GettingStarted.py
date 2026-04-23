@@ -45,7 +45,7 @@ start_case.gravity(radius = 1, radius_unit = jdi.u.Unit('R_jup'),
 
 #define star
 start_case.star(opacity, 5000,0,4.0, radius=1, radius_unit = jdi.u.Unit('R_sun')) #opacity db, pysynphot database, temp, metallicity, logg
-start_case.atmosphere(filename=jdi.HJ_pt(), sep=r'\s+')
+start_case.atmosphere(filename=jdi.jupiter_pt(), sep=r'\s+')
 
 
 # %% [markdown]
@@ -81,7 +81,7 @@ start_case.gravity(radius = 1, radius_unit = jdi.u.Unit('R_jup'),
 
 #define star
 start_case.star(opacity, 5000,0,4.0, radius=1, radius_unit = jdi.u.Unit('R_sun')) #opacity db, pysynphot database, temp, metallicity, logg
-start_case.atmosphere(filename=jdi.HJ_pt(), sep=r'\s+')
+start_case.atmosphere(filename=jdi.jupiter_pt(), sep=r'\s+')
 
 
 # %%
@@ -119,3 +119,52 @@ passing= np.allclose(df_gpu_td['transit_depth'],df_cpu_td['transit_depth'])
 max_per_diff = 100*np.max((np.abs(df_gpu_td['transit_depth']-df_cpu_td['transit_depth']))/df_cpu_td['transit_depth'])
 plt.title(rf'Transit Depth CPU=GPU? {passing}. Max % diff={max_per_diff}')
 plt.legend()
+
+
+# %% [markdown]
+# ## Manual GPU Memory Management
+#
+# By default, PICASO will allocate and deallocate GPU memory for every single spectrum calculation. 
+# While this is convenient, it introduces significant overhead, especially when running many spectra (e.g., in a retrieval or a phase curve).
+#
+# To improve performance, we also offer manual management outside of the `spectrum` call. 
+# This allows you to allocate the necessary buffers once at the beginning of your session and free them once at the end.
+#
+# ### Why is this important?
+# GPU memory allocation is a relatively slow operation compared to the actual computation. 
+# By allocating buffers once, we avoid this overhead in every iteration. 
+# This is particularly important for GPU performance where the goal is to minimize host-to-device communication and synchronization.
+#
+# ### How to use it
+# You need to know the dimensions of your problem (number of levels, number of wavenumbers, number of Gauss angles, and number of Tchebychev angles).
+#
+# Here is how you can manually manage memory for reflected, thermal, and transit calculations:
+
+# %%
+# Define dimensions (must match your actual run)
+nlevel = start_case.nlevel
+nwno = opacity.nwno
+ng = start_case.inputs['disco']['num_gangle']
+nt = start_case.inputs['disco']['num_tangle']
+get_lvl_flux = start_case.inputs['approx'].get('get_lvl_flux', False)
+
+# Allocate buffers
+jdi.get_reflected_1d_allocate_buffers(nlevel, nwno, ng, nt)
+jdi.get_thermal_1d_allocate_buffers(nlevel, nwno, ng, nt, 1 if get_lvl_flux else 0)
+jdi.get_transit_1d_allocate_buffers(nlevel, nwno)
+
+# %% [markdown]
+# Now you can run your spectra multiple times without the allocation overhead:
+
+# %%
+# Run multiple spectra
+# %timeit df_gpu_ref = start_case.spectrum(opacity, calculation='reflected')
+
+# %% [markdown]
+# Finally, don't forget to free the memory at the end of your session:
+
+# %%
+# Free buffers
+jdi.get_reflected_1d_free()
+jdi.get_thermal_1d_free(1 if get_lvl_flux else 0)
+jdi.get_transit_1d_free()
