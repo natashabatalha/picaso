@@ -1502,19 +1502,34 @@ def vresample_and_insert_molecular(molecule, min_wavelength, max_wavelength, new
 
 
 def continuum_avail(db_file):
-    cur, conn = open_local(db_file)
-    #what molecules inside db exist?
-    cur.execute('SELECT molecule FROM continuum')
-    molecules = [str(i) for i in np.unique(cur.fetchall())]
-    cur.execute('SELECT temperature FROM continuum')
-    cia_temperatures = list(np.unique(cur.fetchall()))
-    conn.close()
-    return molecules, cia_temperatures
+    if h5py.is_hdf5(db_file):
+        with h5py.File(db_file, "r") as f:
+            molecules = [x.decode("utf-8") if isinstance(x, bytes) else x for x in f["header/continuum_molecules"][:]]
+            cia_temperatures = list(f["header/continuum_temperatures"][:])
+        return molecules, cia_temperatures
+    else:
+        cur, conn = open_local(db_file)
+        #what molecules inside db exist?
+        cur.execute('SELECT molecule FROM continuum')
+        molecules = [str(i) for i in np.unique(cur.fetchall())]
+        cur.execute('SELECT temperature FROM continuum')
+        cia_temperatures = list(np.unique(cur.fetchall()))
+        conn.close()
+        return molecules, cia_temperatures
 
 def molecular_avail(db_file):
-    cur, conn = open_local(db_file)
-    cur.execute('SELECT ptid, pressure, temperature FROM molecular')
-    data= cur.fetchall()
+    if h5py.is_hdf5(db_file):
+        with h5py.File(db_file, "r") as f:
+            molecules = [x.decode("utf-8") if isinstance(x, bytes) else x for x in f["header/molecules"][:]]
+            pt_pairs_array = f["header/pt_pairs"][:]
+            # pt_pairs in sqlite was list of tuples (ptid, pressure, temperature)
+            # ptid is int, pressure and temperature are float
+            pt_pairs = [(int(row[0]), float(row[1]), float(row[2])) for row in pt_pairs_array]
+        return list(molecules), pt_pairs
+    else:
+        cur, conn = open_local(db_file)
+        cur.execute('SELECT ptid, pressure, temperature FROM molecular')
+        data= cur.fetchall()
     pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
 
     cur.execute('SELECT molecule FROM molecular')
