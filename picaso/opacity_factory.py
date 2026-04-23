@@ -18,6 +18,40 @@ from .io_utils import read_visscher_2121
 
 __refdata__ = os.environ.get('picaso_refdata')
 
+def _decode_hdf5_string(value):
+    if isinstance(value, bytes):
+        return value.decode("utf-8")
+    if isinstance(value, np.ndarray):
+        if value.shape == ():
+            return _decode_hdf5_string(value.item())
+        return [_decode_hdf5_string(i) for i in value.tolist()]
+    return str(value)
+
+def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None, return_log=False):
+    storage_format = _decode_hdf5_string(storage_format)
+    if storage_format == 'log10_float32':
+        decoded = np.asarray(raw_block, dtype=np.float64)
+        return decoded if return_log else 10**decoded
+    if storage_format == 'log10_uint16':
+        if y_min is None or y_max is None:
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = np.asarray(y_min)
+        y_max = np.asarray(y_max)
+        if y_min.shape != () or y_max.shape != ():
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = float(y_min)
+        y_max = float(y_max)
+        raw_block = np.asarray(raw_block, dtype=np.float64)
+        if y_max == y_min:
+            decoded = np.zeros(raw_block.shape, dtype=np.float64) + y_min
+        else:
+            decoded = y_min + (y_max - y_min) * (raw_block / float(np.iinfo(np.uint16).max))
+        return decoded if return_log else 10**decoded
+    raise Exception(
+        f"Do not recognize HDF5 opacity storage format: {storage_format}. "
+        "Supported formats are log10_uint16 and log10_float32."
+    )
+
 def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
     """
     The continuum factory takes the CIA opacity file and adds in extra sources of 
@@ -870,6 +904,15 @@ def convert_sqlite_to_hdf5(
     cur.execute("SELECT DISTINCT temperature FROM continuum ORDER BY temperature")
     continuum_temperatures = np.asarray([row[0] for row in cur.fetchall()], dtype=np.float64)
 
+    # Check for metadata table
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='metadata'")
+    has_metadata = cur.fetchone() is not None
+    if has_metadata:
+        cur.execute("SELECT key, value FROM metadata")
+        metadata = cur.fetchall()
+    else:
+        metadata = []
+
     with h5py.File(output_hdf5, "w") as f:
         header = f.create_group("header")
         header.create_dataset("wavenumber_grid", data=wavenumber_grid)
@@ -892,6 +935,11 @@ def convert_sqlite_to_hdf5(
         header.attrs["molecular_unit"] = str(molecular_unit)
         header.attrs["molecular_log10_floor"] = float(molecular_log10_floor)
         header.attrs["continuum_log10_floor"] = float(continuum_log10_floor)
+
+        if has_metadata:
+            meta_group = f.create_group("metadata")
+            for key, value in metadata:
+                meta_group.create_dataset(key, data=np.array(value, dtype=string_dtype))
 
         molecular_group = f.create_group("molecular")
         total_molecules = len(molecule_names)
@@ -1530,11 +1578,11 @@ def molecular_avail(db_file):
         cur, conn = open_local(db_file)
         cur.execute('SELECT ptid, pressure, temperature FROM molecular')
         data= cur.fetchall()
-    pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
+        pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
 
-    cur.execute('SELECT molecule FROM molecular')
-    molecules = [ str(i) for i in np.unique(cur.fetchall())]
-    return list(molecules), pt_pairs
+        cur.execute('SELECT molecule FROM molecular')
+        molecules = [ str(i) for i in np.unique(cur.fetchall())]
+        return list(molecules), pt_pairs
 def find_nearest_1d(array,value):
     #small program to find the nearest neighbor in a matrix
     ar , iar ,ic = np.unique(array,return_index=True,return_counts=True)
@@ -1546,80 +1594,106 @@ def find_nearest_1d(array,value):
     return idx
 def get_continuum(db_file, species, temperature):
     """
-    Grab continuum opacity from sqlite database 
+    Grab continuum opacity from sqlite or HDF5 database 
 
     Parameters
     ----------
     db_file : str 
-        sqlite3 database filename 
+        sqlite3 or HDF5 database filename 
     species : list of str 
         Single species name. you can run continuum_avail to see what species are present.
     temperature : list of float
         Temperature to grab. can grab available temperatures from continuum_avail
     """
-    cur, conn = open_local(db_file)
+    if h5py.is_hdf5(db_file):
+        with h5py.File(db_file, "r") as f:
+            if not isinstance(temperature, list):
+                raise Exception('Make Temperature a list, even if it is single valued')
+            if not isinstance(species, list):
+                raise Exception('Make Species Input a list, even if it is single valued')
 
-    if not isinstance(temperature,list):
-        raise Exception('Make Temperature a list, even if it is single valued')
-    if not isinstance(species,list):
-        raise Exception('Make Species Input a list, even if it is single valued')
-    cur.execute('SELECT temperature FROM continuum')
-    cia_temperatures = np.unique(cur.fetchall())
+            cia_temperatures = f["header/continuum_temperatures"][:]
+            temp_nearest = [cia_temperatures[find_nearest_1d(cia_temperatures, t)] for t in temperature]
 
-    temp_nearest = [cia_temperatures[find_nearest_1d(cia_temperatures,t)] for t in temperature]
+            restruct = {i: {} for i in species}
+            for ispec in species:
+                if ispec in f["continuum"]:
+                    dataset = f[f"continuum/{ispec}"]
+                    storage_format = dataset.attrs.get("storage_format")
+                    y_min = dataset.attrs.get("y_min")
+                    y_max = dataset.attrs.get("y_max")
+                    
+                    for t in set(temp_nearest):
+                        idx = np.where(cia_temperatures == t)[0][0]
+                        opacity = _decode_hdf5_opacity_block(dataset[idx:idx+1, :], storage_format, y_min, y_max)[0]
+                        restruct[ispec][t] = opacity
 
-    #cur.execute("""SELECT molecule,temperature,opacity
-    #            FROM continuum
-    #            WHERE molecule in {}
-    #            AND temperature in {}""".format(str(tuple(species)), str(tuple(temp_nearest))))
+            restruct['wavenumber'] = f["header/wavenumber_grid"][:]
+        return restruct
+    else:
+        cur, conn = open_local(db_file)
 
-    if (len(species) == 1) and (len(temp_nearest) > 1):
-        placeholders = ', '.join(['?'] * len(temp_nearest))
-        cur.execute(f"""SELECT molecule,temperature,opacity
-                FROM continuum
-                WHERE molecule = ?
-                AND temperature in ({placeholders})""", [species[0]] + list(temp_nearest))
-    elif (len(species) > 1) and (len(temp_nearest) == 1):
-        placeholders = ', '.join(['?'] * len(species))
-        cur.execute(f"""SELECT molecule,temperature,opacity
-                FROM continuum
-                WHERE molecule in ({placeholders})
-                AND temperature = ?""", list(species) + [temp_nearest[0]])
-    elif (len(species) == 1) and (len(temp_nearest) == 1):
-        cur.execute("""SELECT molecule,temperature,opacity
+        if not isinstance(temperature,list):
+            raise Exception('Make Temperature a list, even if it is single valued')
+        if not isinstance(species,list):
+            raise Exception('Make Species Input a list, even if it is single valued')
+        cur.execute('SELECT temperature FROM continuum')
+        cia_temperatures = np.unique(cur.fetchall())
+
+        temp_nearest = [cia_temperatures[find_nearest_1d(cia_temperatures,t)] for t in temperature]
+
+        #cur.execute("""SELECT molecule,temperature,opacity
+        #            FROM continuum
+        #            WHERE molecule in {}
+        #            AND temperature in {}""".format(str(tuple(species)), str(tuple(temp_nearest))))
+
+        if (len(species) == 1) and (len(temp_nearest) > 1):
+            placeholders = ', '.join(['?'] * len(temp_nearest))
+            cur.execute(f"""SELECT molecule,temperature,opacity
                     FROM continuum
                     WHERE molecule = ?
-                    AND temperature = ?""", (species[0], temp_nearest[0]))
-    else:
-        placeholders_spec = ', '.join(['?'] * len(species))
-        placeholders_temp = ', '.join(['?'] * len(temp_nearest))
-        cur.execute(f"""SELECT molecule,temperature,opacity
+                    AND temperature in ({placeholders})""", [species[0]] + list(temp_nearest))
+        elif (len(species) > 1) and (len(temp_nearest) == 1):
+            placeholders = ', '.join(['?'] * len(species))
+            cur.execute(f"""SELECT molecule,temperature,opacity
                     FROM continuum
-                    WHERE molecule in ({placeholders_spec})
-                    AND temperature in ({placeholders_temp})""", list(species) + list(temp_nearest))
+                    WHERE molecule in ({placeholders})
+                    AND temperature = ?""", list(species) + [temp_nearest[0]])
+        elif (len(species) == 1) and (len(temp_nearest) == 1):
+            cur.execute("""SELECT molecule,temperature,opacity
+                        FROM continuum
+                        WHERE molecule = ?
+                        AND temperature = ?""", (species[0], temp_nearest[0]))
+        else:
+            placeholders_spec = ', '.join(['?'] * len(species))
+            placeholders_temp = ', '.join(['?'] * len(temp_nearest))
+            cur.execute(f"""SELECT molecule,temperature,opacity
+                        FROM continuum
+                        WHERE molecule in ({placeholders_spec})
+                        AND temperature in ({placeholders_temp})""", list(species) + list(temp_nearest))
 
-    
-    data= cur.fetchall()
-    restruct = {i:{} for i in species}
+        
+        data= cur.fetchall()
+        restruct = {i:{} for i in species}
 
-    for im, it, dat in data : restruct[im][it] = dat
+        for im, it, dat in data : restruct[im][it] = dat
 
-    cur.execute('SELECT wavenumber_grid FROM header')
-    wave_grid = cur.fetchone()[0]
+        cur.execute('SELECT wavenumber_grid FROM header')
+        wave_grid = cur.fetchone()[0]
 
-    conn.close()
-    restruct['wavenumber'] = wave_grid
+        conn.close()
+        restruct['wavenumber'] = wave_grid
 
-    return restruct
+        return restruct
 
 def get_molecular(db_file, species, temperature,pressure):
     """
-    Grab molecular opacity from sqlite database 
+    Grab molecular opacity from sqlite or HDF5 database 
 
     Parameters
     ----------
     db_file : str 
-        sqlite3 database filename 
+        sqlite3 or HDF5 database filename 
     species : list of str 
         Single species name. you can run molecular_avail to see what species are present.
     temperature : list of flaot,int
@@ -1635,66 +1709,113 @@ def get_molecular(db_file, species, temperature,pressure):
         one temperature at two pressures, then this should be input as 
         t = [100,100] (and pressure would be p=[0.1,1] for instance)
     """
-    if not isinstance(temperature,list):
-        raise Exception('Make temperature a list, even if it is single valued')
-    if not isinstance(pressure,list):
-        raise Exception('Make pressure a list, even if it is single valued')
-    if not isinstance(species,list):
-        raise Exception('Make Species a list, even if it is single valued')
-    if len(temperature) != len(pressure):
-        raise Exception('Temperature and Pressure must be the same size because these \
-            are treated as pairs. t=[500,600], p=[1.0, 0.01] will grab [500,1.0 ] and [600,0.01]')
-    
-    cur, conn = open_local(db_file)
-    #get pt pairs
-    cur.execute('SELECT ptid, pressure, temperature FROM molecular')
-    data= cur.fetchall()    
-    pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
-    #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
-    ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
-              for coordinate in  zip(pressure,temperature)]
-    if (len(species) == 1) and (len(ind_pt) > 1):
-        placeholders = ', '.join(['?'] * len(ind_pt))
-        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
-                FROM molecular
-                WHERE molecule = ?
-                AND ptid in ({placeholders})""", [species[0]] + list(ind_pt))
-    elif (len(species) > 1) and (len(ind_pt) == 1):
-        placeholders = ', '.join(['?'] * len(species))
-        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
-                FROM molecular
-                WHERE molecule in ({placeholders})
-                AND ptid = ?""", list(species) + [ind_pt[0]])
-    elif (len(species) == 1) and (len(ind_pt) == 1):
-        cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+    if h5py.is_hdf5(db_file):
+        with h5py.File(db_file, "r") as f:
+            if not isinstance(temperature, list):
+                raise Exception('Make temperature a list, even if it is single valued')
+            if not isinstance(pressure, list):
+                raise Exception('Make pressure a list, even if it is single valued')
+            if not isinstance(species, list):
+                raise Exception('Make Species a list, even if it is single valued')
+            if len(temperature) != len(pressure):
+                raise Exception('Temperature and Pressure must be the same size because these \
+                    are treated as pairs. t=[500,600], p=[1.0, 0.01] will grab [500,1.0 ] and [600,0.01]')
+
+            pt_pairs_array = f["header/pt_pairs"][:]
+            # pt_pairs in sqlite was list of tuples (ptid, pressure, temperature)
+            pt_pairs = [(int(row[0]), float(row[1]), float(row[2])) for row in pt_pairs_array]
+
+            # here's a little code to get out the correct pair
+            ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1] - coordinate[0], c[2] - coordinate[1]))[0]
+                    for coordinate in zip(pressure, temperature)]
+
+            temp_nearest = [pt_pairs[i - 1][2] for i in ind_pt]
+            pres_nearest = [pt_pairs[i - 1][1] for i in ind_pt]
+            
+            restruct = {i: {} for i in species}
+            for ispec in species:
+                if ispec in f["molecular"]:
+                    dataset = f[f"molecular/{ispec}"]
+                    storage_format = dataset.attrs.get("storage_format")
+                    y_min = dataset.attrs.get("y_min")
+                    y_max = dataset.attrs.get("y_max")
+                    
+                    for i_pair in range(len(ind_pt)):
+                        ptid = ind_pt[i_pair]
+                        t = temp_nearest[i_pair]
+                        p = pres_nearest[i_pair]
+                        
+                        if t not in restruct[ispec]:
+                            restruct[ispec][t] = {}
+                        
+                        # ptid in HDF5 is 1-indexed based on row order
+                        idx = ptid - 1
+                        opacity = _decode_hdf5_opacity_block(dataset[idx:idx+1, :], storage_format, y_min, y_max)[0]
+                        restruct[ispec][t][p] = opacity
+
+            restruct['wavenumber'] = f["header/wavenumber_grid"][:]
+        return restruct
+    else:
+        if not isinstance(temperature,list):
+            raise Exception('Make temperature a list, even if it is single valued')
+        if not isinstance(pressure,list):
+            raise Exception('Make pressure a list, even if it is single valued')
+        if not isinstance(species,list):
+            raise Exception('Make Species a list, even if it is single valued')
+        if len(temperature) != len(pressure):
+            raise Exception('Temperature and Pressure must be the same size because these \
+                are treated as pairs. t=[500,600], p=[1.0, 0.01] will grab [500,1.0 ] and [600,0.01]')
+        
+        cur, conn = open_local(db_file)
+        #get pt pairs
+        cur.execute('SELECT ptid, pressure, temperature FROM molecular')
+        data= cur.fetchall()    
+        pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
+        #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
+        ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
+                for coordinate in  zip(pressure,temperature)]
+        if (len(species) == 1) and (len(ind_pt) > 1):
+            placeholders = ', '.join(['?'] * len(ind_pt))
+            cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                     FROM molecular
                     WHERE molecule = ?
-                    AND ptid = ?""", (species[0], ind_pt[0]))
-    else:
-        placeholders_spec = ', '.join(['?'] * len(species))
-        placeholders_ptid = ', '.join(['?'] * len(ind_pt))
-        cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
+                    AND ptid in ({placeholders})""", [species[0]] + list(ind_pt))
+        elif (len(species) > 1) and (len(ind_pt) == 1):
+            placeholders = ', '.join(['?'] * len(species))
+            cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
                     FROM molecular
-                    WHERE molecule in ({placeholders_spec})
-                    AND ptid in ({placeholders_ptid})""", list(species) + list(ind_pt))
+                    WHERE molecule in ({placeholders})
+                    AND ptid = ?""", list(species) + [ind_pt[0]])
+        elif (len(species) == 1) and (len(ind_pt) == 1):
+            cur.execute("""SELECT molecule,ptid,pressure,temperature,opacity
+                        FROM molecular
+                        WHERE molecule = ?
+                        AND ptid = ?""", (species[0], ind_pt[0]))
+        else:
+            placeholders_spec = ', '.join(['?'] * len(species))
+            placeholders_ptid = ', '.join(['?'] * len(ind_pt))
+            cur.execute(f"""SELECT molecule,ptid,pressure,temperature,opacity
+                        FROM molecular
+                        WHERE molecule in ({placeholders_spec})
+                        AND ptid in ({placeholders_ptid})""", list(species) + list(ind_pt))
 
 
-    data= cur.fetchall()
+        data= cur.fetchall()
 
-    temp_nearest = [pt_pairs[i-1][2] for i in ind_pt]
-    pres_nearest = [pt_pairs[i-1][1] for i in ind_pt]
-    restruct = {i:{} for i in species}
-    for i in restruct.keys():
-        for t in temp_nearest:
-            restruct[i][t] = {}
-    for im, iid,ip,it, dat in data : restruct[im][it][ip] = dat
+        temp_nearest = [pt_pairs[i-1][2] for i in ind_pt]
+        pres_nearest = [pt_pairs[i-1][1] for i in ind_pt]
+        restruct = {i:{} for i in species}
+        for i in restruct.keys():
+            for t in temp_nearest:
+                restruct[i][t] = {}
+        for im, iid,ip,it, dat in data : restruct[im][it][ip] = dat
 
-    cur.execute('SELECT wavenumber_grid FROM header')
-    wave_grid = cur.fetchone()[0]
+        cur.execute('SELECT wavenumber_grid FROM header')
+        wave_grid = cur.fetchone()[0]
 
-    conn.close()
-    restruct['wavenumber'] = wave_grid
-    return restruct
+        conn.close()
+        restruct['wavenumber'] = wave_grid
+        return restruct
 
 def delete_molecule(mol, db_filename):
     """
@@ -2374,12 +2495,12 @@ def get_all_metadata(db_path):
 
 def get_metadata_item(db_path, key):
   """
-  Retrieves a metadata item by key.
+  Retrieves a metadata item by key from SQLite or HDF5.
 
   Parameters
   ----------   
   db_path : str 
-    Path to the SQLite database file.
+    Path to the SQLite or HDF5 database file.
   key : str
     The metadata key.
 
@@ -2387,24 +2508,39 @@ def get_metadata_item(db_path, key):
   -------
       The metadata value associated with the key, or None if the key is not found.
   """
-  try:
-      conn = sqlite3.connect(db_path)
-      cursor = conn.cursor()
-
-      cursor.execute("SELECT value FROM metadata WHERE key=?", (key,))
-      result = cursor.fetchone()
-
-      if result:
-          return result[0]  # Return the value (first element of the tuple)
-      else:
+  if h5py.is_hdf5(db_path):
+      try:
+          with h5py.File(db_path, "r") as f:
+              if "metadata" in f and key in f["metadata"]:
+                  val = f[f"metadata/{key}"]
+                  if val.shape == ():
+                      return _decode_hdf5_string(val[()])
+                  else:
+                      return _decode_hdf5_string(val[:])
+              else:
+                  return None
+      except Exception as e:
+          print(f"An error occurred: {e}")
           return None
+  else:
+      try:
+          conn = sqlite3.connect(db_path)
+          cursor = conn.cursor()
 
-  except sqlite3.Error as e:
-      print(f"An error occurred: {e}")
-      return None  # Return None in case of error
-  finally:
-      if conn:
-          conn.close()
+          cursor.execute("SELECT value FROM metadata WHERE key=?", (key,))
+          result = cursor.fetchone()
+
+          if result:
+              return result[0]  # Return the value (first element of the tuple)
+          else:
+              return None
+
+      except sqlite3.Error as e:
+          print(f"An error occurred: {e}")
+          return None  # Return None in case of error
+      finally:
+          if conn:
+              conn.close()
 
 def add_metadata_table(db_path):
     """
