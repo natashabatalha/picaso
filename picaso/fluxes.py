@@ -1,6 +1,4 @@
 from numba import jit, objmode
-from numba.experimental import jitclass
-from numba import types
 from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, dot, array,log, log10,ones, array_equal
 import numpy as np
 import time
@@ -285,6 +283,7 @@ def setup_pent_diag(nlayer,nwno ,c_plus_up, c_minus_up,
     F[-1,:] = b_surface - c_plus_down[-1,:] + surf_reflect*c_minus_down[-1,:]
 
     return A, B, C, D, E, F
+
 
 @jit(nopython=True, cache=True)
 def tri_diag_solve(l, a, b, c, d):
@@ -1005,6 +1004,7 @@ def get_reflected_1d_deprecate(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,
             #intensity[ng,nt,:,:] = xint
 
     return xint_at_top 
+
 
 @jit(nopython=True, cache=True)
 def get_reflected_1d(nlevel, wno,nwno, numg,numt, dtau, tau, w0, cosb,gcos2, ftau_cld, ftau_ray,
@@ -3896,3 +3896,4 @@ def blackbody_climate_deprecate(wave,temp, bb, y2, tp, tmin, tmax):
             blackbody_array[itemp, iwave] = planck_rad_deprecate(iwave, temp[itemp], dT ,  tmin, tmax, bb , y2, tp)
 
     return blackbody_array
+
