@@ -2454,11 +2454,11 @@ def add_all_metadata(filename, version_number, default, resolution, wavemin, wav
         add = 'default_'
     else: 
         add = ''
-    add_metadata_item(f, 'version',add+version_number)
-    add_metadata_item(f, 'resolution',resolution)
-    add_metadata_item(f, 'wavemin',wavemin)
-    add_metadata_item(f, 'wavemax',wavemax)
-    add_metadata_item(f, 'zenodo',zenodo_doi)
+    add_metadata_item(filename, 'version',add+version_number)
+    add_metadata_item(filename, 'resolution',resolution)
+    add_metadata_item(filename, 'wavemin',wavemin)
+    add_metadata_item(filename, 'wavemax',wavemax)
+    add_metadata_item(filename, 'zenodo',zenodo_doi)
 
 def get_ck_tables(path, preload_gases=None, avail_continuum=None):
     """
