@@ -10,9 +10,23 @@ import numpy as np
 nb.set_num_threads(1)
 
 @nb.njit(cache=True)
-def setup_tri_diag_inplace(A, B, C, D, nlayer, c_plus_up, c_minus_up,
-    c_plus_down, c_minus_down, b_top, b_surface, surf_reflect,
-    gama, exptrm_positive, exptrm_minus):
+def setup_tri_diag_inplace(
+    A,
+    B,
+    C,
+    D,
+    nlayer,
+    c_plus_up,
+    c_minus_up,
+    c_plus_down,
+    c_minus_down,
+    b_top,
+    b_surface,
+    surf_reflect,
+    gama,
+    exptrm_positive,
+    exptrm_minus,
+):
     """
     Build the tridiagonal coefficients for one wavelength row in place.
     This routine operates on a single wavelength at a time and writes the
@@ -126,28 +140,28 @@ def tri_diag_solve_inplace(l, a, b, c, d):
 class GetReflected1DWorkspace:
     "Per-thread scratch space for the reflected-light solver."
 
-    g1 : types.double[:]
-    g2 : types.double[:]
-    lamda : types.double[:]
-    gama : types.double[:]
-    g3 : types.double[:]
-    a_minus : types.double[:]
-    a_plus : types.double[:]
-    c_minus_up : types.double[:]
-    c_plus_up : types.double[:]
-    c_minus_down : types.double[:]
-    c_plus_down : types.double[:]
-    exptrm : types.double[:]
-    exptrm_positive : types.double[:]
-    exptrm_minus : types.double[:]
-    p_single : types.double[:]
-    A : types.double[:]
-    B : types.double[:]
-    C : types.double[:]
-    D : types.double[:]
-    positive : types.double[:]
-    negative : types.double[:]
-    xint : types.double[:]
+    g1 : nb.float64[:]
+    g2 : nb.float64[:]
+    lamda : nb.float64[:]
+    gama : nb.float64[:]
+    g3 : nb.float64[:]
+    a_minus : nb.float64[:]
+    a_plus : nb.float64[:]
+    c_minus_up : nb.float64[:]
+    c_plus_up : nb.float64[:]
+    c_minus_down : nb.float64[:]
+    c_plus_down : nb.float64[:]
+    exptrm : nb.float64[:]
+    exptrm_positive : nb.float64[:]
+    exptrm_minus : nb.float64[:]
+    p_single : nb.float64[:]
+    A : nb.float64[:]
+    B : nb.float64[:]
+    C : nb.float64[:]
+    D : nb.float64[:]
+    positive : nb.float64[:]
+    negative : nb.float64[:]
+    xint : nb.float64[:]
 
     def __init__(self, nlayer):
 
@@ -201,19 +215,19 @@ class GetReflected1D:
     """
 
     # Dimensions and settings
-    nlayer : types.int64
-    nwno : types.int64
-    numg : types.int64
-    numt : types.int64
-    get_lvl_flux : types.int64
-    get_toa_intensity : types.int64
+    nlayer : nb.int64
+    nwno : nb.int64
+    numg : nb.int64
+    numt : nb.int64
+    get_lvl_flux : nb.int64
+    get_toa_intensity : nb.int64
 
     # Results
-    flux_minus_all : types.double[:, :, :, :]
-    flux_plus_all : types.double[:, :, :, :]
-    flux_minus_midpt_all : types.double[:, :, :, :]
-    flux_plus_midpt_all : types.double[:, :, :, :]
-    xint_at_top : types.double[:, :, :]
+    flux_minus_all : nb.float64[:, :, :, :]
+    flux_plus_all : nb.float64[:, :, :, :]
+    flux_minus_midpt_all : nb.float64[:, :, :, :]
+    flux_plus_midpt_all : nb.float64[:, :, :, :]
+    xint_at_top : nb.float64[:, :, :]
 
     # Workspace
     workspace : types.ListType(GetReflected1DWorkspaceType)
@@ -283,7 +297,7 @@ class GetReflected1D:
         for i in range(nthreads):
             self.workspace.append(GetReflected1DWorkspace(nlayer))
 
-# Do not cache this function, as Numba says I should not.
+# A function that accepts a jitclass cannot be cached.
 @nb.njit(parallel=True)
 def get_reflected_1d(
     self,
@@ -457,8 +471,9 @@ def get_reflected_1d(
             self.flux_plus_midpt_all,
             self.xint_at_top
         )
-        
-@nb.njit(cache=True)
+
+# A function that accepts a jitclass cannot be cached.
+@nb.njit
 def get_reflected_1d_w(
     w,
     wrk,
