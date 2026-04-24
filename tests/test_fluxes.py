@@ -144,17 +144,7 @@ def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity,
         toon_coefficients,
     )
 
-    reflected = fluxes_noalloc.GetReflected1D(
-        case["nlevel"] - 1,
-        case["nwno"],
-        case["numg"],
-        case["numt"],
-        get_lvl_flux,
-        get_toa_intensity,
-    )
-
-    fluxes_noalloc.get_reflected_1d(
-        reflected,
+    xint_at_top, lvl_fluxes = fluxes_noalloc.get_reflected_1d(
         case["nlevel"],
         case["wno"].copy(),
         case["nwno"],
@@ -190,20 +180,20 @@ def _assert_reflected_parity(case, single_phase, multi_phase, get_toa_intensity,
     )
 
     if get_toa_intensity:
-        np.testing.assert_allclose(reflected.xint_at_top, expected_xint)
+        np.testing.assert_allclose(xint_at_top, expected_xint)
     else:
-        assert reflected.xint_at_top.size == 0
+        assert xint_at_top.size == 0
 
     if get_lvl_flux:
-        np.testing.assert_allclose(reflected.flux_minus_all, expected_fluxes[0])
-        np.testing.assert_allclose(reflected.flux_plus_all, expected_fluxes[1])
-        np.testing.assert_allclose(reflected.flux_minus_midpt_all, expected_fluxes[2])
-        np.testing.assert_allclose(reflected.flux_plus_midpt_all, expected_fluxes[3])
+        np.testing.assert_allclose(lvl_fluxes[0], expected_fluxes[0])
+        np.testing.assert_allclose(lvl_fluxes[1], expected_fluxes[1])
+        np.testing.assert_allclose(lvl_fluxes[2], expected_fluxes[2])
+        np.testing.assert_allclose(lvl_fluxes[3], expected_fluxes[3])
     else:
-        assert reflected.flux_minus_all.size == 0
-        assert reflected.flux_plus_all.size == 0
-        assert reflected.flux_minus_midpt_all.size == 0
-        assert reflected.flux_plus_midpt_all.size == 0
+        assert lvl_fluxes[0].size == 0
+        assert lvl_fluxes[1].size == 0
+        assert lvl_fluxes[2].size == 0
+        assert lvl_fluxes[3].size == 0
 
 def test_tri_diag_solve_matches_inplace():
     l = 5

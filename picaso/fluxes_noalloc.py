@@ -140,6 +140,7 @@ def tri_diag_solve_inplace(l, a, b, c, d):
 class GetReflected1DWorkspace:
     "Per-thread scratch space for the reflected-light solver."
 
+    nlayer : nb.int64
     g1 : nb.float64[:]
     g2 : nb.float64[:]
     lamda : nb.float64[:]
@@ -165,6 +166,7 @@ class GetReflected1DWorkspace:
 
     def __init__(self, nlayer):
 
+        self.nlayer = nlayer
         self.g1 = np.empty(nlayer, dtype=np.float64)
         self.g2 = np.empty(nlayer, dtype=np.float64)
         self.lamda = np.empty(nlayer, dtype=np.float64)
@@ -286,7 +288,10 @@ class GetReflected1D:
     def _ensure_workspace(self, nlayer):
         "Re-allocates work list/arrays if necessary."
 
-        if nlayer != self.nlayer or len(self.workspace) != nb.get_num_threads():
+        if len(self.workspace) < 1:
+            raise Exception('The workspace list has a length of less than 1.')
+
+        if nlayer != self.workspace[0].nlayer or len(self.workspace) != nb.get_num_threads():
             self._allocate_workspace(nlayer)
 
     def _allocate_workspace(self, nlayer):
@@ -297,10 +302,8 @@ class GetReflected1D:
         for i in range(nthreads):
             self.workspace.append(GetReflected1DWorkspace(nlayer))
 
-# A function that accepts a jitclass cannot be cached.
 @nb.njit(parallel=True)
 def get_reflected_1d(
-    self,
     nlevel,
     wno,
     nwno,
@@ -334,18 +337,16 @@ def get_reflected_1d(
     toon_coefficients,
     b_top
 ):
-    """Compute reflected-light fluxes and intensities in place.
+    """Compute reflected-light fluxes and intensities.
 
-    The solver iterates over wavelength in parallel and writes results into the
-    persistent output arrays owned by ``self``. Per-thread scratch space is
-    taken from ``self.workspace`` so the wavelength loop can reuse memory
-    without allocating inside the hot path.
+    The solver allocates a temporary :class:`GetReflected1D` container, then
+    iterates over wavelength in parallel and writes results into that
+    container's output arrays. Per-thread scratch space is taken from the
+    container's ``workspace`` so the wavelength loop can reuse memory without
+    allocating inside the hot path.
 
     Parameters
     ----------
-    self : GetReflected1D
-        Persistent solver container holding the output arrays and per-thread
-        workspace objects.
     nlevel : int
         Number of atmospheric levels.
     wno : ndarray of float64
@@ -415,19 +416,23 @@ def get_reflected_1d(
 
     Returns
     -------
-    None
-        Results are written into ``self`` in place.
+    xint_at_top : ndarray of float64
+        Top-of-atmosphere reflected intensity with shape ``(numg, numt, nwno)``.
+    lvl_fluxes : tuple of ndarray of float64
+        ``(flux_minus_all, flux_plus_all, flux_minus_midpt_all,
+        flux_plus_midpt_all)``. Each array has shape ``(numg, numt, nlevel,
+        nwno)`` when level fluxes are enabled, otherwise an empty array.
     """
     
     nlayer = nlevel - 1
     
-    # Ensure result + work arrays are right length
-    self._ensure(nlayer, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+    # Allocate work space
+    reflected = GetReflected1D(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
 
     # Parallel loop over wavelength
     for w in nb.prange(nwno):
         # Get workspace for given thread
-        wrk = self.workspace[nb.get_thread_id()]
+        wrk = reflected.workspace[nb.get_thread_id()]
 
         # Call reflected light solver for single wavelength
         get_reflected_1d_w(
@@ -465,12 +470,14 @@ def get_reflected_1d(
             get_lvl_flux,
             toon_coefficients,
             b_top,
-            self.flux_minus_all,
-            self.flux_plus_all,
-            self.flux_minus_midpt_all,
-            self.flux_plus_midpt_all,
-            self.xint_at_top
+            reflected.flux_minus_all,
+            reflected.flux_plus_all,
+            reflected.flux_minus_midpt_all,
+            reflected.flux_plus_midpt_all,
+            reflected.xint_at_top
         )
+
+    return reflected.xint_at_top, (reflected.flux_minus_all, reflected.flux_plus_all, reflected.flux_minus_midpt_all, reflected.flux_plus_midpt_all)
 
 # A function that accepts a jitclass cannot be cached.
 @nb.njit
