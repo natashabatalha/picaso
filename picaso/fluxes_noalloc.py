@@ -335,7 +335,8 @@ def get_reflected_1d(
     get_toa_intensity,
     get_lvl_flux,
     toon_coefficients,
-    b_top
+    b_top,
+    reflected=None,
 ):
     """Compute reflected-light fluxes and intensities.
 
@@ -413,6 +414,9 @@ def get_reflected_1d(
         Selects the Toon et al. coefficient set.
     b_top : float
         Diffuse radiation incident at the top of the atmosphere.
+    reflected : GetReflected1D, optional
+        Preallocated reflected-light container. If omitted, a new container is
+        created for this call.
 
     Returns
     -------
@@ -423,11 +427,12 @@ def get_reflected_1d(
         flux_plus_midpt_all)``. Each array has shape ``(numg, numt, nlevel,
         nwno)`` when level fluxes are enabled, otherwise an empty array.
     """
-    
-    nlayer = nlevel - 1
-    
-    # Allocate work space
-    reflected = GetReflected1D(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+
+    if reflected is None:
+        # Allocate work space.
+        reflected = GetReflected1D(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+    else:
+        reflected._ensure(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
 
     # Parallel loop over wavelength
     for w in nb.prange(nwno):
@@ -577,6 +582,14 @@ def get_reflected_1d_w(
         lamda[i] = lamda_i
         gama[i] = (g1[i] - lamda_i) / g2[i]
 
+        # Toon et al. (1989), Eq. 44: exponential terms for the rotated layered solve.
+        exptrm_val = lamda[i] * dtau[i, w]
+        if exptrm_val > 35.0:
+            exptrm_val = 35.0
+        exptrm[i] = exptrm_val
+        exptrm_positive[i] = np.exp(exptrm_val)
+        exptrm_minus[i] = 1.0 / exptrm_positive[i]
+
     if get_toa_intensity:
         # Phase function for the direct beam and single-scattering term.
         for i in range(nlayer):
@@ -609,8 +622,8 @@ def get_reflected_1d_w(
                 p_single[i] = ftau_cld[i, w] * (f * HG_forward + (1.0 - f) * HG_back) + ftau_ray[i, w] * (0.75 * (1.0 + cos_theta * cos_theta))
 
     # Toon et al. (1989), Table 1: angle-dependent coefficient g3.
-    for ng in range(numg):
-        for nt in range(numt):
+    for nt in range(numt):
+        for ng in range(numg):
             u1 = ubar1[ng, nt]
             u0 = ubar0[ng, nt]
             inv_u0 = 1.0 / u0
@@ -644,14 +657,6 @@ def get_reflected_1d_w(
                 c_plus_up[i] = a_plus[i] * exp_up
                 c_minus_down[i] = a_minus[i] * exp_down
                 c_plus_down[i] = a_plus[i] * exp_down
-
-                # Toon et al. (1989), Eq. 44: exponential terms for the rotated layered solve.
-                exptrm_val = lamda[i] * dtau[i, w]
-                if exptrm_val > 35.0:
-                    exptrm_val = 35.0
-                exptrm[i] = exptrm_val
-                exptrm_positive[i] = np.exp(exptrm_val)
-                exptrm_minus[i] = 1.0 / exptrm_positive[i]
 
             # Boundary conditions at the lower surface.
             b_surface = surf_reflect_w * u0 * f0pi_w * np.exp(-tau[nlevel - 1, w] * inv_u0)
@@ -707,18 +712,21 @@ def get_reflected_1d_w(
                 for i in range(nlevel):
                     flux_minus_all[ng, nt, i, w] = flux_minus_all[ng, nt, i, w] + u0_scale * np.exp(-tau[i, w] * inv_u0)
 
+                ubar0_w = ubar0[ng, nt]
+                inv_ubar0_w = 1.0 / ubar0_w
                 for i in range(nlayer):
                     exptrm_positive_midpt = np.exp(0.5 * exptrm[i])
                     exptrm_minus_midpt = 1.0 / exptrm_positive_midpt
                     taumid = tau[i, w] + 0.5 * dtau[i, w]
-                    c_plus_mid = a_plus[i] * np.exp(-taumid / ubar0[ng, nt])
-                    c_minus_mid = a_minus[i] * np.exp(-taumid / ubar0[ng, nt])
+                    exp_mid = np.exp(-taumid * inv_ubar0_w)
+                    c_plus_mid = a_plus[i] * exp_mid
+                    c_minus_mid = a_minus[i] * exp_mid
 
                     flux_minus_midpt_all[ng, nt, i, w] = (
                         gama[i] * positive[i] * exptrm_positive_midpt
                         + negative[i] * exptrm_minus_midpt
                         + c_minus_mid
-                        + ubar0[ng, nt] * f0pi_w * np.exp(-taumid / ubar0[ng, nt])
+                        + ubar0_w * f0pi_w * exp_mid
                     )
                     flux_plus_midpt_all[ng, nt, i, w] = (
                         positive[i] * exptrm_positive_midpt
