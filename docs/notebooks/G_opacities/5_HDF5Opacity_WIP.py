@@ -1,12 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
-#     custom_cell_magics: kql
+#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.19.1
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -14,31 +14,44 @@
 # ---
 
 # %% [markdown]
-# # Querying Opacities
+# # HDF5 Opacity Database Suport
 #
-# ``PICASO`` currently includes several different flavors of opacity database on Zenodo (incl different Rs, molecules, wavelength ranges). 
-#
-# We chose those use `sqlite3` for our database because of it's 1) user-friendliness, 2) speed, 3) scalability, 4) compatibility with parallel programming. In 2019, we tried out various other methods as well-- `json`, `hdf5`, `ascii`, `sqlalchemy`-- but `sqlite3` was truly better for this specific problem. Having revisited this problem recently `hdf5` has now outpaced `sqlite3` in terms of storage and performance. Therefore in future PICASO v5 we will move away from `sqlite3` and toward `hdf5` which has a much larger user base now. 
-#
-# In this tutorial you wil learn how to quickly grab any opacity data
+# ``PICASO`` is moving away from SQLite and toward HDF5. Currently, this notebook tutorial shows users how to: 
+# - transfer their existing SQLite database to HDF5 (the support for doing this includes options to decrease the float precision of the data to drastically reduce memory by ~factor of 2). 
+# - perform queries on the new HDF5 formatted data 
 
 # %%
 from picaso import justplotit as jpi
 from picaso import justdoit as jdi
-import warnings
-warnings.filterwarnings('ignore')
 import numpy as np
 import picaso.opacity_factory as opa
 #plotting
 jpi.output_notebook()
 
 # %% [markdown]
-# ## General Sqlite3 and how our database is structured
+# ## Transfer SQLite data to HDF5 format
 #
-# - 3 Tables: `header`, `continuum`, and `molecular`
-# - header: contains units and the wavenumber grid
-# - continuum: contains a grid continuum opacity and is temperature dependent
-# - molecular: contains all molecular opacity and is pressure-temperature dependent.
+# Some new parameters to consider for the function below: 
+#
+# - `compression` and `shuffle`: When lzf + shuffle compression is used, this decreases resampled opacity file sizes by a factor of 10.
+# - `storage_format`: HDF5 files can store opacities in two different formats: log10_uint16 and log10_float32. The log10_uint16 approach saves log10 opacities using unsigned 16 bit integers which will degrade accuracy by  < 0.04% in core tests (reflected + transmission + thermal). We do not guarantee that as the ceiling. We encourage users to test for their case of interest. 
+
+# %%
+#lets convert your default opacity file (note this will not delete or overwrite your default)
+opanxn = jdi.opannection()
+db_filename = opanxn.db_filename
+new_hdf5_filename = jdi.os.path.join(jdi.os.getcwd(),'test.hdf5')#'/data/picaso_dbs'
+opa.convert_sqlite_to_hdf5(
+    input_db=db_filename,#lets convert our current default to HDF5
+    output_hdf5=new_hdf5_filename,
+    compression='lzf',
+    shuffle=True,
+    storage_format="log10_uint16",
+    chunks=(1, 4096),
+    molecular_log10_floor=1e-50,
+    continuum_log10_floor=1e-100,
+    verbose=True,
+)
 
 # %% [markdown]
 # ## How to Query the Database
@@ -60,7 +73,7 @@ opa.get_metadata_item(db_filename, 'version'),opa.get_metadata_item(db_filename,
 # ### What Species, Pressures and Temperatures are Available
 
 # %%
-molecules, pt_pairs = opa.molecular_avail(db_filename)
+molecules, pt_pairs = opa.molecular_avail(new)
 
 # %%
 print(molecules)
