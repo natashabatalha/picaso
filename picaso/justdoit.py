@@ -227,7 +227,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.surf_reflect = inputs.get('surface_reflect',np.zeros(nwno)) #default no hard surface if it has not been defined
     atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
@@ -4966,7 +4966,7 @@ class inputs():
             if self.inputs.get('hard_surface',0)==1: 
                 raise Exception('The user is requesting a hard_surface boundary condition but the surface reflectivity has not been set by the function surface_reflect')
             else: 
-                self.inputs['surface_reflect'] = 0 
+                self.inputs['surface_reflect'] = np.zeros(opacityclass.nwno)
                 self.inputs['hard_surface'] = 0 
 
             
