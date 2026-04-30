@@ -376,13 +376,17 @@ class Analyze():
         """
         S_epsilon_inv = np.diag(1.0 / self.error**2 )
 
-        self.FIM =  getattr(self, 'FIM', self.jacobian @ S_epsilon_inv @ self.jacobian.T)
+        scaled_jac = self.jacobian / np.array(np.median(self.jacobian,axis=1))
+
+        #self.FIM =  getattr(self, 'FIM', self.jacobian @ S_epsilon_inv @ self.jacobian.T)
+        FIM= scaled_jac @ S_epsilon_inv @ scaled_jac.T
+
         # DFS = trace of the Hat Matrix (simplifying for the 'elbow' search)
         # Using SVD on the FIM to assess rank/independence
-        u, s, vh = np.linalg.svd(self.FIM)
+        u, s, vh = np.linalg.svd(FIM)
         dfs = np.sum(s / (s + 1)) # Normalized info contribution
-        
-        return dfs 
+
+        return dfs , s, vh 
 
     def shannon_ic(self,prior):
         """
@@ -412,6 +416,7 @@ class Analyze():
         self.FIM = self.jacobian @ S_epsilon_inv @ self.jacobian.T
 
         S_Hat = np.linalg.inv(self.FIM + S_prior_inv ) #nparams x nparamers where the sqrt(diagonal elements) are error on parameters e.g. 
+        self.S_hat = S_Hat
         error_on_params = np.sqrt(np.diag(S_Hat))
 
         #Gain, 𝐺, describes the sensitivity of the retrieval to the observation (e.g. if 𝐺 =0the measurements contribute no new information
