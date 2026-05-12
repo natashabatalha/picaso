@@ -2025,6 +2025,7 @@ class RetrieveOpacities():
         self.p_log_grid = log10(self.pressures) #used for interpolation 
         self.temps = df['temperature'].unique() #used for interpolation
         self.t_inv_grid = 1/self.temps
+        self._pt_ids, _ = _build_ptid_lookup(self.pt_pairs)
 
         #Get the wave grid info
         cur.execute('SELECT wavenumber_grid FROM header')
@@ -2266,11 +2267,16 @@ class RetrieveOpacities():
         #get parameters we need to interpolate molecular opacity 
         t_interp , p_interp, i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi = self.find_needed_pts(tlayer,player)
         #only need to uniquely query certain opacities
-        ind_pt = 1+np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
+        row_pt = np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
+        ind_pt = self._pt_ids[row_pt]
 
         atmosphere.layer['pt_opa_index'] = ind_pt
 
         data = self._get_query_molecular(ind_pt,molecules,cur)
+        pt_low_low = self._pt_ids[i_t_low_p_low]
+        pt_hi_low = self._pt_ids[i_t_hi_p_low]
+        pt_low_hi = self._pt_ids[i_t_low_p_hi]
+        pt_hi_hi = self._pt_ids[i_t_hi_p_hi]
 
         for i in self.molecular_opa.keys():
             #fac is a multiplier for users to test the optical contribution of 
@@ -2281,13 +2287,13 @@ class RetrieveOpacities():
             #these where statements are used for non zero arrays 
             #however they should ultimately be put into opacity factory so it doesnt slow 
             #this down
-                log_abunds1 = data[i+'_'+str(1+i_t_low_p_low[ind])]
+                log_abunds1 = data[i+'_'+str(pt_low_low[ind])]
                 log_abunds1 = log10(np.where(log_abunds1!=0,log_abunds1,1e-50))
-                log_abunds2 = data[i+'_'+str(1+i_t_hi_p_low[ind])]
+                log_abunds2 = data[i+'_'+str(pt_hi_low[ind])]
                 log_abunds2 = log10(np.where(log_abunds2!=0,log_abunds2,1e-50))
-                log_abunds3 = data[i+'_'+str(1+i_t_hi_p_hi[ind])]
+                log_abunds3 = data[i+'_'+str(pt_hi_hi[ind])]
                 log_abunds3 = log10(np.where(log_abunds3!=0,log_abunds3,1e-50))
-                log_abunds4 = data[i+'_'+str(1+i_t_low_p_hi[ind])]
+                log_abunds4 = data[i+'_'+str(pt_low_hi[ind])]
                 log_abunds4 = log10(np.where(log_abunds4!=0,log_abunds4,1e-50))
                 #nlayer x nwno
                 cx = 10**(((1-t_interp[ind])* (1-p_interp[ind]) * log_abunds1) +
@@ -2565,6 +2571,12 @@ def _fill_hdf5_nearest_block(output, block, local_rows, scale):
             output[i, j] = scale * block[row, j]
 
 
+def _build_ptid_lookup(pt_pairs):
+    pt_ids = np.asarray([int(row[0]) for row in pt_pairs], dtype=np.int64)
+    ptid_to_row = {int(ptid): idx for idx, ptid in enumerate(pt_ids.tolist())}
+    return pt_ids, ptid_to_row
+
+
 class RetrieveOpacitiesHDF5(RetrieveOpacities):
     """
     HDF5 reader for resampled opacity databases.
@@ -2688,7 +2700,6 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         self._default_continuum_storage_format = _decode_hdf5_string(
             self._header["continuum_storage_format"][()]
         )
-        self._ptid_to_row = {int(row[0]): idx for idx, row in enumerate(self.pt_pairs)}
         self._continuum_temp_to_row = {
             float(temp): idx for idx, temp in enumerate(self.cia_temps.tolist())
         }
@@ -2788,8 +2799,6 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
         required_rows = np.unique(
             np.concatenate([row_low_low, row_hi_low, row_low_hi, row_hi_hi])
         )
-        atmosphere.layer['pt_opa_index'] = (1 + required_rows).tolist()
-
         dense_blocks, row_lookup = self._load_molecular_blocks(required_rows, molecules, return_log=True)
 
         local_low_low = row_lookup[row_low_low]
@@ -2846,8 +2855,6 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
             np.asarray(self._pt_temperatures, dtype=np.float64),
             np.asarray(self._pt_ids, dtype=np.int64),
         )
-        atmosphere.layer['pt_opa_index'] = nearest_ptids.tolist()
-
         dense_blocks, row_lookup = self._load_molecular_blocks(nearest_rows, molecules, return_log=False)
         local_rows = row_lookup[nearest_rows]
 

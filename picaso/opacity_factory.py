@@ -52,6 +52,11 @@ def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None
         "Supported formats are log10_uint16 and log10_float32."
     )
 
+def _build_ptid_lookup(pt_pairs):
+    pt_ids = np.asarray([int(row[0]) for row in pt_pairs], dtype=np.int64)
+    ptid_to_row = {int(ptid): idx for idx, ptid in enumerate(pt_ids.tolist())}
+    return pt_ids, ptid_to_row
+
 def restruct_continuum(original_file,colnames, new_wno,new_db, overwrite):
     """
     The continuum factory takes the CIA opacity file and adds in extra sources of 
@@ -1724,13 +1729,16 @@ def get_molecular(db_file, species, temperature,pressure):
             pt_pairs_array = f["header/pt_pairs"][:]
             # pt_pairs in sqlite was list of tuples (ptid, pressure, temperature)
             pt_pairs = [(int(row[0]), float(row[1]), float(row[2])) for row in pt_pairs_array]
+            for row_idx, (ptid, _, _) in enumerate(pt_pairs):
+                if ptid != row_idx:
+                    raise Exception("HDF5 ptid must be zero-based and match row order")
 
             # here's a little code to get out the correct pair
             ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1] - coordinate[0], c[2] - coordinate[1]))[0]
                     for coordinate in zip(pressure, temperature)]
 
-            temp_nearest = [pt_pairs[i - 1][2] for i in ind_pt]
-            pres_nearest = [pt_pairs[i - 1][1] for i in ind_pt]
+            temp_nearest = [pt_pairs[i][2] for i in ind_pt]
+            pres_nearest = [pt_pairs[i][1] for i in ind_pt]
             
             restruct = {i: {} for i in species}
             for ispec in species:
@@ -1748,8 +1756,7 @@ def get_molecular(db_file, species, temperature,pressure):
                         if t not in restruct[ispec]:
                             restruct[ispec][t] = {}
                         
-                        # ptid in HDF5 is 1-indexed based on row order
-                        idx = ptid - 1
+                        idx = ptid
                         opacity = _decode_hdf5_opacity_block(dataset[idx:idx+1, :], storage_format, y_min, y_max)[0]
                         restruct[ispec][t][p] = opacity
 
@@ -1771,6 +1778,7 @@ def get_molecular(db_file, species, temperature,pressure):
         cur.execute('SELECT ptid, pressure, temperature FROM molecular')
         data= cur.fetchall()    
         pt_pairs = sorted(list(set(data)),key=lambda x: (x[0]) )
+        _, ptid_to_row = _build_ptid_lookup(pt_pairs)
         #here's a little code to get out the correct pair (so we dont have to worry about getting the exact number right)
         ind_pt = [min(pt_pairs, key=lambda c: math.hypot(c[1]- coordinate[0], c[2]-coordinate[1]))[0]
                 for coordinate in  zip(pressure,temperature)]
@@ -1802,8 +1810,8 @@ def get_molecular(db_file, species, temperature,pressure):
 
         data= cur.fetchall()
 
-        temp_nearest = [pt_pairs[i-1][2] for i in ind_pt]
-        pres_nearest = [pt_pairs[i-1][1] for i in ind_pt]
+        temp_nearest = [pt_pairs[ptid_to_row[i]][2] for i in ind_pt]
+        pres_nearest = [pt_pairs[ptid_to_row[i]][1] for i in ind_pt]
         restruct = {i:{} for i in species}
         for i in restruct.keys():
             for t in temp_nearest:
