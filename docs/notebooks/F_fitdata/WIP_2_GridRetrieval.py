@@ -76,9 +76,9 @@
 # Below we break these down with the simple function of fitting a line to a spectrum. If you understand the basics here of fitting some model to a spectrum, and analyzing the results, you will be well positioned to move on to the next tutorials where we swap the simple line function for a PICASO function.
 
 # %%
+from picaso import justdoit as jdi
 import numpy as np
 import os
-import picaso.justdoit as jdi
 import picaso.analyze as lyz
 import xarray as xr
 import matplotlib.pyplot as plt

@@ -54,6 +54,10 @@
 # 2. Have you already installed picaso, set reference variables, and have an understanding of how to get new data products associated with PICASO? **PROCEED TO edit B.**
 
 # %%
+from virga import justplotit as vpi
+from virga import justdoit as vdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import picaso.data as d
 
 picaso_refdata = '/data/test/tutorial/picaso-lite-reference' #change to where you want this to live
@@ -86,8 +90,6 @@ d.check_environ()
 # %% id="P_mk7nKI78GM"
 import os
 # Check you have picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 import picaso.opacity_factory as op
 import numpy as np
 
@@ -1106,8 +1108,6 @@ xarr_so2['pressure']
 
 # %%
 # Here is virga
-import virga.justdoit as vjdi
-import virga.justplotit as vjpi
 
 # %%
 xarr_no_so2 = jdi.xr.open_dataset("W39b_climate.nc")
@@ -1118,7 +1118,7 @@ xarr_no_so2
 
 # %%
 # Check gas species to choose from
-vjdi.available()
+vdi.available()
 
 # %% [markdown]
 # We have a lot to choose from! If you already know which you want present, then you can skip past to the next section. Otherwise, let's see what recommended gas condensates virga believes we should look into more.
@@ -1130,7 +1130,7 @@ metallicity = 1 # Atmospheric metallicity relative to Solar (for anything above 
 mean_molecular_weight = 2.2 # Atmospheric mean molecular weight
 
 # Get virga recommendation for which gases to run
-recommended = vjdi.recommend_gas(pressure, temperature, metallicity, mean_molecular_weight,plot=True)
+recommended = vdi.recommend_gas(pressure, temperature, metallicity, mean_molecular_weight,plot=True)
 # Print the results
 print(recommended)
 
@@ -1178,7 +1178,7 @@ all_out.keys()
 # As we can see, *MgSi02* and *MnS* condensates, as their P-T profiles are to the right of ours. But, we can see that *Na2s* is to the **left** of ours, which means that it is **not** condensating in the cloud mixture.
 
 # %%
-jpi.show(vjpi.pt(all_out))
+jpi.show(vpi.pt(all_out))
 
 # %% [markdown]
 # <div class="alert alert-block alert-info">
@@ -1189,13 +1189,13 @@ jpi.show(vjpi.pt(all_out))
 # We can see a breakdown of each of the cloud optical depth by species. Note Na2S never condensed, as we expected from the above plot.
 
 # %%
-jpi.show(vjpi.opd_by_gas(all_out))
+jpi.show(vpi.opd_by_gas(all_out))
 
 # %% [markdown]
 # Another way to look at this is through the condensate mass mixing ratios.
 
 # %%
-jpi.show(vjpi.condensate_mmr(all_out))
+jpi.show(vpi.condensate_mmr(all_out))
 
 # %% [markdown]
 # ### Analyzing Cloud Interactions
@@ -1217,7 +1217,7 @@ jpi.show(vjpi.condensate_mmr(all_out))
 # Describes the scattering direction of the particles. Particles which high asymmetry scatter light in the forward directly. Particles with asymmetry near 0 scatter in all directions equally.
 
 # %%
-jpi.show(vjpi.all_optics(all_out))
+jpi.show(vpi.all_optics(all_out))
 
 # %% [markdown]
 # Awesome! This tells us so much about the interaction of clouds between the atmosphere, and is a much different analysis than a cloud free model. This is just a brief overview of what virga can do and the amount of science that can be retrieved from just one set of JWST data. For more information, please feel free to visit the [virga](https://natashabatalha.github.io/virga/index.html) documentation!

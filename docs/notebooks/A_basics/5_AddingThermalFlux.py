@@ -18,11 +18,11 @@
 # Computing thermal flux is pretty much the same deal as the reflected light. There are just a couple tweaks we will have to make in order to make sure we have the full set of info.
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 #picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 
 #plotting
 jpi.output_notebook()

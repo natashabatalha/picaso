@@ -51,14 +51,14 @@
 #
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 
 ck_db_path = os.path.join(os.getenv('picaso_refdata'),'opacities', 'preweighted','sonora_2121grid_feh1.0_co0.46.hdf5')
 sonora_profile_db = os.path.join(os.getenv('picaso_refdata'),'sonora_grids','bobcat')
 
 # %%
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 jpi.output_notebook()
 
 import matplotlib.pyplot as plt

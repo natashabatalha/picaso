@@ -49,7 +49,7 @@ Clouds
 
 1D Climate Modeling
 -------------------
-Relevant Citations: `Mukherjee et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_
+Relevant Citations: `Mukherjee et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_ and `Mang et al. 2026 <https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract>`
 
 .. toctree::
    :maxdepth: 1

@@ -21,7 +21,7 @@
 # - specified methods (e.g. 1d spectra vs climate)
 
 # %%
-import picaso.justdoit as jdi
+from picaso import justdoit as jdi
 import picaso.references as pref
 
 # %% [markdown]

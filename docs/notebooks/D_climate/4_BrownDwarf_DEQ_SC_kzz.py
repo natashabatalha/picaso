@@ -15,7 +15,7 @@
 # %% [markdown]
 # # One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz
 #
-# In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid [Mukherjee et al. 2024](https://ui.adsabs.harvard.edu/abs/2024arXiv240200756M/abstract) (note this should also be cited along with [PICASO 4.0]() if using this code/tutorial).
+# In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid [Mukherjee et al. 2024](https://ui.adsabs.harvard.edu/abs/2024ApJ...963...73M/abstract) (note this should also be cited along with [Mang et al. 2026](https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract) if using this code/tutorial).
 #
 # What you should already be familiar with:
 #
@@ -39,14 +39,14 @@
 # ### First, check that you have downloaded and placed the correlated-k files in the correct folder
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 os.listdir(os.path.join(os.getenv('picaso_refdata'),'opacities','resortrebin')) #should show you a list of files
 
 # %%
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 import astropy.units as u
 import numpy as np
 import matplotlib.pyplot as plt
