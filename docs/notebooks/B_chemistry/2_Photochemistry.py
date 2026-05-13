@@ -33,6 +33,7 @@
 # Each reaction has a rate constant derived experimentally or from Ab initio calculations that can depend on temperature and pressure. Reactions are often faster with increased temperature and pressure. In `Photochem`, all reactions (except photolysis reactions) are reversed using thermodynamic principles. This means that the chemical network will predict chemical equilibrium at high temperatures and pressures, and deviate from equilibrium at cooler temperatures and when UV photolysis is important. UV photons from a host star can split molecules apart (e.g., $\mathrm{H_2O} + h\nu \rightarrow \mathrm{OH} + \mathrm{H}$) in the upper atmosphere, and ultimately drive further chemistry. -->
 
 # %%
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
@@ -291,7 +292,6 @@ while True:
 # Now, we can export this composition and climate to Picaso, to compute its transmission spectrum.
 
 # %%
-from picaso import justdoit as jdi
 import os
 import pandas as pd
 

@@ -41,7 +41,7 @@ Phase curves
 
 - 1D climate models of substellar atmospheres
 
-`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets"`_
+`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets" The Astrophysical Journal (2026): <https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract>`_
 
 - 1D disequilibrium models of substellar atmospheres
 - 1D cloudy models of substellar atmospheres 
@@ -62,7 +62,7 @@ Chemistry
 
 - Use of the `chemeq_visscher` functions 
 
-`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets"`_
+`Mang, et al. "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets" The Astrophysical Journal (2026): <https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract>`_
 
 - Use of the 2121 chemistry grid (`chemeq_visscher_2121` chemistry)
 

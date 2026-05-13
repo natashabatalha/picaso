@@ -1,10 +1,11 @@
-from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
+from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes_noalloc import get_reflected_1d
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
 from .wavelength import get_cld_input_grid
-from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
+from .optics import RetrieveOpacities, RetrieveOpacitiesHDF5, compute_opacity, RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
@@ -92,12 +93,53 @@ if __hardware__ == 'gpu':
 
 LODDERS2020_C_TO_O = 0.54939759398
 
+
+def _molecule_has_continuum_support(opacityclass, simple_name, active_simple_names):
+    if simple_name == 'H-' and 'H-bf' in opacityclass.avail_continuum:
+        return True
+    if simple_name == 'H' and 'H-ff' in opacityclass.avail_continuum:
+        return True
+    if simple_name == 'H2' and 'H2-' in opacityclass.avail_continuum:
+        return True
+    for other in active_simple_names:
+        if simple_name + other in opacityclass.avail_continuum:
+            return True
+    return False
+
+
+def _warn_for_exclude_requests(atm, exclude_mol, opacityclass):
+    if not exclude_mol:
+        return
+
+    active_simple_names = {convert_to_simple(molecule) for molecule in atm.molecules}
+    for molecule, requested_types in exclude_mol.items():
+        simple_name = convert_to_simple(molecule)
+
+        if requested_types.get('line', False):
+            if molecule not in opacityclass.molecules and simple_name not in opacityclass.molecules:
+                atm.add_warnings(
+                    f"You requested line-opacity exclusion for {molecule}, but the available line opacities are {opacityclass.molecules}."
+                )
+
+        if requested_types.get('continuum', False):
+            if simple_name not in active_simple_names or not _molecule_has_continuum_support(opacityclass, simple_name, active_simple_names):
+                atm.add_warnings(
+                    f"You requested continuum-opacity exclusion for {molecule}, but no matching continuum opacity is active in this calculation."
+                )
+
+        if requested_types.get('rayleigh', False):
+            if simple_name not in opacityclass.rayleigh_molecules:
+                atm.add_warnings(
+                    f"You requested Rayleigh-opacity exclusion for {molecule}, but the available Rayleigh molecules are {opacityclass.rayleigh_molecules}."
+                )
+
 if not os.path.exists(__refdata__): 
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 else: 
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
-    if __version__ != str(ref_v): 
+    if (__version__ != str(ref_v)) and (str(ref_v) not in __version__): 
+        #will not apply warning to changes at the X.X.1 level (e.g., no warning for incompatilitibies for 4.0.1 vs 4.0). This means reference data changes must always assume new tenth decimal increase in version)
         msg = f"Your code version is {__version__} but your reference data version is {ref_v}. For some functionality you may experience Keyword errors. Please download the newest ref version or update your code: https://github.com/natashabatalha/picaso/tree/master/reference"
         warnings.warn(msg)
 
@@ -230,7 +272,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs.get('surface_reflect',np.zeros(len(wno))) #default no hard surface if it has not been defined
+    atm.surf_reflect = inputs.get('surface_reflect',np.zeros(nwno)) #default no hard surface if it has not been defined
     atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
@@ -252,8 +294,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+    exclude_mol = normalize_exclude_mol(inputs['atmosphere']['exclude_mol'])
+    _warn_for_exclude_requests(atm, exclude_mol, opacityclass)
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -264,12 +310,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
-    if isinstance(exclude_mol,dict):
-        for imol in exclude_mol.keys(): 
-            if imol not in opacityclass.molecules: 
-                atm.add_warnings(f'Youve requested that I exclude opacity from {imol} but the set of opacities I have is {opacityclass.molecules} so your spectra will look identical.')
-
     get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
@@ -393,7 +433,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                         else:
                             xint_clear, out_ref_fluxes_clear = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                 DTAU_clear[:,:,ig], TAU_clear[:,:,ig], W0_clear[:,:,ig], COSB_clear[:,:,ig],
-                                GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
+                                GCOS2_clear[:,:,ig],ftau_cld_clear[:,:,ig],ftau_ray_clear[:,:,ig],
                                 DTAU_OG_clear[:,:,ig], TAU_OG_clear[:,:,ig], W0_OG_clear[:,:,ig], COSB_OG_clear[:,:,ig],
                                 atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                 single_phase,multi_phase,
@@ -1451,8 +1491,12 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+    exclude_mol = normalize_exclude_mol(inputs['atmosphere']['exclude_mol'])
+    _warn_for_exclude_requests(atm, exclude_mol, opacityclass)
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -1463,15 +1507,13 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
-
     get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
     #lastly grab needed opacities for the problem
-    get_opacities(atm)
+    get_opacities(atm, exclude_mol=exclude_mol)
     #only need to get opacities for one pt profile
 
     #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -1503,13 +1545,17 @@ def find_press(at_tau, a, b, c):
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
 
-def opannection(wave_range = None, filename_db = None, 
-                resample=1, method='resampled',
-                ck_db=None, raman_db = None, 
-                preload_gases='all',
-                #deq= False, on_fly=False,
-                #gases_fly =None,ck=False,
-                verbose=False):
+def opannection(
+    wave_range=None, 
+    filename_db=None, 
+    resample=1, 
+    method='resampled',
+    ck_db=None, 
+    raman_db=None, 
+    preload_gases='all',
+    query_method='nearest',
+    verbose=False,
+):
     """
     Sets up database connection to opacities. 
 
@@ -1533,6 +1579,12 @@ def opannection(wave_range = None, filename_db = None,
     method : str 
         By default method='resampled'
         Other options include: ['preweighted','resortrebin']
+    query_method : str
+        Only used when ``method='resampled'``. Controls how molecular opacities
+        are fetched from the resampled database.
+        Options are:
+        - ``'nearest'``: nearest-neighbor selection in PT space
+        - ``'linear'``: bilinear interpolation in PT space
     ck_db : str 
         Can be: 
         - (required if method is preweighted) ASCII dir of ck file
@@ -1571,10 +1623,22 @@ def opannection(wave_range = None, filename_db = None,
         if resample != 1:
             if verbose:print("YOU ARE REQUESTING RESAMPLING!! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html")
 
-        opacityclass=RetrieveOpacities(
-                    filename_db, 
-                    raman_db,
-                    wave_range = wave_range, resample = resample)  
+        if filename_db.lower().endswith(('.h5', '.hdf5')):
+            opacityclass = RetrieveOpacitiesHDF5(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )
+        else:
+            opacityclass = RetrieveOpacities(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )  
         if verbose: print("verbose=True; Molecule set=",opacityclass.molecules) 
     elif ((method == 'resampled') & isinstance(ck_db,str)):
         raise Exception("ck_db was supplied but method is set to resampled. Change kwarg method='preweighted' to use the preweighted ck tables")
@@ -2162,12 +2226,17 @@ class inputs():
         filename : str 
             (Optional) Filename with pressure, temperature and volume mixing ratios.
             Must contain pressure at least one molecule
-        exclude_mol : list of str 
-            (Optional) List of molecules to ignore from opacity. It will NOT 
-            change other aspects of the calculation like mean molecular weight. 
-            This should be used as exploratory ONLY. if you actually want to remove 
-            the contribution of a molecule entirely from your profile you should remove 
-            it from your input data frame. 
+        exclude_mol : str, list of str, or dict
+            (Optional) Opacity-only exclusion control used for exploratory
+            spectroscopy. This does NOT change chemistry, mean molecular weight,
+            density, or other non-opacity atmospheric properties.
+            Supported forms are:
+            - ``'H2O'`` or ``['H2O', 'CO2']`` to exclude all opacity types
+              associated with each molecule
+            - ``{'H2O': ['line', 'continuum'], 'CO2': ['all']}`` to exclude
+              only selected opacity classes
+            Valid opacity types are ``line``, ``continuum``, ``rayleigh``, and
+            ``all``.
         mh : float 
             Metallicity relative to Solar 
         cto_relative : float 
@@ -2247,7 +2316,7 @@ class inputs():
             if 'climate' not in self.inputs['calculation']:
                 raise Exception("`temperature` not specified as a column/key name")
 
-        # if there are molecules we want to exclude lets make sure they are in list format
+        # if there ar molecules we want to exclude lets make sure they are in list format
         if not isinstance(exclude_mol, type(None)):
             if  isinstance(exclude_mol, str):
                 exclude_mol = [exclude_mol]
@@ -5793,6 +5862,13 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
         start_case.guillot_pt(Tirr) 
 
     return start_case
+def earth_icrccm_pt():
+    """
+    Return the path to the Earth ICRCCM mid-latitude summer P-T-X profile.
+    The file is a PICASO-formatted rewrite of "icrccm_62_v2.atm", from the
+    rfast code.
+    """
+    return os.path.join(__refdata__, 'base_cases', 'earth_icrccm.pt')
 def jupiter_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','jupiter.pt')

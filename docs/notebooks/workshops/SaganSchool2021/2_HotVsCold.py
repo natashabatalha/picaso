@@ -29,14 +29,14 @@
 # **Questions?** [Submit an Issue to PICASO Github](https://github.com/natashabatalha/picaso/issues) with any issues you are experiencing. Don't be shy! Others are likely experiencing similar problems
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings(action='ignore')
 import os
 import pandas as pd
 import numpy as np
 
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 jpi.output_notebook()
 
 #point to your sonora profile grid that you untared (see above cell #2)

@@ -19,11 +19,11 @@
 # In this tutorial you will learn the different integration schemes that exist within `PICASO`.
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 
 #picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 
 jpi.output_notebook()
 
