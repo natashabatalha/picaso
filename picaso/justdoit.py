@@ -43,7 +43,7 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '5.0'#GPU VERSION
+__version__ = '5.0'#GPU VERSION and/or terradev 
 
 #sets the hardware (Default is CPU)
 __hardware__ = os.environ.get('picaso_hardware','cpu')
@@ -2316,18 +2316,7 @@ class inputs():
             if 'climate' not in self.inputs['calculation']:
                 raise Exception("`temperature` not specified as a column/key name")
 
-        # if there ar molecules we want to exclude lets make sure they are in list format
-        if not isinstance(exclude_mol, type(None)):
-            if  isinstance(exclude_mol, str):
-                exclude_mol = [exclude_mol]
-            
-            #now lets transfer to a dictionary for each molecule the user has chosen
-            #this way we can flip them on and off individually
-            self.inputs['atmosphere']['exclude_mol'] = {i:1 for i in df.keys()}
-            for i in exclude_mol: 
-                self.inputs['atmosphere']['exclude_mol'][i]=0
-        else: 
-            self.inputs['atmosphere']['exclude_mol'] = 1
+        self.inputs['atmosphere']['exclude_mol'] = normalize_exclude_mol(exclude_mol)
 
         #sort by pressure to make sure 0 index is low pressure, last index is high pressure
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
