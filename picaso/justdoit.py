@@ -1,11 +1,12 @@
 from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes_noalloc import get_reflected_1d
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
 
 from .wavelength import get_cld_input_grid
-from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
+from .optics import RetrieveOpacities, RetrieveOpacitiesHDF5, compute_opacity, RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
@@ -228,7 +229,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.surf_reflect = inputs.get('surface_reflect',np.zeros(nwno)) #default no hard surface if it has not been defined
     atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
@@ -1336,13 +1337,17 @@ def find_press(at_tau, a, b, c):
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
 
-def opannection(wave_range = None, filename_db = None, 
-                resample=1, method='resampled',
-                ck_db=None, raman_db = None, 
-                preload_gases='all',
-                #deq= False, on_fly=False,
-                #gases_fly =None,ck=False,
-                verbose=False):
+def opannection(
+    wave_range=None, 
+    filename_db=None, 
+    resample=1, 
+    method='resampled',
+    ck_db=None, 
+    raman_db=None, 
+    preload_gases='all',
+    query_method='nearest',
+    verbose=False,
+):
     """
     Sets up database connection to opacities. 
 
@@ -1366,6 +1371,12 @@ def opannection(wave_range = None, filename_db = None,
     method : str 
         By default method='resampled'
         Other options include: ['preweighted','resortrebin']
+    query_method : str
+        Only used when ``method='resampled'``. Controls how molecular opacities
+        are fetched from the resampled database.
+        Options are:
+        - ``'nearest'``: nearest-neighbor selection in PT space
+        - ``'linear'``: bilinear interpolation in PT space
     ck_db : str 
         Can be: 
         - (required if method is preweighted) ASCII dir of ck file
@@ -1404,10 +1415,22 @@ def opannection(wave_range = None, filename_db = None,
         if resample != 1:
             if verbose:print("YOU ARE REQUESTING RESAMPLING!! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html")
 
-        opacityclass=RetrieveOpacities(
-                    filename_db, 
-                    raman_db,
-                    wave_range = wave_range, resample = resample)  
+        if filename_db.lower().endswith(('.h5', '.hdf5')):
+            opacityclass = RetrieveOpacitiesHDF5(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )
+        else:
+            opacityclass = RetrieveOpacities(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )  
         if verbose: print("verbose=True; Molecule set=",opacityclass.molecules) 
     elif ((method == 'resampled') & isinstance(ck_db,str)):
         raise Exception("ck_db was supplied but method is set to resampled. Change kwarg method='preweighted' to use the preweighted ck tables")
@@ -4980,7 +5003,7 @@ class inputs():
             if self.inputs.get('hard_surface',0)==1: 
                 raise Exception('The user is requesting a hard_surface boundary condition but the surface reflectivity has not been set by the function surface_reflect')
             else: 
-                self.inputs['surface_reflect'] = 0 
+                self.inputs['surface_reflect'] = np.zeros(opacityclass.nwno)
                 self.inputs['hard_surface'] = 0 
 
             
@@ -5561,6 +5584,13 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
         start_case.guillot_pt(Tirr) 
 
     return start_case
+def earth_icrccm_pt():
+    """
+    Return the path to the Earth ICRCCM mid-latitude summer P-T-X profile.
+    The file is a PICASO-formatted rewrite of "icrccm_62_v2.atm", from the
+    rfast code.
+    """
+    return os.path.join(__refdata__, 'base_cases', 'earth_icrccm.pt')
 def jupiter_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','jupiter.pt')
