@@ -311,6 +311,9 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
         asym_factor_cld[:,:,igauss] = atm.layer['cloud']['g0']
         single_scattering_cld[:,:,igauss] = atm.layer['cloud']['w0'] 
 
+    if do_holes == True:
+        TAUCLD = fthin_cld*TAUCLD 
+    
     if return_mode: 
         taus_by_species['cloud'] = TAUCLD[:,:,0]#*single_scattering_cld[:,:,0]
         return taus_by_species
@@ -350,15 +353,15 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     TAU = np.zeros((nlayer+1, nwno,ngauss))
     for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
 
-    # Clearsky case
-    if do_holes == True:
-        print('I am thinning the cloud with a fractional component:',fthin_cld)
-        DTAU = TAUGAS + TAURAY + fthin_cld*TAUCLD #fraction of cloud opacity
-        COSB = fthin_cld*np.copy(asym_factor_cld) #fraction of cloud asymmetry
-        ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD *fthin_cld)
-        GCOS2 = 0.5*ftau_ray # since ftau_ray = 1 without any clouds
-        W0 = (TAURAY*raman_factor + fthin_cld*TAUCLD*single_scattering_cld) / DTAU #TOTAL single scattering
-        W0_no_raman = (TAURAY*0.99999 + TAUCLD*single_scattering_cld* fthin_cld) / DTAU #TOTAL single scattering
+    #removing this code as it is bug prone as it generally repeats all code 
+    #by removing this I will only be modifying taucld 
+    #if do_holes == True:
+    #    DTAU = TAUGAS + TAURAY + fthin_cld*TAUCLD #fraction of cloud opacity
+    #    COSB = fthin_cld*np.copy(asym_factor_cld) #fraction of cloud asymmetry
+    #    ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD *fthin_cld)
+    #    GCOS2 = 0.5*ftau_ray # since ftau_ray = 1 without any clouds
+    #    W0 = (TAURAY*raman_factor + fthin_cld*TAUCLD*single_scattering_cld) / DTAU #TOTAL single scattering
+    #    W0_no_raman = (TAURAY*0.99999 + TAUCLD*single_scattering_cld* fthin_cld) / DTAU #TOTAL single scattering
 
     if plot_opacity:
         opt_figure.line(1e4/opacityclass.wno, DTAU[plot_layer,:,0], legend_label='TOTAL', line_width=4, color=colors[0],
