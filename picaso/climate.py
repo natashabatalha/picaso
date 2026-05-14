@@ -2839,7 +2839,7 @@ def find_strat(bundle, nofczns,nstr,
     return profile_flag, pressure, temp, dtdp, nstr ,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop, chem, cld_out,all_profiles,all_opd,all_kzz
 
 
-def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
+def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs, nimbus_kwargs,
                    verbose=False,save_profile=True,all_opd=[]):
     """
     Updates cloud parameters and returns the cloud output.
@@ -2884,12 +2884,18 @@ def update_clouds(bundle, CloudParameters, Atmosphere, kzz,virga_kwargs,
 
     opd_prev_cld_step = (we0 * opd_cld_climate[:, :, 0] + we1 * opd_cld_climate[:, :, 1] + we2 * opd_cld_climate[:, :, 2] + we3 * opd_cld_climate[:, :, 3])
 
-    virga_kwargs['mmw'] = np.mean(Atmosphere.mmw_layer)
+    if CloudParameters.model == 'virga':
+        virga_kwargs['mmw'] = np.mean(Atmosphere.mmw_layer)
+    elif CloudParameters.model == 'nimbus':
+        nimbus_kwargs['mmw'] = np.mean(Atmosphere.mmw_layer)
 
     bundle.inputs['atmosphere']['profile']['kz'] = kzz
 
     #if not average_only: 
-    cld_out = bundle.virga(**virga_kwargs)
+    if CloudParameters.model == 'virga':
+        cld_out = bundle.virga(**virga_kwargs)
+    elif CloudParameters.model == 'nimbus':
+        cld_out = bundle.nimbus(**nimbus_kwargs)
 
     opd_now, w0_now, g0_now = cld_out['opd_per_layer'], cld_out['single_scattering'], cld_out['asymmetry']
 
@@ -3015,7 +3021,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     if cloudy: 
         virga_kwargs = {key.replace('virga_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'virga' in key}
         hole_kwargs = {key.replace('patchy_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'patchy' in key}
-        do_holes = hole_kwargs['do_holes'];fhole=hole_kwargs['fhole']
+        nimbus_kwargs = {key.replace('nimbus_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'nimbus' in key}
+        do_holes = hole_kwargs.get('do_holes', False);fhole=hole_kwargs.get('fhole', None)
         #cld_species = CloudParameters.virga_condensates #neb commenting out not used 
     else: 
         #cld_species=[] ; #neb commenting out not used 
@@ -3111,7 +3118,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     ### 4) IF: COMPUTE CLOUDS 
     if cloudy :
         cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
+                                                                          kz_cloud,virga_kwargs,nimbus_kwargs,save_profile=save_profile,
                                                                           all_opd=all_opd,verbose=verbose)
         bundle.clouds(df=df_cld,**hole_kwargs)
         
@@ -3193,7 +3200,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         ### 4) IF: COMPUTE CLOUDS 
         if cloudy:
             cld_out,df_cld, taudif, taudif_tol, all_opd, CloudParameters=update_clouds(bundle, CloudParameters,Atmosphere,
-                                                                          kz_cloud,virga_kwargs,save_profile=save_profile,
+                                                                          kz_cloud,virga_kwargs,nimbus_kwargs,save_profile=save_profile,
                                                                           all_opd=all_opd,verbose=verbose)
             bundle.clouds(df=df_cld,**hole_kwargs)
         else: 
@@ -3247,4 +3254,3 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         if verbose: print("Profile converged after itmx hit")
     
     return RETURNS
-

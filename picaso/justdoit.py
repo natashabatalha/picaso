@@ -11,7 +11,10 @@ from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, 
 from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
 
-
+try:
+    from nimbus import Nimbus
+except ImportError:
+    Nimbus = None
 from virga import justdoit as vj
 from scipy.interpolate import UnivariateSpline, interp1d,RegularGridInterpolator
 from scipy import special
@@ -28,6 +31,8 @@ import pandas as pd
 import copy
 import json
 import warnings
+
+np_trapezoid = getattr(np, 'trapezoid', np.trapz)
 
 from synphot.models import Empirical1D
 from synphot import SourceSpectrum
@@ -589,8 +594,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
         #see equation 18 Batalha+2019 PICASO 
-        returns['bond_albedo'] = (np.trapezoid(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
-                                    np.trapezoid(x=1/wno, y=opacityclass.unshifted_stellar_spec))
+        returns['bond_albedo'] = (np_trapezoid(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
+                                    np_trapezoid(x=1/wno, y=opacityclass.unshifted_stellar_spec))
 
         if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
@@ -607,7 +612,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
         returns['thermal_unit'] = 'erg/s/(cm^2)/(cm)'#'erg/s/(cm^2)/(cm^(-1))'
-        returns['effective_temperature'] = (np.trapezoid(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
+        returns['effective_temperature'] = (np_trapezoid(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
             atm.thermal_flux_planet = thermal
@@ -1919,7 +1924,7 @@ class inputs():
             fine_flux_star = 10**interpolator(np.log10(wno_planet))
             
             # Compute binned flux using trapezoidal integration
-            fine_flux_star = np.array([np.trapezoid(fine_flux_star[(wno_planet >= wno_planet[i]) &
+            fine_flux_star = np.array([np_trapezoid(fine_flux_star[(wno_planet >= wno_planet[i]) &
                                                         (wno_planet <= wno_planet[i+1])],
                                         x=-1/wno_planet[(wno_planet >= wno_planet[i]) &
                                                         (wno_planet <= wno_planet[i+1])])
@@ -4521,10 +4526,14 @@ class inputs():
                             Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
                             gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
                             aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0,latent_heat=latent_heat)
+            cloud_kwargs = dict(patchy_do_holes=do_holes, patchy_fthin_cld=fthin_cld,
+                                patchy_fhole=fhole)
             #turn on clouds for this calculation
             self.inputs['climate']['cloudy'] = True
+            self.inputs['climate']['cld_model'] = 'virga'
             #passes all the virga params 
             self.inputs['climate']['virga_kwargs'] = virga_kwargs
+            self.inputs['climate']['cloud_kwargs'] = cloud_kwargs
         
         #if we are all good for a run, run virga and produce output
         if run:     
@@ -4787,6 +4796,116 @@ class inputs():
 
         self.inputs['clouds']['profile'] = ds 
         self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
+
+    def nimbus(self, condensates,
+        fsed=1, mh=1, mmw=2.2, gas_mmr=None, verbose=True,
+        do_holes=False,fhole=None,fthin_cld=None):
+        """
+        Runs nimbus cloud code based on the PT and Kzz profiles
+        that have been added to inptus class.
+        Parameters
+        ----------
+        condensates : str
+            Condensates to run in cloud model
+        fsed : float
+            Sedimentation efficiency coefficient
+        mh : float
+            Metallicity
+        mmw : float
+            Atmospheric mean molecular weight
+        gas_mmr : dict
+            Required gas MMR as a dictionary for individual condensates.
+            E.g. {'H2O':1e-6}
+        verbose : bool
+            Turn off warnings
+        clouds_kwargs : dict
+            Added so that users can add do_hole=True, with fhole and fthin_cld and it will make the nimbus cloud
+            patchy
+        do_holes : bool
+            If True, the clouds will be patchy. This is done by using the fthin_cld and fhole parameters
+        fhole : float
+            Fraction of the clear hole such that spec = (1-fhole) * cloudy_spec + fhole * clear_spec
+        fthin_cld : float
+            Scales the hole (the clear part) such that fthin_cld=0 would simply be a fully clear patch
+        """
+        if gas_mmr is None:
+            raise Exception("Nimbus requires gas_mmr to be defined. Please pass gas_mmr as a dict of condensate mass mixing ratios, e.g. gas_mmr={'H2O': 1e-6}.")
+
+        #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this
+        clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
+        self.inputs['clouds']['do_holes']=do_holes
+        self.inputs['clouds']['fhole']=fhole
+        self.inputs['clouds']['fthin_cld']=fthin_cld
+
+        if ((('temperature' not in self.inputs['atmosphere']['profile'].keys())
+            or ('kz' not in self.inputs['atmosphere']['profile'].keys()))
+            and ('climate' in self.inputs['calculation'])):
+            #if there is no temprature and a user has specified clouds, then assume this is just a setup inputs function
+            #and the user does not want an actual run
+            run=False
+        else:
+            run=True
+
+        #if this is a climate run lets make sure we have all the right inputs set
+        if 'climate' in self.inputs['calculation']:
+            nimbus_kwargs = dict(condensates=condensates, fsed=fsed, mh=mh, mmw=mmw,
+                                 gas_mmr=gas_mmr, verbose=verbose)
+            cloud_kwargs = dict(patchy_do_holes=do_holes, patchy_fthin_cld=fthin_cld,
+                                patchy_fhole=fhole)
+            #turn on clouds for this calculation
+            self.inputs['climate']['cloudy'] = True
+            self.inputs['climate']['cld_model'] = 'nimbus'
+            self.inputs['climate']['nimbus_kwargs'] = nimbus_kwargs
+            self.inputs['climate']['cloud_kwargs'] = cloud_kwargs
+
+        #if we are all good for a run, run nimbus and produce output
+        if run:
+            obj = Nimbus(create_analytic_plots=False, verbose = verbose)
+
+            if 'kz' not in self.inputs['atmosphere']['profile'].keys():
+                raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
+                    if running `nimbus` through `picaso`. This should go in the \
+                    same place that you specified you pressure-temperature profile. \
+                    Alternatively, you can manually add it by doing \
+                    `case.inputs['atmosphere']['profile']['kz'] = KZ`")
+            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']].copy()
+
+            obj.set_up_atmosphere(
+                temperature = self.inputs['atmosphere']['profile']['temperature'].values,
+                pressure = self.inputs['atmosphere']['profile']['pressure'].values,
+                kzz = self.inputs['atmosphere']['profile']['kz'].values,
+                mmw = mmw,
+                gravity = self.inputs['planet']['gravity'], #convert from m/s^2 to cm/s^2 for nimbus
+                species = condensates,
+                deep_mmr = gas_mmr, #future work make this pull from virga gas_mmr
+                metalicity = mh, #relative to solar
+                fsed = fsed
+            )
+            obj.set_up_solver()
+
+            # compute the cloud structure
+            ds = obj.compute(typ='full')
+
+            opd, w0, g0, df_cld = obj.virga_opacities()
+
+            df_cld = df_cld.sort_values(['pressure', 'wavenumber']).reset_index(drop=True)
+            pressure = np.sort(df_cld['pressure'].unique())
+            wavenumber = np.sort(df_cld['wavenumber'].unique())
+            opd = df_cld['opd'].values.reshape(len(pressure), len(wavenumber))
+            w0 = df_cld['w0'].values.reshape(len(pressure), len(wavenumber))
+            g0 = df_cld['g0'].values.reshape(len(pressure), len(wavenumber))
+
+            # format to be similar to virga output so that climate can use the same cloud workflow
+            out = {}
+            out['opd_per_layer'] = opd
+            out['single_scattering'] = w0
+            out['asymmetry'] = g0
+            out['pressure'] = pressure
+            out['wave'] = 1e4 / wavenumber
+
+            #only pass through clouds 1d if clouds are one dimension
+            self.clouds(df=df_cld,**clouds_kwargs)
+            return out
     
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
@@ -5317,6 +5436,9 @@ class inputs():
 
         #virga inputs 
         virga_kwargs = self.inputs['climate'].get('virga_kwargs',{})
+        nimbus_kwargs = self.inputs['climate'].get('nimbus_kwargs',{})
+        cloud_kwargs = self.inputs['climate'].get('cloud_kwargs',{})
+        cld_model = self.inputs['climate'].get('cld_model','virga')
         
         #now these are in virga kwargs!!! 
         #do_holes = self.inputs['climate']['do_holes']
@@ -5325,17 +5447,22 @@ class inputs():
 
         # check the dimensions of the mieff grid  
         if cloudy:
-            mieff_dir = virga_kwargs.get('directory',None)
-            if mieff_dir is None:
-                raise Exception('Need to specify directory for cloudy runs via Virga function')
-            # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size 
-            # check if the mieff file is on 661 grid
-            list_mieff_files=[f for f in os.listdir(mieff_dir) if f.endswith('.mieff')]
-            assert len(list_mieff_files)>0, 'Did not find any mieff files in the supplied virga directory'
-            testfile = list_mieff_files[0]
-            miefftest = os.path.join(mieff_dir, testfile)
-            with open(miefftest, 'r') as file:
-                nwno_clouds = int(float(file.readline().split()[0]))
+            if cld_model == 'virga':
+                mieff_dir = virga_kwargs.get('directory',None)
+                if mieff_dir is None:
+                    raise Exception('Need to specify directory for cloudy runs via Virga function')
+                # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size
+                # check if the mieff file is on 661 grid
+                list_mieff_files=[f for f in os.listdir(mieff_dir) if f.endswith('.mieff')]
+                assert len(list_mieff_files)>0, 'Did not find any mieff files in the supplied virga directory'
+                testfile = list_mieff_files[0]
+                miefftest = os.path.join(mieff_dir, testfile)
+                with open(miefftest, 'r') as file:
+                    nwno_clouds = int(float(file.readline().split()[0]))
+            elif cld_model == 'nimbus':
+                nwno_clouds = 196
+            else:
+                raise Exception(f'Unknown cloud model {cld_model}. Supported cloud models are virga and nimbus.')
         else: 
             nwno_clouds = nwno
             #if diseq_chem and not chemeq_first and gridsize != 661:
@@ -5350,14 +5477,19 @@ class inputs():
         w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         #BUNDLING
         virga_specific =[['virga_'+i,val] for i ,val in virga_kwargs.items() if 'patchy' not in i]
-        hole_specific =  [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
-        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']
+        hole_specific =  [[i,val] for i ,val in cloud_kwargs.items()]
+        if not hole_specific:
+            hole_specific = [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
+        nimbus_specific = [['nimbus_'+i,val] for i ,val in nimbus_kwargs.items()]
+        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'model','OPD','G0','W0']
                                       +[i[0] for i in virga_specific]
-                                      +[i[0] for i in hole_specific])
+                                      +[i[0] for i in hole_specific]
+                                      +[i[0] for i in nimbus_specific])
         #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
-        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate]
+        CloudParameters=CloudParametersT(*([cloudy, cld_model, opd_cld_climate,g0_cld_climate,w0_cld_climate]
                                         +[i[1] for i in virga_specific]
-                                        +[i[1] for i in hole_specific]))
+                                        +[i[1] for i in hole_specific]
+                                        +[i[1] for i in nimbus_specific]))
 
 
         if verbose: self.interpret_run()
@@ -5410,7 +5542,11 @@ class inputs():
             df_cld = vj.picaso_format(cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry'], 
                                       pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_df'] = df_cld
-            all_out['virga_output'] = cld_out
+            all_out['cloud_output'] = cld_out
+            if cld_model == 'virga':
+                all_out['virga_output'] = cld_out
+            elif cld_model == 'nimbus':
+                all_out['nimbus_output'] = cld_out
             #all_out['cld_output_final'] = df_cld_final
 
         if save_all_profiles: 
@@ -5425,9 +5561,12 @@ class inputs():
                                         cold_trap = self.inputs['approx']['chem_params']['cold_trap'], 
                                         vol_rainout= self.inputs['approx']['chem_params']['vol_rainout'])
             if cloudy == 1:
-                cld_kwargs =dict( do_holes=virga_kwargs.get('patchy_do_holes',False), 
-                                  fhole = virga_kwargs.get('patchy_fhole',0),
-                                  fthin_cld = virga_kwargs.get('patchy_fthin_cld',0))
+                cld_kwargs =dict( do_holes=cloud_kwargs.get('patchy_do_holes',
+                                                            virga_kwargs.get('patchy_do_holes',False)),
+                                  fhole = cloud_kwargs.get('patchy_fhole',
+                                                           virga_kwargs.get('patchy_fhole',0)),
+                                  fthin_cld = cloud_kwargs.get('patchy_fthin_cld',
+                                                               virga_kwargs.get('patchy_fthin_cld',0)))
                 self.clouds(df=df_cld,**cld_kwargs)
             df_spec = self.spectrum(opacityclass,full_output=True,calculation='thermal')    
             all_out['spectrum_output'] = df_spec 
