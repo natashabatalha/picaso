@@ -1075,6 +1075,11 @@ def get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
     else:
         flux_net_v_layer = flux_net_v_layer_fixed
         flux_net_v = flux_net_v_fixed
+        #also make sure that flux_results has what is needed so that this 
+        #doesnt get propogated as zero if it shouldnt be zero 
+        flux_results[0][0,0,:] = flux_net_v_layer_fixed
+        flux_results[1][0,0,:] = flux_net_v_fixed
+
 
     flux_net_ir_layer = flux_results[4]
     flux_net_ir = flux_results[5]
@@ -1868,10 +1873,8 @@ def update_rfacv(bundle, Atmosphere, OpacityWEd, OpacityNoEd=None,
 
     # 3) calculate the surface pressure p_surf by taking the deepest pressure level
     p_surf = pressure[-1]
-
     # finally, compute new rfacv value using Koll2022 ApJ 924 134
-    rfacv = get_rfacv_rockytl(p_surf, TauLW, Teq)
-
+    rfacv = get_rfacv_rockytl(p_surf, TauLW, Teq) 
     return rfacv
 
 @jit(nopython=True)
