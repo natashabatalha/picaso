@@ -1075,6 +1075,10 @@ def get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
     else:
         flux_net_v_layer = flux_net_v_layer_fixed
         flux_net_v = flux_net_v_fixed
+        #also make sure that flux_results has what is needed so that this 
+        #doesnt get propogated as zero if it shouldnt be zero 
+        flux_results[0][0,0,:] = flux_net_v_layer_fixed
+        flux_results[1][0,0,:] = flux_net_v_fixed
 
     flux_net_ir_layer = flux_results[4]
     flux_net_ir = flux_results[5]
