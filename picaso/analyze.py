@@ -150,6 +150,7 @@ class GridFitter():
         'grid_params':self.grid_params, 
         'offsets': getattr(self, 'offsets',0), #,
         'chi_sqs': self.chi_sqs,
+        'unreduced_chi_sqs': self.unreduced_chi_sqs,
         'posteriors': self.posteriors
         }
 
@@ -331,7 +332,8 @@ class GridFitter():
         e_data = self.data[data_name]['e_data']
 
         #get chi_sqrs if it already exists 
-        self.chi_sqs =  getattr(self, 'chi_sqs',{grid_name: {data_name:np.zeros(shape=(nmodels))}})
+        self.chi_sqs =  getattr(self, 'chi_sqs',{grid_name: {data_name:np.zeros(shape=(nmodels))}}) # reduced X^2
+        self.unreduced_chi_sqs =  getattr(self, 'unreduced_chi_sqs',{grid_name: {data_name:np.zeros(shape=(nmodels))}}) # repeat for unreduced version of X^2
         #get best fit dicts if it already exists 
         self.best_fits =  getattr(self, 'best_fits',{grid_name:{data_name:np.zeros(shape=(nmodels,len(wlgrid_center)))}})
         #get rank order  
@@ -343,12 +345,14 @@ class GridFitter():
 
         #make sure nothing exiting is overwritten 
         self.chi_sqs[grid_name] = self.chi_sqs.get(grid_name, {data_name:np.zeros(shape=(nmodels))})
+        self.unreduced_chi_sqs[grid_name] = self.unreduced_chi_sqs.get(grid_name, {data_name:np.zeros(shape=(nmodels))})
         self.best_fits[grid_name] = self.best_fits.get(grid_name, {data_name:np.zeros(shape=(nmodels,len(wlgrid_center)))})
         self.rank[grid_name] = self.rank.get(grid_name, {data_name:np.zeros(shape=(nmodels))})
         self.posteriors[grid_name] = self.posteriors.get(grid_name, {data_name:{}})
 
         #make sure nothing existing is overwritten 
         self.chi_sqs[grid_name][data_name] = self.chi_sqs[grid_name].get(data_name, np.zeros(shape=(nmodels)))
+        self.unreduced_chi_sqs[grid_name][data_name] = self.unreduced_chi_sqs[grid_name].get(data_name, np.zeros(shape=(nmodels)))
         self.best_fits[grid_name][data_name]  = self.best_fits[grid_name].get(data_name,np.zeros(shape=(nmodels,len(wlgrid_center))))
         self.rank[grid_name][data_name]  = self.rank[grid_name].get(data_name,np.zeros(shape=(nmodels)))
         self.posteriors[grid_name][data_name]  = self.posteriors[grid_name].get(data_name,{})
@@ -375,12 +379,13 @@ class GridFitter():
             else: 
                 shift = 0 
             if dof == 'ndata': numparams=0
-            self.chi_sqs[grid_name][data_name][index]= chi_squared(y_data,e_data,flux_in_bin+shift,numparams)
+            self.chi_sqs[grid_name][data_name][index]= chi_squared(y_data,e_data,flux_in_bin+shift,numparams) # calculate reduced X^2
+            self.unreduced_chi_sqs[grid_name][data_name][index]= unreduced_chi_squared(y_data,e_data,flux_in_bin+shift) # calculate ordinary X^2 (not reduced)
 
             self.best_fits[grid_name][data_name][index,:] = flux_in_bin+shift
             if offset: self.offsets[grid_name][data_name][index] = shift
 
-        self.rank[grid_name][data_name] = self.chi_sqs[grid_name][data_name].argsort()
+        self.rank[grid_name][data_name] = self.chi_sqs[grid_name][data_name].argsort() # rank using reduced X^2
 
         #finally compute the posteriors 
         for iattr in self.grid_params[grid_name].keys(): 
@@ -529,11 +534,11 @@ class GridFitter():
         if isinstance(parameter_sort, type(None)): 
             raise Exception(f'Parameter {parameter} not found in grid {grid_name}')
         
-        chi_sq = self.chi_sqs[grid_name][data_name]
+        unreduced_chi_sq = self.unreduced_chi_sqs[grid_name][data_name] # grab unreduced X^2 values
 
         parameter_grid =np.unique(parameter_sort)
         
-        prob_array = np.exp(-chi_sq/2.0)
+        prob_array = np.exp(-unreduced_chi_sq/2.0) # calculate probabilities using unreduced X^2
         alpha = 1.0/np.sum(prob_array)
         prob_array = prob_array*alpha
         
@@ -1314,7 +1319,8 @@ def detection_test(fitter, molecule, min_wavelength, max_wavelength,
 
 def chi_squared(data,data_err,model,numparams):
     """
-    Compute reduced chi squared assuming DOF = ndata_pts - num parameters  
+    Compute reduced chi squared assuming DOF = ndata_pts - num parameters. 
+    This is stored as 'chi_sqs' in the dataframes.
 
     Parameters
     ---------
@@ -1332,7 +1338,24 @@ def chi_squared(data,data_err,model,numparams):
     
     return chi_squared
 
+def unreduced_chi_squared(data,data_err,model):
+    """
+    Compute chi squared (ordinary X^2 - not the reduced version).
+    This is used in the posterior probability calculation only, and is stored as 'unreduced_chi_sqs' in the dataframes.
 
+    Parameters
+    ---------
+    data : array
+        array of data to compare against model
+    data_err : array
+        array of data errors
+    model : array
+        array of modeled data to compare against data
+    """
+    
+    unreduced_chi_squared = np.sum(((data-model)/(data_err))**2)
+    
+    return unreduced_chi_squared
 
 
 
