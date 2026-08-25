@@ -1334,7 +1334,22 @@ def conv_non_uniform_R(model_flux, model_wl, R, obs_wl):
 
 def _resume_check_config(config):
     check = copy.deepcopy(config)
-    check.get('retrieval', {}).get('sampler', {}).pop('resume', None)
+    allowed_resume_differences = [
+        ('retrieval', 'mpi'),
+        ('retrieval', 'processes'),
+        ('retrieval', 'sampler', 'resume'),
+        ('retrieval', 'sampler', 'run_kwargs', 'dlogz'),
+    ]
+
+    for keys in allowed_resume_differences:
+        section = check
+        for key in keys[:-1]:
+            section = section.get(key, {})
+            if not isinstance(section, dict):
+                break
+        else:
+            section.pop(keys[-1], None)
+
     return check
 
 SAMPLER_REGISTRY = {}
