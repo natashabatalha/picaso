@@ -69,11 +69,11 @@ opacity_ck = jdi.opannection(method='resortrebin',preload_gases=gases_fly) # gra
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
 
 
-tint= 700
+tint = 700 # Intrinsic temperature of your Planet in K
 grav = 316 # Gravity of your Planet in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(tint) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 nlevel = 91
 

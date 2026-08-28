@@ -104,5 +104,11 @@
 		}
 
 	},
+	"surfaces":{
+		"wnogrid":"opacities/terra_wavenumber_grid.h5",
+		"files":{ 
+			"hemispherical_reflectances":"surfaces/hemispherical_reflectances.h5"
+		}
+	},
 	"test_mode":null
 }

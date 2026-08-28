@@ -133,7 +133,8 @@ data.get_data(category_download='stellar_grids')
 # | Preweighted correlated-k Tables | No   | Chemical equilibrium climate       | Your choice (default=`$picaso_refdata/opacities/preweighted`)|
 # | By molecule correlated-k Tables | No   | Disequilibrium climate             | Your choice (default=`$picaso_refdata/opacities/resortrebin`)|
 # | Sonora grid models              | No   | Initial guess/grid fitting         | Your choice (default=`$picaso_refdata/sonora_grids`)         |
-# | Virga Mieff files               | No   | Virga cloud modeling               | Your choice (default=`$picaso_refdata/virga`)                |
+# | Virga Mieff files               | No   | Virga cloud modeling               | Your choice (default=`$picaso_refdata/virga`)     
+# | Hemispherical Reflectances      | No   | Terrestrial surfaces               | Your choice (default=$picaso_refdata/surfaces)              |           |
 
 #
 #
@@ -141,7 +142,7 @@ data.get_data(category_download='stellar_grids')
 # ```
 # data.get_data()
 # What data can I help you download? Options include:
-# ['resampled_opacity', 'stellar_grids', 'sonora_grids', 'ck_tables']
+# ['resampled_opacity', 'stellar_grids', 'sonora_grids', 'ck_tables', 'surfaces']
 # >> sonora_grids
 # Great. I found these options for sonora_grids. Select one:
 # 0 - 'elfowl-Ytype': The models between Teff of 275 to 550 K (applicable to Y-type objects). Total: ~40 Gb.

@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
-from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux, blackbody_extend
 from .fluxes_noalloc import get_reflected_1d
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
@@ -12,7 +12,7 @@ from .build_3d_input import regrid_xarray
 
 
 from virga import justdoit as vj
-from scipy.interpolate import UnivariateSpline, interp1d,RegularGridInterpolator
+from scipy.interpolate import UnivariateSpline, interp1d, RegularGridInterpolator
 from scipy import special
 from numpy import exp, sqrt,log
 from numba import jit,njit
@@ -592,8 +592,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
         #see equation 18 Batalha+2019 PICASO 
-        returns['bond_albedo'] = (np.trapezoid(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
-                                    np.trapezoid(x=1/wno, y=opacityclass.unshifted_stellar_spec))
+        try:
+            returns['bond_albedo'] = (np.trapezoid(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
+                                      np.trapezoid(x=1/wno, y=opacityclass.unshifted_stellar_spec))
+        except:
+            returns['bond_albedo'] = (np.trapz(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
+                                      np.trapz(x=1/wno, y=opacityclass.unshifted_stellar_spec))
 
         if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
@@ -610,7 +614,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
         returns['thermal_unit'] = 'erg/s/(cm^2)/(cm)'#'erg/s/(cm^2)/(cm^(-1))'
-        returns['effective_temperature'] = (np.trapezoid(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
+        try:
+            returns['effective_temperature'] = (np.trapezoid(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
+        except:
+            returns['effective_temperature'] = (np.trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
             atm.thermal_flux_planet = thermal
@@ -783,7 +790,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     ----
     - figure out why pandas index are being returned for pressure and wavelenth 
     - fix clouds wavenumber_layer which doesnt seem like it would work 
-    - add clima inputs : teff (or tint), number of convective zones
+    - add clima inputs : teff, number of convective zones
     - cvs_locs array should be more clear
     """ 
     attrs = {}
@@ -1485,6 +1492,51 @@ def opannection(
         raise Exception("The only available opacity methods are: resortrebin, preweighted, and resampled")
     return opacityclass
 
+
+def _bin_stellar_flux(wno_star, flux_star, wno_planet, delta_wno):
+    """
+    Integrate a stellar spectrum over each k-table wavelength bin.
+
+    For each bin i, integrates the spectrum over the proper bin edges
+    [wno_planet[i] - delta_wno[i]/2, wno_planet[i] + delta_wno[i]/2],
+    including any original high-resolution spectrum points that fall
+    within the bin for accuracy with structured spectra (e.g. M-dwarfs).
+
+    Parameters
+    ----------
+    wno_star : array
+        Wavenumber grid of the stellar spectrum (cm^-1), filtered to positive values.
+    flux_star : array
+        Stellar flux at wno_star (erg cm^-2 s^-1 cm^-1).
+    wno_planet : array
+        K-table bin center wavenumbers (cm^-1).
+    delta_wno : array
+        K-table bin widths (cm^-1).
+
+    Returns
+    -------
+    bin_flux : ndarray
+        Integrated flux per bin (erg cm^-2 s^-1).
+    """
+    
+    half_dw = delta_wno / 2.0
+    bin_flux = np.zeros(len(wno_planet))
+    for i in range(len(wno_planet)):
+        # Set up wavenumbers of bin with sampling high resolution stellar spectrum
+        wno_lo = wno_planet[i] - half_dw[i]
+        wno_hi = wno_planet[i] + half_dw[i]
+        in_bin = (wno_star >= wno_lo) & (wno_star <= wno_hi)
+        wno_bin = wno_star[in_bin]
+
+        # Compute binned flux using trapezoidal integration
+        try:
+            bin_flux[i] = np.trapezoid(flux_star[in_bin], x=-1/wno_bin)
+        except AttributeError:
+            bin_flux[i] = np.trapz(flux_star[in_bin], x=-1/wno_bin)
+    
+    return bin_flux
+
+
 class inputs():
     """Class to setup planet to run
 
@@ -1804,6 +1856,7 @@ class inputs():
         # load in adiabat file
         if adiabat=='didier' or adiabat=='H-H2-He':
             cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','specific_heat_p_adiabat_grad.json')))
+            adiabat = 'H-H2-He'
         elif adiabat=='co2' or adiabat=='CO2':
             cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','adiabat_grad_co2.json')))
         elif adiabat=='n2' or adiabat=='N2':
@@ -1813,13 +1866,15 @@ class inputs():
         else:
             raise Exception('You have selected an adiabatic gradient composition that PICASO does not recognize. Please change or remove your specified adiabat in jdi.inputs(). Acceptable adiabat choices are: \'H-H2-He\', \'CO2\', \'N2\', \'O2\'. Not specifying the adiabat will default to the legacy H-H2-He adiabat.')
 
+        #adiabat
+        self.inputs['climate']['adiabat'] = adiabat
         #log10 base temperature Kelvin 
         self.inputs['climate']['t_table'] = np.array(cp_grad['temperature'])
         #log10 base pressure bars 
         self.inputs['climate']['p_table'] = np.array(cp_grad['pressure'])
         #\nabla_ad = d ln T/ d ln P |_S (at constant entropy)
         self.inputs['climate']['grad'] = np.array(cp_grad['adiabat_grad'])
-        #log Cp (erg/g/K);Specific heat at constant pressure for the same H/He 
+        #log Cp (erg/g/K);Specific heat at constant pressure
         self.inputs['climate']['cp'] = np.array(cp_grad['specific_heat'])
 
 
@@ -1916,6 +1971,11 @@ class inputs():
 
         wno_planet = opannection.wno
 
+        # check if we need to extend stellar spectrum to get on planet wno grid
+        if wno_planet[0] < wno_star[0] or wno_planet[-1] > wno_star[-1]:
+            # extend stellar spectrum with a blackbody
+            wno_star, flux_star = blackbody_extend(temp, wno_star, wno_planet, flux_star)
+
         #this adds stellar shifts 'self.raman_stellar_shifts' to the opacity class
         #the cross sections are computed later 
         if self.inputs['approx']['rt_params']['common']['raman'] == 0: 
@@ -1932,36 +1992,18 @@ class inputs():
             if not ((not np.isnan(semi_major)) & (not np.isnan(r))): 
                 raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculation or when get_lvl_flux are being requested')
 
-            # Ensure valid values for interpolation
-            mask_valid = flux_star > 1e-30  
-            if not np.all(mask_valid):
-                wno_star, flux_star = wno_star[mask_valid], flux_star[mask_valid]
-
-            # Log-space interpolation
-            interpolator = interp1d(np.log10(wno_star), np.log10(flux_star), kind='linear',
-                                    fill_value='extrapolate', bounds_error=False)
-            fine_flux_star = 10**interpolator(np.log10(wno_planet))
-            
-            # Compute binned flux using trapezoidal integration
-            fine_flux_star = np.array([np.trapezoid(fine_flux_star[(wno_planet >= wno_planet[i]) &
-                                                        (wno_planet <= wno_planet[i+1])],
-                                        x=-1/wno_planet[(wno_planet >= wno_planet[i]) &
-                                                        (wno_planet <= wno_planet[i+1])])
-                                if i < len(wno_planet) - 1 else 0 for i in range(len(wno_planet))])
-
-            # Linear extrapolation for the last point
-            if len(wno_planet) > 2:
-                slope = (fine_flux_star[-2] - fine_flux_star[-3]) / (wno_planet[-2] - wno_planet[-3])
-                fine_flux_star[-1] = fine_flux_star[-2] + slope * (wno_planet[-1] - wno_planet[-2])
+            # Compute binned flux using trapzezoidal integration
+            delta_wno = getattr(opannection, 'delta_wno',
+                                np.append(np.diff(wno_planet), np.diff(wno_planet)[-1]))
+            fine_flux_star = _bin_stellar_flux(wno_star, flux_star, wno_planet, delta_wno)
 
             # Handle NaNs and zeros
             mask = np.logical_or(np.isnan(fine_flux_star), fine_flux_star == 0)
             if np.sum(mask) > 20:
-                print(f"Having to replace {len(fine_wno_star[mask])} zeros or nans in stellar spectra")
+                print(f"Having to replace {np.sum(mask)} zeros or nans in stellar spectra")
                 non_zero_indices = np.where(~mask)[0]
                 fine_flux_star[mask] = np.interp(wno_planet[mask], wno_planet[non_zero_indices], fine_flux_star[non_zero_indices])
             
-
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
             unit_flux =  'ergs cm^{-2} s^{-1}'
@@ -2127,7 +2169,7 @@ class inputs():
             if not isinstance(chem_method, str):
                 raise Exception('chem_method must be of type str')
 
-            #OPTION 1: Fixed chemistry, does not involve any addition of mh or cto as an input parametr
+            #OPTION 1: Fixed chemistry, does not involve any addition of mh or cto as an input parameter
             #this option will not evolve chemistry at all and will keep it fixed throughout the duration of the run 
             if chem_method=='fixed':
                 # let's store this here for safe keeping making sure there are no temperature or pressure 
@@ -3536,7 +3578,7 @@ class inputs():
         kv1, kv2 =10.**(logg1+logKir),10.**(logg1+logKir)
         kth=10.**logKir
 
-        Teff = T_int
+        Teff = (Teq**4 + T_int**4)**(1/4)
         f = 1.0  # solar re-radiation factor
         A = 0.0  # planetary albedo
         g0 = self.inputs['planet']['gravity']/100.0 #cm/s2 to m/s2
@@ -4309,7 +4351,9 @@ class inputs():
         else:
             raise Exception("Must include 'reflected' or 'thermal' in calculation")
 
-    def surface_reflect(self, albedo, wavenumber, old_wavenumber = None):
+    def surface_reflect(self, albedo=None,
+                        surface_composition=None, surface_type=None,
+                        wavenumber=None, old_wavenumber = None):
         """
         Set atmospheric surface reflectivity. This preps the code to run a terrestrial 
         planet. This will automatically change the run to "hardsurface", which alters 
@@ -4318,12 +4362,18 @@ class inputs():
         ----------
         albedo : float
             Set constant albedo for surface reflectivity 
+        surface_composition : str
+            Specify surface composition for wavelength-dependent albedo
+        surface_type : str
+            Specify surface type for wavelength-dependent albedo
         wavenumber : list
             The desired wavenumber grid (inverse cm) for the albedo
             Make sure this wavenumber grid matches the wavenumber grid of the opacities
         old_wavenumber : list
             Original wavenumber grid (inverse cm) for the albedo which is used to interpolate onto the new wavenumber grid
         """
+
+        # constant wavelength surface albedo
         if isinstance(albedo, (float, int)):
             self.inputs['surface_reflect'] = np.array([albedo]*len(wavenumber))
         elif isinstance(albedo, (list, np.ndarray)): 
@@ -4331,6 +4381,29 @@ class inputs():
                 self.inputs['surface_reflect'] = albedo
             else: 
                 self.inputs['surface_reflect'] = np.interp(wavenumber, old_wavenumber, albedo)
+
+        # wavelength dependent surface albedo
+        # NOTE: Paragas+25 ApJ 981 130 also provide emissivity measurements for different temperatures that could be implemented in the future
+        elif isinstance(surface_composition, str) and isinstance(surface_type, str):
+            try:
+                # pull hemispherical reflectances from albedo file
+                # the albedo file is a reformatted version of the data in Figure 3 of Paragas+25 ApJ 981 130
+                albedo_file = os.path.join(os.environ['picaso_refdata'], 'surfaces', 'hemispherical_reflectances.h5')
+                with h5py.File(albedo_file, 'r') as f:
+                    albedo = f[surface_composition+'_'+surface_type][:]
+                    wavelength = f['wavelength'][:] # microns
+                    wavenumber_ref = 1e4/wavelength # cm^-1
+
+                # interpolate reflectances onto the wavenumber grid of the opacities
+                # TODO update terra_wavenumber_grid file, for now it's 661 grid
+                if isinstance(wavenumber, type(None)):
+                    terra_wavenumber_file = os.path.join(os.environ['picaso_refdata'], 'opacities', 'terra_wavenumber_grid.h5')
+                    with h5py.File(terra_wavenumber_file, 'r') as f:
+                        wavenumber = f['wavenumber'][:] # cm^-1
+                self.inputs['surface_reflect'] = np.interp(wavenumber, wavenumber_ref[::-1], albedo[::-1])
+            except:
+                raise Exception('You have selected a surface composition and/or surface type that PICASO does not recognize.')
+        
         self.inputs['hard_surface'] = 1 #let's the code know you have a hard surface at depth
     
     def clouds_reset(self):
@@ -5060,31 +5133,33 @@ class inputs():
         return picaso(self, opacityclass,dimension=dimension,calculation=calculation,
             full_output=full_output, plot_opacity=plot_opacity, as_dict=as_dict)
 
-    def effective_temp(self, teff=None):
-        """Same as T_eff with different notation
-
-
-        Parameters
-        ----------
-        teff : float 
-            (Optional) Effective temperature of Planet
-        """
-        return self.T_eff(teff)
-
-    def T_eff(self, Teff=None):
-        """
-        Get Teff for climate run 
+    def intrinsic_temp(self, Tint=None):
+        """Same as T_int with different notation
+        Get T_int for climate run.
 
         Parameters
         ----------
-        T_eff : float 
-            (Optional) Effective temperature of Planet
+        Tint : float 
+            (Optional) Intrinsic temperature [K]
+        """
+
+        return self.T_int(Tint=Tint)
+
+    def T_int(self, Tint=None):
+        """
+        Get T_int for climate run.
         
+        Parameters
+        ----------
+        Tint : float 
+            (Optional) Intrinsic temperature [K]
         """
-        if Teff is not None:
-            self.inputs['planet']['T_eff'] = Teff
-        else :
-            self.inputs['planet']['T_eff'] = 0
+
+        # internal temperature
+        if Tint is not None:
+            self.inputs['planet']['T_int'] = Tint
+        else:
+            self.inputs['planet']['T_int'] = 0
     
     def interpret_run(self):
         print('SUMMARY')
@@ -5099,6 +5174,11 @@ class inputs():
                 kzz = 'Self Consistent Treatment' 
             print('Kzz for chem:',kzz )
     
+        if self.inputs.get('hard_surface', 0):
+            print('Hard Surface:', True)
+        else:
+            print('Hard Surface:', False)
+
         return 
     
     def inputs_climate(self, temp_guess= None, pressure= None, rfaci = 1,
@@ -5127,8 +5207,10 @@ class inputs():
         moistgrad: bool
             Moist adiabatic gradient option
         """
-        if self.inputs['planet']['T_eff'] == 0.0:
-            raise Exception('Need to specify Teff with jdi.input for climate run')
+        try:
+            self.inputs['planet']['T_int']
+        except KeyError:
+            raise Exception('Need to specify intrinsic temperature Tint with jdi.input for climate run')
         if self.inputs['planet']['gravity'] == 0.0:
             raise Exception('Need to specify gravity with jdi.input for climate run')
         temp_guess = temp_guess.copy()
@@ -5202,8 +5284,8 @@ class inputs():
         self.inputs['climate']['beam_profile'] = beam_profile
     
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
-        save_all_kzz = False, diseq_chem = False, self_consistent_kzz =True, 
-        verbose=True):#,
+        save_all_kzz = False, diseq_chem = False, self_consistent_kzz = True,
+        damping = False, verbose=True):#,
         #chemeq_first=True
        #deprecate: on_fly=False,gases_fly=None, as_dict=True, kz = None, 
         """
@@ -5229,8 +5311,14 @@ class inputs():
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
             If you want to run MLT in convective zones and Moses in the radiative zones
-        verbose : bool  
-            If True, triggers prints throughout code 
+        damping : bool
+            (Optional) Only used when diseq_chem=True. If True, under-relax the
+            temperature update in the coupled temperature<->photochem iteration
+            (blend the new iterate 50/50 with the previous one). This damps
+            period-2 limit cycles that can otherwise prevent convergence. Has no
+            effect on chemical-equilibrium runs. Default False.
+        verbose : bool
+            If True, triggers prints throughout code
         """
         #save to user 
         all_out = {}
@@ -5244,15 +5332,15 @@ class inputs():
 
         #we will extend the black body grid 30% beyond the min and max temp of the 
         #opacity grid just to be safe with the spline
-        Teff = self.inputs['planet']['T_eff']
+        Tint = self.inputs['planet']['T_int']
         extension = 0.3 
         #add threshold for tmin for convergence *JM
-        if Teff > 300:
+        if Tint > 300:
             tmin = min_temp*(1-extension)
         else:
             tmin = 10
 
-        if Teff > 1600:
+        if Tint > 1600:
             tmax = 10000
         else:
             tmax = max_temp*(1+extension)
@@ -5357,14 +5445,12 @@ class inputs():
         
         col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
         nlevel = len(pressure)
-        tidal = tidal_flux(Teff, nlevel, pressure, col_den, InjectionBundle)
+        tidal = tidal_flux(Tint, nlevel, pressure, col_den, InjectionBundle)
         if inject_energy: 
             if verbose: 
                 print("Tidal Injection is Turned on. This is your new energy profile. Pressure, tidal (erg/cm3)/s:")
                 for i in range(nlevel):
                     print(pressure[i],tidal[i])
-        # old tidal flux calculation without energy injection function
-        # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
 
         # cloud inputs
         cloudy = self.inputs['climate'].get('cloudy',False)
@@ -5461,7 +5547,7 @@ class inputs():
                         CloudParameters,
                         save_profile,all_profiles,all_opd,
                         verbose=verbose, moist = moist, 
-                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz,
+                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz, damping=damping,
                         analytic_rfacv=analytic_rfacv)
         #all output to user
         all_out['pressure'] = pressure
@@ -5469,6 +5555,7 @@ class inputs():
         all_out['ptchem_df'] = chem_out
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
+        all_out['adiabat'] = self.inputs['climate']['adiabat']
         all_out['flux_ir_attop']=flux_plus_final
         flux_net_final = rfacv * flux_net_v_final + rfaci* flux_net_ir_final + tidal
         all_out['fnet/fnetir']=flux_net_final/flux_net_ir_final

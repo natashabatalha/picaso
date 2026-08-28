@@ -252,6 +252,11 @@ def get_data_config():
 
             }
     },
+    'surfaces':{
+        'url':{'hemispherical_reflectances.zip':'https://zenodo.org/records/15886530/files/virga.zip'}, #TODO replace zenodo link
+        'description':'Calibrated hemispherical reflectances for 30 rocks samples measured by Paragas et al. (2025). Used for wavelength dependent surface albedos.',
+        'default_destination':os.path.join(__refdata__, 'surfaces')
+    },
     'picaso-lite':{
         'tutorial_sagan23':{
             'url':{"picaso-lite-reference.tar.gz": "https://zenodo.org/records/18708158/files/picaso-lite-reference.tar.gz"},
@@ -550,7 +555,7 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                     print('I dont recognize that directory. Please enter a existing  directory or press enter to keep in current working directory')
                     final_destination_dir = input()              
         else: 
-            raise Exception('Internal PICASO issue: default destimation not supplied in data config. Contact develoepers.')
+            raise Exception('Internal PICASO issue: default destination not supplied in data config. Contact develoepers.')
 
     #with tempfile.TemporaryDirectory() as temp_dir:
     allzips = []

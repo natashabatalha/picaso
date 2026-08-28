@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: picaso
 #     language: python
 #     name: python3
 # ---
@@ -90,7 +91,7 @@ def make_inputs(kz=1e8, filename_guess=None):
 
     # Effective Temp
     tint = 200 # Intrinsic Temperature of your Planet in K
-    cl_run.effective_temp(tint) # input effective temperature
+    cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
     # Star
     T_star = 5485 # K, star effective temperature

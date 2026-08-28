@@ -586,11 +586,11 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             H=H*0.5/pi
             A=A*0.5/pi
 
-            ################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
+            ################################ being options for direct scattering ####################
             #define f (fraction of forward to back scattering), 
             #g_forward (forward asymmetry), g_back (backward asym)
             #needed for everything except the OTHG
-            
+            #the default values in conjig.json are from Cahoy+2010
             if single_phase!=1: 
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og#-
@@ -602,42 +602,46 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             # as opposed to the traditional:
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
 
+            #original phase function of Cahoy+2010, which apporximates the rayleigh with gcos2
             if single_phase==0:#'cahoy':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                p_single=(f * (1-g_forward**2)
-                                /sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
-                                #rayleigh phase function
-                                (gcos2))
+                HG_forward = (1-g_forward**2) / sqrt((1+g_forward**2 + 2*g_forward*cos_theta)**3) 
+                HG_backward =(1-g_back**2) / sqrt((1+g_back**2 + 2*g_back*cos_theta)**3)
+
+                p_single=(f * HG_forward #first term of TTHG: forward scattering
+                        +(1-f)*HG_backward #second term of TTHG: backward scattering
+                        + (gcos2)) #rayleigh phase function
+
+            #single term HG phase function. Does not separate forward and back scattering. Does not have Rayleigh direct.  
             elif single_phase==1:#'OTHG':
-                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3)
+                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
+            #Two HG phase function. Separate forward and back scattering based on parameters above
+            #Does not have Rayleigh direct. 
             elif single_phase==2:#'TTHG':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                p_single=(f * (1-g_forward**2)
-                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
-
+                HG_forward = (1-g_forward**2) / sqrt((1+g_forward**2 + 2*g_forward*cos_theta)**3) 
+                HG_backward = (1-g_back**2) / sqrt((1+g_back**2 + 2*g_back*cos_theta)**3)
+                p_single=(f * HG_forward #first term of TTHG: forward scattering
+                            +(1-f)* HG_backward) #second term of TTHG: backward scattering
+            
+            #Two HG phase function. Separate forward and back scattering based on parameters above
+            #Same as above except now is weighted by the fractional contribution of both 
+            #rayleigh vs. cloud scattering
             elif single_phase==3:#'TTHG_ray':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                            #first term of TTHG: forward scattering
-                p_single=(ftau_cld*(f * (1-g_forward**2)
-                                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                                #second term of TTHG: backward scattering
-                                                +(1-f)*(1-g_back**2)
-                                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
-                                #rayleigh phase function
-                                ftau_ray*(0.75*(1+cos_theta**2.0)))
-
+                            
+                HG_forward =  (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3)    
+                HG_back = (1-g_back**2)/sqrt((1+g_back**2+2*g_back*cos_theta)**3)
+                
+                p_single=(
+                        ftau_cld * (          #opacity of cloud / total opacity
+                            f * HG_forward  + #first term of TTHG: forward scattering
+                            (1-f) * HG_back  #second term of TTHG: backward scattering  
+                            )+  
+                        ftau_ray * (
+                            0.75*(1+cos_theta**2.0) #rayleigh phase function
+                            )
+                        )
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
             for i in range(nlayer-1,-1,-1):
@@ -1660,6 +1664,28 @@ def blackbody_integrated(T, wave, dwave):
 @jit(nopython=True, cache=True)
 def blackbody(t,w):
     """
+    Blackbody intensity in cgs units in per unit wavelength (cm)
+
+    Parameters
+    ----------
+    t : array,float
+        Temperature (K)
+    w : array, float
+        Wavelength (cm)
+    
+    Returns
+    -------
+    ndarray with shape ntemp x numwave in units of erg/cm/s2/cm
+    """
+    h = 6.62607004e-27 # erg s 
+    c = 2.99792458e+10 # cm/s
+    k = 1.38064852e-16 #erg / K
+
+    return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
+
+@jit(nopython=True, cache=True)
+def blackbody_flux(t,w):
+    """
     Blackbody flux in cgs units in per unit wavelength (cm)
 
     Parameters
@@ -1677,7 +1703,64 @@ def blackbody(t,w):
     c = 2.99792458e+10 # cm/s
     k = 1.38064852e-16 #erg / K
 
-    return ((2.0*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0)) #* (w*w)
+    return ((2.0*np.pi*h*c**2.0)/(w**5.0))*(1.0/(exp((h*c)/outer(t, w*k)) - 1.0))
+
+def blackbody_extend(T, wno_star, wno_planet, flux_star):
+    """
+    Extends spectrum with a blackbody
+
+    Parameters
+    ----------
+    T : float
+        Temperature [K]
+    wno_star : arr
+        Wavenumber [cm^-1]
+    wno_planet : arr
+        Wavenumber [cm^-1]
+    flux_star : arr
+        Flux corresponding to wno grid [erg*cm^(-3)*s^(-1)]
+
+    Returns
+    -------
+    extended_wno_star : arr
+        Extended wno grid [cm^-1]
+    extended_flux_star : arr
+        Extended flux array [erg*cm^(-3)*s^(-1)]
+    """
+
+    # figure out if we have to extend short wnos, long wnos, or both
+    double_extend = False # flag to extend in both directions
+    if wno_planet[0] < wno_star[0]: 
+        # set up possibilty of double extend
+        double_extend = True
+
+        # extend short wnos
+        additional_wno_short = np.linspace(wno_planet[0], wno_star[0], 1000, endpoint=True)
+
+        # calculate fluxes of a blackbody of temperature T
+        flux_bb_short = blackbody_flux(T, 1/additional_wno_short)
+        
+        # append flux_star with blackbody
+        extended_wno_star = np.concatenate((additional_wno_short, wno_star))
+        extended_flux_star = np.concatenate((flux_bb_short.squeeze(), flux_star))
+    if wno_planet[-1] > wno_star[-1]: 
+         # extend long wnos        
+        additional_wno_long = np.linspace(wno_star[-1], wno_planet[-1], 1000, endpoint=True)
+
+        # calculate fluxes of a blackbody of temperature T
+        flux_bb_long = blackbody_flux(T, 1/additional_wno_long)
+
+        # pick which array to append based on if extending only long wnos or both
+        if double_extend:
+            # append extended flux
+            extended_wno_star = np.concatenate((extended_wno_star, additional_wno_long))
+            extended_flux_star = np.concatenate((extended_flux_star, flux_bb_long.squeeze()))
+        else:
+            # append flux
+            extended_wno_star = np.concatenate((wno_star, additional_wno_long))
+            extended_flux_star = np.concatenate((flux_star, flux_bb_long.squeeze()))
+
+    return extended_wno_star, extended_flux_star
 
 @jit(nopython=True, cache=True)
 def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, ubar1,
@@ -3668,30 +3751,22 @@ def vec_dot(A,B):
     return C
 
 
-def tidal_flux(T_e, nlevel, pressure, col_den, InjectionBundle):
+def tidal_flux(Tint, nlevel, pressure, col_den, InjectionBundle):
     """
     Computes Tidal Fluxes in all levels. Py of TIDALWAVE subroutine. 
 	
     Parameters
 	----------
-	T_e : float 
-		Temperature (internal?)
-	wave_in : float
-		what is this?
+	Tint : float 
+		Intrinsic temperature [K]
 	nlevel : int 
 		# of levels
 	pressure : array 
 		pressure array 
-	pm : float
-		Some pressure (?)
-    hratio : float
-		Ratio of Scale Height over Chapman Scale Height
     col_den : array
         Column density array
-    inject_beam : bool
-        If True, inject an energy beam into the model
-    beam_profile : array
-        Beam profile to inject into the model. If None, no beam is injected.
+    InjectionBundle : namedtuple
+        Collection of energy injection inputs
     Returns
 	-------
 	Tidal Fluxes and DE/DM in ergs/g sec
@@ -3700,7 +3775,7 @@ def tidal_flux(T_e, nlevel, pressure, col_den, InjectionBundle):
 
     sigma_sb = 0.56687e-4 # stefan-boltzmann constant
 
-    tide = -sigma_sb* (T_e**4)
+    tide = -sigma_sb* (Tint**4)
 
     T_tot= 0.0 #TTOT
 

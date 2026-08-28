@@ -336,7 +336,6 @@ def get_reflected_1d(
     get_lvl_flux,
     toon_coefficients,
     b_top,
-    reflected=None,
 ):
     """Compute reflected-light fluxes and intensities.
 
@@ -414,9 +413,6 @@ def get_reflected_1d(
         Selects the Toon et al. coefficient set.
     b_top : float
         Diffuse radiation incident at the top of the atmosphere.
-    reflected : GetReflected1D, optional
-        Preallocated reflected-light container. If omitted, a new container is
-        created for this call.
 
     Returns
     -------
@@ -428,11 +424,8 @@ def get_reflected_1d(
         nwno)`` when level fluxes are enabled, otherwise an empty array.
     """
 
-    if reflected is None:
-        # Allocate work space.
-        reflected = GetReflected1D(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
-    else:
-        reflected._ensure(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
+    # Allocate work space
+    reflected = GetReflected1D(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
 
     # Parallel loop over wavelength
     for w in nb.prange(nwno):

@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: pic312
+#     display_name: picaso
 #     language: python
 #     name: python3
 # ---
@@ -68,11 +69,11 @@ elf
 # %%
 cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculation
 
-tint= 950
+tint = 950 # Intrinsic temperature of your Planet in K
 grav = 56 # Gravity of your Planet in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(tint) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 nlevel = 91
 

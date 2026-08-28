@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: pic312
+#     display_name: picaso
 #     language: python
 #     name: python3
 # ---
@@ -76,7 +77,7 @@ def run_climate(base_case_name, array_save_dir, mh, CtoO,
                         database='phoenix', radius_unit = jdi.u.Unit('R_sun'), semi_major_unit = jdi.u.AU)
         case_name.gravity(mass=planet_mass, mass_unit=jdi.u.Unit('M_jup'),
                       radius=planet_radius, radius_unit=jdi.u.Unit('R_jup'))
-        case_name.effective_temp(t_int)
+        case_name.intrinsic_temp(t_int)
 
         #setup mechanism to create initial guesses
         pt = case_name.guillot_pt(teq, nlevel=nlevel, T_int = t_int, p_bottom=2, p_top=-6)
