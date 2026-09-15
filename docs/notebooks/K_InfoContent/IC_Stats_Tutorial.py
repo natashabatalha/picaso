@@ -1,12 +1,13 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -14,7 +15,9 @@
 # ---
 
 # %% [markdown]
-# # Computing Information Content Statistics
+# # Spectral Sensitivity Analysis: Jacobians, Linear-Gaussian Approximations, and Information Content
+#
+# Users should cite Batalha & Wogan 2026 RASTI 
 #
 # In this tutorial you will learn how to: 
 #
@@ -159,7 +162,7 @@ for d_param in [0.01, 0.1, 0.2,0.3,0.4 ] :
         params = jac_params, #this defines the jacobian parameters above 
         is_log=is_log, #defines log or not 
         d_param=d_param,#defines perturbation 
-        calculation='reflected',#could be reflected, thermal, or transmission
+        calculation='albedo',#could be reflected, thermal, or transmission
         opacityclass=opacity, #provides the opacities 
         method='center', #sets jacobian finite differencing method (center, forward, backward)
         #this defines the other parameters that will be regarded as fixed when running the clouds function
@@ -168,7 +171,7 @@ for d_param in [0.01, 0.1, 0.2,0.3,0.4 ] :
 
     jac_mat_class_foward = ic.jacobian(
         picaso_class = perturb_example, params = jac_params, is_log=is_log,d_param=d_param,
-        calculation='reflected', opacityclass=opacity, method='forward',
+        calculation='albedo', opacityclass=opacity, method='forward',
             def_kwargs = {'def.clouds.dp':dict(w0=[0.97], g0=[0.85], p = [log_pbot], dp = np.array([logdp]), opd=[10],do_holes=True,fhole=0.5,fthin_cld=1)}) 
 
 
@@ -178,7 +181,7 @@ for d_param in [0.01, 0.1, 0.2,0.3,0.4 ] :
 # %% [markdown]
 # ## Determine how Jacobian is sensitive to perturbation choice
 #
-# Reproducing Figure 1, Batalha & Wogan
+# Reproducing Figure 1, Batalha & Wogan 2026 RASTI 
 
 # %%
 fig,axs = plt.subplots(5,1,figsize=[12,9],sharex=True)
@@ -296,6 +299,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import copy
 
 fig, (ax_ref, ax) = plt.subplots(2, 1, figsize=(5, 10), sharex=True,
 layout="constrained", 
@@ -397,3 +401,5 @@ ax_ref.legend(fontsize=14)
 for i in [ax,ax_ref]:
     i.set_xlim([0.4,1.8])
     i.set_yticklabels([])
+
+# %%

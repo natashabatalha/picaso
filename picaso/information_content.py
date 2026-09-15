@@ -4,7 +4,7 @@ from spectres import spectres
 import pandas as pd
 
 #picaso imports 
-from .driver import *
+from .driver import set_dict_value,OBSERVATION_CALC_MAP
 from .opacity_factory import create_grid
 from .justplotit import mean_regrid 
 
@@ -82,7 +82,7 @@ def _resolve_param_path(config, param_path):
         
     return param_path
 
-def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=None, method='forward', d_param=1e-2, is_log=False, 
+def jacobian(picaso_class = None, params=None, method='forward', d_param=1e-2, is_log=False, 
              opacityclass=None, calculation=None,def_kwargs=None):
     """
     Computes a Jacobian matrix for a set of model parameters.
@@ -93,10 +93,6 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
 
     Parameters
     ----------
-    driver_file : str, optional
-        Path to the driver.toml configuration file.
-    driver_dict : dict, optional
-        Configuration dictionary.
     picaso_class : picaso.justdoit.inputs
         Standard picaso class. 
         If this is passed then required inputs become opacityclass and calculation (normal picaso .spectrum arguments)
@@ -127,7 +123,15 @@ def jacobian(driver_file=None, driver_dict=None, picaso_class = None, params=Non
     -------
     numpy.ndarray
         A matrix of shape (N_wavelengths, N_parameters) containing the Jacobian.
+    
+    To Do 
+    -----
+    driver_file : str, optional
+        Path to the driver.toml configuration file.
+    driver_dict : dict, optional
+        Configuration dictionary.
     """
+    driver_file=None; driver_dict=None#hard coding for now because of staged release of retrieval and IC stuff
     if isinstance(driver_file, str):
         with open(driver_file, "rb") as f:
             config = tomllib.load(f)
