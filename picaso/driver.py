@@ -638,7 +638,9 @@ def process_model(resultx, resulty, data_dict=None, conv_dict=None, config=None,
 
     RV_config = _velocity_config(config, 'RV')
     if RV_config:
-        resulty = RV(resultx, resulty, **RV_config)
+        # RV expects wavelength; PICASO's spectrum grid is wavenumber (cm^-1).
+        # Passing wavenumber would reverse the physical velocity sign.
+        resulty = RV(1e4 / resultx, resulty, **RV_config)
 
     vrot_config = _velocity_config(config, 'vrot')
     if vrot_config:
