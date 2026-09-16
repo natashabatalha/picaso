@@ -1,3 +1,10 @@
+Version 4.1
+-----------
+Major functionality:
+1. Jacobian calculations off any picaso class 
+2. Information statistics and spectral diagnostics 
+3. Chemeq on the fly from photochem
+
 Version 4.0
 -----------
 Major functionality:
