@@ -46,7 +46,7 @@ case1.gravity(mass=1, mass_unit=jdi.u.Unit('M_jup'),
               radius=1.2, radius_unit=jdi.u.Unit('R_jup'))
 
 #here we are going to have to specify R as well
-case1.star(opa, 4000,0.0122,4.437,radius=0.7, radius_unit = jdi.u.Unit('R_sun') )
+case1.star(opa, temp=4000, metal=0.0122, logg=4.437, radius=0.7, radius_unit = jdi.u.Unit('R_sun') )
 
 #atmo
 case1.atmosphere(filename = jdi.HJ_pt(), sep=r'\s+')
