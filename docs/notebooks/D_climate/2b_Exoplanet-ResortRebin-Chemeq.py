@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: base
 #     language: python
@@ -65,11 +67,11 @@ cl_run = jdi.inputs(calculation="planet", climate = True) # start a calculation
 # now you need to add these parameters to your calculation
 
 
-tint= 200 # Intrinsic Temperature of your Planet in K
+tint = 200 # Intrinsic Temperature of your Planet in K
 grav = 4.5 # Gravity of your Planet in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(tint) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 # %% [markdown]
 # Let's now input the host-star properties
@@ -163,7 +165,7 @@ plt.tick_params(axis='both',which='minor',length =10, width=2,direction='in',lab
 
 plt.legend(fontsize=15)
 
-plt.title(r"T$_{\rm eff}$= 1000 K, log(g)=5.0",fontsize=25)
+plt.title(r"T$_{\rm eff}$= 1100 K, log(g)=2.65",fontsize=25)
 
 
 

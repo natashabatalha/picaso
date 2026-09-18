@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: pic312
+#     display_name: picaso
 #     language: python
 #     name: python3
 # ---
@@ -56,11 +57,11 @@ cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculat
 #note you need to put the climate keyword to be True in order to do so
 # now you need to add these parameters to your calculation
 
-teff= 400 # Effective Temperature of your Brown Dwarf in K
+tint = 400 # Intrinsic Temperature of your Brown Dwarf in K
 grav = 1000 # Gravity of your brown dwarf in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(teff) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 gases_fly = ['CO','CH4','H2O','NH3','CO2','N2','HCN','H2','PH3','C2H2','Na','K','TiO','VO','FeH']
 opacity_ck =  jdi.opannection(method='resortrebin',preload_gases=gases_fly)# grab your opacities
@@ -140,7 +141,7 @@ cr_cond_p, cr_cond_t = vdi.condensation_t('Cr', 1, 2.2, pressure = out['pressure
 
 # %%
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
-                            sonora_profile_db,f"t{teff}g{grav}nc_m0.0.cmp.gz"),
+                            sonora_profile_db,f"t{tint}g{grav}nc_m0.0.cmp.gz"),
                             usecols=[1,2],unpack=True, skiprows = 1)
 
 pressure_elfowl,temp_elfowl = np.loadtxt(f"profilegrid_kz_1d9_qt_onfly_400_grav_1000_mh_+0.0_cto_1.0.dat",
@@ -181,7 +182,6 @@ show(vpi.all_optics_1d(out['virga_output'], wave_range=[1,2]))
 opa_mon = jdi.opannection(wave_range=[0.3,15])
 
 hi_res = jdi.inputs(calculation="browndwarf") # start a calculation
-teff= 400 # Effective Temperature of your Brown Dwarf in K
 grav = 1000 # Gravity of your brown dwarf in m/s/s
 hi_res.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
 

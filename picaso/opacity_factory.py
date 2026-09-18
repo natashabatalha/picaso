@@ -235,7 +235,7 @@ def insert_hitran_cia(original_file, molname, new_db, new_wno):
             cx = np.array(cx_arrays)[inds[0]:inds[1],:]
             for iw in range(len(new_wno)): 
                 #get onto new tgrid
-                #NOTE this seems repetetive but in this interpolation
+                #NOTE this seems repetitive but in this interpolation
                 #we are extrapolating the bands to a uniform grid 
                 #in the next interpolation, we are zeroing the bands outside the T range
                 ycx= 10**np.interp(tgrid, og_t_grid, np.log10(cx[:,iw]))#purposefully leaveing as default left, right
@@ -262,6 +262,60 @@ def insert_hitran_cia(original_file, molname, new_db, new_wno):
     conn.commit()
     conn.close()
     return 
+
+def insert_photochem_cia(original_file, molname, new_db, new_wno):
+    """
+    This continuum function takes a CIA file in the Photochem format and adds it 
+    as an extra source of opacity
+
+    Parameters
+    ----------
+    original_file : str
+        Filepath that points to Photochem CIA file
+    molname : str
+        Name of molecule (e.g. CO2CO2)
+    new_db : str 
+        New database name 
+    new_wno : array, list 
+        wavenumber grid to interpolate onto (units of inverse cm)
+    """
+    
+    # STEP 1: get original H2- CIA that is already inserted
+    cur, conn = open_local(new_db)
+    try:
+        cur.execute('SELECT temperature FROM continuum')
+        current_cia_temps = np.unique(cur.fetchall())
+        conn.close()
+    except: 
+        raise Exception('No temperatures found in continuum table. Usually we insert the H2 continuum first since it exists on a larger H2 Temperature grid. Then, we insert other CIA. Please run restruct_continuum first to insert H/H2 based opacity first.')
+
+    # STEP 2: read in Photochem CIA file
+    with h5py.File(original_file, 'r') as f:
+        wavelengths = f['wavelengths'][:][::-1] # microns
+        temperatures = f['T'][:] # K
+        cia_xsecs_pc = f['log10xs'][:][::-1, :].T # cm^5/molecule^2
+    wvno = 1e4/wavelengths # cm^-1
+
+    # STEP 3: interpolate to new wvno grid
+    cia_xsecs_wvgrid = np.zeros((len(temperatures), len(new_wno)))
+    for temp in range(len(cia_xsecs_pc[:, 0])):
+        cia_xsecs_wvgrid[temp, :] += 10**np.interp(new_wno, wvno, cia_xsecs_pc[temp, :]) # cm^5/molecule^2
+
+    # STEP 4: get on the master CIA temperature grid
+    cia_xsecs = np.zeros((len(current_cia_temps), len(new_wno)))
+    for iw in range(len(new_wno)):
+        cia_xsecs[:, iw] += 10**np.interp(current_cia_temps, temperatures, np.log10(cia_xsecs_wvgrid[:, iw])) # cm^5/molecule^2
+
+    # STEP 5: commit changes to database file
+    cur, conn = open_local(new_db)
+    for it in range(len(current_cia_temps)):
+        #CONVERT FROM cm^5/molecule^2 to amagat^-2 cm^-1
+        #Eqn 3: https://www.sciencedirect.com/science/article/pii/S0019103518306997
+        final_bundle = cia_xsecs[it, :]/1.385277e-39
+        insert(cur, conn, molname, current_cia_temps[it], final_bundle)
+    conn.commit()
+    conn.close()
+    return
 
 def get_original_data(original_file,colnames,new_db, overwrite=False):
     """
@@ -634,28 +688,6 @@ def open_local(db_f):
     return cur,conn
 
 #class MolecularFactory():
-
-#these functions are so that you can store your float arrays as bytes to minimize storage
-def adapt_array(arr):
-    out = io.BytesIO()
-    np.save(out, arr)
-    out.seek(0)
-    return sqlite3.Binary(out.read())
-
-def convert_array(text):
-    out = io.BytesIO(text)
-    out.seek(0)
-    return np.load(out).copy()
-
-def open_local(db_f):
-    """Code needed to open up local database, interpret arrays from bytes and return cursor"""
-    conn = sqlite3.connect(db_f, detect_types=sqlite3.PARSE_DECLTYPES)
-    #tell sqlite what to do with an array
-    sqlite3.register_adapter(np.ndarray, adapt_array)
-    sqlite3.register_converter("array", convert_array)
-    cur = conn.cursor()
-    return cur,conn
-
 
 def build_skeleton(db_f):
     """

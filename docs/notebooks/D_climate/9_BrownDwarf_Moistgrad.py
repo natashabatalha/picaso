@@ -1,13 +1,14 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: base
+#     display_name: picaso
 #     language: python
 #     name: python3
 # ---
@@ -42,11 +43,11 @@ cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculat
 #note you need to put the climate keyword to be True in order to do so
 # now you need to add these parameters to your calculation
 
-teff= 350 # Effective Temperature of your Brown Dwarf in K
+tint = 350 # Intrinsic Temperature of your Brown Dwarf in K
 grav = 100 # Gravity of your brown dwarf in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(teff) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 # %%
 # Here we're going to run a higher metallicity model since the effect of the latent heat is more pronounced at higher metallicities
@@ -65,7 +66,7 @@ nlevel = 91 # number of plane-parallel levels in your code
 
 # let's start with a Sonora Bobcat profile
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
-                            sonora_profile_db,f"t{teff}g{grav}nc_m0.0.cmp.gz"),
+                            sonora_profile_db,f"t{tint}g{grav}nc_m0.0.cmp.gz"),
                             usecols=[1,2],unpack=True, skiprows = 1)
 
 # %%

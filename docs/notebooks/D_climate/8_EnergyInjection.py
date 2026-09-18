@@ -60,11 +60,11 @@ cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculat
 #note you need to put the climate keyword to be True in order to do so
 # now you need to add these parameters to your calculation
 
-teff= 600 # Effective Temperature of your Brown Dwarf in K
+tint = 600 # Intrinsic Temperature of your Brown Dwarf in K
 grav = 1000 # Gravity of your brown dwarf in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(teff) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 opacity_ck = jdi.opannection(ck_db=ck_db,method='preweighted') # grab your opacities
 
@@ -72,7 +72,7 @@ opacity_ck = jdi.opannection(ck_db=ck_db,method='preweighted') # grab your opaci
 nlevel = 91 # number of plane-parallel levels in your code
 
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
-                            sonora_profile_db,f"t{teff}g{grav}nc_m0.0.cmp.gz"),
+                            sonora_profile_db,f"t{tint}g{grav}nc_m0.0.cmp.gz"),
                             usecols=[1,2],unpack=True, skiprows = 1)
 
 # %%
@@ -109,7 +109,7 @@ benchmark.columns = ['level', 'pressure', 'temperature', 'x1', 'x2', 'x3', 'x4',
 
 # %%
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
-                            sonora_profile_db,f"t{teff}g{grav}nc_m0.0.cmp.gz"),
+                            sonora_profile_db,f"t{tint}g{grav}nc_m0.0.cmp.gz"),
                             usecols=[1,2],unpack=True, skiprows = 1)
 plt.figure(figsize=(8,6))
 plt.ylabel("Pressure [Bars]")
@@ -139,11 +139,11 @@ cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculat
 #note you need to put the climate keyword to be True in order to do so
 # now you need to add these parameters to your calculation
 
-teff= 600 # Effective Temperature of your Brown Dwarf in K
+tint = 600 # Intrinsic Temperature of your Brown Dwarf in K
 grav = 1000 # Gravity of your brown dwarf in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(teff) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 opacity_ck = jdi.opannection(ck_db=ck_db,method='preweighted') # grab your opacities
 
@@ -151,7 +151,7 @@ opacity_ck = jdi.opannection(ck_db=ck_db,method='preweighted') # grab your opaci
 nlevel = 91 # number of plane-parallel levels in your code
 
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
-                            sonora_profile_db,f"t{teff}g{grav}nc_m0.0.cmp.gz"),
+                            sonora_profile_db,f"t{tint}g{grav}nc_m0.0.cmp.gz"),
                             usecols=[1,2],unpack=True, skiprows = 1)
 
 # %%
@@ -203,7 +203,7 @@ out = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True)
 
 # %%
 pressure_bobcat,temp_bobcat = np.loadtxt(jdi.os.path.join(
-                            sonora_profile_db,f"t{teff}g{grav}nc_m0.0.cmp.gz"),
+                            sonora_profile_db,f"t{tint}g{grav}nc_m0.0.cmp.gz"),
                             usecols=[1,2],unpack=True, skiprows = 1)
 plt.figure(figsize=(8,6))
 plt.ylabel("Pressure [Bars]")

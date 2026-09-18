@@ -2380,7 +2380,6 @@ class RetrieveOpacities():
         else:
             data = self._get_query_continuum(tcia, cia_mol, cur)
 
-
         for i in self.continuum_opa.keys():
             for j,ind in zip(tcia,range(nlayer)):
                 self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]

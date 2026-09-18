@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: pic312
+#     display_name: picaso
 #     language: python
 #     name: python3
 # ---
@@ -93,11 +93,11 @@ cl_run = jdi.inputs(calculation="browndwarf", climate = True) # start a calculat
 #note you need to put the climate keyword to be True in order to do so
 # now you need to add these parameters to your calculation
 
-teff= 400 # Effective Temperature of your Brown Dwarf in K
+tint = 400 # Intrinsic Temperature of your Brown Dwarf in K
 grav = 1000 # Gravity of your brown dwarf in m/s/s
 
 cl_run.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)')) # input gravity
-cl_run.effective_temp(teff) # input effective temperature
+cl_run.intrinsic_temp(tint) # input intrinsic temperature
 
 opacity_preweighted =  jdi.opannection(method='preweighted',ck_db=ck_db)
 
