@@ -18,7 +18,7 @@ import os
 from collections import namedtuple
 
 
-convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
+convergence_criteriaT = namedtuple('Conv',['max_inner_iterations','max_outer_iterations','inner_threshold','outer_threshold','step_multiplier'])
 
 def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False): 
     """
@@ -131,7 +131,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             CloudParameters,
             save_profile,all_profiles,all_opd,
             verbose=True, moist = None,
-            save_kzz=False, self_consistent_kzz=True):
+            save_kzz=False, self_consistent_kzz=True, damping=False):
     """
     Run the disequilibrium climate workflow. This function is called by the main function
     and runs the disequilibrium climate workflow. It updates the profile, kzz, and chemistry
@@ -173,11 +173,18 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
         if True, save the kzz profile for every iteration
     self_consistent_kzz : bool
         if True, use the self-consistent kzz profile (not constant kzz)
+    damping : bool
+        if True, under-relax the temperature update (blend the new iterate 50/50
+        with the previous one) to damp period-2 limit cycles that can stall the
+        coupled temperature<->photochem fixed-point iteration. Default False.
 
     """
-    ### 5) PROFILE to converge initial profile 
+    ### 5) PROFILE to converge initial profile
     # define the initial convergence criteria for profile 
-    convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=5.0, convt=4.0, x_max_mult=7.0) 
+    # Damped iterations may need additional outer iterations to converge;
+    # preserve the original cap for the default undamped behavior.
+    max_outer_iterations = 15 if damping else 7
+    convergence_criteria = convergence_criteriaT(max_inner_iterations=10, max_outer_iterations=max_outer_iterations, inner_threshold=5.0, outer_threshold=4.0, step_multiplier=7.0) 
 
     final=False
     profile_flag, pressure, temperature, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer,flux_plus_ir_attop,all_profiles,all_opd,all_kzz =profile(
@@ -191,7 +198,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             convergence_criteria, final,
             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False,
             verbose=verbose, moist = moist,
-            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=True)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=True,damping=damping)
     
     final_conv_flag, pressure, temp, dtdp, nstr_new,flux_net_ir_final,flux_net_v_final, flux_plus_final, chem_out, cld_out,all_profiles, all_opd ,all_kzz=find_strat(bundle,
             nofczns,nstr,
@@ -204,7 +211,7 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             save_profile, all_profiles, all_opd,
             flux_net_ir_layer, flux_plus_ir_attop,
             verbose=verbose,  moist = moist,
-            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=True, all_kzz=all_kzz)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=True,damping=damping, all_kzz=all_kzz)
     
     #if CloudParameters.cloudy == 1:
     #    opd_now,w0_now,g0_now = cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry']
@@ -270,7 +277,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     #STEP 1) first profile call with lose convergence criteria 
     final = False
     
-    convergence_criteria = convergence_criteriaT(it_max=10, itmx=7, conv=10.0, convt=5.0, x_max_mult=7.0)       
+    convergence_criteria = convergence_criteriaT(max_inner_iterations=10, max_outer_iterations=7, inner_threshold=10.0, outer_threshold=5.0, step_multiplier=7.0)       
     
     profile_flag,pressure, temperature, dtdp,  CloudParameters,cld_out,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,all_profiles, all_opd,all_kzz = profile(bundle,
             nofczns,nstr, #tracks convective zones 
@@ -286,12 +293,12 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
             save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz)
 
     #STEP 2) second profile call with stricter convergence criteria 
-    it_max= 7
-    itmx= 5
-    conv = 5.0
-    convt=4.0
-    x_max_mult=7.0
-    convergence_criteria = convergence_criteriaT(it_max, itmx, conv, convt, x_max_mult)
+    max_inner_iterations= 7
+    max_outer_iterations= 5
+    inner_threshold = 5.0
+    outer_threshold=4.0
+    step_multiplier=7.0
+    convergence_criteria = convergence_criteriaT(max_inner_iterations, max_outer_iterations, inner_threshold, outer_threshold, step_multiplier)
 
     final = False
     
@@ -828,7 +835,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
         5   is bottom layer of lower convective region
     convergence_criteria : namedtuple
         Defines convergence criteria for max number of loops and other numerical recipes values 
-        TODO: rename these quantities so that its more readable 
     rfaci : float 
         IR flux addition fraction 
     rfacv : float
@@ -893,7 +899,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     nlevel = len(temp)
     tmin =Opagrid.tmin 
     tmax = Opagrid.tmax 
-    it_max,conv,x_max_mult = convergence_criteria.it_max,convergence_criteria.conv,convergence_criteria.x_max_mult
+    max_inner_iterations,inner_threshold,step_multiplier = convergence_criteria.max_inner_iterations,convergence_criteria.inner_threshold,convergence_criteria.step_multiplier
 
 
     cldsave_count = 0 # used to track how many cloud profiles to save outside of loop for animation *JM
@@ -967,7 +973,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     
 
     
-    for its in range(it_max):
+    for its in range(max_inner_iterations):
         
         # the total net flux = optical + ir + tidal component
         
@@ -1078,7 +1084,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
         else:
             # added this to help with smoother convergence for cloudy cases and also helps speed up convergence
             # by a bit when running the default test cases
-            iteration_factor = max(0.01, (it_max - its) / it_max)
+            iteration_factor = max(0.01, (max_inner_iterations - its) / max_inner_iterations)
             step_max *= max(sqrt(sum_1),n_total*1.0)*iteration_factor #step_max_tolerance*
         #if verbose: print('maximum scaled step size',step_max, n_total, sum_1, its)
         no =n_top_r
@@ -1544,7 +1550,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
            
             return   temp,  dtdp, all_profiles , flux_net_ir,flux_net_v, flux_plus_ir[0,:] 
         
-    if verbose: print("Iterations exceeded it_max ! sorry ")
+    if verbose: print("Iterations exceeded max_inner_iterations ! sorry ")
     dtdp=np.zeros(shape=(nlevel-1))
     for j in range(nlevel -1):
         dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
@@ -2549,8 +2555,8 @@ def find_strat(bundle, nofczns,nstr,
         save_profile, all_profiles, all_opd,
         flux_net_ir_layer, flux_plus_ir_attop,
         verbose=1, moist = None,
-        save_kzz=False,self_consistent_kzz=True,diseq=False, all_kzz=[]):
-    
+        save_kzz=False,self_consistent_kzz=True,diseq=False,damping=False, all_kzz=[]):
+
     """
     Parameters
     ----------
@@ -2620,15 +2626,17 @@ def find_strat(bundle, nofczns,nstr,
     #    cld_species= []
 
     # new conditions for this routine
-    convergence_criteriaT = namedtuple('Conv',['it_max','itmx','conv','convt','x_max_mult'])
 
-    #itmx_strat = 5 #itmx  # outer loop counter
-    #it_max_strat = 8 # its # inner loop counter # original code is 8
-    #conv_strat = 5.0 # conv
-    #convt_strat = 3.0 # convt 
-    x_max_mult = 7.0
+    #max_outer_iterations_strat = 5 #max_outer_iterations  # outer loop counter
+    #max_inner_iterations_strat = 8 # its # inner loop counter # original code is 8
+    #inner_threshold_strat = 5.0 # inner_threshold
+    #outer_threshold_strat = 3.0 # outer_threshold 
+    step_multiplier = 7.0
     
-    convergence_criteria = convergence_criteriaT(it_max=8, itmx=5, conv=5.0, convt=3.0, x_max_mult=x_max_mult)
+    # Damping is opt-in, so retain the original iteration cap otherwise.
+    strat_itmx = 15 if damping else 5
+    convergence_criteria = convergence_criteriaT(max_inner_iterations=8, max_outer_iterations=strat_itmx, inner_threshold=5.0, outer_threshold=3.0, step_multiplier=step_multiplier)
+
 
     ip2 = -10 #?
     subad = 0.98 # degree to which layer can be subadiabatic and
@@ -2671,7 +2679,7 @@ def find_strat(bundle, nofczns,nstr,
             convergence_criteria, final,
             flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
             verbose=verbose,moist = moist,
-            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq, all_kzz=all_kzz)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq,damping=damping, all_kzz=all_kzz)
 
 
     # if nofczns == 2: JM* #should be a flag here since this block in EGP is skipped if only 1 convective zone but convergence is better when enabled
@@ -2718,7 +2726,7 @@ def find_strat(bundle, nofczns,nstr,
             convergence_criteria, final,
             flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
             verbose=verbose,moist = moist,
-            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq, all_kzz=all_kzz)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq,damping=damping, all_kzz=all_kzz)
         
 
         i_change = 1
@@ -2761,7 +2769,7 @@ def find_strat(bundle, nofczns,nstr,
                                 convergence_criteria, final,
                                 flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
                                 verbose=verbose, moist = moist,
-            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq, all_kzz=all_kzz)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq,damping=damping, all_kzz=all_kzz)
 
                 d1 = dtdp[nstr[1]-1]
                 d2 = dtdp[nstr[3]]
@@ -2791,17 +2799,18 @@ def find_strat(bundle, nofczns,nstr,
                                 convergence_criteria, final,
                                 flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
                                 verbose=verbose, moist = moist,
-            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq, all_kzz=all_kzz)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq,damping=damping, all_kzz=all_kzz)
 
             flag_final_convergence = 1
         
-    itmx_strat =6
-    it_max_strat = 10
-    conv_strat = 2.0 
-    convt_strat = 2.0
-    x_max_mult = x_max_mult/2.0
+    max_outer_iterations_strat = 15 if damping else 6
+    max_inner_iterations_strat = 10
+    inner_threshold_strat = 2.0 
+    outer_threshold_strat = 2.0
+    step_multiplier = step_multiplier/2.0
+
     ip2 = -10
-    convergence_criteria=convergence_criteriaT(it_max_strat,itmx_strat,conv_strat,convt_strat,x_max_mult)
+    convergence_criteria=convergence_criteriaT(max_inner_iterations_strat,max_outer_iterations_strat,inner_threshold_strat,outer_threshold_strat,step_multiplier)
     final = True
     if verbose: print("final",nstr)
 
@@ -2816,7 +2825,7 @@ def find_strat(bundle, nofczns,nstr,
                 convergence_criteria, final,
                 flux_net_ir_layer=flux_net_ir_layer, flux_plus_ir_attop=flux_plus_ir_attop,
                 verbose=verbose,moist = moist,
-            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq, all_kzz=all_kzz)
+            save_kzz=save_kzz,self_consistent_kzz=self_consistent_kzz,diseq=diseq,damping=damping, all_kzz=all_kzz)
                 #(mieff_dir, it_max_strat, itmx_strat, conv_strat, convt_strat, nofczns,nstr,x_max_mult,
                 #temp,pressure, F0PI, t_table, p_table, grad, cp,opacityclass, grav, 
                 #rfaci, rfacv, nlevel, tidal, tmin, tmax, dwni, bb , y2 , tp, final, 
@@ -2933,7 +2942,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
             convergence_criteria, final,
             flux_net_ir_layer=None, flux_plus_ir_attop=None,first_call_ever=False,
             verbose=True, moist = None,
-            save_kzz=False,self_consistent_kzz=True,diseq=False,all_kzz=[]):
+            save_kzz=False,self_consistent_kzz=True,diseq=False,damping=False,all_kzz=[]):
     """
     Parameters
     ----------
@@ -2999,8 +3008,8 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     #unpack 
     F0PI = opacityclass.relative_flux 
 
-    convt = convergence_criteria.convt
-    itmx = convergence_criteria.itmx
+    outer_threshold = convergence_criteria.outer_threshold
+    max_outer_iterations = convergence_criteria.max_outer_iterations
     cloudy =  CloudParameters.cloudy
 
    #under what circumstances to do we compute a self consistent kzz calc 
@@ -3132,7 +3141,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     #            verbose, moist , egp_stepmax ],file)
 
     ## begin bigger loop which gets opacities
-    for iii in range(itmx):
+    for iii in range(max_outer_iterations):
 
         if do_holes == True:
             temp, dtdp, all_profiles,  flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop = t_start(
@@ -3149,7 +3158,15 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                     F0PI,
                     save_profile, all_profiles, 
                     verbose=verbose, moist = moist, egp_stepmax = egp_stepmax)
-        
+
+        # Optional under-relaxation of the temperature update. The coupled
+        # temperature <-> photochem fixed-point iteration in a diseq climate
+        # solve can enter a period-2 limit cycle (T flips between two states
+        # every big iteration, Jacobian eigenvalue ~ -1); blending the new
+        # iterate with the previous one damps it (eigenvalue -1 -> 0 at 0.5).
+        if damping and iii > 0:
+            temp = 0.5*temp + 0.5*temp_old
+
         ### 1) ALWAYS UPDATE PT, CHEM, OPACITIES
         bundle.add_pt( temp, pressure)
         #simple chem no quenching 
@@ -3225,17 +3242,17 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         
         ert = ert/(float(len(temp))*scalt)
         
-        if ((iii > 0) & (ert < convt) & (taudif < taudif_tol)) :
-            if verbose: print("Profile converged before itmx")
+        if ((iii > 0) & (ert < outer_threshold) & (taudif < taudif_tol)) :
+            if verbose: print("Profile converged before max_outer_iterations")
             conv_flag = 1
             #update convergence flag!! 
             RETURNS[0] = conv_flag
             if final == True :
-                #itmx = 6
-                convergence_criteria=convergence_criteria._replace(itmx=6)
+                #max_outer_iterations = 6
+                convergence_criteria=convergence_criteria._replace(max_outer_iterations=6)
             else :
-                #itmx = 3       
-                convergence_criteria=convergence_criteria._replace(itmx=3)     
+                #max_outer_iterations = 3       
+                convergence_criteria=convergence_criteria._replace(max_outer_iterations=3)     
             
             return RETURNS
         
@@ -3244,7 +3261,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     if conv_flag == 0:
         if verbose: print("Not converged")
     else :
-        if verbose: print("Profile converged after itmx hit")
+        if verbose: print("Profile converged after max_outer_iterations hit")
     
     return RETURNS
 

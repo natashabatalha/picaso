@@ -2,6 +2,7 @@ from .deq_chem import mix_all_gases_gasesfly
 from .rayleigh import Rayleigh
 from .opacity_factory import g_w_2gauss, get_ck_tables
 from .deq_chem import mix_all_gases
+from .atmsetup import is_opacity_excluded, molecule_has_excluded_line_opacity
 
 import warnings
 import pandas as pd
@@ -22,7 +23,433 @@ import math
 from scipy.io import FortranFile
 
 __refdata__ = os.environ.get('picaso_refdata')
+
+@jit(nopython=True, cache=True)
+def add_continuum_numba(taugas_gauss_0, opa, factor, transpose=False):
+    nlayer, nwno = taugas_gauss_0.shape
+    if not transpose:
+        for i in range(nlayer):
+            f = factor[i, 0]
+            for j in range(nwno):
+                taugas_gauss_0[i, j] += opa[i, j] * f
+    else:
+        for i in range(nlayer):
+            f = factor[i, 0]
+            for j in range(nwno):
+                taugas_gauss_0[i, j] += opa[j, i] * f
+
+@jit(nopython=True, cache=True)
+def add_molecular_gauss_numba(taugas, molecular_opa, colden, mmw):
+    nlayer, nwno, ngauss = taugas.shape
+    for g in range(ngauss):
+        for i in range(nlayer):
+            f = colden[i, 0] / mmw[i, 0]
+            for j in range(nwno):
+                taugas[i, j, g] += molecular_opa[i, j, g] * f
+
+@jit(nopython=True, cache=True)
+def add_rayleigh_numba(tauray_gauss_0, rayleigh_opa, factor):
+    nlayer, nwno = tauray_gauss_0.shape
+    for i in range(nlayer):
+        f = factor[i, 0]
+        for j in range(nwno):
+            tauray_gauss_0[i, j] += rayleigh_opa[j] * f
+
 #@jit(nopython=True)
+def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
+    test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False, fthin_cld = None, do_holes = False):
+    """
+    Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
+    It should automatically select the molecules needed
+    
+    Parameters
+    ----------
+    atmosphere : class ATMSETUP
+        This inherets the class from atmsetup.py 
+    opacityclass : class opacity
+        This inherets the class from optics.py. It is done this way so that the opacity db doesnt have 
+        to be reloaded in a retrieval 
+    ngauss : int 
+        Number of gauss angles if using correlated-k. If using monochromatic opacites, 
+        ngauss should one. 
+    stream : int 
+        Number of streams (only affects detal eddington approximation)
+    delta_eddington : bool 
+        (Optional) Default=True, With Delta-eddington on, it incorporates the forward peak 
+        contribution by adjusting optical properties such that the fraction of scattered energy
+        in the forward direction is removed from the scattering parameters 
+    raman : int 
+        (Optional) Default =0 which corresponds to oklopcic+2018 raman scattering cross sections. 
+        Other options include 1 for original pollack approximation for a 6000K blackbody. 
+        And 2 for nothing.  
+    test_mode : bool 
+        (Optional) Default = False to run as normal. This will overwrite the opacities and fix the 
+        delta tau at 0.5. 
+    full_output : bool 
+        (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class. 
+        This is done so that the users can debug, plot, etc. 
+    plot_opacity : bool 
+        (Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber 
+        at the middle layer
+    return_mode : bool 
+        (Optional) Default = False, If true, will only return matrices for all the weighted opacity 
+        contributions
+    do_holes : bool
+        (Optional) Default = False, If true, will calculate clearsky
+    fthin_cld : float
+        Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column
+    Returns
+    -------
+    DTAU : ndarray 
+        This is a matrix with # layer by # wavelength. It is the opacity contained within a layer 
+        including the continuum, scattering, cloud (if specified), and molecular opacity
+        **If requested, this is corrected for with Delta-Eddington.**
+    TAU : ndarray
+        This is a matrix with # level by # wavelength. It is the cumsum of opacity contained 
+        including the continuum, scattering, cloud (if specified), and molecular opacity
+        **If requested, this is corrected for with Delta-Eddington.**
+    WBAR : ndarray
+        This is the single scattering albedo that includes rayleigh, raman and user input scattering sources. 
+        It has dimensions: # layer by # wavelength
+        **If requested, this is corrected for with Delta-Eddington.**
+    COSB : ndarray
+        This is the asymettry factor which accounts for rayleigh and user specified values 
+        It has dimensions: # layer by # wavelength
+        **If requested, this is corrected for with Delta-Eddington.**
+    ftau_cld : ndarray 
+        This is the fraction of cloud opacity relative to the total TAUCLD/(TAUCLD + TAURAY)
+    ftau_ray : ndarray 
+        This is the fraction of rayleigh opacity relative to the total TAURAY/(TAUCLD + TAURAY)
+    GCOS2 : ndarray
+        This is used for Cahoy+2010 methodology for accounting for rayleigh scattering. It 
+        replaces the use of the actual rayleigh phase function by just multiplying ftau_ray by 2
+    DTAU : ndarray 
+        This is a matrix with # layer by # wavelength. It is the opacity contained within a layer 
+        including the continuum, scattering, cloud (if specified), and molecular opacity
+        **If requested, this is corrected for with Delta-Eddington.**
+    TAU : ndarray
+        This is a matrix with # level by # wavelength. It is the cumsum of opacity contained 
+        including the continuum, scattering, cloud (if specified), and molecular opacity
+        **Original, never corrected for with Delta-Eddington.**
+    WBAR : ndarray
+        This is the single scattering albedo that includes rayleigh, raman and user input scattering sources. 
+        It has dimensions: # layer by # wavelength
+        **Original, never corrected for with Delta-Eddington.**
+    COSB : ndarray
+        This is the asymettry factor which accounts for rayleigh and user specified values 
+        It has dimensions: # layer by # wavelength
+        **Original, never corrected for with Delta-Eddington.**
+    Notes
+    -----
+    This was baselined against jupiter with the old fortran code. It matches 100% for all cases 
+    except for hotter cases where Na & K are present. This differences is not a product of the code 
+    but a product of the different opacities (1060 grid versus old 736 grid)
+    Todo 
+    -----
+    Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has 
+    a better methodology)
+    """
+    atm = atmosphere
+    nlayer = atm.c.nlayer
+    nwno = opacityclass.nwno
+
+    if return_mode:
+        taus_by_species = {}
+
+    if plot_opacity: 
+        plot_layer=int(nlayer/1.5)#np.size(tlayer)-1
+        opt_figure = figure(x_axis_label = 'Wavelength', y_axis_label='TAUGAS in optics.py', 
+        title = 'Opacity at T='+str(atm.layer['temperature'][plot_layer])+' P='+str(atm.layer['pressure'][plot_layer]/atm.c.pconv)
+        ,y_axis_type='log',height=700, width=600)
+
+    #====================== INITIALIZE TAUGAS#======================
+    TAUGAS = np.zeros((nlayer,nwno,ngauss)) #nlayer x nwave x ngauss
+    TAURAY = np.zeros((nlayer,nwno,ngauss)) #nlayer x nwave x ngauss
+    TAUCLD = np.zeros((nlayer,nwno,ngauss)) #nlayer x nwave x ngauss
+    asym_factor_cld = np.zeros((nlayer,nwno,ngauss)) #nlayer x nwave x ngauss
+    single_scattering_cld = np.zeros((nlayer,nwno,ngauss)) #nlayer x nwave x ngauss
+    raman_factor = np.zeros((nlayer,nwno,ngauss)) #nlayer x nwave x ngauss 
+
+    c=1
+    #set color scheme.. adding 3 for raman, rayleigh, and total
+    if plot_opacity: colors = inferno(3+len(atm.continuum_molecules) + len(atm.molecules))
+
+    #====================== ADD CONTIMUUM OPACITY====================== 
+    #Set up coefficients needed to convert amagat to a normal human unit
+    #these COEF's are only used for the continuum opacity. 
+    tlevel = atm.level['temperature']
+    #these units are purely because of the wonky continuum units
+    #plevel in this routine is only used for those 
+    plevel = atm.level['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum COEF's below
+    tlayer = atm.layer['temperature']
+    player = atm.layer['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum
+    gravity = atm.planet.gravity / 100.0  #THIS IS DANGEROUS, used for continuum
+
+    ACOEF = (tlayer/(tlevel[:-1]*tlevel[1:]))*(
+            tlevel[1:]*plevel[1:] - tlevel[:-1]*plevel[:-1])/(plevel[1:]-plevel[:-1]) #UNITLESS
+
+    BCOEF = (tlayer/(tlevel[:-1]*tlevel[1:]))*(
+            tlevel[:-1] - tlevel[1:])/(plevel[1:]-plevel[:-1]) #INVERSE PRESSURE
+
+    COEF1 = atm.c.rgas*273.15**2*.5E5* (
+        ACOEF* (plevel[1:]**2 - plevel[:-1]**2) + BCOEF*(
+            2./3.)*(plevel[1:]**3 - plevel[:-1]**3) ) / (
+        1.01325**2 *gravity*tlayer*atm.layer['mmw']) 
+
+
+    #go through every molecule in the continuum first 
+    colden = atm.layer['colden'][:,np.newaxis]
+    mmw = atm.layer['mmw'][:,np.newaxis]
+    player = atm.layer['pressure'][:,np.newaxis]
+    tlayer = atm.layer['temperature'][:,np.newaxis]
+    for m in atm.continuum_molecules:
+
+        #H- Bound-Free
+        if (m[0] == "H-") and (m[1] == "bf"):
+            factor = (atm.layer['mixingratios'][m[0]].values[:,np.newaxis] * colden / (mmw*atm.c.amu))
+            if plot_opacity or return_mode:
+                ADDTAU = opacityclass.continuum_opa['H-bf'] * factor
+                TAUGAS[:,:,0] += ADDTAU
+                if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
+                if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
+            else:
+                add_continuum_numba(TAUGAS[:,:,0], opacityclass.continuum_opa['H-bf'], factor, transpose=False)
+        
+        #H- Free-Free
+        elif (m[0] == "H-") and (m[1] == "ff"):
+            factor = (player*atm.layer['mixingratios']['H'].values[:,np.newaxis] * atm.layer['electrons'][:,np.newaxis] * colden / (tlayer*mmw*atm.c.amu*atm.c.k_b))
+            if plot_opacity or return_mode:
+                ADDTAU = (opacityclass.continuum_opa['H-ff'] * factor).T
+                TAUGAS[:,:,0] += ADDTAU
+                if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
+                if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
+            else:
+                add_continuum_numba(TAUGAS[:,:,0], opacityclass.continuum_opa['H-ff'], factor, transpose=True)
+
+        #H2- 
+        elif (m[0] == "H2-") and (m[1] == ""): 
+            factor = (player*atm.layer['mixingratios']['H2'].values[:,np.newaxis] * atm.layer['electrons'][:,np.newaxis] * colden / (mmw*atm.c.amu))
+            if plot_opacity or return_mode:
+                ADDTAU = opacityclass.continuum_opa['H2-'] * factor
+                TAUGAS[:,:,0] += ADDTAU
+                if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
+                if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
+            else:
+                add_continuum_numba(TAUGAS[:,:,0], opacityclass.continuum_opa['H2-'], factor, transpose=False)
+        #everything else.. e.g. H2-H2, H2-CH4. Automatically determined by which molecules were requested
+        else:
+            factor = (COEF1[:,np.newaxis]*atm.layer['mixingratios'][m[0]].values[:,np.newaxis] * atm.layer['mixingratios'][m[1]].values[:,np.newaxis])
+            if plot_opacity or return_mode:
+                ADDTAU = opacityclass.continuum_opa[m[0]+m[1]] * factor
+                TAUGAS[:,:,0] += ADDTAU
+                if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
+                if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
+            else:
+                add_continuum_numba(TAUGAS[:,:,0], opacityclass.continuum_opa[m[0]+m[1]], factor, transpose=False)
+        c+=1
+    
+    # ADD CONTINUUM TO OTHER GAUSS POINTS 
+    # Continuum doesn't need to go through normal correlated K path way since there 
+    # are no lines to worry about. 
+    for igauss in range(1,ngauss):TAUGAS[:,:,igauss] = TAUGAS[:,:,0]
+
+    #====================== ADD MOLECULAR OPACITY======================
+    #if monochromatic opacities, grap each molecular opacity individually
+    
+    if ngauss == 1:  
+        for m in atm.molecules:
+            factor = colden * atm.layer['mixingratios'][m].values[:,np.newaxis] / mmw
+            if plot_opacity or return_mode:
+                ADDTAU = opacityclass.molecular_opa[m] * factor
+                TAUGAS[:,:,0] += ADDTAU
+                if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:,], alpha=0.7,legend_label=m, line_width=3, color=colors[c],
+                    muted_color=colors[c], muted_alpha=0.2)
+                if return_mode: taus_by_species[m] = ADDTAU
+            else:
+                add_continuum_numba(TAUGAS[:,:,0], opacityclass.molecular_opa[m], factor, transpose=False)
+            c+=1
+
+    elif ngauss > 1: 
+        if plot_opacity or return_mode:
+            for igauss in range(ngauss):
+                ADDTAU = (opacityclass.molecular_opa[:,:,igauss] * ( # nlayer x nwave x ngauss
+                            colden/
+                            mmw) )
+                TAUGAS[:,:,igauss] += ADDTAU
+        else:
+            add_molecular_gauss_numba(TAUGAS, opacityclass.molecular_opa, colden, mmw)
+    
+    #====================== ADD RAYLEIGH OPACITY======================  
+    for m in atm.rayleigh_molecules:
+        factor = colden * atm.layer['mixingratios'][m].values[:,np.newaxis] / mmw
+        add_rayleigh_numba(TAURAY[:,:,0], opacityclass.rayleigh_opa[m], factor)
+
+
+    # ADD RAYLEIGH TO OTHER GAUSS POINTS 
+    # Continuum doesn't need to go through normal correlated K path way since there 
+    # are no lines to worry about. 
+    for igauss in range(1,ngauss): TAURAY[:,:,igauss] = TAURAY[:,:,0]
+
+
+    if plot_opacity: opt_figure.line(1e4/opacityclass.wno, TAURAY[plot_layer,:,0], alpha=0.7,legend_label='Rayleigh', line_width=3, color=colors[c],
+            muted_color=colors[c], muted_alpha=0.2) 
+    #if return_mode: taus_by_species['rayleigh'] = ADDTAU
+    if return_mode: taus_by_species['rayleigh'] = TAURAY[:,:,0]
+
+    #====================== ADD RAMAN OPACITY======================
+    #OKLOPCIC OPACITY
+    if raman == 0 :
+        raman_db = opacityclass.raman_db
+        raman_factor[:,:,0] = compute_raman(nwno, nlayer,opacityclass.wno, 
+            opacityclass.raman_stellar_shifts, atm.layer['temperature'], raman_db['c'].values,
+                raman_db['ji'].values, raman_db['deltanu'].values)
+        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:,0]*TAURAY[plot_layer,:,0], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
+        raman_factor[:,:,0] = np.minimum(raman_factor[:,:,0], raman_factor[:,:,0]*0+0.99999)
+    #POLLACK OPACITY
+    elif raman ==1: 
+        raman_factor[:,:,0] = raman_pollack(nlayer,1e4/opacityclass.wno)
+        raman_factor[:,:,0] = np.minimum(raman_factor[:,:,0], raman_factor[:,:,0]*0+0.99999)  
+        if plot_opacity: opt_figure.line(1e4/opacityclass.wno, raman_factor[plot_layer,:,0]*TAURAY[plot_layer,:,0], alpha=0.7,legend_label='Shifted Raman', line_width=3, color=colors[c],
+                muted_color=colors[c], muted_alpha=0.2)
+    #NOTHING
+    else: 
+        raman_factor = 0.99999 + np.zeros((nlayer, nwno,ngauss))
+
+    #fill rest of gauss points
+    for igauss in range(1,ngauss):raman_factor[:,:,igauss] = raman_factor[:,:,0]
+
+    #====================== ADD CLOUD OPACITY====================== 
+    for igauss in range(ngauss):
+        TAUCLD[:,:,igauss] = atm.layer['cloud']['opd'] #TAUCLD is the total extinction from cloud = (abs + scattering)
+        asym_factor_cld[:,:,igauss] = atm.layer['cloud']['g0']
+        single_scattering_cld[:,:,igauss] = atm.layer['cloud']['w0'] 
+
+    if do_holes == True:
+        TAUCLD = fthin_cld*TAUCLD 
+    
+    if return_mode: 
+        taus_by_species['cloud'] = TAUCLD[:,:,0]#*single_scattering_cld[:,:,0]
+        return taus_by_species
+        
+    #====================== If user requests full output, add Tau's to atmosphere class=====
+    if full_output:
+        atmosphere.taugas = TAUGAS
+        atmosphere.tauray = TAURAY
+        atmosphere.taucld = TAUCLD
+
+    #====================== ADD EVERYTHING TOGETHER PER LAYER====================== 
+    #formerly DTAU
+    DTAU = TAUGAS + TAURAY + TAUCLD 
+    
+    # This is the fractional of the total scattering that will be due to the cloud
+    #VERY important note. You must weight the taucld by the single scattering 
+    #this is because we only care about the fractional opacity from the cloud that is 
+    #scattering. Equivalent to w_ray in optici.f
+    ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
+
+    #COSB = ftau_cld*asym_factor_cld
+    COSB = asym_factor_cld
+
+    #formerly GCOSB2 
+    ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD)
+    GCOS2 = 0.5*ftau_ray #Hansen & Travis 1974 for Rayleigh scattering 
+
+    #Raman correction is usually used for reflected light calculations 
+    #although users to have option turn it off in reflected light as well 
+    W0 = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
+
+    #if a user wants both reflected and thermal, this computes SSA without raman correction, but with 
+    #scattering from clouds still
+    W0_no_raman = (TAURAY*0.99999 + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
+
+    #sum up taus starting at the top, going to depth
+    TAU = np.zeros((nlayer+1, nwno,ngauss))
+    for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
+
+    # Clearsky case
+    #removing this code as it is bug prone as it generally repeats all code 
+    #by removing this I will only be modifying taucld 
+    #if do_holes == True:
+    #    DTAU = TAUGAS + TAURAY + fthin_cld*TAUCLD #fraction of cloud opacity
+    #    COSB = fthin_cld*np.copy(asym_factor_cld) #fraction of cloud asymmetry
+    #    ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD *fthin_cld)
+    #    GCOS2 = 0.5*ftau_ray # since ftau_ray = 1 without any clouds
+    #    W0 = (TAURAY*raman_factor + fthin_cld*TAUCLD*single_scattering_cld) / DTAU #TOTAL single scattering
+    #    W0_no_raman = (TAURAY*0.99999 + TAUCLD*single_scattering_cld* fthin_cld) / DTAU #TOTAL single scattering
+
+    if plot_opacity:
+        opt_figure.line(1e4/opacityclass.wno, DTAU[plot_layer,:,0], legend_label='TOTAL', line_width=4, color=colors[0],
+            muted_color=colors[c], muted_alpha=0.2)
+        opt_figure.legend.click_policy="mute"
+        show(opt_figure)
+
+    if test_mode != None:  
+            #this is to check against Dlugach & Yanovitskij 
+            #https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
+            if test_mode=='rayleigh':
+                DTAU = TAURAY 
+                #GCOS2 = 0.5
+                GCOS2 = np.zeros(DTAU.shape) + 0.5
+                #ftau_ray = 1.0
+                ftau_ray = np.zeros(DTAU.shape) + 1.0
+                #ftau_cld = 1e-6
+                ftau_cld = np.zeros(DTAU.shape) #+ 1e-6
+            else:
+                DTAU = np.zeros(DTAU.shape) 
+                for igauss in range(ngauss): DTAU[:,:,igauss] = atm.layer['cloud']['opd']#TAURAY*0+0.05
+                GCOS2 = np.zeros(DTAU.shape)#0.0
+                ftau_ray = np.zeros(DTAU.shape)
+                ftau_cld = np.zeros(DTAU.shape)+1.
+            W0_no_raman = np.zeros(DTAU.shape)
+            W0 = np.zeros(DTAU.shape)
+            COSB = np.zeros(DTAU.shape)
+            #check for zero ssa's 
+            atm.layer['cloud']['w0'][atm.layer['cloud']['w0']<=0] = 1e-10#arbitrarily small
+            DTAU[DTAU<=0] = 1e-10#arbitrarily small
+            for igauss in range(ngauss): COSB[:,:,igauss] = atm.layer['cloud']['g0']
+            for igauss in range(ngauss): W0[:,:,igauss] = atm.layer['cloud']['w0']
+            W0_no_raman = W0
+            TAU = np.zeros((nlayer+1, nwno,ngauss))
+            for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
+    #====================== D-Eddington Approximation======================
+    if delta_eddington:
+        #First thing to do is to use the delta function to icorporate the forward 
+        #peak contribution of scattering by adjusting optical properties such that 
+        #the fraction of scattered energy in the forward direction is removed from 
+        #the scattering parameters 
+
+        #Joseph, J.H., W. J. Wiscombe, and J. A. Weinman, 
+        #The Delta-Eddington approximation for radiative flux transfer, J. Atmos. Sci. 33, 2452-2459, 1976.
+
+        #also see these lecture notes are pretty good
+        #http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
+        f_deltaM = COSB**stream
+        w0_dedd=W0*(1.-f_deltaM)/(1.0-W0*f_deltaM)
+        #cosb_dedd=COSB/(1.+COSB)
+        cosb_dedd=(COSB-f_deltaM)/(1.-f_deltaM)
+        dtau_dedd=DTAU*(1.-W0*f_deltaM) 
+
+        #sum up taus starting at the top, going to depth
+        tau_dedd = np.zeros((nlayer+1, nwno, ngauss))
+        for igauss in range(ngauss): tau_dedd[1:,:,igauss]=numba_cumsum(dtau_dedd[:,:,igauss])
+    
+        #returning the terms used in 
+        return (dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2, 
+                DTAU, TAU, W0, COSB,    #these are returned twice because we need the uncorrected 
+                W0_no_raman, f_deltaM)            #values for single scattering terms where we use the TTHG phase function
+                                        # w0_no_raman is used in thermal calculations only
+
+    else: 
+        return (DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, 
+                DTAU, TAU, W0, COSB,  #these are returned twice for consistency with the delta-eddington option
+                W0_no_raman, 0*COSB)          #W0_no_raman is used for thermal calculations only 
+
+
 def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
     test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False, fthin_cld = None, do_holes = False):
     """
@@ -1176,7 +1603,7 @@ class RetrieveCKs():
         kappas = []
         for imol in atmosphere.molecules: 
             #only add to molecule set if it wasnt requested as a excluded molecule
-            if ((exclude_mol==1) or (exclude_mol[imol]==1)):
+            if not is_opacity_excluded(exclude_mol, imol, 'line'):
                 mixes += [atmosphere.layer['mixingratios'][imol].values]
                 kappas += [self.kappas[imol]]
 
@@ -1507,6 +1934,11 @@ class RetrieveCKs():
             Not yet functional for CK option since they are premixed. For individual 
             CK molecules, this will ignore the optical contribution from one molecule. 
         """
+        if molecule_has_excluded_line_opacity(exclude_mol):
+            raise Exception(
+                "Line-opacity exclusion is not supported for premixed/preweighted CK tables because the line opacity is already mixed. "
+                "Use separable opacities or request only continuum/rayleigh exclusion."
+            )
         self.get_continuum(atmosphere)
         self.get_pre_mix_ck(atmosphere)
     
@@ -2023,6 +2455,7 @@ class RetrieveOpacities():
         self.p_log_grid = log10(self.pressures) #used for interpolation 
         self.temps = df['temperature'].unique() #used for interpolation
         self.t_inv_grid = 1/self.temps
+        self._pt_ids, _ = _build_ptid_lookup(self.pt_pairs)
 
         #Get the wave grid info
         cur.execute('SELECT wavenumber_grid FROM header')
@@ -2160,6 +2593,8 @@ class RetrieveOpacities():
         """
         Get queried continuum 
         """
+        tcia = tuple(float(i) for i in np.asarray(tcia, dtype=np.float64).tolist())
+        cia_mol = tuple(str(i) for i in cia_mol)
         #if user only runs a single molecule or temperature
         #if len(tcia) ==1: 
         #    query_temp = """AND temperature= '{}' """.format(str(tcia[0]))
@@ -2186,7 +2621,7 @@ class RetrieveOpacities():
             query_mol = "WHERE molecule IN ({})".format(','.join(['?'] * len(cia_mol)))
 
 
-        query_params = tuple(cia_mol) + tuple(tcia)
+        query_params = cia_mol + tcia
 
         cur.execute("""
             SELECT molecule, temperature, opacity 
@@ -2203,6 +2638,8 @@ class RetrieveOpacities():
         """
         submits query
         """
+        ind_pt = tuple(int(i) for i in np.asarray(ind_pt).tolist())
+        molecules = tuple(str(i) for i in molecules)
         #query molecular opacities from sqlite3
         #if len(molecules) ==1: 
         #    query_mol = """WHERE molecule= '{}' """.format(str(molecules[0]))
@@ -2221,7 +2658,7 @@ class RetrieveOpacities():
 
         query_pt = "AND ptid IN ({})".format(','.join(['?'] * len(ind_pt)))
 
-        query_params = tuple(molecules) + tuple(ind_pt)
+        query_params = molecules + ind_pt
 
         cur.execute("""SELECT molecule,ptid,opacity 
                     FROM molecular 
@@ -2260,31 +2697,33 @@ class RetrieveOpacities():
         #get parameters we need to interpolate molecular opacity 
         t_interp , p_interp, i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi = self.find_needed_pts(tlayer,player)
         #only need to uniquely query certain opacities
-        ind_pt = 1+np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
+        row_pt = np.unique(np.concatenate([i_t_low_p_low, i_t_hi_p_low, i_t_low_p_hi, i_t_hi_p_hi]))
+        ind_pt = self._pt_ids[row_pt]
 
         atmosphere.layer['pt_opa_index'] = ind_pt
 
         data = self._get_query_molecular(ind_pt,molecules,cur)
+        pt_low_low = self._pt_ids[i_t_low_p_low]
+        pt_hi_low = self._pt_ids[i_t_hi_p_low]
+        pt_low_hi = self._pt_ids[i_t_low_p_hi]
+        pt_hi_hi = self._pt_ids[i_t_hi_p_hi]
 
         for i in self.molecular_opa.keys():
             #fac is a multiplier for users to test the optical contribution of 
             #each of their molecules
             #for example, does ignoring CH4 opacity affect my spectrum??
-            if exclude_mol==1:
-                fac =1
-            else: 
-                fac = exclude_mol[i]
+            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
             for ind in range(nlayer): # multiply by avogadro constant
             #these where statements are used for non zero arrays 
             #however they should ultimately be put into opacity factory so it doesnt slow 
             #this down
-                log_abunds1 = data[i+'_'+str(1+i_t_low_p_low[ind])]
+                log_abunds1 = data[i+'_'+str(pt_low_low[ind])]
                 log_abunds1 = log10(np.where(log_abunds1!=0,log_abunds1,1e-50))
-                log_abunds2 = data[i+'_'+str(1+i_t_hi_p_low[ind])]
+                log_abunds2 = data[i+'_'+str(pt_hi_low[ind])]
                 log_abunds2 = log10(np.where(log_abunds2!=0,log_abunds2,1e-50))
-                log_abunds3 = data[i+'_'+str(1+i_t_hi_p_hi[ind])]
+                log_abunds3 = data[i+'_'+str(pt_hi_hi[ind])]
                 log_abunds3 = log10(np.where(log_abunds3!=0,log_abunds3,1e-50))
-                log_abunds4 = data[i+'_'+str(1+i_t_low_p_hi[ind])]
+                log_abunds4 = data[i+'_'+str(pt_low_hi[ind])]
                 log_abunds4 = log10(np.where(log_abunds4!=0,log_abunds4,1e-50))
                 #nlayer x nwno
                 cx = 10**(((1-t_interp[ind])* (1-p_interp[ind]) * log_abunds1) +
@@ -2343,10 +2782,7 @@ class RetrieveOpacities():
            #fac is a multiplier for users to test the optical contribution of 
             #each of their molecules
             #for example, does ignoring CH4 opacity affect my spectrum??
-            if exclude_mol==1:
-                fac =1
-            else: 
-                fac = exclude_mol[i]
+            fac = 0 if is_opacity_excluded(exclude_mol, i, 'line') else 1
             for j,ind in zip(ind_pt,range(nlayer)): # multiply by avogadro constant 
                 self.molecular_opa[i][ind, :] = fac*data[i+'_'+str(j)]*6.02214086e+23 #add to opacity
 
@@ -2400,6 +2836,482 @@ class RetrieveOpacities():
             all_shifted_spec[:,i] = shifted_flux/unshifted
 
         self.raman_stellar_shifts = all_shifted_spec
+
+
+def _decode_hdf5_string(value):
+    if isinstance(value, bytes):
+        return value.decode("utf-8")
+    if isinstance(value, np.ndarray):
+        if value.shape == ():
+            return _decode_hdf5_string(value.item())
+        return [_decode_hdf5_string(i) for i in value.tolist()]
+    return str(value)
+
+
+def _decode_hdf5_opacity_block(raw_block, storage_format, y_min=None, y_max=None, return_log=False):
+    storage_format = _decode_hdf5_string(storage_format)
+    if storage_format == 'log10_float32':
+        decoded = np.asarray(raw_block, dtype=np.float64)
+        return decoded if return_log else 10**decoded
+    if storage_format == 'log10_uint16':
+        if y_min is None or y_max is None:
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = np.asarray(y_min)
+        y_max = np.asarray(y_max)
+        if y_min.shape != () or y_max.shape != ():
+            raise Exception("log10_uint16 datasets require scalar y_min and y_max attributes")
+        y_min = float(y_min)
+        y_max = float(y_max)
+        raw_block = np.asarray(raw_block, dtype=np.float64)
+        if y_max == y_min:
+            decoded = np.zeros(raw_block.shape, dtype=np.float64) + y_min
+        else:
+            decoded = y_min + (y_max - y_min) * (raw_block / float(np.iinfo(np.uint16).max))
+        return decoded if return_log else 10**decoded
+    raise Exception(
+        f"Do not recognize HDF5 opacity storage format: {storage_format}. "
+        "Supported formats are log10_uint16 and log10_float32."
+    )
+
+
+@jit(nopython=True, cache=True)
+def _interpolate_hdf5_log_opacity(output, log_block, idx1, idx2, idx3, idx4, t_interp, p_interp, scale):
+    """Interpolate log10 opacity rows into a preallocated linear-opacity output buffer."""
+    nlayer, nwno = output.shape
+    for i in range(nlayer):
+        w1 = (1.0 - t_interp[i]) * (1.0 - p_interp[i])
+        w2 = t_interp[i] * (1.0 - p_interp[i])
+        w3 = t_interp[i] * p_interp[i]
+        w4 = (1.0 - t_interp[i]) * p_interp[i]
+        row1 = idx1[i]
+        row2 = idx2[i]
+        row3 = idx3[i]
+        row4 = idx4[i]
+        for j in range(nwno):
+            log_val = (
+                w1 * log_block[row1, j]
+                + w2 * log_block[row2, j]
+                + w3 * log_block[row3, j]
+                + w4 * log_block[row4, j]
+            )
+            output[i, j] = scale * (10.0 ** log_val)
+
+
+@jit(nopython=True, cache=True)
+def _find_needed_pts_hdf5(tlayer, player, t_inv_grid, p_log_grid, nc_p, temp_row_offsets):
+    nlayer = tlayer.size
+    t_interp = np.empty(nlayer, dtype=np.float64)
+    p_interp = np.empty(nlayer, dtype=np.float64)
+    row_low_low = np.empty(nlayer, dtype=np.int64)
+    row_hi_low = np.empty(nlayer, dtype=np.int64)
+    row_low_hi = np.empty(nlayer, dtype=np.int64)
+    row_hi_hi = np.empty(nlayer, dtype=np.int64)
+
+    for i in range(nlayer):
+        t_inv = 1.0 / tlayer[i]
+        p_log = np.log10(player[i])
+
+        t_low = 0
+        found = False
+        for j in range(t_inv_grid.size):
+            if t_inv_grid[j] > t_inv:
+                t_low = j
+                found = True
+        if not found:
+            t_low = 0
+        if t_low == t_inv_grid.size - 1:
+            t_low = t_inv_grid.size - 2
+        t_hi = t_low + 1
+
+        p_low = 0
+        found = False
+        for j in range(p_log_grid.size):
+            if p_log_grid[j] <= p_log:
+                p_low = j
+                found = True
+        if not found:
+            p_low = 0
+
+        max_avail_p = p_low
+        hi_limit = nc_p[t_hi] - 3
+        if hi_limit < max_avail_p:
+            max_avail_p = hi_limit
+        if max_avail_p < 0:
+            max_avail_p = 0
+        p_low = max_avail_p
+        p_hi = p_low + 1
+
+        t_inv_low = t_inv_grid[t_low]
+        t_inv_hi = t_inv_grid[t_hi]
+        p_log_low = p_log_grid[p_low]
+        p_log_hi = p_log_grid[p_hi]
+
+        row_low_low[i] = temp_row_offsets[t_low] + p_low
+        row_hi_low[i] = temp_row_offsets[t_hi] + p_low
+        row_low_hi[i] = temp_row_offsets[t_low] + p_hi
+        row_hi_hi[i] = temp_row_offsets[t_hi] + p_hi
+
+        t_interp[i] = (t_inv - t_inv_low) / (t_inv_hi - t_inv_low)
+        p_interp[i] = (p_log - p_log_low) / (p_log_hi - p_log_low)
+
+    return t_interp, p_interp, row_low_low, row_hi_low, row_low_hi, row_hi_hi
+
+
+@jit(nopython=True, cache=True)
+def _find_nearest_pt_rows_hdf5(player, tlayer, pt_pressures, pt_temperatures, pt_ids):
+    nlayer = tlayer.size
+    row_indices = np.empty(nlayer, dtype=np.int64)
+    ptid_indices = np.empty(nlayer, dtype=np.int64)
+    for i in range(nlayer):
+        player_log = np.log(player[i])
+        best_row = 0
+        best_metric = math.hypot(np.log(pt_pressures[0]) - player_log, pt_temperatures[0] - tlayer[i])
+        for j in range(1, pt_pressures.size):
+            metric = math.hypot(np.log(pt_pressures[j]) - player_log, pt_temperatures[j] - tlayer[i])
+            if metric < best_metric:
+                best_metric = metric
+                best_row = j
+        row_indices[i] = best_row
+        ptid_indices[i] = pt_ids[best_row]
+    return row_indices, ptid_indices
+
+
+@jit(nopython=True, cache=True)
+def _find_nearest_temperature_rows_hdf5(tlayer, cia_temps):
+    nlayer = tlayer.size
+    row_indices = np.empty(nlayer, dtype=np.int64)
+    for i in range(nlayer):
+        best_row = 0
+        best_metric = abs(cia_temps[0] - tlayer[i])
+        for j in range(1, cia_temps.size):
+            metric = abs(cia_temps[j] - tlayer[i])
+            if metric < best_metric:
+                best_metric = metric
+                best_row = j
+        row_indices[i] = best_row
+    return row_indices
+
+
+@jit(nopython=True, cache=True)
+def _fill_hdf5_nearest_block(output, block, local_rows, scale):
+    nlayer, nwno = output.shape
+    for i in range(nlayer):
+        row = local_rows[i]
+        for j in range(nwno):
+            output[i, j] = scale * block[row, j]
+
+
+def _build_ptid_lookup(pt_pairs):
+    pt_ids = np.asarray([int(row[0]) for row in pt_pairs], dtype=np.int64)
+    ptid_to_row = {int(ptid): idx for idx, ptid in enumerate(pt_ids.tolist())}
+    return pt_ids, ptid_to_row
+
+
+class RetrieveOpacitiesHDF5(RetrieveOpacities):
+    """
+    HDF5 reader for resampled opacity databases.
+    """
+    def __init__(self, db_filename, raman_data, wave_range=None, location='local', resample=1,
+        query_method='nearest'):
+
+        self.ngauss = 1
+        self.gauss_wts = np.array([1])
+        self.db_filename = db_filename
+        self._h5 = h5py.File(self.db_filename, "r")
+
+        try:
+            self._header = self._h5["header"]
+            self._molecular_group = self._h5["molecular"]
+            self._continuum_group = self._h5["continuum"]
+        except KeyError as exc:
+            self.close()
+            raise Exception(
+                f"The HDF5 opacity file does not match the expected resampled layout: missing {exc}"
+            )
+
+        self.get_available_data(wave_range, resample)
+
+        self.raman_db = pd.read_csv(
+            raman_data,
+            sep=r'\s+',
+            skiprows=16,
+            header=None,
+            names=['ji','jf','vf','c','deltanu'],
+        )
+
+        self.get_available_rayleigh()
+        self.preload = False
+        self.query_method = query_method
+
+        if query_method == 'nearest':
+            self.get_opacities = self.get_opacities_nearest
+        elif query_method == 'linear':
+            self.get_opacities = self.__class__.get_opacities.__get__(self)
+        else:
+            self.close()
+            raise Exception(
+                f'Do not recognize query method for opacities: {query_method}. Options are nearest or linear'
+            )
+
+    def close(self):
+        h5 = getattr(self, "_h5", None)
+        if h5 is not None:
+            try:
+                h5.close()
+            except Exception:
+                pass
+            self._h5 = None
+
+    def __del__(self):
+        self.close()
+
+    def _get_storage_format(self, dataset, default_value):
+        return dataset.attrs.get("storage_format", default_value)
+
+    def _decode_dataset_rows(self, dataset, row_indices, default_storage_format, return_log=False):
+        row_indices = np.asarray(row_indices, dtype=np.int64)
+        raw_block = dataset[row_indices, self._dataset_wave_slice]
+        storage_format = self._get_storage_format(dataset, default_storage_format)
+        decoded = _decode_hdf5_opacity_block(
+            raw_block,
+            storage_format,
+            y_min=dataset.attrs.get("y_min"),
+            y_max=dataset.attrs.get("y_max"),
+            return_log=return_log,
+        )
+        return np.asarray(decoded, dtype=np.float64)
+
+    def get_available_data(self, wave_range, resample):
+        self.resample = resample
+
+        self.cia_temps = np.asarray(self._header["continuum_temperatures"][:], dtype=np.float64)
+        self.avail_continuum = list(_decode_hdf5_string(self._header["continuum_molecules"][:]))
+        self.molecules = list(_decode_hdf5_string(self._header["molecules"][:]))
+
+        pt_pairs = np.asarray(self._header["pt_pairs"][:], dtype=np.float64)
+        if pt_pairs.ndim != 2 or pt_pairs.shape[1] < 3:
+            raise Exception("HDF5 header/pt_pairs must be a 2D array with columns ptid, pressure, temperature")
+
+        self.pt_pairs = [(int(row[0]), float(row[1]), float(row[2])) for row in pt_pairs]
+        df = pd.DataFrame(self.pt_pairs, columns=['ptid','pressure','temperature'])
+        self.nc_p = df.groupby('temperature').size().values
+        self.pressures = df['pressure'].unique()
+        self.p_log_grid = log10(self.pressures)
+        self.temps = df['temperature'].unique()
+        self.t_inv_grid = 1/self.temps
+        self._pt_ids = np.asarray(pt_pairs[:, 0], dtype=np.int64)
+        self._pt_pressures = np.asarray(pt_pairs[:, 1], dtype=np.float64)
+        self._pt_temperatures = np.asarray(pt_pairs[:, 2], dtype=np.float64)
+        self._temp_row_offsets = np.zeros(self.nc_p.size, dtype=np.int64)
+        if self.nc_p.size > 1:
+            self._temp_row_offsets[1:] = np.cumsum(self.nc_p[:-1], dtype=np.int64)
+
+        native_wno = np.asarray(self._header["wavenumber_grid"][:], dtype=np.float64)
+        resampled_wno = native_wno[::self.resample]
+        resampled_wave = 1e4/resampled_wno
+        if wave_range is None:
+            selected_resampled_indices = np.arange(resampled_wno.size, dtype=np.int64)
+        else:
+            selected_resampled_indices = np.where(
+                ((resampled_wave > min(wave_range)) & (resampled_wave < max(wave_range)))
+            )[0]
+        if selected_resampled_indices.size == 0:
+            raise Exception("The requested wave_range does not overlap the opacity grid")
+
+        start = int(selected_resampled_indices[0]) * self.resample
+        stop = (int(selected_resampled_indices[-1]) + 1) * self.resample
+        self._dataset_wave_slice = slice(start, stop, self.resample)
+
+        self.wno = resampled_wno[selected_resampled_indices]
+        self.wave = resampled_wave[selected_resampled_indices]
+        self.nwno = np.size(self.wno)
+
+        self._default_molecular_storage_format = _decode_hdf5_string(self._header["storage_format"][()])
+        self._default_continuum_storage_format = _decode_hdf5_string(
+            self._header["continuum_storage_format"][()]
+        )
+        self._continuum_temp_to_row = {
+            float(temp): idx for idx, temp in enumerate(self.cia_temps.tolist())
+        }
+        self._molecular_opa = {}
+        self._continuum_opa = {}
+        self.loaded_molecules = None
+        self.loaded_continuum = None
+
+    def preload_opacities(self,molecules,p_range,t_range):
+        raise NotImplementedError(
+            "HDF5 preload_opacities() is no longer supported. The backend now "
+            "loads dense row blocks directly on demand and does not use a preload cache."
+        )
+
+    def _prepare_output_buffers(self, molecules, cia_molecules, nlayer):
+        continuum_keys = [key[0] + key[1] for key in cia_molecules]
+        self.molecular_opa = self._reuse_or_allocate_output_dict(
+            getattr(self, "molecular_opa", None),
+            molecules,
+            nlayer,
+        )
+        self.continuum_opa = self._reuse_or_allocate_output_dict(
+            getattr(self, "continuum_opa", None),
+            continuum_keys,
+            nlayer,
+        )
+
+    def _reuse_or_allocate_output_dict(self, existing, keys, nlayer):
+        shape = (nlayer, self.nwno)
+        if existing is None:
+            existing = {}
+        if list(existing.keys()) != list(keys):
+            return {key: np.empty(shape, dtype=np.float64) for key in keys}
+        for key in keys:
+            arr = existing.get(key)
+            if arr is None or arr.shape != shape or arr.dtype != np.float64:
+                return {key: np.empty(shape, dtype=np.float64) for key in keys}
+        return existing
+
+    def _build_row_lookup(self, row_indices, total_rows):
+        requested_rows = np.unique(np.asarray(row_indices, dtype=np.int64))
+        row_lookup = np.full(total_rows, -1, dtype=np.int64)
+        row_lookup[requested_rows] = np.arange(requested_rows.size, dtype=np.int64)
+        return requested_rows, row_lookup
+
+    def _load_molecular_blocks(self, row_indices, molecules, return_log=False):
+        requested_rows, row_lookup = self._build_row_lookup(row_indices, self._pt_ids.size)
+        dense_blocks = {}
+        for molecule in molecules:
+            if molecule not in self._molecular_group:
+                raise Exception(f"Molecule {molecule} not found in HDF5 opacity file")
+            dataset = self._molecular_group[molecule]
+            dense_blocks[molecule] = self._decode_dataset_rows(
+                dataset,
+                requested_rows,
+                self._default_molecular_storage_format,
+                return_log=return_log,
+            )
+        return dense_blocks, row_lookup
+
+    def _load_continuum_blocks(self, row_indices, continuum_species):
+        requested_rows, row_lookup = self._build_row_lookup(row_indices, self.cia_temps.size)
+        dense_blocks = {}
+        for molecule in continuum_species:
+            if molecule not in self._continuum_group:
+                raise Exception(f"Continuum species {molecule} not found in HDF5 opacity file")
+            dense_blocks[molecule] = self._decode_dataset_rows(
+                self._continuum_group[molecule],
+                requested_rows,
+                self._default_continuum_storage_format,
+            )
+        return dense_blocks, row_lookup
+
+    def _prepare_linear_pt_state(self, tlayer, player):
+        return _find_needed_pts_hdf5(
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(player, dtype=np.float64),
+            np.asarray(self.t_inv_grid, dtype=np.float64),
+            np.asarray(self.p_log_grid, dtype=np.float64),
+            np.asarray(self.nc_p, dtype=np.int64),
+            np.asarray(self._temp_row_offsets, dtype=np.int64),
+        )
+
+    def get_opacities(self, atmosphere, exclude_mol=1):
+        nlayer = atmosphere.c.nlayer
+        tlayer = atmosphere.layer['temperature']
+        player = atmosphere.layer['pressure']/atmosphere.c.pconv
+        molecules = atmosphere.molecules
+        cia_molecules = atmosphere.continuum_molecules
+
+        self._prepare_output_buffers(molecules, cia_molecules, nlayer)
+
+        t_interp, p_interp, row_low_low, row_hi_low, row_low_hi, row_hi_hi = self._prepare_linear_pt_state(
+            tlayer,
+            player,
+        )
+        required_rows = np.unique(
+            np.concatenate([row_low_low, row_hi_low, row_low_hi, row_hi_hi])
+        )
+        dense_blocks, row_lookup = self._load_molecular_blocks(required_rows, molecules, return_log=True)
+
+        local_low_low = row_lookup[row_low_low]
+        local_hi_low = row_lookup[row_hi_low]
+        local_low_hi = row_lookup[row_low_hi]
+        local_hi_hi = row_lookup[row_hi_hi]
+
+        for molecule in molecules:
+            fac = 0 if is_opacity_excluded(exclude_mol, molecule, 'line') else 1
+            # The HDF5 linear path stays entirely in log-space until the final
+            # write into the reusable output buffer, which removes redundant
+            # decode/re-encode work and keeps temporary memory flat.
+            _interpolate_hdf5_log_opacity(
+                self.molecular_opa[molecule],
+                dense_blocks[molecule],
+                local_low_low,
+                local_hi_low,
+                local_hi_hi,
+                local_low_hi,
+                t_interp,
+                p_interp,
+                fac * 6.02214086e+23,
+            )
+
+        continuum_species = list(self.continuum_opa.keys())
+        continuum_rows = _find_nearest_temperature_rows_hdf5(
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(self.cia_temps, dtype=np.float64),
+        )
+        dense_continuum, continuum_lookup = self._load_continuum_blocks(continuum_rows, continuum_species)
+        continuum_local_rows = continuum_lookup[continuum_rows]
+        for molecule in continuum_species:
+            _fill_hdf5_nearest_block(
+                self.continuum_opa[molecule],
+                dense_continuum[molecule],
+                continuum_local_rows,
+                1.0,
+            )
+
+    def get_opacities_nearest(self, atmosphere, exclude_mol=1):
+        nlayer =atmosphere.c.nlayer
+        tlayer =atmosphere.layer['temperature']
+        player = atmosphere.layer['pressure']/atmosphere.c.pconv
+
+        molecules = atmosphere.molecules
+        cia_molecules = atmosphere.continuum_molecules
+
+        self._prepare_output_buffers(molecules, cia_molecules, nlayer)
+
+        nearest_rows, nearest_ptids = _find_nearest_pt_rows_hdf5(
+            np.asarray(player, dtype=np.float64),
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(self._pt_pressures, dtype=np.float64),
+            np.asarray(self._pt_temperatures, dtype=np.float64),
+            np.asarray(self._pt_ids, dtype=np.int64),
+        )
+        dense_blocks, row_lookup = self._load_molecular_blocks(nearest_rows, molecules, return_log=False)
+        local_rows = row_lookup[nearest_rows]
+
+        for molecule in molecules:
+            fac = 0 if is_opacity_excluded(exclude_mol, molecule, 'line') else 1
+            _fill_hdf5_nearest_block(
+                self.molecular_opa[molecule],
+                dense_blocks[molecule],
+                local_rows,
+                fac * 6.02214086e+23,
+            )
+
+        continuum_species = list(self.continuum_opa.keys())
+        continuum_rows = _find_nearest_temperature_rows_hdf5(
+            np.asarray(tlayer, dtype=np.float64),
+            np.asarray(self.cia_temps, dtype=np.float64),
+        )
+        dense_continuum, continuum_lookup = self._load_continuum_blocks(continuum_rows, continuum_species)
+        continuum_local_rows = continuum_lookup[continuum_rows]
+
+        for molecule in continuum_species:
+            _fill_hdf5_nearest_block(
+                self.continuum_opa[molecule],
+                dense_continuum[molecule],
+                continuum_local_rows,
+                1.0,
+            )
 
 def adapt_array(arr):
     """needed to interpret bytes to array"""

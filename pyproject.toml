@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "picaso"
-version = "4.0.1"
+version = "4.1"
 description = "planetary intesity code for atmospheric scattering observations"
 readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
@@ -13,7 +13,7 @@ authors = [
 license = "GPL-3.0"
 requires-python = ">=3.7"
 dependencies = [
-    "bokeh>=2.3.0,<3.8.2",
+    "bokeh>=2.3.0,<3.9.3",
     "numpy>=2.0",
     "numba",
     "pandas",
@@ -45,3 +45,4 @@ Download = "https://github.com/natashabatalha/picaso"
 
 [project.scripts]
 picaso-notebooks = "picaso.integration_testing:main"
+picaso-app = "picaso.driver_ui:main"

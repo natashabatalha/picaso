@@ -586,11 +586,11 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             H=H*0.5/pi
             A=A*0.5/pi
 
-            ################################ BEGIN OPTIONS FOR DIRECT SCATTERING####################
+            ################################ being options for direct scattering ####################
             #define f (fraction of forward to back scattering), 
             #g_forward (forward asymmetry), g_back (backward asym)
             #needed for everything except the OTHG
-            
+            #the default values in conjig.json are from Cahoy+2010
             if single_phase!=1: 
                 g_forward = constant_forward*cosb_og
                 g_back = constant_back*cosb_og#-
@@ -602,42 +602,46 @@ def get_reflected_3d(nlevel, wno,nwno, numg,numt, dtau_3d, tau_3d, w0_3d, cosb_3
             # as opposed to the traditional:
             # p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2-2*cosb_og*cos_theta)**3) (NOTICE NEGATIVE)
 
+            #original phase function of Cahoy+2010, which apporximates the rayleigh with gcos2
             if single_phase==0:#'cahoy':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                p_single=(f * (1-g_forward**2)
-                                /sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+(-cosb_og/2.)**2+2*(-cosb_og/2.)*cos_theta)**3)+
-                                #rayleigh phase function
-                                (gcos2))
+                HG_forward = (1-g_forward**2) / sqrt((1+g_forward**2 + 2*g_forward*cos_theta)**3) 
+                HG_backward =(1-g_back**2) / sqrt((1+g_back**2 + 2*g_back*cos_theta)**3)
+
+                p_single=(f * HG_forward #first term of TTHG: forward scattering
+                        +(1-f)*HG_backward #second term of TTHG: backward scattering
+                        + (gcos2)) #rayleigh phase function
+
+            #single term HG phase function. Does not separate forward and back scattering. Does not have Rayleigh direct.  
             elif single_phase==1:#'OTHG':
-                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3)
+                p_single=(1-cosb_og**2)/sqrt((1+cosb_og**2+2*cosb_og*cos_theta)**3) 
 
+            #Two HG phase function. Separate forward and back scattering based on parameters above
+            #Does not have Rayleigh direct. 
             elif single_phase==2:#'TTHG':
-                #Phase function for single scattering albedo frum Solar beam
-                #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                      #first term of TTHG: forward scattering
-                p_single=(f * (1-g_forward**2)
-                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                #second term of TTHG: backward scattering
-                                +(1-f)*(1-g_back**2)
-                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))
-
+                HG_forward = (1-g_forward**2) / sqrt((1+g_forward**2 + 2*g_forward*cos_theta)**3) 
+                HG_backward = (1-g_back**2) / sqrt((1+g_back**2 + 2*g_back*cos_theta)**3)
+                p_single=(f * HG_forward #first term of TTHG: forward scattering
+                            +(1-f)* HG_backward) #second term of TTHG: backward scattering
+            
+            #Two HG phase function. Separate forward and back scattering based on parameters above
+            #Same as above except now is weighted by the fractional contribution of both 
+            #rayleigh vs. cloud scattering
             elif single_phase==3:#'TTHG_ray':
                 #Phase function for single scattering albedo frum Solar beam
                 #uses the Two term Henyey-Greenstein function with the additiona rayleigh component 
-                            #first term of TTHG: forward scattering
-                p_single=(ftau_cld*(f * (1-g_forward**2)
-                                                /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3) 
-                                                #second term of TTHG: backward scattering
-                                                +(1-f)*(1-g_back**2)
-                                                /sqrt((1+g_back**2+2*g_back*cos_theta)**3))+            
-                                #rayleigh phase function
-                                ftau_ray*(0.75*(1+cos_theta**2.0)))
-
+                            
+                HG_forward =  (1-g_forward**2) /sqrt((1+g_forward**2+2*g_forward*cos_theta)**3)    
+                HG_back = (1-g_back**2)/sqrt((1+g_back**2+2*g_back*cos_theta)**3)
+                
+                p_single=(
+                        ftau_cld * (          #opacity of cloud / total opacity
+                            f * HG_forward  + #first term of TTHG: forward scattering
+                            (1-f) * HG_back  #second term of TTHG: backward scattering  
+                            )+  
+                        ftau_ray * (
+                            0.75*(1+cos_theta**2.0) #rayleigh phase function
+                            )
+                        )
             ################################ END OPTIONS FOR DIRECT SCATTERING####################
 
             for i in range(nlayer-1,-1,-1):

@@ -84,6 +84,14 @@ picaso\.optics module
     :undoc-members:
     :show-inheritance:
 
+picaso\.parameterizations module
+--------------------------------
+
+.. automodule:: picaso.parameterizations
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    
 picaso\.test module
 -------------------
 

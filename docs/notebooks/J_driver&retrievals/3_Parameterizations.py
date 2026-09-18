@@ -1,39 +1,56 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: pic312
 #     language: python
 #     name: python3
 # ---
 
+# %% [markdown]
+# # PT, Chemistry, and Cloud Parameterizations in PICASO 
+#
+# Parameterizations can be used via the driver.toml specification. But, they can also be run inline directly using the parameterizations class. In this tutorial you will: 
+#
+# 1. Learn to use the parameterizations class to run spectra using in line Python code instead of the driver function
+#
+# You should already be well versed with PICASO spectra generation 
+
 # %%
 from picaso import justplotit as jpi
 from picaso import justdoit as jdi
 import picaso.parameterizations as pr
 import numpy as np
+import os
 
 jpi.output_notebook()
 
+# %% [markdown]
+# ## Introducing the parameterizations class
+#
+# The purpose of this class is to preload any data, specifically cloud optical properties. In other tutorials this is used to pre load PT/chem grids. This is why the class must be established outside the main retrieval call, if you are running retrievals.
+
 # %%
 #all species whose optical properties you want to preload
-virga_mieff_files = '/Users/nbatalh1/Documents/data/virga_0,3_15_R300/'
-cloud_species = ['SiO2','Al2O3']
+virga_mieff_files = os.path.join(os.getenv('picaso_refdata'),'virga')
+cloud_species = ['MgSiO3','Al2O3']
 param_tools = pr.Parameterize(load_cld_optical=cloud_species,
         mieff_dir=virga_mieff_files)
 
 # %% [markdown]
-# ## Initialize PICASO Parameterization Class
+# Now we can proceed with setting picaso inputs 
 
 # %%
 pic = jdi.inputs(calculation='brown')
 grav = 1000
 pic.gravity(gravity=grav, gravity_unit = jdi.u.Unit('cm/s**2'))
+
 #initialize pressure grid
 nlevel = 91
 pic.add_pt(P=np.logspace(-6,3,nlevel))
@@ -42,7 +59,7 @@ pic.add_pt(P=np.logspace(-6,3,nlevel))
 param_tools.add_class(pic)
 
 # %% [markdown]
-# ## Build Various PT Parameterizations
+# ## Accessing P-T Parameterizations
 
 # %%
 df_pt_knots = param_tools.pt_knots(P_knots=[1e2,1e1,1e0,1e-1,1e-3,1e-5],
@@ -70,7 +87,7 @@ jpi.plt.ylim([1e2,1e-6])
 jpi.plt.legend()
 
 # %% [markdown]
-# ## Build Various Cloud Parameterizations
+# ## Accessing Cloud Parameterizations
 
 # %%
 df_cld_slab = param_tools.cloud_brewster_grey(decay_type='slab',alpha=-4,ssa=1,reference_wave=1,
@@ -79,12 +96,12 @@ df_cld_slab = param_tools.cloud_brewster_grey(decay_type='slab',alpha=-4,ssa=1,r
 df_cld_deck = param_tools.cloud_brewster_grey(decay_type='deck',alpha=-4,ssa=1,reference_wave=1,
                                          deck_kwargs={'ptop': -1, 'dp': 1})
 
-df_cld_SiO2_deck = param_tools.cloud_brewster_mie('SiO2',
-                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd[cm]':-3},
+df_cld_SiO2_deck = param_tools.cloud_brewster_mie('Al2O3',
+                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd':1},
                                              decay_type='deck',deck_kwargs={'ptop': -1, 'dp': 1})
 
-df_cld_SiO2_slab = param_tools.cloud_brewster_mie('SiO2',
-                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd[cm]': -3},
+df_cld_SiO2_slab = param_tools.cloud_brewster_mie('Al2O3',
+                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd': 1},
                                              decay_type='slab',slab_kwargs={'ptop': -1, 'dp': 1, 'reference_tau': 1})
 
 
@@ -102,7 +119,7 @@ for ikey in clouds.keys():
     fig = jpi.plot_cld_input(nwno, nlayer,df=clouds[ikey])
 
 # %% [markdown]
-# ## Build Spectra
+# ## Compute Spectra Parameterizations
 
 # %%
 opa = jdi.opannection()

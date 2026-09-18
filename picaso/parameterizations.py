@@ -4,13 +4,13 @@ import os
 from scipy import interpolate
 from astropy.convolution import convolve, Gaussian1DKernel
 
-
+from .analyze import GridFitter, custom_interp
 from .justdoit import vj,u,get_cld_input_grid,special
 
 
 ## Parameterizations 
-class Parameterize():
-    def __init__(self, load_cld_optical = None, mieff_dir = None):
+class Parameterize(GridFitter):
+    def __init__(self, load_cld_optical = None, mieff_dir = None,model_dir=None,to_fit=None):
         """
         picaso_inputs_class : class picaso.justdoit.inputs 
             PICASO inputs class 
@@ -19,11 +19,24 @@ class Parameterize():
             see virga.available to see available species you can load 
         mieff_dir : str 
             If a condensate species is supplied to load_cld_optical, then you must also supplie a mieff directory
-            
+        model_dir : str     
+            If a model directory is specified then this will trigger a load of the grid
+            must be a picaso xarray grid.   
+        to_fit : str 
+            This is a kwarg for model_dir which specifies what spectra to load. If 
+            None it will load only the chemistry and temperature info from grid
         """
+        if os.path.isdir(str(model_dir)):
+            self.grid_name='init'
+            GridFitter.__init__(self, model_dir=model_dir, grid_name=self.grid_name, 
+                                model_type='xarrays', save_chem=True, verbose=False,
+                                to_fit=to_fit)
+            self.load_grid()
+
         self.mieff_dir=mieff_dir
         if isinstance(load_cld_optical, (str,list)):
             if isinstance(load_cld_optical,str): load_cld_optical=[load_cld_optical]
+            self.load_cld_optical = load_cld_optical
             if isinstance(mieff_dir, str):
                 if os.path.exists(mieff_dir):
                     self.qext, self.qscat, self.cos_qscat, self.nwave, self.radius, self.wave_in = {},{},{},{},{},{}
@@ -54,7 +67,14 @@ class Parameterize():
         self.nlevel = len(self.pressure_level )
         self.nlayer = self.nlevel -1 
         self.gravity_cgs = picaso_inputs_class.inputs['planet'].get('gravity',np.nan)
-
+    
+    def load_grid(self):
+        """
+        This is used for GridFitting to load a grid before conducting a retrieval run
+        """
+        self.add_grid(self.grid_name, 
+                      self.model_dir, to_fit=self.to_fit, save_chem=self.save_chem)
+        self.prep_gridtrieval(self.grid_name)
           
     def get_particle_dist(self,species,distribution,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
@@ -73,7 +93,7 @@ class Parameterize():
         elif 'hansen' in distribution: 
             a = 10**hansen_kwargs['lograd']
             b = hansen_kwargs['b']
-            dist = (10**self.radius[species])**((1-3*b)/b)*np.exp(-self.radius[species]/(a*b))
+            dist = self.radius[species]**((1-3*b)/b)*np.exp(-self.radius[species]/(a*b))
         else: 
             raise Exception("Only lognormal and hansen distributions available")        
         
@@ -89,7 +109,7 @@ class Parameterize():
         virga_kwargs.pop('kzz')
         self.picaso.virga(**virga_kwargs)
         df_cld = self.picaso.inputs['clouds']['profile']
-        return df_cld 
+        return df_cld.astype(float) 
 
     def cloud_flex_fsed(self, condensate, base_pressure, ndz, fsed, distribution, 
                   lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
@@ -143,7 +163,7 @@ class Parameterize():
         df_cld = picaso_format(opd, w0, g0, wavenumber_grid, self.pressure_layer, 
                                           p_bottom=base_pressure,p_decay=opd_h)
 
-        return df_cld 
+        return df_cld.astype(float) 
     flex_cloud =  cloud_flex_fsed  
     def cloud_brewster_mie(self, condensate, distribution, decay_type,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
@@ -169,12 +189,12 @@ class Parameterize():
             either lognormal or hansen 
         lognorm_kwargs : dict 
             diectionary with the format: {'sigma':np.nan, 'lograd':np.nan}
-            lograd median particle radius in cm 
+            lograd median particle radius in um 
             sigma width of the distribtuion must be >1 
         hansen_kwargs : dict 
             dictionary with the format: {'b':np.nan,'lograd':np.nan}
             lograd and b from Hansen+1971: https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf
-            lograd = a = effective particle radius 
+            lograd = a = effective particle radius in um
             b = varience of the particle radius 
 
         Returns 
@@ -182,6 +202,23 @@ class Parameterize():
         pandas.DataFrame 
             PICASO formatted cld input dataframe 
         """
+
+        lognorm_kwargs = lognorm_kwargs.copy()
+        hansen_kwargs = hansen_kwargs.copy()
+
+        if "lognorm" in distribution:
+            if "lograd" in lognorm_kwargs and np.isfinite(lognorm_kwargs["lograd"]):
+                # Brewster log10(radius / um) -> PICASO log10(radius / cm)
+                lognorm_kwargs["lograd"] -= 4.0
+
+            if "sigma" in lognorm_kwargs and np.isfinite(lognorm_kwargs["sigma"]):
+                # Brewster width parameter -> sigma in log10(radius)
+                lognorm_kwargs["sigma"] = np.log10(1.0 + 4.0 * lognorm_kwargs["sigma"])
+
+        elif "hansen" in distribution:
+            if "lograd" in hansen_kwargs and np.isfinite(hansen_kwargs["lograd"]):
+                # Brewster log10(radius / um) -> PICASO log10(radius / cm)
+                hansen_kwargs["lograd"] -= 4.0
         
         dist = self.get_particle_dist(condensate,distribution,lognorm_kwargs,hansen_kwargs)
             
@@ -189,13 +226,28 @@ class Parameterize():
                                                               dist, self.qext[condensate], self.qscat[condensate], self.cos_qscat[condensate])
         
         if decay_type == 'slab':
+            slab_kwargs = slab_kwargs.copy()
+            slab_kwargs["ptop"] = slab_kwargs["ptop"] - slab_kwargs.get("dp", 0.005)
             opd_profile = self.slab_decay(**slab_kwargs)
         elif decay_type == 'deck':
             opd_profile = self.deck_decay(**deck_kwargs)
+
+        reference_wave = 1.0  # micron, Brewster convention
+
+        wavelength = 1e4 / np.asarray(wavenumber_grid, dtype=float)
+        opd = np.asarray(opd, dtype=float)
+
+        order = np.argsort(wavelength)
+        opd_ref = np.interp(reference_wave, wavelength[order], opd[order])
+
+        if not np.isfinite(opd_ref) or opd_ref <= 0:
+            raise ValueError("Could not normalize Brewster Mie cloud opacity at 1 micron.")
+
+        opd_max = np.nanmax(opd)
+        opd_profile = opd_profile * (opd_max / opd_ref)
         
         df = picaso_format(opd, w0, g0, wavenumber_grid, self.pressure_layer, opd_profile=opd_profile)
-
-        return df 
+        return df.astype(float)
     
     def cloud_brewster_grey(self, decay_type, alpha, ssa, reference_wave=1,
                   slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
@@ -222,11 +274,13 @@ class Parameterize():
         wavelength= 1e4/wavenumber_grid
 
         if decay_type == 'slab':
+            slab_kwargs = slab_kwargs.copy()
+            slab_kwargs["ptop"] = slab_kwargs["ptop"] - slab_kwargs.get("dp", 0.005)
             opd_profile = self.slab_decay(**slab_kwargs)
         elif decay_type == 'deck':
             opd_profile = self.deck_decay(**deck_kwargs)
 
-        wave_dependent_opd =  np.concatenate([opd_profile[i]*(wavelength/reference_wave)**(-alpha) for i in range(self.nlayer)])
+        wave_dependent_opd =  np.concatenate([opd_profile[i]*(wavelength/reference_wave)**(alpha) for i in range(self.nlayer)])
         wvnos =  np.concatenate([wavenumber_grid for i in range(self.nlayer)])
         pressures =  np.concatenate([[self.pressure_layer[i]]*len(wavelength) for i in range(self.nlayer)])
         w0=wave_dependent_opd*0+ssa
@@ -239,7 +293,7 @@ class Parameterize():
                 'pressure':pressures
             })
 
-        return df 
+        return df.astype(float)
 
     def cloud_hard_grey(self,g0, w0, opd,p, dp): 
         if isinstance(g0,int):g0=[g0]
@@ -250,7 +304,7 @@ class Parameterize():
 
         self.picaso.clouds(g0=g0, w0=w0, opd=opd,p=p,dp=dp)
         df_cld = self.picaso.inputs['clouds']['profile']
-        return df_cld
+        return df_cld.astype(float)
 
     def deck_decay(self,ptop, dp=0.005): 
         """
@@ -333,7 +387,11 @@ class Parameterize():
 
     def chem_free(self, **species):
         ''''
-        Abundance profile for free chemistry
+        Abundance profile for free chemistry.
+
+        For non background species, it checks whether a constant or pressure-
+        dependent abundance profile will be used. For pressure dependent profiles,
+        it calls the relevant function.
 
         Parameters
         ----------
@@ -352,19 +410,16 @@ class Parameterize():
         total_sum_of_gases = 0*pressure_grid
         assert len(temp_grid)==len(pressure_grid), 'Len of t grid does not match len of p grid. likely t grid has not been set yet '
         mixingratio_df = pd.DataFrame(dict(pressure=pressure_grid, temperature=temp_grid))
-        for i in species.keys(): 
-            #make sure its not the background
-            if i !='background':
-                value = species[i].get('value',None)
-                #easy case where there is just one well-mixed value 
-                if value is not None: #abundance of the chemistry input per molecule
-                    mixingratio_df[i] = value    
-                else: #each molecule input manually
-                    profile = species[i]['profile']
-                    profile_fun = getattr(self, f'vmr_{profile}')
-                    mixingratio_df[i] = profile_fun(species[i])
-
-                total_sum_of_gases += mixingratio_df[i].values
+        molecules = species['species']
+        for i in molecules: 
+            assert 'profile' in species[i].keys(), 'Need profile key to define how to treat each molecule: either: constant, 2gradients, knots'
+            profile = species[i]['profile']
+            if profile != 'constant': #need function to get the vmr profile
+                profile_fun = getattr(self, f'vmr_{profile}')
+                mixingratio_df[i] = profile_fun(species[i])  
+            else: #each molecule input manually
+                mixingratio_df[i] = species[i]['value']   
+            total_sum_of_gases += mixingratio_df[i].values
         #add background gas if it is requested
         if 'background' in species.keys():
             total_sum_of_background = 1-total_sum_of_gases
@@ -379,65 +434,147 @@ class Parameterize():
             if len(species['background']['gases'])==1: #1 background gas
                 mixingratio_df[species['background']['gases'][0]] = total_sum_of_background
         return mixingratio_df
-
+    
     def vmr_knots(self, species):
-        VMR_knots = species['vmr_knots']
-        abun_knots = [VMR_knots[k]["value"] for k in sorted(VMR_knots.keys())]
+        """
+        Computes a pressure dependent abundance profile by interpolating
+        from a given set of pressures and the VMRs at those pressures.
+
+        Parameters:
+            species (dict): A dictionary containing the following keys:
+                - 'vmr_knots': list of associated vmrs that match P_knots 
+                - 'P_knots': A dictionary or list of pressure knot values. 
+
+            (I think now it should be possible to remove the 'value' key in the dictionaries)
+        Returns:
+            np.ndarray: An array of VMR values interpolated across the 
+            pressure levels, clipped to the range [0, 1].
+        """
+        abun_knots = species['vmr_knots']
         nlevel=len(self.pressure_level)
         abun_by_level=np.zeros(nlevel)
         P_knots = species['P_knots']
+        interp_kind=species['interpolation_method']
         if isinstance(P_knots, dict):
             P_knots = [P_knots[k]["value"] for k in sorted(P_knots.keys())]
-        interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind='linear', bounds_error=False, fill_value='extrapolate')
+        interpolator = interpolate.interp1d(np.log10(P_knots), np.log10(abun_knots), kind=interp_kind, bounds_error=False, fill_value='extrapolate')
         vmr_by_level = 10**interpolator(np.log10(self.pressure_level))
-        return vmr_by_level
-    
-    def vmr_gradient(self, species):
+        clippedvmr = np.clip(vmr_by_level, 0, 0.1)
+
+        return clippedvmr
+
+    def vmr_2gradients(self, species):
         """
-        Calculate the variable mixing ratio (VMR) gradient for a given pressure grid and H2O parameters.
+        Compute the volume mixing ratio (VMR) profile using two gradients.
+
+        This method calculates the VMR profile for a given species based on 
+        specified gradients above ('gradient_top') and below ('gradient_bottom') 
+        a switch pressure ('p_switch') and the VMR at that pressure ('vmr_switch').
+
+        A quenched profile can be emulated by setting 'gradient_top' to 0. 
+        a rained out profile can be emulated by setting 'gradient_bottom' to 0.
 
         Parameters:
-        pressure (numpy.ndarray): Array of pressure values.
-        h2o (dict): Dictionary containing H2O parameters such as 'deep', 'top', 'p_switch', and 'gradient'.
+            species (dict): A dictionary containing the following keys:
+                - 'vmr_switch': A dictionary with the key 'value' specifying 
+                  the VMR at the switch pressure level.
+                - 'p_switch': A dictionary with the key 'value' specifying 
+                  the switch pressure level.
+                - 'gradient_top': A dictionary with the key 'value' specifying 
+                  the gradient above the switch pressure level.
+                - 'gradient_bottom': A dictionary with the key 'value' 
+                  specifying the gradient below the switch pressure level.
 
         Returns:
-        numpy.ndarray: Array of VMR values corresponding to the input pressure grid.
+            np.ndarray: An array representing the VMR profile, with values 
+            capped at a maximum of 1.
         """
-        # Extract the 'bottom' value if it exists, otherwise use 'top' value
-        deep = species.get('bottom', None)
-        if deep is not None:
-            deep = species['bottom']['value']
-        else:
-            top = species['top']['value']
-        
-        # Extract the pressure switch and gradient values
-        p_switch = species['p_switch']['value']
-        gradient = species['gradient']['value']
 
-        # Determine the starting VMR value and the direction of the gradient
-        if deep is not None:
-            ct = deep  # Start with the 'deep' value
-            n = 0      # Gradient direction for 'deep'
-        else:
-            ct = top   # Start with the 'top' value
-            n = 1      # Gradient direction for 'top'
+        vmr_at_switch = species['vmr_switch']
+        p_switch = species['p_switch']
+        top = species['gradient_top']
+        bottom = species['gradient_bottom']
 
-        # Initialize the VMR array with the starting value
-        vmr = ct + 0 * self.pressure_level
+        log_p = np.log10(self.pressure_level)
+        log_p_switch = np.log10(p_switch)
+        log_ct = np.log10(vmr_at_switch)
 
-        # Calculate the VMR for each pressure level
-        for i, p in enumerate(self.pressure_level):
-            if (-1)**n * p <= (-1)**n * p_switch:
-                vmr[i] = 10**(np.log10(ct) + (gradient * (abs(np.log10(p) - np.log10(p_switch)))))
+        delta = log_p - log_p_switch
 
-        # Cap the VMR values at a maximum of 1
-        vmr[vmr > 1] = 1
+        vmr = np.where(
+            self.pressure_level <= p_switch,
+            10 ** (log_ct + top * np.abs(delta)),
+            10 ** (log_ct + bottom * np.abs(delta))
+        )
+
+        vmr = np.minimum(vmr, 0.1)
 
         return vmr
 
     def chem_visscher(self,cto_absolute, log_mh): 
         self.picaso.chemeq_visscher_2121(cto_absolute, log_mh)
         return self.picaso.inputs['atmosphere']['profile']
+
+    def chem_chemeq_on_the_fly(self,cto_absolute, log_mh): 
+        self.picaso.chemeq_on_the_fly(cto_absolute, log_mh)
+        return self.picaso.inputs['atmosphere']['profile']
+    
+    def chem_xarray_grid(self, molecules,  **grid_kwargs):
+        """
+        Allows chemistry to be interpolated from picaso's standard xarray grid format.
+
+        Parameters
+        ----------
+        grid_name : str
+            Name of grid for storage and bookeeping 
+        molecules : list, str
+            list of molecules from which to pull parameters for 
+        grid_kwargs : dict 
+            dictionary of grid parameters and values on which to interpolate (must match grid)
+            e.g., {'logmh':0,'cto':0.55}
+        """
+        grid_name=self.grid_name
+        if self.grid_name not in self.interp_params or getattr(self, 'grid_name', None) != grid_name:
+            raise Exception('Grid needs to be pre-loaded into Parameterize')
+            #self.load_grid(grid_name, grid_location, to_fit=to_fit, save_chem=True)
+        grid_pars = self.interp_params[grid_name]['grid_parameters_unique']
+        final_goal = [grid_kwargs[k] for k in grid_pars.keys()]
+        pressure_grid = self.pressure_level
+        temp_grid = self.temperature_level
+        mixingratio_df = pd.DataFrame(dict(pressure=pressure_grid, temperature=temp_grid))
+        if 'all' in molecules: 
+            molecules=self.interp_params[grid_name]['square_chem_grid'].keys()
+        elif isinstance(molecules,str):
+            molecules=[molecules] 
+
+        for imol in molecules:
+            chem_vals = custom_interp(final_goal, self, grid_name, to_interp='custom',
+                                      array_to_interp=self.interp_params[grid_name]['square_chem_grid'][imol])
+            mixingratio_df[imol] = chem_vals
+        return mixingratio_df
+
+    def pt_xarray_grid(self, **grid_kwargs):
+        """
+        Allows temperature to be interpolated from picaso's standard xarray grid format.
+
+        Parameters
+        ----------
+        grid_name : str
+            Name of grid for storage and bookeeping 
+        grid_kwargs : dict 
+            dictionary of grid parameters and values on which to interpolate (must match grid)
+            e.g., {'logmh':0,'cto':0.55}
+        """
+        grid_name=self.grid_name
+        if grid_name not in self.interp_params or getattr(self, 'grid_name', None) != grid_name:
+            raise Exception('Grid needs to be pre-loaded into Parameterize')
+            #self.load_grid(grid_name, grid_location, to_fit=to_fit, save_chem=True)
+        grid_pars = self.interp_params[grid_name]['grid_parameters_unique']
+        final_goal = [grid_kwargs[k] for k in grid_pars.keys()]
+        temp = custom_interp(final_goal, self, grid_name, to_interp='custom',
+                             array_to_interp=self.interp_params[grid_name]['square_temp_grid'])
+        pressure = self.pressure[grid_name][0]
+        return pd.DataFrame(dict(pressure=pressure, temperature=temp))
 
     def pt_madhu_seager_09_noinversion(self, alpha_1, alpha_2, P_1, P_3, T_3, beta=0.5):
         """"
@@ -577,7 +714,7 @@ class Parameterize():
             pressures = [pressures[k]["value"] for k in sorted(pressures.keys())]
 
         if isinstance(dTs, dict):
-            dTs = [dTs[k]["value"] for k in sorted(dTs.keys())]
+            dTs = [dTs[k] for k in sorted(dTs.keys())]
 
         pressure = self.pressure_level
         nlevel = len(pressure)
@@ -588,11 +725,13 @@ class Parameterize():
         interpolator = interpolate.interp1d(np.log(pressures), dTs, kind='quadratic', bounds_error=False, fill_value='extrapolate')
         dT_by_level = interpolator(np.log(reverseP))    
 
-        T[0] = Tbottom['value']
+        T[0] = Tbottom # ['value'] 
         for i in range(1,nlevel):
             T[i]=np.exp( np.log(T[i-1]) + (np.log(reverseP[i])-np.log(reverseP[i-1])) * dT_by_level[i-1] )
 
-        return pd.DataFrame(dict(pressure=pressure, temperature=T[::-1]))
+        clippedT = np.clip(T, 1, 2*T[0])  ## Cap temperatures to twice the temperature at the bottom --hottest if no inversion.
+
+        return pd.DataFrame(dict(pressure=pressure, temperature=clippedT[::-1]))
 
     def pt_guillot(self, Teq, T_int, logg1, logKir, alpha):
         """

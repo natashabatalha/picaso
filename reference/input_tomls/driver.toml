@@ -1,43 +1,51 @@
-observation_type = 'thermal' # options: 'transmission', 'thermal', 'reflected' or a combo e.g. transmission+thermal
+observation_type = 'thermal' # options: 'thermal', 'fpfs_thermal', 'transit_depth', 'albedo', 'fpfs_reflected' or a combo e.g. transit_depth+thermal
+observation_type_options = ['thermal', 'fpfs_thermal', 'transit_depth', 'albedo', 'fpfs_reflected']
 irradiated=false #options: true or false (if true, user needs to input star properties)
-calc_type='retrieval'#spectrum climate or retrieval
+calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
-observation_data = 'path/to/spectrum.nc' #see docs on required data formats
-coord_key = 'central_wavelength' 
-y_key = 'transit_depth'
-error_key = 'transit_depth_error'
-retrieval_output = 'path/to/output'
-spectrum_output = 'path/to/output.nc'
+retrieval_output = ''
+spectrum_output = ''
+
+[ObservationData]
+filenames = []
+data = '' # specifies the column name or xarray data_var that is being fit 
+data_unit = '' # astropy unit of column name if data is provided in csv, not xarray format 
+coord = '' 
+coord_unit = '' # astropy unit of column name if data is provided in csv, not xarray format 
+error = ''
+instruments=[] # the names here are set by the file name of the fits of the diserser. Can run driver.get_instrument_options to see what jwst instruments are available and how to specify their names. 
 
 [OpticalProperties]
-opacity_files = '/Users/floppityflappity/Work/prewster/picaso/reference/opacities/opacities.db' # single db or list of opacity dbs 
+opacity_file = '_default_/opacities/opacities.db' # single db 
 opacity_method = 'resampled' #list of options: resampled, preweighted, resortrebin
 opacity_kwargs = {} # any other inputs you want to give to justodit.opannection()
-virga_mieff = '/Users/floppityflappity/Work/prewster/picaso/reference/virga/' # any other inputs you want to give to justodit.opannection()
-wave_range = [0.3,15]#wavelength range subset of the opannection file you want. None for the whole range. 
+virga_mieff = '_default_/virga/' # any other inputs you want to give to justodit.opannection()
 
 [object]
 radius    = {value=1.2, unit='Rjup'}
 mass      = {value=1.2, unit='Mjup'}
 gravity   = {value=1e5, unit='cm/s**2'}
 distance  = {value=8.3,  unit='parsec'}
-teff      = {value=5400, unit='Kelvin'}
-teq       = {value=500, unit='Kelvin'}
+RV       =  {value=0.0, unit='km/s'}
+vrot     =  {value=0.0, unit='km/s'}
 
 [geometry]
 phase = {value=0, unit='radian'} #planet phase angle
+phase_kwargs = {} #anything else for function phase in picaso
 
 [star]
-radius= {value=1, unit='Rsun'} 
-semi_major= {value=200, unit='AU'}
+radius= {value=1.0, unit='Rsun'} 
+semi_major= {value=200.0, unit='AU'}
 type='grid' #'grid' or 'userfile'
+type_options=['grid', 'userfile']
 
 [star.grid]
-logg  = 4
-teff  = 5400
-feh   = 0
-database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
+logg  = 4.0
+teff  = 5400.0
+feh   = 0.0
+database  ='ck04models'# options: phoenix, ck04models, or other pysynphot databases
+database_options=['ck04models', 'phoenix']
 
 [star.userfile]
 filename = '' # simple two column format no header column1=wavelength, column2=flux
@@ -45,33 +53,41 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'knots' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09_inversion','madhu_seager_09_noinversion' ,'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+profile = 'isothermal' 
 
 [temperature.userfile]
-filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
+filename='_default_/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
+
 pd_kwargs={sep=' '} #kwargs for pandas.read_csv
 
 [temperature.pressure]
 reference = {value=1e1,unit='bar'}
 min = {value=1e-5, unit='bar'}
 max = {value=1e3,unit='bar'}
-nlevel = 100
+nlevel = 91
 spacing = 'log'
 
 [temperature.isothermal]
 T = 500
 
+[temperature.zj24]
+pressures=[1e3, 1e1, 1e0, 1e-1, 1e-2, 1e-4] # bar 
+Tbottom=2000.0 # K 
+dTs = [0.2857, 0.25, 0.0, 0.25, 0.2, 0.12]
+
 [temperature.knots]
-P_knots=[1e2,1e-1,1e-4]
-T_knots=[1000,200, 50]
-interpolation='brewster' #options are: brewster, linear, quadratic_spline, cubic_spline, OR any function from scipy.interpolate with associated kwargs passed to scipy_it
+P_knots=[1e2,1e1,1e0,1e-1,1e-2, 1e-3]
+T_knots=[1000.0, 550.0, 300.0, 200.0, 100.0, 50.0]
+interpolation='brewster' 
+interpolation_options = ['brewster', 'linear', 'quadratic_spline', 'cubic_spline']
 scipy_interpolate_kwargs={}
+#options are: brewster, linear, quadratic_spline, cubic_spline, OR any function from scipy.interpolate with associated kwargs passed to scipy_it
 
 [temperature.madhu_seager_09_inversion]
 P_1=1e1
 P_2=1e-3
 P_3=1e-5
-T_3=1000
+T_3=1000.0
 alpha_1=1
 alpha_2=1
 beta=0.5
@@ -79,83 +95,150 @@ beta=0.5
 [temperature.madhu_seager_09_noinversion]
 P_1=1e1
 P_3=1e-5
-T_3=1000
+T_3=1000.0
 alpha_1=1
 alpha_2=1
 beta=0.5
 
 [temperature.guillot]
-Teq=1000
-T_int=100
-logg1=-1
+Teq=1000.0
+T_int=100.0
+logg1=-1.0
 logKir=-1.5
 alpha=0.5
 
 [temperature.sonora_bobcat]
-sonora_path='/Users/nbatalh1/Documents/data/sonora_bobcat/structures_m+0.0'
-teff=1000
+sonora_path='_default_/sonora_grids/bobcat'
+teff=1000.0
+
+[temperature.xarray_grid]
+model_dir='/Users/nbatalh1/Documents/data/models/wasp-17-v1'
+
+[temperature.xarray_grid.grid_kwargs]
+mh=0
+cto=1
+tint=200
+heat_redis=0.5
 
 [chemistry]
-method='free' #options: 'visscher', 'free', 'userfile'; delete this block if already given chem in pt userfile : future updates 'fast_chem' vs 'photo_chem'
+method='visscher' 
 
 [chemistry.free]#note all molecules must be case sensitive: e.g., TiO. Isotopologues should be specified with dashes e.g.,: 12-CO
-H2O={value=1e-3,unit='v/v'}
-CH4={value=[1e-4,1e-3],unit='v/v', pressures=[1e-2],pressure_unit='bar'}
-NH3={value=1e-5,unit='v/v'}
-background={gases=['H2','He'],fraction=5.667} # optional 
+background={gases=['H2','He'], fraction=5.667} # optional 
+species=['H2O','CH4','CO2','NH3'] #just here to serve as examples below for each of the profile options 
+profile_options={constant=['value'], 2gradients=['p_switch', 'vmr_switch','gradient_top','gradient_bottom'],knots=['P_knots','interpolation_method', 'vmr_knots' ],background=0}
+
+[chemistry.free.H2O]
+profile="2gradients" #constant, gradient, knots# # this emulates water rainout
+p_switch = 1e-2
+vmr_switch=1e-3
+gradient_top=-4
+gradient_bottom=0.0
+
+[chemistry.free.CH4]
+profile="knots"
+P_knots=[ 1e3, 1e1, 1e0, 1e-1, 1e-3] #bar units
+interpolation_method="slinear" #anything that can go into numpy interpolator.interp1d
+vmr_knots=[1e-3, 1e-5, 1e-6, 1e-4, 1e-5] #vmr units
+
+[chemistry.free.CO2]
+profile="2gradients"
+p_switch = 1e2 
+vmr_switch=1e-5
+gradient_top=0.0
+gradient_bottom=-1.5
+
+[chemistry.free.NH3]
+profile="constant"
+value=1e-8
+
+[chemistry.free.H2]
+profile="background"
+
+[chemistry.free.He]
+profile="background"
+
+#[chemistry.free.mol1]
+#profile="2gradients"
+#p_switch = 1e1
+#vmr_switch=1e-4
+#gradient_top=-5
+#gradient_bottom=1
 
 [chemistry.visscher]
 cto_absolute=0.55
-log_mh=0
+log_mh=0.0
+
+[chemistry.chemeq_on_the_fly]
+cto_absolute=0.55
+log_mh=0.0
 
 [chemistry.userfile]
-filename='/Users/nbatalh1/Documents/codes/PICASO/picaso/reference/base_cases/HJ.pt'
+filename='_default_/base_cases/HJ.pt'
 pd_kwargs={sep=' '}
 
+[chemistry.xarray_grid]
+model_dir='_custom_/wasp-17b/'
+
+[chemistry.xarray_grid.grid_kwargs]
+molecules='all'
+mh=0
+cto=1
+tint=200
+heat_redis=0.5
+
 [clouds]
-cloud1_type='brewster_mie' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
+cloud1_type='hard_grey' #options: brewster_grey, brewster_mie, virga, flex_fsed, hard_grey, userfile
 
 [clouds.cloud1.hard_grey]
-p = 1 # {value=1,unit='logbar'} #bottom pressure
-dp = 1 # {value=1,unit='logbar'} #thickness in log 
-w0 = 0 #single scattering albedo
-g0 = 0 #asymmetry
-opd = 10 #cloud optical depth per layer
+p = [1.0] # {value=1,unit='logbar'} #bottom pressure
+dp = [1.0] # {value=1,unit='logbar'} #thickness in log 
+w0 = [0.0] #single scattering albedo
+g0 = [0.0] #asymmetry
+opd = [10.0] #cloud optical depth per layer
 
 [clouds.cloud1.flex_fsed]
-#condensate='SiO2'
-base_pressure=1 # {value=1 , unit='bar'}
-ndz=2 #arbitrary scaling for setting max optical depth of the cloud
-fsed=1
+condensate='Al2O3'#'SiO2'
+base_pressure=1.0 # {value=1 , unit='bar'}
+ndz=2.0 #arbitrary scaling for setting max optical depth of the cloud
+fsed=1.0
 distribution='lognorm' # "lognorm" or "hansen" .. make sure to add respective kwargs below
-lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
-hansen_kwargs = {b=1 , lograd = -4}
+distribution_options = ['lognorm', 'hansen']
+lognorm_kwargs = {sigma=1.0, lograd = -4.0}  #log rad in log cm
+hansen_kwargs = {b=1.0 , lograd = -4.0}
 
 [clouds.cloud1.virga]
-mh = 1 
-#condensates=['SiO2','Al2O3']
-fsed=1
+mh = 1.0 
+condensates=['Al2O3']#['SiO2','Al2O3']
+fsed=1.0
 kzz=1e9 # {value=1e9,unit='cm**2/s'}
 mmw = 2.2
-sig =2 
+sig =2.0 
 # can add any other virga param see justdoit.inputs.virga
 
 [clouds.cloud1.brewster_mie]
 condensate='Na2S'
-decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
-slab_kwargs={ptop= 1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
-deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
+decay_type = 'slab' # can be 'slab' or 'deck' #make sure to add respective kwargs below
+decay_type_options = ['slab', 'deck']
+slab_kwargs={ptop= 1.0, dp= 1.0, reference_tau= 1.0} # ptop: log bar, dp: log bar, ref tau: micron
+deck_kwargs={ptop= -1.0, dp= 1.0} # ptop: log bar, dp: log bar
 distribution = 'lognorm' # 'lognorm' or 'hansen', make sure to add respective kwargs below
-lognorm_kwargs = {sigma=1, lograd = -4}  #log rad in log cm
-hansen_kwargs = {b=1 , lograd = -4}
+distribution_options = ['lognorm', 'hansen']
+lognorm_kwargs = {sigma=1.0, lograd = -4.0}  #log rad in log cm
+hansen_kwargs = {b=1.0 , lograd = -4.0}
 
 [clouds.cloud1.brewster_grey]
-decay_type = 'slab' # can be 'slab' or 'decay' #make sure to add respective kwargs below
+decay_type = 'slab' # can be 'slab' or 'deck' #make sure to add respective kwargs below
+decay_type_options = ['slab', 'deck']
 alpha=-4 # used for wavelength dependent scattering cross section 
 ssa=1 # single scattering albedo set to 1 
 reference_wave=1 #reference wave in micron sets to alpha 
-slab_kwargs={ptop= -1, dp= 1, reference_tau= 1} # ptop: log bar, dp: log bar, ref tau: micron
-deck_kwargs={ptop= -1, dp= 1} # ptop: log bar, dp: log bar
+slab_kwargs={ptop= -1.0, dp= 1.0, reference_tau= 1.0} # ptop: log bar, dp: log bar, ref tau: micron
+deck_kwargs={ptop= -1.0, dp= 1.0} # ptop: log bar, dp: log bar
+
+[clouds.cloud1.userfile]
+filename='_default_/base_cases/HJ.cld'
+pd_kwargs={sep=' '}
 
 [clouds.patchy]
 npatch = 1
@@ -165,47 +248,80 @@ frac_1 = 0.3 #this is the fraction assigned to patch 1
 
 
 [retrieval]
-[temperature.knots.T_knots.0]
-prior="uniform"
-uniform_kwargs={min=500, max=1000}
-log=false
+mpi = true # set to true if parallelizing 
+processes = 10 # used for Pool in dynesty. default is to use cpu_count()/2
 
-[temperature.knots.T_knots.1]
-prior="uniform"
-uniform_kwargs={min=100, max=500}
-log=false
-
-[temperature.knots.T_knots.2]
-prior="uniform"
-uniform_kwargs={min=50, max=100}
-log=false
+# below we incldue some examples of how to specify which parameters to retrieve
+# to specify that a given parameter is a free parametr you specify the dictionary path 
+# e.g., planet radius is  located at object.radius so we need a retrieval block for 
+# retrieval.object.radius
 
 [retrieval.object.radius]
 prior="uniform"
 uniform_kwargs={min=0.5, max=2}
-gaussian_kwargs={mean=1, std=0.5} #kwargs of specified prior
+gaussian_kwargs={mean=1, std=0.5}
 log=false
 
-[retrieval.chemistry.free.H2O]
+#[retrieval.object.RV]
+#prior="uniform"
+#uniform_kwargs={min=-100, max=100}
+#log=false
+
+#[retrieval.object.vrot]
+#prior="uniform"
+#uniform_kwargs={min=0, max=100}
+#log=false
+
+[retrieval.chemistry.free.H2O.vmr_switch]
 prior='uniform'
-uniform_kwargs={min=-12, max=0}
+uniform_kwargs={min=-12.0, max=0.0}
 log=false
 
 [retrieval.clouds.cloud1.slab-grey.ptop]
 prior="uniform"
-uniform_kwargs={min=-3, max=2}
+uniform_kwargs={min=-3.0, max=2.0}
 log=true
 
 [retrieval.clouds.cloud1.slab-grey.dp]
 prior="uniform"
+min=0.005
+max=2
+log=true
+
+# in addition to physical parameters you might also want to retrieve on 
+# error inflation, error scaling, offsets, or wavelength offsets. 
+# below we show examples for how to add those. Note, that each requires 
+# the parameter to be associated with the filename of your data (not the full path and WITHOUT the extension)
+
+[retrieval.err_inf]
+[retrieval.err_inf.filename_example] #errinf terms are recognized by the associated filename. e.g., filename filename_example.csv would be entered here as filename_example
+prior="uniform"
 uniform_kwargs={min=0.005, max=2}
 log=true
 
-#[retrieval.errinf]
-#prior="uniform"
-#uniform_kwargs={min=-2, max=4}
-#log=true
+[retrieval.scaling]
+[retrieval.scaling.filename_example] #scaling terms are recognized by the associated filename. e.g., filename filename_example.csv would be entered here as filename_example
+prior="uniform"
+uniform_kwargs={min=0.005, max=2}
+log=true
 
-[sampler]
+[retrieval.offset]
+[retrieval.offset.filename_example] #offsets terms are recognized by the associated filename. e.g., filename filename_example.csv would be entered here as filename_example
+prior="uniform"
+uniform_kwargs={min=-1, max=1}
+log=false
+
+[retrieval.wvl_offset]
+[retrieval.wvl_offset.filename_example] #wavelength offsets are recognized by the associated filename/key. Values default to micron; set unit="nm" or unit="AA" to sample in another unit.
+prior="uniform"
+uniform_kwargs={min=-0.02, max=0.02}
+log=false
+unit="um"
+
+[retrieval.sampler]
 code='dynesty'#options: ultranest, emcee, pymultinest, dynesty
-sampler_kwargs={live_points = 100}
+code_options=['dynesty','ultranest']#should eventually be ultranest, emcee, pymultinest, dynesty
+sampler_kwargs={live_points = 700}#currently for NestedSampler in dynesty
+resume=false
+run_kwargs={}#currently for run_nested in dynesty
+
