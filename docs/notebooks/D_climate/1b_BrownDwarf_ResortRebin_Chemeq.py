@@ -100,11 +100,11 @@ rfacv = 0.0 #we are focused on a brown dwarf so let's keep this as is
 #
 # `cto_relative` : C/O **relative** to solar OR `cto_absolute` which makes it the actual C/O value
 #
-# `chem_method` : This will tell PICASO what kind of chemistry you want. The 3 options are `visscher`, `visscher_1060`, and `photochem`.
+# `chem_method` : This will tell PICASO what kind of chemistry you want. The 4 options are `visscher`, `visscher_1060`, `on-the-fly`, and `photochem`.
 #
-# The difference between `visscher` and `visscher_1060` are the grid points used with `visscher` having the most updated chemistry as well. We will get into `photochem` in another notebook doing photochemistry.
+# The difference between `visscher` and `visscher_1060` are the grid points used with `visscher` having the most updated chemistry as well. The `on-the-fly` option computes equilibrium chemistry at runtime using the equilibrium solver. We will get into `photochem` in another notebook doing photochemistry.
 #
-# You **MUST** include the `mh` and one of the `cto...` inputs when doing the `visscher` and `visscher_1060` method.
+# You **MUST** include `mh` and one of the `cto...` inputs when using `visscher`, `visscher_1060`, `on-the-fly`, or `photochem` (`photochem` also needs `photochem_init_args`).
 
 # %%
 cl_run.inputs_climate(temp_guess= temp_guess, pressure= pressure,

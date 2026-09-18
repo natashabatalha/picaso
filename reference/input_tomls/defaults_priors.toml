@@ -3,9 +3,11 @@ irradiated=true #options: true or false (if true, user needs to input star prope
 calc_type='spectrum'#spectrum climate or retrieval
 
 [InputOutput]
-observation_data = 'path/to/spectrum.nc' #see docs on required data formats
 retrieval_output = 'path/to/output'
 spectrum_output = 'path/to/output.nc'
+
+[InputOutput.observation_data] #see docs on required data formats
+instrument1 = 'path/to/spectrum.nc'
 
 [OpticalProperties]
 opacity_files = 'path/to/opacities.db' # single db or list of opacity dbs 
@@ -180,10 +182,10 @@ convolution = 'tophat' #options: instrument, tophat, spectres
 "clouds.slab-grey.dp" = {type='uniform',min=0.005,max=2,log=true}
 "error_inflation" = {type='uniform',min=-2,max=4,log=true}
 
-[sampler]
+[retrieval.sampler]
 code='ultranest'#options: ultranest, emcee, pymultinest
 
-[sampler.ultranest]
+[retrieval.sampler.ultranest]
 live_points = 100
 resume=true 
 ultranets_kwargs={}

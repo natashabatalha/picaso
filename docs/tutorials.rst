@@ -112,6 +112,14 @@ Radiative Transfer Techniques
    Spherical Harmonics Radiative Transfer in Reflected Light </notebooks/H_radiativetransfer/2_AnalyzingApproximationsReflectedLightSH.py>
    Spherical Harmonics Radiative Transfer in Thermal Emission </notebooks/H_radiativetransfer/3_AnalyzingApproximationsThermal.py>
 
+Spectral Sensitivity Analyses 
+-----------------------------
+Relevant Citations: Batalha & Wogan 2026 RASTI'
+
+.. toctree::
+   :maxdepth: 1
+   Jacobians, Linear-Gaussian Approximations, and Information Content </notebooks/K_InfoContent/IC_Stats_Tutorial.py>
+
 
 Useful Tools
 ------------

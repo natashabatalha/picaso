@@ -28,6 +28,16 @@ from .fluxes import blackbody, get_transit_1d
 from .opacity_factory import *
 from .climate import convec, namedtuple, calculate_atm
 
+
+def _get_legend_cols(n_items, plot_height):
+    """
+    Calculate the number of columns needed for a legend to fit within the plot height.
+    This is only supported in bokeh >= 3.1.0
+    """
+    max_items_per_col = max(1, (plot_height - 17) // 23)
+    ncols = int(np.ceil(n_items / max_items_per_col))
+    return {'ncols': max([1,ncols])}
+
 def mean_regrid(x, y, newx=None, R=None):
     """
     Rebin the spectrum at a minimum R or on a fixed grid! 
@@ -282,8 +292,10 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, plot_type='bokeh',
             f = fig.line(mixingratios[mol],pressure, color=c, line_width=3,
                         muted_color=c, muted_alpha=0.2)
             legend_it.append((mol, [f]))
-
-        legend = Legend(items=legend_it, location=(0, -20))
+        
+        legend = Legend(items=legend_it, location=(0, -20),
+                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
+        
         legend.click_policy="mute"
         fig.add_layout(legend, 'left')  
 
@@ -415,7 +427,9 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         i = i+1
 
     if not isinstance(legend,type(None)):
-        plt_legend = Legend(items=legend_it, location=(0, 0))
+        plt_legend = Legend(items=legend_it, location=(0, 0),
+                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
+        
         plt_legend.click_policy="mute"
         fig.add_layout(plt_legend, 'left')
 
@@ -501,7 +515,8 @@ def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **k
     f = fig.line(wave,at_pressures_ray,line_width=3,color=Colorblind8[6]) 
     legend_it.append(('Rayleigh Opacity', [f]))
 
-    legend = Legend(items=legend_it, location=(0, -20))
+    legend = Legend(items=legend_it, location=(0, -20),
+                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
     legend.click_policy="mute"
     fig.add_layout(legend, 'right')   
 
@@ -878,7 +893,7 @@ def numba_cumsum(mat):
         new_mat[:,i] = np.cumsum(mat[:,i])
     return new_mat
 
-def spectrum_hires(wno, alb,legend=None, **kwargs):
+def spectrum_hires_deprecate(wno, alb,legend=None, **kwargs):
     """Plot formated albedo spectrum
 
     Parameters
@@ -1536,7 +1551,8 @@ def phase_curve(allout, to_plot, collapse=None, R=100,
         
         legend_it.append((str(int(1e4/all_ws[i]*100)/100)+'um', [f]))
 
-    legend = Legend(items=legend_it, location=(0, -20))
+    legend = Legend(items=legend_it, location=(0, -20),
+                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
     legend.click_policy="mute"
     fig.add_layout(legend, 'left') 
     
@@ -1567,7 +1583,8 @@ def phase_curve(allout, to_plot, collapse=None, R=100,
             f2 = fig2.line(reorder_phases,reorder_all_curves[:,i],line_width=3,color=palette[i],
                     )
     
-        legend2 = Legend(items=legend_it, location=(0, -20))
+        legend2 = Legend(items=legend_it, location=(0, -20),
+                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
         legend2.click_policy="mute"
         fig2.add_layout(legend, 'left')
 
@@ -2004,7 +2021,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
     plt.close()
     return ani
 
-def create_heat_map(data,rayleigh=True,extend=False,plot_height=300,plot_width=300,font_size="12px"):
+def create_heat_map_deprecate(data,rayleigh=True,extend=False,plot_height=300,plot_width=300,font_size="12px"):
     reverse = True
     data.columns.name = 'w0' 
     data.index.name = 'g0' 
@@ -2183,10 +2200,10 @@ def pt_adiabat(clima_out, input_class, opacityclass, plot=True):
     
     grad, cp = convec(clima_out['temperature'],clima_out['pressure'],
                       AdiabatBundle, Atmosphere,moist=moist)
-                      
-    plt.semilogy(clima_out['dtdp'], layer_p)
-    plt.semilogy(grad,layer_p) 
-    plt.ylim([1e4,1e-4]), 
-    plt.xlabel('dT/dP vs adiabat')
-    plt.ylabel('Pressure(bars)')
+    if plot: 
+        plt.semilogy(clima_out['dtdp'], layer_p)
+        plt.semilogy(grad,layer_p) 
+        plt.ylim([1e4,1e-4]), 
+        plt.xlabel('dT/dP vs adiabat')
+        plt.ylabel('Pressure(bars)')
     return cp, grad, clima_out['dtdp'], layer_p

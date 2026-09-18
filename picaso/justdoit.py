@@ -1,11 +1,12 @@
-from .atmsetup import ATMSETUP
-from .fluxes import get_reflected_1d, get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
+from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes_noalloc import get_reflected_1d
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
 
 
 from .wavelength import get_cld_input_grid
-from .optics import RetrieveOpacities,compute_opacity,RetrieveCKs
+from .optics import RetrieveOpacities, RetrieveOpacitiesHDF5, compute_opacity, RetrieveCKs
 from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
@@ -23,6 +24,7 @@ import os
 import glob
 import pickle as pk
 import numpy as np
+_trapz = np.trapezoid if hasattr(np, 'trapezoid') else np.trapz
 import pandas as pd
 import copy
 import json
@@ -43,8 +45,49 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '4.0.1'
+__version__ = '4.1'
 
+LODDERS2020_C_TO_O = 0.54939759398
+
+
+def _molecule_has_continuum_support(opacityclass, simple_name, active_simple_names):
+    if simple_name == 'H-' and 'H-bf' in opacityclass.avail_continuum:
+        return True
+    if simple_name == 'H' and 'H-ff' in opacityclass.avail_continuum:
+        return True
+    if simple_name == 'H2' and 'H2-' in opacityclass.avail_continuum:
+        return True
+    for other in active_simple_names:
+        if simple_name + other in opacityclass.avail_continuum:
+            return True
+    return False
+
+
+def _warn_for_exclude_requests(atm, exclude_mol, opacityclass):
+    if not exclude_mol:
+        return
+
+    active_simple_names = {convert_to_simple(molecule) for molecule in atm.molecules}
+    for molecule, requested_types in exclude_mol.items():
+        simple_name = convert_to_simple(molecule)
+
+        if requested_types.get('line', False):
+            if molecule not in opacityclass.molecules and simple_name not in opacityclass.molecules:
+                atm.add_warnings(
+                    f"You requested line-opacity exclusion for {molecule}, but the available line opacities are {opacityclass.molecules}."
+                )
+
+        if requested_types.get('continuum', False):
+            if simple_name not in active_simple_names or not _molecule_has_continuum_support(opacityclass, simple_name, active_simple_names):
+                atm.add_warnings(
+                    f"You requested continuum-opacity exclusion for {molecule}, but no matching continuum opacity is active in this calculation."
+                )
+
+        if requested_types.get('rayleigh', False):
+            if simple_name not in opacityclass.rayleigh_molecules:
+                atm.add_warnings(
+                    f"You requested Rayleigh-opacity exclusion for {molecule}, but the available Rayleigh molecules are {opacityclass.rayleigh_molecules}."
+                )
 
 if not os.path.exists(__refdata__): 
     raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
@@ -173,8 +216,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #need to account for case where there is no star
     if 'nostar' in inputs['star']['database']:
         F0PI = np.zeros(opacityclass.nwno) + 1.0
+        stellar_flux = np.zeros(opacityclass.nwno) + 1.0
     else:
-        F0PI = opacityclass.relative_flux
+        F0PI = inputs['star']['relative_flux']#opacityclass.relative_flux
+        stellar_flux = inputs['star']['flux']#opacityclass.unshifted_stellar_spec
 
     b_top = 0.
     #semi major axis
@@ -185,7 +230,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
     #Add inputs to class 
-    atm.surf_reflect = inputs.get('surface_reflect',0) #default no hard surface if it has not been defined
+    atm.surf_reflect = inputs.get('surface_reflect',np.zeros(nwno)) #default no hard surface if it has not been defined
     atm.hard_surface = inputs.get('hard_surface',0)#0=no hard surface, 1=hard surface
     atm.wavenumber = wno
     atm.planet.gravity = inputs['planet']['gravity']
@@ -207,8 +252,12 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+    exclude_mol = normalize_exclude_mol(inputs['atmosphere']['exclude_mol'])
+    _warn_for_exclude_requests(atm, exclude_mol, opacityclass)
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -219,12 +268,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
-    if isinstance(exclude_mol,dict):
-        for imol in exclude_mol.keys(): 
-            if imol not in opacityclass.molecules: 
-                atm.add_warnings(f'Youve requested that I exclude opacity from {imol} but the set of opacities I have is {opacityclass.molecules} so your spectra will look identical.')
-
     get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
@@ -549,8 +592,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
         #see equation 18 Batalha+2019 PICASO 
-        returns['bond_albedo'] = (np.trapezoid(x=1/wno, y=albedo*opacityclass.unshifted_stellar_spec)/
-                                    np.trapezoid(x=1/wno, y=opacityclass.unshifted_stellar_spec))
+        returns['bond_albedo'] = (_trapz(x=1/wno, y=albedo*inputs['star']['flux'])/
+                                    _trapz(x=1/wno, y=stellar_flux))
 
         if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
@@ -567,7 +610,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
         returns['thermal_unit'] = 'erg/s/(cm^2)/(cm)'#'erg/s/(cm^2)/(cm^(-1))'
-        returns['effective_temperature'] = (np.trapezoid(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
+        returns['effective_temperature'] = (_trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
 
         if full_output: 
             atm.thermal_flux_planet = thermal
@@ -583,7 +626,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         if radius_star == 'nostar': 
             returns['fpfs_thermal'] = ['No star mode for Brown Dwarfs was used']
         elif ((not np.isnan(atm.planet.radius)) & (not np.isnan(radius_star))) :
-            fpfs_thermal = thermal/(opacityclass.unshifted_stellar_spec)*(atm.planet.radius/radius_star)**2.0
+            fpfs_thermal = thermal/(stellar_flux)*(atm.planet.radius/radius_star)**2.0
             returns['fpfs_thermal'] = fpfs_thermal
         else:
             returns['fpfs_thermal'] =[]
@@ -601,7 +644,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     if full_output: 
         if as_dict:
             returns['full_output'] = atm.as_dict()
-            if radius_star != 'nostar':returns['full_output']['star']['flux'] = opacityclass.unshifted_stellar_spec
+            if radius_star != 'nostar':returns['full_output']['star']['flux'] = stellar_flux
         else:
             returns['full_output'] = atm
 
@@ -1208,7 +1251,7 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     if 'nostar' in inputs['star']['database']:
         F0PI = np.zeros(opacityclass.nwno) + 1.0
     else:
-        F0PI = opacityclass.relative_flux
+        F0PI = inputs['star']['relative_flux']#opacityclass.relative_flux
 
     b_top = 0.
     #semi major axis
@@ -1241,8 +1284,12 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     #gets both continuum and needed rayleigh cross sections 
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
+    exclude_mol = normalize_exclude_mol(inputs['atmosphere']['exclude_mol'])
+    _warn_for_exclude_requests(atm, exclude_mol, opacityclass)
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -1253,15 +1300,13 @@ def get_contribution(bundle, opacityclass, at_tau=1, dimension='1d'):
     atm.molecules = np.array([ x for x in atm.molecules if x not in no_opacities ])
     
     #opacity assumptions
-    exclude_mol = inputs['atmosphere']['exclude_mol']
-
     get_opacities = opacityclass.get_opacities
 
     nlevel = atm.c.nlevel
     nlayer = atm.c.nlayer
     
     #lastly grab needed opacities for the problem
-    get_opacities(atm)
+    get_opacities(atm, exclude_mol=exclude_mol)
     #only need to get opacities for one pt profile
 
     #There are two sets of dtau,tau,w0,g in the event that the user chooses to use delta-eddington
@@ -1293,13 +1338,17 @@ def find_press(at_tau, a, b, c):
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
 
-def opannection(wave_range = None, filename_db = None, 
-                resample=1, method='resampled',
-                ck_db=None, raman_db = None, 
-                preload_gases='all',
-                #deq= False, on_fly=False,
-                #gases_fly =None,ck=False,
-                verbose=False):
+def opannection(
+    wave_range=None, 
+    filename_db=None, 
+    resample=1, 
+    method='resampled',
+    ck_db=None, 
+    raman_db=None, 
+    preload_gases='all',
+    query_method='nearest',
+    verbose=False,
+):
     """
     Sets up database connection to opacities. 
 
@@ -1323,6 +1372,12 @@ def opannection(wave_range = None, filename_db = None,
     method : str 
         By default method='resampled'
         Other options include: ['preweighted','resortrebin']
+    query_method : str
+        Only used when ``method='resampled'``. Controls how molecular opacities
+        are fetched from the resampled database.
+        Options are:
+        - ``'nearest'``: nearest-neighbor selection in PT space
+        - ``'linear'``: bilinear interpolation in PT space
     ck_db : str 
         Can be: 
         - (required if method is preweighted) ASCII dir of ck file
@@ -1361,10 +1416,22 @@ def opannection(wave_range = None, filename_db = None,
         if resample != 1:
             if verbose:print("YOU ARE REQUESTING RESAMPLING!! This could degrade the precision of your spectral calculations so should be used with caution. If you are unsure check out this tutorial: https://natashabatalha.github.io/picaso/notebooks/10_ResamplingOpacities.html")
 
-        opacityclass=RetrieveOpacities(
-                    filename_db, 
-                    raman_db,
-                    wave_range = wave_range, resample = resample)  
+        if filename_db.lower().endswith(('.h5', '.hdf5')):
+            opacityclass = RetrieveOpacitiesHDF5(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )
+        else:
+            opacityclass = RetrieveOpacities(
+                db_filename=filename_db,
+                raman_data=raman_db,
+                wave_range=wave_range, 
+                resample=resample,
+                query_method=query_method
+            )  
         if verbose: print("verbose=True; Molecule set=",opacityclass.molecules) 
     elif ((method == 'resampled') & isinstance(ck_db,str)):
         raise Exception("ck_db was supplied but method is set to resampled. Change kwarg method='preweighted' to use the preweighted ck tables")
@@ -1855,7 +1922,7 @@ class inputs():
             fine_flux_star = 10**interpolator(np.log10(wno_planet))
             
             # Compute binned flux using trapezoidal integration
-            fine_flux_star = np.array([np.trapezoid(fine_flux_star[(wno_planet >= wno_planet[i]) &
+            fine_flux_star = np.array([_trapz(fine_flux_star[(wno_planet >= wno_planet[i]) &
                                                         (wno_planet <= wno_planet[i+1])],
                                         x=-1/wno_planet[(wno_planet >= wno_planet[i]) &
                                                         (wno_planet <= wno_planet[i+1])])
@@ -1917,7 +1984,7 @@ class inputs():
         #for now the next line is only climate params 
         quench=False,no_ph3=False,cold_trap=False,vol_rainout=False,
         #these only used for photochem climate 
-        photochem_init_args=None,add_visscher_abunds = True,
+        photochem_init_args=None,
         **pd_kwargs):
         """
         Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
@@ -1931,12 +1998,17 @@ class inputs():
         filename : str 
             (Optional) Filename with pressure, temperature and volume mixing ratios.
             Must contain pressure at least one molecule
-        exclude_mol : list of str 
-            (Optional) List of molecules to ignore from opacity. It will NOT 
-            change other aspects of the calculation like mean molecular weight. 
-            This should be used as exploratory ONLY. if you actually want to remove 
-            the contribution of a molecule entirely from your profile you should remove 
-            it from your input data frame. 
+        exclude_mol : str, list of str, or dict
+            (Optional) Opacity-only exclusion control used for exploratory
+            spectroscopy. This does NOT change chemistry, mean molecular weight,
+            density, or other non-opacity atmospheric properties.
+            Supported forms are:
+            - ``'H2O'`` or ``['H2O', 'CO2']`` to exclude all opacity types
+              associated with each molecule
+            - ``{'H2O': ['line', 'continuum'], 'CO2': ['all']}`` to exclude
+              only selected opacity classes
+            Valid opacity types are ``line``, ``continuum``, ``rayleigh``, and
+            ``all``.
         mh : float 
             Metallicity relative to Solar 
         cto_relative : float 
@@ -1951,6 +2023,7 @@ class inputs():
                 if 'visscher' needs to input: mh and cto 
             - 'photochem' : users photochem model by Nick Wogan
                 if 'photochem' user needs to input photochem_init_args and photochem_TOA_pressure
+            - 'on-the-fly' : Computes equilibrium chemistry on-the-fly with the equilibrium solver in `Photochem`.
         quench : bool 
             Climate only, default = False: no quencing
         no_ph3 : bool 
@@ -1977,8 +2050,6 @@ class inputs():
                 Optionally include a dedicated thermodynamic file.
             - "TOA_pressure" : float
             Pressure at the top of the atmosphere for photochem, by default 1e-7 bar. Unit must be in dynes/cm^2
-        add_visscher_abunds : bool 
-            Default = False; Only used for photochemical results. Adds visscher to fill gaps covered by the photochemical mdoel 
         verbose : bool 
             (Optional) prints out warnings. Default set to True
         pd_kwargs : kwargs 
@@ -2015,18 +2086,7 @@ class inputs():
             if 'climate' not in self.inputs['calculation']:
                 raise Exception("`temperature` not specified as a column/key name")
 
-        # if there ar molecules we want to exclude lets make sure they are in list format
-        if not isinstance(exclude_mol, type(None)):
-            if  isinstance(exclude_mol, str):
-                exclude_mol = [exclude_mol]
-            
-            #now lets transfer to a dictionary for each molecule the user has chosen
-            #this way we can flip them on and off individually
-            self.inputs['atmosphere']['exclude_mol'] = {i:1 for i in df.keys()}
-            for i in exclude_mol: 
-                self.inputs['atmosphere']['exclude_mol'][i]=0
-        else: 
-            self.inputs['atmosphere']['exclude_mol'] = 1
+        self.inputs['atmosphere']['exclude_mol'] = normalize_exclude_mol(exclude_mol)
 
         #sort by pressure to make sure 0 index is low pressure, last index is high pressure
         self.inputs['atmosphere']['profile'] = df.sort_values('pressure').reset_index(drop=True)
@@ -2040,31 +2100,57 @@ class inputs():
                 if df['H2'].min() < 0.7: 
                     self.inputs['approx']['rt_params']['common']['raman'] = 2
 
-        #now, if mh and cto were supplied lets add those to inputs and set the chem method requestd 
-        if (mh != None ):
-            self.inputs['atmosphere']['mh'] = mh 
-            if ((cto_absolute == None) and isinstance(cto_relative, (float,int))): 
-                cto_absolute=cto_relative*0.549
-            elif (cto_relative ==None and isinstance(cto_absolute, (float,int))): 
-                cto_relative = cto_absolute/0.549 #such that if user did c/o=1, then cto=0.549
-            elif 'cto' in pd_kwargs: 
-                raise Exception('cto is not an acceptance argument. need to input either cto_relative or cto_absolute.')
-            else: 
-                raise Exception('mh was specified but cto_relative or cto_absolute was not. need to input one of these. ')
-            self.inputs['atmosphere']['cto_relative'] = cto_relative 
-            self.inputs['atmosphere']['cto_absolute'] = cto_absolute 
-            self.inputs['approx']['chem_method'] = chem_method
-        
-        #add photochem initialization if it exists 
-        if photochem_init_args!=None: 
-            self.inputs['atmosphere']['photochem_init_args'] = photochem_init_args 
-            if add_visscher_abunds: 
-                #if we also want visscher then we can make the chem method "photochem+visccher"
-                self.inputs['approx']['chem_method'] = self.inputs['approx']['chem_method']+'+visscher'
+        if chem_method is not None:
+            if not isinstance(chem_method, str):
+                raise Exception('chem_method must be of type str')
+            if mh is None:
+                raise Exception("Specify mh when chem_method is set")
+            if cto_relative is None and cto_absolute is None:
+                raise Exception("Specify cto_relative or cto_absolute when chem_method is set")
+            if cto_relative is not None and cto_absolute is not None:
+                raise Exception("Specify cto_relative or cto_absolute. Do not specify both.")
+            if chem_method not in ['visscher_1060', 'visscher', 'visscher_2121','on-the-fly', 'photochem']:
+                raise Exception(f"A chem option {chem_method} is not valid.") 
+            
+            if chem_method in ['visscher', 'visscher_2121','on-the-fly', 'photochem']:
+                solar_cto = LODDERS2020_C_TO_O
+            elif chem_method == 'visscher_1060':
+                solar_cto = 0.458
 
-            # sets chemistry options and runs chemistry if the user has input a PT profile
-            # otherwise this just checks for valid inputs 
+            if cto_absolute is None:
+                warnings.warn(
+                    "The input `cto_relative` was converted to an absolute C/O ratio "
+                    f"assuming a Solar C/O = {solar_cto:.3f}"
+                )
+                cto_absolute = cto_relative*solar_cto
+            elif cto_relative is None:
+                cto_relative = cto_absolute/solar_cto
+   
+            if chem_method == 'photochem':
+                if photochem_init_args is None:
+                    raise Exception("Specify photochem_init_args when chem_method is set to 'photochem'.")
+                self.inputs['atmosphere']['photochem_init_args'] = photochem_init_args
+            else:
+                if photochem_init_args is not None:
+                    raise Exception("photochem_init_args were provided but chem_method is not set to 'photochem'.")
+
+            self.inputs['atmosphere']['mh'] = mh
+            self.inputs['atmosphere']['cto_relative'] = cto_relative
+            self.inputs['atmosphere']['cto_absolute'] = cto_absolute # might be None, if chem_method != 'visscher'
+            self.inputs['approx']['chem_method'] = chem_method
+
             self.chemistry_handler()
+        else:
+            # If chem_method is None, none of these optional inputs should be specified.
+            if mh is not None:
+                raise Exception("mh was provided but chem_method is None; please specify a chemistry method.")
+            if cto_relative is not None or cto_absolute is not None:
+                raise Exception(
+                    "cto_relative or cto_absolute were provided but chem_method is None; " \
+                    "please specify a chemistry method."
+                    )
+            if photochem_init_args is not None:
+                raise Exception("photochem_init_args were provided but chem_method is None; please specify a chemistry method.")
 
         #SET ATMOSPHERE APPROXIMATIONS 
         #if this is not a climate calculation and one of the parameters is True, then braek the code 
@@ -2079,7 +2165,7 @@ class inputs():
                               [ quench,  no_ph3,  cold_trap,  vol_rainout]):
             self.inputs['approx']['chem_params'][ikey]=ibool
 
-    def chemistry_handler(self, chemistry_table = None):
+    def chemistry_handler(self, chemistry_table=None):
         """
         This function sets the chemistry table that we want to use, whether it is the 1060, 2121 and if we want to 
         do photohchemistry.
@@ -2089,49 +2175,52 @@ class inputs():
         chemistry_table : str
             Chemistry table type
         """
-        #add default chem method
-        chem_method = self.inputs['approx'].get('chem_method',None)
-        atmosphere_profile = self.inputs['atmosphere']['profile']
-        
-        # Are we running chemistry or just setting inputs ?
+
+        # Are we running chemistry or just setting inputs?
         # if the user has supplied a T and P we will just assume they want to run chemistry
-
-        if (('temperature' in atmosphere_profile.keys()) & ('pressure' in atmosphere_profile.keys())):
-            run = True 
+        atmosphere_profile = self.inputs['atmosphere']['profile']
+        if 'temperature' in atmosphere_profile and 'pressure' in atmosphere_profile:
+            run = True
         else: 
-            run = False 
+            run = False
 
-        #lets set a bool to see if we find a valid chem method
-        found_method = False
-
-        # Option : simplest method where we just grab visscher abundances 
-        
-        if 'visscher_1060' in str(chem_method):            
-            mh = self.inputs['atmosphere']['mh'] 
-            cto = self.inputs['atmosphere']['cto_relative']   
-            if run: self.chemeq_visscher_1060(cto, np.log10(mh))   
-            found_method = True
-        elif 'visscher' in str(chem_method):  
-            mh = self.inputs['atmosphere']['mh'] 
-            cto = self.inputs['atmosphere']['cto_absolute']   
-            if run: self.chemeq_visscher_2121(cto, np.log10(mh)) 
-            found_method = True
-
-        if (('photochem' in str(chem_method)) and (self.inputs['climate'].get('pc',0)==0)): 
-            #initialize photochemistry inputs on first time 
-            self.photochem_init()
-            found_method = True
-        
-        # Option : Here the user has supplied a chemistry table and we just need to use the chem_interp function to interpolate on that table
-        # Notes : This method inherently assumes mh and cto since the loaded table is for a single mh/co
-        if not isinstance(chemistry_table, type(None)): 
-            self.inputs['approx']['chem_method'] = 'chemistry table loaded through opannection'
+        # If custom chemistry_table is input, then we do interpolation and return
+        if chemistry_table is not None:
+            self.inputs['approx']['chem_method'] = 'chemistry_table'
             if run: self.chem_interp(chemistry_table)
-            found_method=True
-        #Option : No other options so far 
-        elif not found_method: 
-            raise Exception(f"A chem option {chem_method} is not valid. Likely you specified method='resrotrebin' in opannection but did not run `atmosphere()` function after inputs_climate.") 
-    
+            return
+
+        # If no custom chemistry_table, then we will do chemistry based on "chem_method"
+        chem_method = self.inputs['approx'].get('chem_method')
+        chem_method_str = str(chem_method)
+
+        # Check for validity
+        if chem_method_str not in ['visscher_1060', 'visscher', 'on-the-fly', 'photochem']:
+            raise Exception(
+                f"A chem option {chem_method_str} is not valid. Likely you specified method='resortrebin'"
+                " in opannection but did not run `atmosphere()` function after inputs_climate."
+                ) 
+        
+        # Initialize photochem if needed
+        if chem_method_str == 'photochem' and 'pc' not in self.inputs['climate']:
+            self.photochem_init()
+
+        # Return if we are not running
+        if not run:
+            return
+
+        # Run chemistry
+        mh = self.inputs['atmosphere'].get('mh')
+        cto_relative = self.inputs['atmosphere'].get('cto_relative')
+        cto_absolute = self.inputs['atmosphere'].get('cto_absolute')
+        if chem_method_str == 'visscher_1060':            
+            self.chemeq_visscher_1060(cto_relative, np.log10(mh))   
+        elif ((chem_method_str == 'visscher') or (chem_method_str == 'visscher_2121')):  
+            self.chemeq_visscher_2121(cto_absolute, np.log10(mh)) 
+        elif chem_method_str == 'on-the-fly' or chem_method_str == 'photochem':
+            # chem_method of "photochem" still needs equilibrium chemistry.
+            self.chemeq_on_the_fly(cto_absolute, np.log10(mh))
+
     def volatile_rainout(self,quench_levels,species_to_consider = ['H2O', 'CH4','NH3']):
         """
         Enforces rainout along pvap. So far these are only H2O, CH4 and NH3, since these are the only major species 
@@ -2833,6 +2922,89 @@ class inputs():
             self.chemeq_visscher_2121(cto_absolute=0.458,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
 
+    def chemeq_on_the_fly(self, cto_absolute, log_mh, method='sonora-approx', chemeq_solver_init_args={}):
+        """
+        Compute chemical equilibrium abundances for the current pressure–temperature
+        profile using the `photochem.EquilibriumChemistry` solver and attach the
+        resulting gas-phase mixing ratios to ``inputs['atmosphere']['profile']``.
+
+        Parameters
+        ----------
+        cto_absolute : float
+            Absolute carbon-to-oxygen ratio. Converted internally to a
+            solar-relative C/O ratio before passing to the equilibrium solver.
+        log_mh : float
+            Base-10 logarithm of the metallicity relative to solar. This value,
+            together with ``cto_absolute``, defines the elemental composition used
+            in the equilibrium calculation.
+        method : str or None, optional
+            Equilibrium chemistry approach to use. Default ``'sonora-approx'`` loads the
+            Sonora thermo data shipped with the reference data and caches the
+            solver in ``inputs['climate']['chemeq_solver']`` for reuse. Set to
+            ``None`` to build an ``EquilibriumChemistry`` instance with custom
+            arguments supplied via ``chemeq_solver_init_args``. Any other value
+            raises an exception.
+        chemeq_solver_init_args : dict, optional
+            Keyword arguments forwarded to ``EquilibriumChemistry`` when
+            ``method`` is ``None`` (e.g., custom thermodynamic files or solver
+            options). Ignored when using the built-in Sonora grid.
+
+        Notes
+        -----
+        - Requires ``inputs['atmosphere']['profile']`` to already contain
+          ``pressure`` (bar) and ``temperature`` (K) columns.
+        - The solver instance is cached on ``inputs['climate']['chemeq_solver']``
+          and reinitialized only when ``method`` changes.
+        - Only gas abundances returned by the solver are currently written back to
+          the profile; condensate information is discarded.
+        """
+
+        # Initialize if needed
+        # NEB edit -- if climate is not initialized then we do not need to save this initialization
+        if 'climate' not in self.inputs['calculation']:
+            climate_dict = {}
+            save_photoclass=False
+        else: 
+            climate_dict = self.inputs['climate']
+            save_photoclass=True
+
+        initialize = False
+        if 'chemeq_solver' not in climate_dict:
+            initialize = True
+        else:
+            if method != climate_dict['chemeq_solver'].method:
+                initialize = True
+        
+        if initialize:
+            from .photochem import EquilibriumChemistry
+            if method == 'sonora-approx':
+                thermofile = os.path.join(__refdata__,'chemistry','thermo_data','thermo-sonora-component.yaml')
+                solver = EquilibriumChemistry(thermofile=thermofile, method=method)
+            elif method == None:
+                solver = EquilibriumChemistry(**chemeq_solver_init_args)
+            else:
+                raise Exception('`method` can be one of the following: "sonora-approx" or None')
+            if save_photoclass: 
+                climate_dict['chemeq_solver'] = solver
+        else: 
+            solver = climate_dict.get('chemeq_solver',None)
+            
+            if isinstance(solver,type(None)):
+                raise Exception('Oops: dev mistake -- NEB made the assumption that chemeq_on_the_fly initialization only happens for climate calculations but this assumptions is wrong and needs to be fixed. ')
+        
+        # Unpack P, T
+        P = self.inputs['atmosphere']['profile']['pressure'].to_numpy()
+        T = self.inputs['atmosphere']['profile']['temperature'].to_numpy()
+
+        # Convert to a relative C/O
+        cto_relative = cto_absolute/LODDERS2020_C_TO_O
+
+        # Solve for equilibrium
+        gases, condensates = solver.equilibrate_atmosphere(P, T, log_mh, cto_relative)
+        
+        # Update the abundances
+        for key in gases:
+            self.inputs['atmosphere']['profile'][key] = gases[key]
 
     def chemeq_visscher_2121(self, cto_absolute, log_mh):#, interp_window = 11, interp_poly=2):
         """
@@ -4832,7 +5004,7 @@ class inputs():
             if self.inputs.get('hard_surface',0)==1: 
                 raise Exception('The user is requesting a hard_surface boundary condition but the surface reflectivity has not been set by the function surface_reflect')
             else: 
-                self.inputs['surface_reflect'] = 0 
+                self.inputs['surface_reflect'] = np.zeros(opacityclass.nwno)
                 self.inputs['hard_surface'] = 0 
 
             
@@ -4949,7 +5121,7 @@ class inputs():
         pc = EvoAtmosphereGasGiantPicaso(**photochem_init_args)
         pc.gdat.TOA_pressure_avg = photochem_TOA_pressure
         self.inputs['climate']['pc'] = pc
-    
+
     def energy_injection(self, inject_energy = False, total_energy_injection = 0, press_max_energy = 1,
                         injection_scalehight= 1, inject_beam = False, beam_profile = 0):
         """
@@ -4981,7 +5153,7 @@ class inputs():
     
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =True
-        ,verbose=True):#,
+        ,verbose=True, damping=False):#,
         #chemeq_first=True
        #deprecate: on_fly=False,gases_fly=None, as_dict=True, kz = None, 
         """
@@ -5007,8 +5179,14 @@ class inputs():
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
             If you want to run MLT in convective zones and Moses in the radiative zones
-        verbose : bool  
-            If True, triggers prints throughout code 
+        verbose : bool
+            If True, triggers prints throughout code
+        damping : bool
+            (Optional) Only used when diseq_chem=True. If True, under-relax the
+            temperature update in the coupled temperature<->photochem iteration
+            (blend the new iterate 50/50 with the previous one). This damps
+            period-2 limit cycles that can otherwise prevent convergence. Has no
+            effect on chemical-equilibrium runs. Default False.
         """
         #save to user 
         all_out = {}
@@ -5048,9 +5226,10 @@ class inputs():
             rfacv=0.0 
             F0PI = np.zeros(nwno) + 1.0
             opacityclass.relative_flux=F0PI
+            self.inputs['star']['relative_flux']=F0PI
         else:
             rfacv = self.inputs['climate']['rfacv']
-            F0PI = opacityclass.relative_flux 
+            F0PI = self.inputs['star']['relative_flux']#opacityclass.relative_flux 
 
         #turn off reflected light permanently for all these runs if rfacv=0 
         if rfacv==0:compute_reflected=False
@@ -5230,8 +5409,8 @@ class inputs():
                         Opagrid,
                         CloudParameters,
                         save_profile,all_profiles,all_opd,
-                        verbose=verbose, moist = moist, 
-                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
+                        verbose=verbose, moist = moist,
+                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz, damping=damping)
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp
@@ -5412,6 +5591,13 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
         start_case.guillot_pt(Tirr) 
 
     return start_case
+def earth_icrccm_pt():
+    """
+    Return the path to the Earth ICRCCM mid-latitude summer P-T-X profile.
+    The file is a PICASO-formatted rewrite of "icrccm_62_v2.atm", from the
+    rfast code.
+    """
+    return os.path.join(__refdata__, 'base_cases', 'earth_icrccm.pt')
 def jupiter_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','jupiter.pt')

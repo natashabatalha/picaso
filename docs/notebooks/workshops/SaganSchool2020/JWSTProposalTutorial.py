@@ -82,7 +82,6 @@ import bokeh.palettes as color
 from bokeh.io import output_notebook
 from bokeh.layouts import row, column
 output_notebook()
-#double check that you have loaded BokehJS 2.1.1
 
 # %% [markdown]
 # # What accuracy in planet properties do I need?
