@@ -20,13 +20,13 @@
 # Now let's take a look at what weird things might happen in your climate models!
 
 # %%
+from virga import justplotit as vpi
+from virga import justdoit as vdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
 import warnings
 warnings.filterwarnings('ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
-import virga.justdoit as vj
-import virga.justplotit as cldplt
 jpi.output_notebook()
 import astropy.units as u
 import numpy as np

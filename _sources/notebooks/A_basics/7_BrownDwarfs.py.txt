@@ -24,14 +24,14 @@
 # 3. Create a Brown Dwarf Spectrum
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 import pandas as pd
 import astropy.units as u
 import os
 
 #picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 #plotting
 from bokeh.io import output_notebook
 

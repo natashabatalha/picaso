@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Photochemistry with Photochem &mdash; picaso 4.0 documentation</title>
+  <title>Photochemistry with Photochem &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -74,6 +74,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#spectral-sensitivity-analyses">Spectral Sensitivity Analyses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
 </ul>
@@ -131,11 +132,12 @@ For example, at depth in a gas-rich atmosphere (e.g., 1000 bar), the atmosphere 
 
 $$\mathrm{H_2} + \mathrm{OH} \leftrightarrow \mathrm{H_2O} + \mathrm{H}$$
 
-Each reaction has a rate constant derived experimentally or from Ab initio calculations that can depend on temperature and pressure. Reactions are often faster with increased temperature and pressure. In `Photochem`, all reactions (except photolysis reactions) are reversed using thermodynamic principles. This means that the chemical network will predict chemical equilibrium at high temperatures and pressures, and deviate from equilibrium at cooler temperatures and when UV photolysis is important. UV photons from a host star can split molecules apart (e.g., $\mathrm{H_2O} + h\nu \rightarrow \mathrm{OH} + \mathrm{H}$) in the upper atmosphere, and ultimately drive further chemistry. --><div class="nbinput nblast docutils container">
+Each reaction has a rate constant derived experimentally or from Ab initio calculations that can depend on temperature and pressure. Reactions are often faster with increased temperature and pressure. In `Photochem`, all reactions (except photolysis reactions) are reversed using thermodynamic principles. This means that the chemical network will predict chemical equilibrium at high temperatures and pressures, and deviate from equilibrium at cooler temperatures and when UV photolysis is important. UV photons from a host star can split molecules apart (e.g., $\mathrm{H_2O} + h\nu \rightarrow \mathrm{OH} + \mathrm{H}$) in the upper atmosphere, and ultimately drive further chemistry. --><div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
@@ -153,6 +155,14 @@ Each reaction has a rate constant derived experimentally or from Ab initio calcu
     <span class="n">stellar_logg</span> <span class="o">=</span> <span class="mf">4.45</span> <span class="c1"># log10(gravity), in cgs units</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
 </div>
 <section id="Installing-Photochem">
 <h2>Installing Photochem<a class="headerlink" href="#Installing-Photochem" title="Link to this heading"></a></h2>
@@ -507,8 +517,7 @@ He 7.84e-02
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="c1"># For creating a Picaso input from Photochem</span>

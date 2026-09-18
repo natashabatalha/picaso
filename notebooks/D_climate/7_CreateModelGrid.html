@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Creating a Grid of Models to use with GridFitter &mdash; picaso 4.0 documentation</title>
+  <title>Creating a Grid of Models to use with GridFitter &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -78,6 +78,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#spectral-sensitivity-analyses">Spectral Sensitivity Analyses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
 </ul>
@@ -147,9 +148,9 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </pre></div>
 </div>
@@ -775,7 +776,7 @@ Running climate
   result = func(self.values, **kwargs)
 /home/nbatalh1/anaconda3/envs/pic313/lib/python3.13/site-packages/pandas/core/internals/blocks.py:347: RuntimeWarning: divide by zero encountered in log10
   result = func(self.values, **kwargs)
-/home/nbatalh1/codes/picaso/picaso/justdoit.py:5242: RuntimeWarning: divide by zero encountered in divide
+/home/nbatalh1/codes/picaso/picaso/justdoit.py:5422: RuntimeWarning: divide by zero encountered in divide
   all_out[&#39;fnet/fnetir&#39;]=flux_net_final/flux_net_ir_final
 </pre></div></div>
 </div>

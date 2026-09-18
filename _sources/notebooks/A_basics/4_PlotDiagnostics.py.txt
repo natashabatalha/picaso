@@ -21,8 +21,8 @@
 
 # %%
 #picaso
-from picaso import justdoit as jdi
 from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 jpi.output_notebook()
 
 # %% [markdown]

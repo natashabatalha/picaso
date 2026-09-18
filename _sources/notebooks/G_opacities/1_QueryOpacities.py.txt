@@ -1,11 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -15,20 +16,20 @@
 # %% [markdown]
 # # Querying Opacities
 #
-# ``PICASO`` currently comes with single opacity database that includes both the continuum and molecular opacity. The opacity file that comes included with has a 0.3-14 $\mu$m opacity grid sampled at R=15000. This is why we consistently bin our spectra to R~100. Contact us with opacity needs.
+# ``PICASO`` currently includes several different flavors of opacity database on Zenodo (incl different Rs, molecules, wavelength ranges). 
 #
 # We chose those use `sqlite3` for our database because of it's 1) user-friendliness, 2) speed, 3) scalability, 4) compatibility with parallel programming. In 2019, we tried out various other methods as well-- `json`, `hdf5`, `ascii`, `sqlalchemy`-- but `sqlite3` was truly better for this specific problem. Having revisited this problem recently `hdf5` has now outpaced `sqlite3` in terms of storage and performance. Therefore in future PICASO v5 we will move away from `sqlite3` and toward `hdf5` which has a much larger user base now. 
 #
 # In this tutorial you wil learn how to quickly grab any opacity data
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
 import picaso.opacity_factory as opa
 #plotting
-import picaso.justplotit as jpi
-import picaso.justdoit as jdi
 jpi.output_notebook()
 
 # %% [markdown]

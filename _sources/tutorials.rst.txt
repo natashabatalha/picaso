@@ -49,7 +49,7 @@ Clouds
 
 1D Climate Modeling
 -------------------
-Relevant Citations: `Mukherjee et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_
+Relevant Citations: `Mukherjee et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_ and `Mang et al. 2026 <https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract>`
 
 .. toctree::
    :maxdepth: 1
@@ -112,6 +112,14 @@ Radiative Transfer Techniques
    Spherical Harmonics Radiative Transfer in Reflected Light </notebooks/H_radiativetransfer/2_AnalyzingApproximationsReflectedLightSH.py>
    Spherical Harmonics Radiative Transfer in Thermal Emission </notebooks/H_radiativetransfer/3_AnalyzingApproximationsThermal.py>
 
+Spectral Sensitivity Analyses 
+-----------------------------
+Relevant Citations: Batalha & Wogan 2026 RASTI'
+
+.. toctree::
+   :maxdepth: 1
+
+   Jacobians, Linear-Gaussian Approximations, and Information Content </notebooks/K_InfoContent/IC_Stats_Tutorial.py>
 
 Useful Tools
 ------------

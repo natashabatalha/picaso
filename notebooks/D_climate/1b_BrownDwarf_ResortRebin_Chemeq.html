@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Chemical Equilibrium and Resort-Rebin &mdash; picaso 4.0 documentation</title>
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Chemical Equilibrium and Resort-Rebin &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -104,15 +104,15 @@
 <blockquote>
 <div><p>d.get_data(category_download=’sonora_grids’,target_download=’bobcat’)</p>
 </div></blockquote>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -123,6 +123,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
 </div>
 <section id="Setting-up-Initial-Run-(highlighting-main-differences-for-resort-rebin)">
 <h2>Setting up Initial Run (highlighting main differences for resort-rebin)<a class="headerlink" href="#Setting-up-Initial-Run-(highlighting-main-differences-for-resort-rebin)" title="Link to this heading"></a></h2>
@@ -177,9 +185,9 @@
 <p><strong>New Parameters</strong></p>
 <p><code class="docutils literal notranslate"><span class="pre">mh</span></code> : this is the metallicity <strong>relative</strong> to solar</p>
 <p><code class="docutils literal notranslate"><span class="pre">cto_relative</span></code> : C/O <strong>relative</strong> to solar OR <code class="docutils literal notranslate"><span class="pre">cto_absolute</span></code> which makes it the actual C/O value</p>
-<p><code class="docutils literal notranslate"><span class="pre">chem_method</span></code> : This will tell PICASO what kind of chemistry you want. The 3 options are <code class="docutils literal notranslate"><span class="pre">visscher</span></code>, <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code>, and <code class="docutils literal notranslate"><span class="pre">photochem</span></code>.</p>
-<p>The difference between <code class="docutils literal notranslate"><span class="pre">visscher</span></code> and <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code> are the grid points used with <code class="docutils literal notranslate"><span class="pre">visscher</span></code> having the most updated chemistry as well. We will get into <code class="docutils literal notranslate"><span class="pre">photochem</span></code> in another notebook doing photochemistry.</p>
-<p>You <strong>MUST</strong> include the <code class="docutils literal notranslate"><span class="pre">mh</span></code> and one of the <code class="docutils literal notranslate"><span class="pre">cto...</span></code> inputs when doing the <code class="docutils literal notranslate"><span class="pre">visscher</span></code> and <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code> method.</p>
+<p><code class="docutils literal notranslate"><span class="pre">chem_method</span></code> : This will tell PICASO what kind of chemistry you want. The 4 options are <code class="docutils literal notranslate"><span class="pre">visscher</span></code>, <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code>, <code class="docutils literal notranslate"><span class="pre">on-the-fly</span></code>, and <code class="docutils literal notranslate"><span class="pre">photochem</span></code>.</p>
+<p>The difference between <code class="docutils literal notranslate"><span class="pre">visscher</span></code> and <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code> are the grid points used with <code class="docutils literal notranslate"><span class="pre">visscher</span></code> having the most updated chemistry as well. The <code class="docutils literal notranslate"><span class="pre">on-the-fly</span></code> option computes equilibrium chemistry at runtime using the equilibrium solver. We will get into <code class="docutils literal notranslate"><span class="pre">photochem</span></code> in another notebook doing photochemistry.</p>
+<p>You <strong>MUST</strong> include <code class="docutils literal notranslate"><span class="pre">mh</span></code> and one of the <code class="docutils literal notranslate"><span class="pre">cto...</span></code> inputs when using <code class="docutils literal notranslate"><span class="pre">visscher</span></code>, <code class="docutils literal notranslate"><span class="pre">visscher_1060</span></code>, <code class="docutils literal notranslate"><span class="pre">on-the-fly</span></code>, or <code class="docutils literal notranslate"><span class="pre">photochem</span></code> (<code class="docutils literal notranslate"><span class="pre">photochem</span></code> also needs <code class="docutils literal notranslate"><span class="pre">photochem_init_args</span></code>).</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -225,13 +233,13 @@ Iteration number  5 , min , max temp  250.49053564306288 2741.2604724750377 , fl
 In t_start: Converged Solution in iterations  5
 Big iteration is  250.49053564306288 0
  We are already at a root, tolf , test =  5e-05 ,  2.2150156500146494e-05
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  252.62572334306927 2740.9341961939303 , flux balance  0.00014408612703621347
 Iteration number  1 , min , max temp  252.63897068753067 2740.933047450133 , flux balance  1.1025121975810279e-06
 In t_start: Converged Solution in iterations  1
 Big iteration is  252.63897068753067 0
  We are already at a root, tolf , test =  5e-05 ,  3.2886132990402834e-06
-Profile converged before itmx
+Profile converged before max_outer_iterations
  convection zone status
 0 79 89 0 0 0
 1
@@ -241,7 +249,7 @@ In t_start: Converged Solution in iterations  0
 Big iteration is  253.12083465646742 0
 Iteration number  0 , min , max temp  253.12874798661045 2741.0459518989433 , flux balance  -9.490223123813534e-08
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Grow Phase : Upper Zone
 [0, 62, 63, 63, 79, 89]
 Iteration number  0 , min , max temp  253.2496608116602 2740.9969558878283 , flux balance  2.2314463196910543e-06
@@ -249,56 +257,56 @@ Iteration number  1 , min , max temp  253.2516998019538 2740.9968255660992 , flu
 In t_start: Converged Solution in iterations  1
 Big iteration is  253.2516998019538 0
  We are already at a root, tolf , test =  5e-05 ,  6.473294336799259e-07
-Profile converged before itmx
+Profile converged before max_outer_iterations
 [0, 62, 64, 64, 79, 89]
 Iteration number  0 , min , max temp  253.31795262206617 2740.92949431593 , flux balance  -2.195976979717528e-06
 In t_start: Converged Solution in iterations  0
 Big iteration is  253.31795262206617 0
 Iteration number  0 , min , max temp  253.31887808965556 2740.92910364333 , flux balance  -1.1606803889961518e-08
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 [0, 61, 64, 64, 79, 89]
 Iteration number  0 , min , max temp  253.37315886146618 2740.8634199001303 , flux balance  -1.914805061058287e-06
 In t_start: Converged Solution in iterations  0
 Big iteration is  253.37315886146618 0
 Iteration number  0 , min , max temp  253.374012102053 2740.8627534233087 , flux balance  -1.3081385687866023e-08
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 [0, 61, 65, 65, 79, 89]
 Iteration number  0 , min , max temp  253.43625550700293 2740.8075991312853 , flux balance  -8.034560137674328e-06
 In t_start: Converged Solution in iterations  0
 Big iteration is  253.43625550700293 0
 Iteration number  0 , min , max temp  253.43724614931037 2740.806935469116 , flux balance  -8.236289791437821e-08
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 [0, 60, 65, 65, 79, 89]
 Iteration number  0 , min , max temp  253.4867455422823 2740.7566617774396 , flux balance  -1.6859290855046488e-05
 In t_start: Converged Solution in iterations  0
 Big iteration is  253.4867455422823 0
 Iteration number  0 , min , max temp  253.48782260505098 2740.755336499341 , flux balance  -2.1035037479884676e-07
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 [0, 59, 65, 65, 79, 89]
 Iteration number  0 , min , max temp  253.5230650010696 2740.7709966684442 , flux balance  -1.133164376910837e-05
 In t_start: Converged Solution in iterations  0
 Big iteration is  253.5230650010696 0
 Iteration number  0 , min , max temp  253.5238095982639 2740.7705784741806 , flux balance  -1.5207596474940572e-07
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 [0, 59, 66, 66, 79, 89]
 Iteration number  0 , min , max temp  253.53847887264322 2740.7808808272594 , flux balance  2.617332149490844e-05
 Iteration number  1 , min , max temp  253.53843650379483 2740.781492314242 , flux balance  2.875172098394905e-07
 In t_start: Converged Solution in iterations  1
 Big iteration is  253.53843650379483 0
  We are already at a root, tolf , test =  5e-05 ,  2.3910132164612816e-06
-Profile converged before itmx
+Profile converged before max_outer_iterations
 final [0, 59, 66, 66, 79, 89]
 Iteration number  0 , min , max temp  253.54134683822042 2740.778036100137 , flux balance  2.6826400765563947e-05
 Iteration number  1 , min , max temp  253.5410411228989 2740.7786079774905 , flux balance  2.9553440603505207e-07
 In t_start: Converged Solution in iterations  1
 Big iteration is  253.5410411228989 0
  We are already at a root, tolf , test =  5e-05 ,  2.3858857666450026e-06
-Profile converged before itmx
+Profile converged before max_outer_iterations
 YAY ! ENDING WITH CONVERGENCE
 </pre></div></div>
 </div>

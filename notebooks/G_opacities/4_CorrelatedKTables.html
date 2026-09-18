@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Using Correlated-K Tables vs. Monochromatic Opacities &mdash; picaso 4.0 documentation</title>
+  <title>Using Correlated-K Tables vs. Monochromatic Opacities &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -74,6 +74,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#spectral-sensitivity-analyses">Spectral Sensitivity Analyses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
 </ul>
@@ -145,24 +146,32 @@
 <li><p>Resort Rebin correlated k tables : these are the ones downloaded for on-the-fly disequilibrium and are mixed “on the fly” based on your chemistry. Therefore you will see they are on a per molecule basis.</p></li>
 <li><p>Monochromatic opacities: these are resampled from line by line calculations and you will notice they are usually very large (10-30 Gb)</p></li>
 </ol>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
 <span class="n">ck_db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span> <span class="s1">&#39;preweighted&#39;</span><span class="p">,</span><span class="s1">&#39;sonora_2121grid_feh1.0_co0.46.hdf5&#39;</span><span class="p">)</span>
 <span class="n">sonora_profile_db</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;sonora_grids&#39;</span><span class="p">,</span><span class="s1">&#39;bobcat&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
-<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cycle</span>
@@ -170,14 +179,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
-</pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
@@ -193,7 +194,7 @@ WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stel
 </style>
 <div>
     <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
-    <span id="ba262d26-13e9-4f5d-b9ee-ffc6ecde46c6">Loading BokehJS ...</span>
+    <span id="b1784b71-16f7-4e66-acab-797774f7fcdc">Loading BokehJS ...</span>
 </div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -366,7 +367,7 @@ const JS_MIME_TYPE = 'application/javascript';
      "</div>"}};
 
   function display_loaded(error = null) {
-    const el = document.getElementById("ba262d26-13e9-4f5d-b9ee-ffc6ecde46c6");
+    const el = document.getElementById("b1784b71-16f7-4e66-acab-797774f7fcdc");
     if (el != null) {
       const html = (() => {
         if (typeof root.Bokeh === "undefined") {
@@ -474,7 +475,7 @@ const JS_MIME_TYPE = 'application/javascript';
     document.body.appendChild(element);
   }
 
-  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.9.1.min.js"];
   const css_urls = [];
 
   const inline_js = [    function(Bokeh) {
@@ -500,7 +501,7 @@ function(Bokeh) {
       console.log("Bokeh: BokehJS failed to load within specified timeout.");
       root._bokeh_failed_load = true;
     } else if (force !== true) {
-      const cell = $(document.getElementById("ba262d26-13e9-4f5d-b9ee-ffc6ecde46c6")).parents('.cell').data().cell;
+      const cell = $(document.getElementById("b1784b71-16f7-4e66-acab-797774f7fcdc")).parents('.cell').data().cell;
       cell.output_area.append_execute_result(NB_LOAD_WARNING)
     }
   }

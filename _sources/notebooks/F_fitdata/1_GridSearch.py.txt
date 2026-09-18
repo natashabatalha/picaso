@@ -30,11 +30,11 @@
 # - [Download the final planet spectrum](https://zenodo.org/record/6959427#.Y1M0U-zMLvU)
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 import os
 
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 import picaso.analyze as lyz
 jpi.output_notebook()
 

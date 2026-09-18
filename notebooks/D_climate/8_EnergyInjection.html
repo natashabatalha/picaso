@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Energy Injection in 1D Brown Dwarf Climate Models &mdash; picaso 4.0 documentation</title>
+  <title>Energy Injection in 1D Brown Dwarf Climate Models &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -76,6 +76,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#spectral-sensitivity-analyses">Spectral Sensitivity Analyses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
 </ul>
@@ -119,19 +120,20 @@
 </div>
 <section id="Energy-Injection-in-1D-Brown-Dwarf-Climate-Models">
 <h1>Energy Injection in 1D Brown Dwarf Climate Models<a class="headerlink" href="#Energy-Injection-in-1D-Brown-Dwarf-Climate-Models" title="Link to this heading"></a></h1>
-<p>In this tutorial you will learn how you can add in an arbitrary amount of energy into your climate model. This could be because you want to build an intuition on the impact of temperature inversions or see if there are hot spots in your object causing variability in the observations for example. For a more in depth look at the climate-cloud code check out <a href="#id1"><span class="problematic" id="id2">`Mang et al. 2026 &lt;&gt;`__</span></a> (note this should also be cited if using this code/tutorial).</p>
+<p>In this tutorial you will learn how you can add in an arbitrary amount of energy into your climate model. This could be because you want to build an intuition on the impact of temperature inversions or see if there are hot spots in your object causing variability in the observations for example. For a more in depth look at the climate-cloud code check out <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract">Mang et al. 2026</a> (note this should also be cited if using this
+code/tutorial).</p>
 <p>You should be comfortable with running climate models by now, the minimum requirement for this tutorial is <a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html">One-Dimensional Climate Models: The Basics of Brown Dwarfs</a>.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">virga</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">vpi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">virga</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">vdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vj</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">virga.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cldplt</span>
 <span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -142,6 +144,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
@@ -157,7 +167,7 @@
 </style>
 <div>
     <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
-    <span id="dfc0af78-ed24-46c9-a0e9-33716d0d838f">Loading BokehJS ...</span>
+    <span id="ce7a2a6d-bafc-4200-bd19-3227fe21d12b">Loading BokehJS ...</span>
 </div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -330,7 +340,7 @@ const JS_MIME_TYPE = 'application/javascript';
      "</div>"}};
 
   function display_loaded(error = null) {
-    const el = document.getElementById("dfc0af78-ed24-46c9-a0e9-33716d0d838f");
+    const el = document.getElementById("ce7a2a6d-bafc-4200-bd19-3227fe21d12b");
     if (el != null) {
       const html = (() => {
         if (typeof root.Bokeh === "undefined") {
@@ -438,7 +448,7 @@ const JS_MIME_TYPE = 'application/javascript';
     document.body.appendChild(element);
   }
 
-  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.9.1.min.js"];
   const css_urls = [];
 
   const inline_js = [    function(Bokeh) {
@@ -464,7 +474,7 @@ function(Bokeh) {
       console.log("Bokeh: BokehJS failed to load within specified timeout.");
       root._bokeh_failed_load = true;
     } else if (force !== true) {
-      const cell = $(document.getElementById("dfc0af78-ed24-46c9-a0e9-33716d0d838f")).parents('.cell').data().cell;
+      const cell = $(document.getElementById("ce7a2a6d-bafc-4200-bd19-3227fe21d12b")).parents('.cell').data().cell;
       cell.output_area.append_execute_result(NB_LOAD_WARNING)
     }
   }
@@ -689,7 +699,7 @@ Iteration number  6 , min , max temp  201.1198855343269 2315.3754268434377 , flu
 Iteration number  7 , min , max temp  204.59405443610072 2325.751883092252 , flux balance  -0.2545482682715949
 Iteration number  8 , min , max temp  207.99123041083956 2336.315826246886 , flux balance  -0.2362919459393604
 Iteration number  9 , min , max temp  211.31923340950496 2347.0738962653277 , flux balance  -0.2173353978394921
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  211.31923340950496 0
 Iteration number  0 , min , max temp  214.58499933911236 2358.0345879172914 , flux balance  -0.19766650718359915
 Iteration number  1 , min , max temp  217.79474184499009 2369.1917866492145 , flux balance  -0.17727295695767448
@@ -701,11 +711,11 @@ Iteration number  6 , min , max temp  233.18612527951302 2427.6887698868104 , fl
 Iteration number  7 , min , max temp  236.16700627545913 2439.8408710852314 , flux balance  -0.03898122121090535
 Iteration number  8 , min , max temp  239.1303286387749 2452.13716532128 , flux balance  -0.013158576362375572
 Iteration number  9 , min , max temp  240.6074930177224 2458.2904865210044 , flux balance  -1.7570441376894604e-05
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  240.6074930177224 1
 Iteration number  0 , min , max temp  240.6265521417385 2458.277158877199 , flux balance  -1.3253268439665553e-07
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  241.42120164192607 2493.4823704718106 , flux balance  -0.07477209342767703
 Iteration number  1 , min , max temp  242.2564257588249 2528.3352571007244 , flux balance  -0.06060806763396156
 Iteration number  2 , min , max temp  243.1335915079278 2562.7773112848836 , flux balance  -0.04580810063211896
@@ -716,34 +726,34 @@ Iteration number  6 , min , max temp  245.90525427186097 2657.773456862984 , flu
 In t_start: Converged Solution in iterations  6
 Big iteration is  245.90525427186097 0
  We are already at a root, tolf , test =  5e-05 ,  2.0395427072540126e-06
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Move up two levels
 Iteration number  0 , min , max temp  246.86089837310382 2370.235486100191 , flux balance  -2.6570557145221656e-05
 Iteration number  1 , min , max temp  246.87503808926112 2370.210261689973 , flux balance  -2.020825729511743e-07
 In t_start: Converged Solution in iterations  1
 Big iteration is  246.87503808926112 0
  We are already at a root, tolf , test =  5e-05 ,  5.059718140823494e-07
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  247.05782979106266 2328.595061259507 , flux balance  -1.113893360395449e-05
 In t_start: Converged Solution in iterations  0
 Big iteration is  247.05782979106266 0
  We are already at a root, tolf , test =  5e-05 ,  1.4687060967086001e-05
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  247.09059932354563 2315.207937441767 , flux balance  -1.8449651798759383e-06
 In t_start: Converged Solution in iterations  0
 Big iteration is  247.09059932354563 0
  We are already at a root, tolf , test =  5e-05 ,  1.5865465009334767e-05
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  247.09609310654784 2315.7873986962745 , flux balance  -2.6413844871284214e-07
 In t_start: Converged Solution in iterations  0
 Big iteration is  247.09609310654784 0
  We are already at a root, tolf , test =  5e-05 ,  1.5516350549823215e-06
-Profile converged before itmx
+Profile converged before max_outer_iterations
 final [0, 82, 89, 0, 0, 0]
  We are already at a root, tolf , test =  5e-05 ,  1.182409052181469e-05
 Big iteration is  247.09609310654784 0
  We are already at a root, tolf , test =  5e-05 ,  1.182409052181469e-05
-Profile converged before itmx
+Profile converged before max_outer_iterations
 YAY ! ENDING WITH CONVERGENCE
 </pre></div></div>
 </div>
@@ -1006,127 +1016,127 @@ cold_trap False
 vol_rainout False
 no_ph3 False
 Moist Adiabat: False
-Iteration number  0 , min , max temp  180.02278133328147 2249.4489475307887 , flux balance  -0.6929809234344015
-Iteration number  1 , min , max temp  186.34822223122202 2249.5839074094833 , flux balance  -0.6926120012014338
-Iteration number  2 , min , max temp  192.6287872584764 2249.7355121290307 , flux balance  -0.6921972930637508
-Iteration number  3 , min , max temp  198.8346605500266 2249.9050802010984 , flux balance  -0.6917331163974603
-Iteration number  4 , min , max temp  204.9492701588066 2250.0938828535286 , flux balance  -0.6912159081390434
-Iteration number  5 , min , max temp  210.96504854930546 2250.3031483570553 , flux balance  -0.6906422126162899
-Iteration number  6 , min , max temp  216.88015708913818 2250.534065174805 , flux balance  -0.6900086724500001
-Iteration number  7 , min , max temp  222.69625726746503 2250.7877840538695 , flux balance  -0.6893120222272676
-Iteration number  8 , min , max temp  228.41701572157365 2251.0654195862135 , flux balance  -0.6885490835166963
-Iteration number  9 , min , max temp  234.0471979686329 2251.3680513661807 , flux balance  -0.6877167608985831
-Iterations exceeded it_max ! sorry
-Big iteration is  234.0471979686329 0
-Iteration number  0 , min , max temp  239.59207173364427 2251.6967251800156 , flux balance  -0.6868120378235983
-Iteration number  1 , min , max temp  245.0570695077836 2252.0524541674245 , flux balance  -0.685831972480807
-Iteration number  2 , min , max temp  250.4475765424282 2252.4362201474023 , flux balance  -0.6847736931536706
-Iteration number  3 , min , max temp  255.76882045360207 2252.8489750395183 , flux balance  -0.6836343932637762
-Iteration number  4 , min , max temp  261.02581119817273 2253.2912519381634 , flux balance  -0.6824113259786017
-Iteration number  5 , min , max temp  266.2233039870398 2253.7636931096918 , flux balance  -0.6811017983369195
-Iteration number  6 , min , max temp  271.36579856573957 2254.2677463281148 , flux balance  -0.6797031652522675
-Iteration number  7 , min , max temp  276.4575354323648 2254.8042588462936 , flux balance  -0.6782128231105088
-Iteration number  8 , min , max temp  281.5025093092014 2255.3740568987573 , flux balance  -0.6766282033148253
-Iteration number  9 , min , max temp  286.5044857218329 2255.9779476213566 , flux balance  -0.6749467657398908
-Iterations exceeded it_max ! sorry
-Big iteration is  286.5044857218329 1
-Iteration number  0 , min , max temp  291.4670057669792 2256.6167210640647 , flux balance  -0.6731659918952889
-Iteration number  1 , min , max temp  296.3934119814995 2257.2911520856806 , flux balance  -0.6712833783894174
-Iteration number  2 , min , max temp  301.2868540235243 2258.0020023454017 , flux balance  -0.6692964300865926
-Iteration number  3 , min , max temp  306.15030923210276 2258.750022171761 , flux balance  -0.6672026535713359
-Iteration number  4 , min , max temp  310.98659122990705 2259.535952464388 , flux balance  -0.6649995504784911
-Iteration number  5 , min , max temp  315.7983619375306 2260.3605265194687 , flux balance  -0.6626846109918797
-Iteration number  6 , min , max temp  320.58814368691964 2261.2244717882563 , flux balance  -0.6602553074806985
-Iteration number  7 , min , max temp  325.35832790947774 2262.1285115896258 , flux balance  -0.6577090882102423
-Iteration number  8 , min , max temp  330.11118218260503 2263.073366764027 , flux balance  -0.6550433711571515
-Iteration number  9 , min , max temp  334.84886036037807 2264.059757212997 , flux balance  -0.652255538082968
-Iterations exceeded it_max ! sorry
-Big iteration is  334.84886036037807 2
-Iteration number  0 , min , max temp  339.5734073184169 2265.0884034013816 , flux balance  -0.6493429286426649
-Iteration number  1 , min , max temp  344.28676549955827 2266.1600277532198 , flux balance  -0.6463028347194323
-Iteration number  2 , min , max temp  348.9907795533963 2267.275355970361 , flux balance  -0.6431324948991833
-Iteration number  3 , min , max temp  353.68720258189745 2268.435118241553 , flux balance  -0.6398290891723787
-Iteration number  4 , min , max temp  358.3776995493291 2269.640050375308 , flux balance  -0.6363897337648194
-Iteration number  5 , min , max temp  363.0638496221493 2270.890894852741 , flux balance  -0.6328114761035961
-Iteration number  6 , min , max temp  367.74715199160886 2272.188401739175 , flux balance  -0.6290912900926005
-Iteration number  7 , min , max temp  372.4290268938888 2273.5333295437995 , flux balance  -0.6252260714371323
-Iteration number  8 , min , max temp  377.1108187218259 2274.926445964127 , flux balance  -0.6212126331972697
-Iteration number  9 , min , max temp  381.7937999088011 2276.3685285081674 , flux balance  -0.6170477015900244
-Iterations exceeded it_max ! sorry
-Big iteration is  381.7937999088011 3
-Iteration number  0 , min , max temp  386.47917103925266 2277.860365071801 , flux balance  -0.6127279118131258
-Iteration number  1 , min , max temp  391.1680644368116 2279.4027543720854 , flux balance  -0.6082498041792984
-Iteration number  2 , min , max temp  395.8615449916507 2280.9965063143454 , flux balance  -0.6036098203319245
-Iteration number  3 , min , max temp  400.56061412180344 2282.6424422233113 , flux balance  -0.5988042997486314
-Iteration number  4 , min , max temp  405.2662094202691 2284.3413950394483 , flux balance  -0.5938294762353109
-Iteration number  5 , min , max temp  409.97920690915834 2286.0942093842605 , flux balance  -0.5886814746941551
-Iteration number  6 , min , max temp  414.7004240023871 2287.9017415285243 , flux balance  -0.5833563080684941
-Iteration number  7 , min , max temp  419.4306199291407 2289.7648593054564 , flux balance  -0.5778498743423246
-Iteration number  8 , min , max temp  424.17049776295755 2291.684441917755 , flux balance  -0.5721579537474203
-Iteration number  9 , min , max temp  428.9207060261344 2293.6613796684355 , flux balance  -0.5662762060940878
-Iterations exceeded it_max ! sorry
-Big iteration is  428.9207060261344 4
-Iteration number  0 , min , max temp  433.68184040282705 2295.696573613182 , flux balance  -0.5602001682346276
-Iteration number  1 , min , max temp  438.454446604925 2297.790935110814 , flux balance  -0.5539252517361202
-Iteration number  2 , min , max temp  443.23901976209527 2299.9453853677273 , flux balance  -0.5474467404774517
-Iteration number  3 , min , max temp  448.0360085137182 2302.16085482927 , flux balance  -0.5407597886187268
-Iteration number  4 , min , max temp  452.8458149165832 2304.438282581485 , flux balance  -0.5338594184575745
-Iteration number  5 , min , max temp  457.6687978469725 2306.7786156251855 , flux balance  -0.5267405185958158
-Iteration number  6 , min , max temp  462.50527462859776 2309.1828081308286 , flux balance  -0.5193978420958876
-Iteration number  7 , min , max temp  467.35552164175397 2311.651820656329 , flux balance  -0.5118260046849833
-Iteration number  8 , min , max temp  472.21977723683614 2314.1866192795956 , flux balance  -0.5040194831665931
-Iteration number  9 , min , max temp  477.0982432862157 2316.788174705705 , flux balance  -0.4959726138617968
-Iterations exceeded it_max ! sorry
-Big iteration is  477.0982432862157 5
-Iteration number  0 , min , max temp  481.9910870001874 2319.45746134295 , flux balance  -0.48767959111073433
-Iteration number  1 , min , max temp  486.8984438564668 2322.1954563113327 , flux balance  -0.4791344659526932
-Iteration number  2 , min , max temp  491.8204189224172 2325.003138466387 , flux balance  -0.4703311447436563
-Iteration number  3 , min , max temp  496.7570871233573 2327.881487424233 , flux balance  -0.46126338775633513
-Iteration number  4 , min , max temp  501.70849807758447 2330.8253851521004 , flux balance  -0.4519248081638173
-Iteration number  5 , min , max temp  506.6746759769887 2333.835605580255 , flux balance  -0.44230887069103275
-Iteration number  6 , min , max temp  511.65562233529926 2336.919107186799 , flux balance  -0.43240889052266085
-Iteration number  7 , min , max temp  516.651317272841 2340.076857003553 , flux balance  -0.42221803211118425
-Iteration number  8 , min , max temp  521.6617220653387 2343.309817620988 , flux balance  -0.4117293080950004
-Iteration number  9 , min , max temp  526.6867799326174 2346.6189462292054 , flux balance  -0.40093557807878816
-Iterations exceeded it_max ! sorry
-Big iteration is  526.6867799326174 6
+Iteration number  0 , min , max temp  180.0227813180463 2249.448947530315 , flux balance  -0.6929809234356967
+Iteration number  1 , min , max temp  186.3482142474253 2249.583907417895 , flux balance  -0.6926120011782949
+Iteration number  2 , min , max temp  192.62878572523684 2249.7355121303635 , flux balance  -0.692197293060115
+Iteration number  3 , min , max temp  198.83465763111005 2249.905080204765 , flux balance  -0.6917331163873927
+Iteration number  4 , min , max temp  204.94926354285218 2250.0938828645963 , flux balance  -0.6912159081085559
+Iteration number  5 , min , max temp  210.96503649971592 2250.3031483815093 , flux balance  -0.6906422125488481
+Iteration number  6 , min , max temp  216.88014638784637 2250.5340652003747 , flux balance  -0.6900086723795043
+Iteration number  7 , min , max temp  222.69624637412454 2250.7877840828564 , flux balance  -0.6893120221473251
+Iteration number  8 , min , max temp  228.41700836124156 2251.065419608574 , flux balance  -0.6885490834550909
+Iteration number  9 , min , max temp  234.04719429147164 2251.368051380544 , flux balance  -0.6877167608591576
+Iterations exceeded max_inner_iterations ! sorry
+Big iteration is  234.04719429147164 0
+Iteration number  0 , min , max temp  239.5920704320243 2251.6967251879632 , flux balance  -0.6868120378019611
+Iteration number  1 , min , max temp  245.0570682624376 2252.0524541762757 , flux balance  -0.685831972456666
+Iteration number  2 , min , max temp  250.44757327717264 2252.436220164449 , flux balance  -0.6847736931067289
+Iteration number  3 , min , max temp  255.76881853988036 2252.848975052292 , flux balance  -0.6836343932287019
+Iteration number  4 , min , max temp  261.0258101619204 2253.291251948332 , flux balance  -0.6824113259507102
+Iteration number  5 , min , max temp  266.2233022275558 2253.763693123748 , flux balance  -0.6811017982981732
+Iteration number  6 , min , max temp  271.365795978959 2254.2677463471696 , flux balance  -0.6797031651994875
+Iteration number  7 , min , max temp  276.4575323141965 2254.804258869649 , flux balance  -0.6782128230456476
+Iteration number  8 , min , max temp  281.50250786596575 2255.3740569146667 , flux balance  -0.6766282032708233
+Iteration number  9 , min , max temp  286.50448405371367 2255.977947639444 , flux balance  -0.6749467656897375
+Iterations exceeded max_inner_iterations ! sorry
+Big iteration is  286.50448405371367 1
+Iteration number  0 , min , max temp  291.4670052327075 2256.6167210758117 , flux balance  -0.6731659918629505
+Iteration number  1 , min , max temp  296.3934105584556 2257.291152103556 , flux balance  -0.671283378339786
+Iteration number  2 , min , max temp  301.2868533612722 2258.0020023586158 , flux balance  -0.6692964300500504
+Iteration number  3 , min , max temp  306.1503085365928 2258.7500221854552 , flux balance  -0.6672026535334262
+Iteration number  4 , min , max temp  310.9865907005936 2259.5359524779565 , flux balance  -0.6649995504408946
+Iteration number  5 , min , max temp  315.7983618522729 2260.3605265302135 , flux balance  -0.6626846109622215
+Iteration number  6 , min , max temp  320.58814403502925 2261.2244717955064 , flux balance  -0.6602553074609243
+Iteration number  7 , min , max temp  325.35832807405365 2262.1285115987935 , flux balance  -0.6577090881849731
+Iteration number  8 , min , max temp  330.1111828623008 2263.0733667694303 , flux balance  -0.6550433711425517
+Iteration number  9 , min , max temp  334.84886108461427 2264.059757217867 , flux balance  -0.6522555380698846
+Iterations exceeded max_inner_iterations ! sorry
+Big iteration is  334.84886108461427 2
+Iteration number  0 , min , max temp  339.5734077608703 2265.088403409314 , flux balance  -0.6493429286208066
+Iteration number  1 , min , max temp  344.28676577395447 2266.1600277627585 , flux balance  -0.6463028346929197
+Iteration number  2 , min , max temp  348.9907799196916 2267.2753559803914 , flux balance  -0.6431324948712119
+Iteration number  3 , min , max temp  353.687203601392 2268.435118244499 , flux balance  -0.6398290891647358
+Iteration number  4 , min , max temp  358.3777008287331 2269.6400503755335 , flux balance  -0.6363897337650041
+Iteration number  5 , min , max temp  363.0638514988197 2270.890894846674 , flux balance  -0.6328114761219181
+Iteration number  6 , min , max temp  367.74715403533634 2272.188401730473 , flux balance  -0.6290912901185818
+Iteration number  7 , min , max temp  372.4290286850481 2273.5333295385108 , flux balance  -0.6252260714532734
+Iteration number  8 , min , max temp  377.11082068628997 2274.9264459560954 , flux balance  -0.6212126332214278
+Iteration number  9 , min , max temp  381.7938017236254 2276.3685285016045 , flux balance  -0.6170477016099192
+Iterations exceeded max_inner_iterations ! sorry
+Big iteration is  381.7938017236254 3
+Iteration number  0 , min , max temp  386.47917267033745 2277.860365067597 , flux balance  -0.612727911826178
+Iteration number  1 , min , max temp  391.1680655391107 2279.4027543752113 , flux balance  -0.6082498041708794
+Iteration number  2 , min , max temp  395.8615463156062 2280.9965063138206 , flux balance  -0.6036098203342364
+Iteration number  3 , min , max temp  400.56061480017627 2282.6424422321184 , flux balance  -0.5988042997234606
+Iteration number  4 , min , max temp  405.2662097081381 2284.341395053452 , flux balance  -0.5938294761947146
+Iteration number  5 , min , max temp  409.97920737746466 2286.094209395883 , flux balance  -0.5886814746604407
+Iteration number  6 , min , max temp  414.7004240967917 2287.901741546128 , flux balance  -0.5833563080169233
+Iteration number  7 , min , max temp  419.43061985747664 2289.764859325946 , flux balance  -0.5778498742820058
+Iteration number  8 , min , max temp  424.1704977245226 2291.68444193837 , flux balance  -0.5721579536865304
+Iteration number  9 , min , max temp  428.9207058119808 2293.661379692582 , flux balance  -0.5662762060223784
+Iterations exceeded max_inner_iterations ! sorry
+Big iteration is  428.9207058119808 4
+Iteration number  0 , min , max temp  433.68184052252224 2295.696573632385 , flux balance  -0.5602001681775571
+Iteration number  1 , min , max temp  438.454446257557 2297.7909351394796 , flux balance  -0.5539252516502408
+Iteration number  2 , min , max temp  443.23901934534615 2299.945385399349 , flux balance  -0.5474467403822633
+Iteration number  3 , min , max temp  448.0360080096695 2302.1608548644763 , flux balance  -0.5407597885122672
+Iteration number  4 , min , max temp  452.845814793638 2304.438282610318 , flux balance  -0.533859418370191
+Iteration number  5 , min , max temp  457.6687983425412 2306.778615642412 , flux balance  -0.5267405185436823
+Iteration number  6 , min , max temp  462.5052751508716 2309.1828081476015 , flux balance  -0.5193978420449609
+Iteration number  7 , min , max temp  467.3555223294937 2311.6518206695946 , flux balance  -0.5118260046446932
+Iteration number  8 , min , max temp  472.21977768843084 2314.1866192976604 , flux balance  -0.5040194831112628
+Iteration number  9 , min , max temp  477.09824355830114 2316.788174728599 , flux balance  -0.49597261379114965
+Iterations exceeded max_inner_iterations ! sorry
+Big iteration is  477.09824355830114 5
+Iteration number  0 , min , max temp  481.9910873646295 2319.4574613646223 , flux balance  -0.48767959104355196
+Iteration number  1 , min , max temp  486.8984446011414 2322.195456325376 , flux balance  -0.4791344659091681
+Iteration number  2 , min , max temp  491.82041954579233 2325.0031384843096 , flux balance  -0.47033114468781717
+Iteration number  3 , min , max temp  496.7570877399153 2327.881487443017 , flux balance  -0.4612633876974937
+Iteration number  4 , min , max temp  501.7084990389639 2330.825385162882 , flux balance  -0.45192480813011937
+Iteration number  5 , min , max temp  506.67467686108887 2333.835605593399 , flux balance  -0.4423088706495706
+Iteration number  6 , min , max temp  511.6556229039051 2336.9191072084664 , flux balance  -0.43240889045334946
+Iteration number  7 , min , max temp  516.6513176077966 2340.076857032077 , flux balance  -0.42221803201939784
+Iteration number  8 , min , max temp  521.6617222694048 2343.3098176541425 , flux balance  -0.41172930798749474
+Iteration number  9 , min , max temp  526.6867802232046 2346.618946260269 , flux balance  -0.40093557797746004
+Iterations exceeded max_inner_iterations ! sorry
+Big iteration is  526.6867802232046 6
 Not converged
-Iteration number  0 , min , max temp  531.8553096665111 2365.4484016175334 , flux balance  -0.3735390106484338
-Iteration number  1 , min , max temp  584.7895876866653 2555.133641566759 , flux balance  0.11710412027474348
-Iteration number  2 , min , max temp  579.8564548160366 2533.099303234426 , flux balance  0.006648101552233551
-Iteration number  3 , min , max temp  579.8474830721907 2532.7156105672066 , flux balance  6.695543519824114e-05
+Iteration number  0 , min , max temp  531.8553097452692 2365.448401664252 , flux balance  -0.3735390105174015
+Iteration number  1 , min , max temp  584.7895894989357 2555.1336415928754 , flux balance  0.11710412015360458
+Iteration number  2 , min , max temp  579.85645346116 2533.0993032658225 , flux balance  0.00664810154037673
+Iteration number  3 , min , max temp  579.8474819122774 2532.71561059881 , flux balance  6.695543501186285e-05
 In t_start: Converged Solution in iterations  3
-Big iteration is  579.8474830721907 0
-Iteration number  0 , min , max temp  579.8484023737434 2532.714668259904 , flux balance  3.9113035033525043e-07
+Big iteration is  579.8474819122774 0
+Iteration number  0 , min , max temp  579.8484012556214 2532.714668291507 , flux balance  3.911303486711585e-07
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Move up two levels
-Iteration number  0 , min , max temp  577.5749342793941 2366.1494186562654 , flux balance  0.00011184663700658382
-Iteration number  1 , min , max temp  577.3464837347578 2367.531764135102 , flux balance  8.899169134180645e-06
+Iteration number  0 , min , max temp  577.5749351621138 2366.149418718457 , flux balance  0.00011184666429153462
+Iteration number  1 , min , max temp  577.3464847648592 2367.531764136286 , flux balance  8.899168768579645e-06
 In t_start: Converged Solution in iterations  1
-Big iteration is  577.3464837347578 0
- We are already at a root, tolf , test =  5e-05 ,  2.3890709934746546e-05
-Profile converged before itmx
-Iteration number  0 , min , max temp  580.7832457367583 2330.2836180319837 , flux balance  2.1083037062562408e-05
- We are already at a root, tolf , test =  5e-05 ,  2.318867502117102e-05
-Big iteration is  580.7832457367583 0
- We are already at a root, tolf , test =  5e-05 ,  2.318867502117102e-05
-Profile converged before itmx
-Iteration number  0 , min , max temp  578.9123835006712 2317.30507482273 , flux balance  1.2388023082947608e-07
+Big iteration is  577.3464847648592 0
+ We are already at a root, tolf , test =  5e-05 ,  2.3890709141473912e-05
+Profile converged before max_outer_iterations
+Iteration number  0 , min , max temp  580.783245780647 2330.283618032098 , flux balance  2.1083036908633903e-05
+ We are already at a root, tolf , test =  5e-05 ,  2.3188675010853652e-05
+Big iteration is  580.783245780647 0
+ We are already at a root, tolf , test =  5e-05 ,  2.3188675010853652e-05
+Profile converged before max_outer_iterations
+Iteration number  0 , min , max temp  578.9123836135166 2317.3050748227342 , flux balance  1.2388013048473164e-07
 In t_start: Converged Solution in iterations  0
-Big iteration is  578.9123835006712 0
- We are already at a root, tolf , test =  5e-05 ,  7.795086496158718e-06
-Profile converged before itmx
-Iteration number  0 , min , max temp  579.751777462235 2318.132170551263 , flux balance  -1.6041577874011742e-07
+Big iteration is  578.9123836135166 0
+ We are already at a root, tolf , test =  5e-05 ,  7.79508649636673e-06
+Profile converged before max_outer_iterations
+Iteration number  0 , min , max temp  579.7517760668592 2318.132170551254 , flux balance  -1.6041578489725762e-07
 In t_start: Converged Solution in iterations  0
-Big iteration is  579.751777462235 0
- We are already at a root, tolf , test =  5e-05 ,  1.0185425748314464e-06
-Profile converged before itmx
+Big iteration is  579.7517760668592 0
+ We are already at a root, tolf , test =  5e-05 ,  1.0185425759547084e-06
+Profile converged before max_outer_iterations
 final [0, 82, 89, 0, 0, 0]
- We are already at a root, tolf , test =  5e-05 ,  3.666060099430754e-05
-Big iteration is  579.751777462235 0
- We are already at a root, tolf , test =  5e-05 ,  3.666060099430754e-05
-Profile converged before itmx
+ We are already at a root, tolf , test =  5e-05 ,  3.666060351024816e-05
+Big iteration is  579.7517760668592 0
+ We are already at a root, tolf , test =  5e-05 ,  3.666060351024816e-05
+Profile converged before max_outer_iterations
 YAY ! ENDING WITH CONVERGENCE
 </pre></div></div>
 </div>

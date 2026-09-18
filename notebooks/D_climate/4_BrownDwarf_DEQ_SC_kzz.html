@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz &mdash; picaso 4.0 documentation</title>
+  <title>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -76,6 +76,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#opacities">Opacities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#spectral-sensitivity-analyses">Spectral Sensitivity Analyses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#useful-tools">Useful Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../tutorials.html#references">References</a></li>
 </ul>
@@ -119,7 +120,7 @@
 </div>
 <section id="One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-with-Self-Consistent-Kzz">
 <h1>One-Dimensional Climate Models: Brown Dwarfs w/ Disequilibrium Chemistry with Self-Consistent Kzz<a class="headerlink" href="#One-Dimensional-Climate-Models:-Brown-Dwarfs-w/-Disequilibrium-Chemistry-with-Self-Consistent-Kzz" title="Link to this heading"></a></h1>
-<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2024arXiv240200756M/abstract">Mukherjee et al. 2024</a> (note this should also be cited along with <a href="#id1"><span class="problematic" id="id2">`PICASO 4.0 &lt;&gt;`__</span></a> if using this code/tutorial).</p>
+<p>In this tutorial you will learn how to run 1d climate models with the effects of disequilibrium chemistry as was done for the Elf-OWL Grid <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2024ApJ...963...73M/abstract">Mukherjee et al. 2024</a> (note this should also be cited along with <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract">Mang et al. 2026</a> if using this code/tutorial).</p>
 <p>What you should already be familiar with:</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://natashabatalha.github.io/picaso/notebooks/A_basics/5_AddingThermalFlux.html">basics of running/analyzing thermal spectra</a></p></li>
@@ -141,10 +142,20 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;picaso_refdata&#39;</span><span class="p">),</span><span class="s1">&#39;opacities&#39;</span><span class="p">,</span><span class="s1">&#39;resortrebin&#39;</span><span class="p">))</span> <span class="c1">#should show you a list of files</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -199,8 +210,6 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -312,326 +321,322 @@ Moist Adiabat: False
 Kzz for chem: Self Consistent Treatment
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
 I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(75)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(78), &#39;PH3&#39;: np.int64(75)}
 Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  235.62271922088516 2707.920724731951 , flux balance  0.12265895313042115
-Iteration number  1 , min , max temp  239.64459781356913 2710.8677446347806 , flux balance  0.09094314095911757
-Iteration number  2 , min , max temp  243.25126229567127 2713.6784703273343 , flux balance  0.060282390965011354
-Iteration number  3 , min , max temp  246.50154138055348 2716.3425446478745 , flux balance  0.03070610491420926
-Iteration number  4 , min , max temp  249.42386362639218 2718.83829322524 , flux balance  0.002262725443493044
-Iteration number  5 , min , max temp  249.5965195078939 2718.9778911009244 , flux balance  2.0424181352221725e-05
+Iteration number  0 , min , max temp  235.64466644735649 2707.9291287071073 , flux balance  0.12227283166156303
+Iteration number  1 , min , max temp  239.68421235650072 2710.8843960336876 , flux balance  0.09058816231369736
+Iteration number  2 , min , max temp  243.3052239436151 2713.703039135567 , flux balance  0.05995520380199323
+Iteration number  3 , min , max temp  246.56706016121936 2716.374603016509 , flux balance  0.030404100425359938
+Iteration number  4 , min , max temp  249.49804205682187 2718.87686933563 , flux balance  0.0019842258376915525
+Iteration number  5 , min , max temp  249.64398921491212 2718.9931193796588 , flux balance  1.7600739896628484e-05
 In t_start: Converged Solution in iterations  5
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Big iteration is  249.5965195078939 0
-Iteration number  0 , min , max temp  249.27094970432267 2717.6404269847544 , flux balance  0.010792075632602477
-Iteration number  1 , min , max temp  249.18782340074844 2717.2474766980504 , flux balance  0.00013276689693210173
+Big iteration is  249.64398921491212 0
+Iteration number  0 , min , max temp  248.96937104904438 2722.615636164977 , flux balance  0.00041824068535500247
+Iteration number  1 , min , max temp  248.969402725668 2722.616718793263 , flux balance  3.1489649421502983e-06
 In t_start: Converged Solution in iterations  1
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  248.60537836789186 2725.042061000884 , flux balance  0.0001557861020286915
-Iteration number  1 , min , max temp  248.58563712993097 2725.0089166567936 , flux balance  1.163891931097992e-06
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  248.58563712993097 0
-Iteration number  0 , min , max temp  248.78398134133923 2724.2680121494664 , flux balance  3.433960604645322e-05
-In t_start: Converged Solution in iterations  0
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
+Profile converged before max_outer_iterations
  convection zone status
-0 78 89 0 0 0
+0 79 89 0 0 0
 1
-[0, 64, 64, 64, 78, 89]
+[0, 64, 64, 64, 79, 89]
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
 I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
 Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  248.6825339855133 2724.3139441552 , flux balance  1.1020401452800717e-06
+Iteration number  0 , min , max temp  248.3777166878026 2725.9686060505023 , flux balance  4.4208655123865917e-05
 In t_start: Converged Solution in iterations  0
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Big iteration is  248.6825339855133 0
-Iteration number  0 , min , max temp  248.59327968146454 2724.294878645025 , flux balance  1.529558065376712e-05
-In t_start: Converged Solution in iterations  0
+Big iteration is  248.3777166878026 0
+Iteration number  0 , min , max temp  248.81990293857473 2721.844231453631 , flux balance  0.0006533012747070504
+Iteration number  1 , min , max temp  248.82388893065865 2721.8105874259722 , flux balance  5.106271789008316e-06
+In t_start: Converged Solution in iterations  1
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Grow Phase : Upper Zone
-[0, 63, 64, 64, 78, 89]
+[0, 63, 64, 64, 79, 89]
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
 I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
 Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  248.69658225817605 2724.2305438986486 , flux balance  -4.943061304498978e-06
+Iteration number  0 , min , max temp  248.3007075925421 2725.99061516703 , flux balance  0.0001954597241472304
+Iteration number  1 , min , max temp  248.28169974943725 2725.989494613352 , flux balance  1.488771072697019e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.28169974943725 0
+Iteration number  0 , min , max temp  248.8532548493831 2721.764818014999 , flux balance  0.0006068707391129284
+Iteration number  1 , min , max temp  248.85914111290344 2721.729674127943 , flux balance  4.7242145185885e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 62, 64, 64, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.4063406231432 2725.912544375541 , flux balance  0.00022603243952764055
+Iteration number  1 , min , max temp  248.3899466536482 2725.911094310485 , flux balance  1.8025968021404994e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.3899466536482 0
+Iteration number  0 , min , max temp  248.97850016197614 2721.691020117972 , flux balance  0.0005904402172787402
+Iteration number  1 , min , max temp  248.98411968047756 2721.6561731449315 , flux balance  4.673807233044697e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 61, 64, 64, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.5837054285988 2725.7802075892473 , flux balance  -3.5088898352621534e-05
+Iteration number  1 , min , max temp  248.5664751349512 2725.815069501177 , flux balance  -1.823110870810325e-07
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.5664751349512 0
+Iteration number  0 , min , max temp  249.16245015646615 2721.6035779115464 , flux balance  0.000577950426644675
+Iteration number  1 , min , max temp  249.16752985506818 2721.569097251191 , flux balance  4.736039862709016e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 60, 64, 64, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  248.81852637240976 2725.4939203859994 , flux balance  -0.001543511365247636
+Iteration number  1 , min , max temp  248.7872693792162 2725.7169873917514 , flux balance  -1.1870028737152435e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  248.7872693792162 0
+Iteration number  0 , min , max temp  249.39469856676251 2721.511699626939 , flux balance  0.0005683430241744049
+Iteration number  1 , min , max temp  249.39939356635014 2721.4774522543084 , flux balance  4.828796279261242e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 59, 64, 64, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  249.09160830651484 2725.2297975615243 , flux balance  -0.003035940593410077
+Iteration number  1 , min , max temp  249.05009952583998 2725.625280748028 , flux balance  -2.3008240545995775e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.05009952583998 0
+Iteration number  0 , min , max temp  249.65636187305785 2721.426418233515 , flux balance  0.000563278070220533
+Iteration number  1 , min , max temp  249.66049555736828 2721.3923757967477 , flux balance  5.01549196190927e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 58, 64, 64, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  249.3860227904144 2724.996381698511 , flux balance  -0.0044462539043245985
+Iteration number  1 , min , max temp  249.33744670776704 2725.5453297369672 , flux balance  -3.380378119025983e-05
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.33744670776704 0
+Iteration number  0 , min , max temp  249.93901690863638 2721.3511520339052 , flux balance  0.0005621314288731528
 In t_start: Converged Solution in iterations  0
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Big iteration is  248.69658225817605 0
-Iteration number  0 , min , max temp  248.88338650452562 2716.3371311905244 , flux balance  0.0026105376301620927
-Iteration number  1 , min , max temp  248.89190718175294 2715.7751670533607 , flux balance  2.262051523047003e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 62, 64, 64, 78, 89]
+Profile converged before max_outer_iterations
+[0, 57, 64, 64, 79, 89]
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
 I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
 Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  248.70416541135486 2722.9383239436897 , flux balance  -0.0082315107267431
-Iteration number  1 , min , max temp  248.6405291805248 2724.8872213094833 , flux balance  -3.092506636811071e-05
+Iteration number  0 , min , max temp  249.70102611330987 2724.8678410194525 , flux balance  -0.004967247912219826
+Iteration number  1 , min , max temp  249.65562820018673 2725.471572021222 , flux balance  -3.918325553187402e-05
 In t_start: Converged Solution in iterations  1
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Big iteration is  248.6405291805248 0
-Iteration number  0 , min , max temp  248.95855262679038 2717.1199512314074 , flux balance  0.0066066852499824325
-Iteration number  1 , min , max temp  249.01467822357293 2715.587541246083 , flux balance  7.010759684525414e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 61, 64, 64, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  248.86435097294387 2722.4708856335496 , flux balance  -0.010085508076620536
-Iteration number  1 , min , max temp  248.80368874141232 2724.778837064784 , flux balance  -3.268171626552668e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  248.80368874141232 0
-Iteration number  0 , min , max temp  249.12984908390206 2717.085147740263 , flux balance  0.006798998015684969
-Iteration number  1 , min , max temp  249.19035754191026 2715.4833134331325 , flux balance  7.452446972427276e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 60, 64, 64, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  249.06701248103627 2722.119185388562 , flux balance  -0.01144132599499469
-Iteration number  1 , min , max temp  249.01149885187883 2724.662375438639 , flux balance  -3.428641479030797e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  249.01149885187883 0
-Iteration number  0 , min , max temp  249.34288903901705 2717.0714437095535 , flux balance  0.007083569915209617
-Iteration number  1 , min , max temp  249.40881906401634 2715.376206546928 , flux balance  8.051542687529488e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 59, 64, 64, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  249.3060903825976 2721.783044908591 , flux balance  -0.012784249144022793
-Iteration number  1 , min , max temp  249.25549564592995 2724.5518307150187 , flux balance  -3.7061922894608625e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  249.25549564592995 0
-Iteration number  0 , min , max temp  249.58441564054849 2717.09389744628 , flux balance  0.007493014528130769
-Iteration number  1 , min , max temp  249.65588384964573 2715.2746295714455 , flux balance  8.91854913328523e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 58, 64, 64, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  249.57349819301712 2721.4645483783797 , flux balance  -0.014131693136014234
-Iteration number  1 , min , max temp  249.52929836251653 2724.457142511097 , flux balance  -4.150304893033935e-05
-Iteration number  2 , min , max temp  249.53019792652685 2724.4600872529704 , flux balance  -4.981681216075661e-07
-In t_start: Converged Solution in iterations  2
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  249.53019792652685 0
-Iteration number  0 , min , max temp  249.85020420267574 2717.1595936936974 , flux balance  0.008035948329219278
-Iteration number  1 , min , max temp  249.92726596216346 2715.1859837560974 , flux balance  0.00010101323541854413
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 57, 64, 64, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  249.86544655396483 2721.201982616111 , flux balance  -0.01517620841821787
-Iteration number  1 , min , max temp  249.82995680293726 2724.3829556411447 , flux balance  -4.528360830610874e-05
-Iteration number  2 , min , max temp  249.83172755351623 2724.385344369182 , flux balance  -6.165297641740825e-07
-In t_start: Converged Solution in iterations  2
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  249.83172755351623 0
-Iteration number  0 , min , max temp  250.1266090875086 2717.277250195077 , flux balance  0.008725116353957684
-Iteration number  1 , min , max temp  250.2061865006998 2715.119203260371 , flux balance  0.00011530499719201258
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 56, 64, 64, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  250.11625574634664 2724.3908107041016 , flux balance  0.00045760562755193016
-Iteration number  1 , min , max temp  250.1174645531834 2724.3387538407273 , flux balance  4.728386789243219e-06
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  250.1174645531834 0
-Iteration number  0 , min , max temp  250.46778538592912 2715.1891805395026 , flux balance  0.0009313808513743368
-Iteration number  1 , min , max temp  250.46146236196216 2715.0588740391013 , flux balance  1.008162449140382e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 56, 65, 65, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  250.50248439927103 2724.248935747201 , flux balance  0.0002770490827395984
-Iteration number  1 , min , max temp  250.50940217558102 2724.196079489764 , flux balance  2.251583970205378e-06
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  250.50940217558102 0
-Iteration number  0 , min , max temp  250.8025969292328 2715.016221448609 , flux balance  0.0010113437720777776
-Iteration number  1 , min , max temp  250.791531460662 2714.887485443902 , flux balance  1.2334334602942442e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 55, 65, 65, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  250.64494744489943 2724.1191217249752 , flux balance  0.0003075147524339695
-Iteration number  1 , min , max temp  250.64904679213927 2724.065299129627 , flux balance  2.7270626302699056e-06
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  250.64904679213927 0
-Iteration number  0 , min , max temp  250.9554615750629 2714.9480678875893 , flux balance  0.0009212758653619096
-Iteration number  1 , min , max temp  250.94564216766057 2714.820064363868 , flux balance  1.1437845710226886e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 55, 66, 66, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  251.0031018492615 2724.031788862462 , flux balance  0.00019893401015248075
-Iteration number  1 , min , max temp  251.01650856102242 2723.974808939412 , flux balance  7.917704411601961e-07
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  251.01650856102242 0
-Iteration number  0 , min , max temp  251.25916237539258 2714.8110416747977 , flux balance  0.0010599019931071458
-Iteration number  1 , min , max temp  251.24243785113703 2714.6859913872727 , flux balance  1.5375595544135976e-05
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Profile converged before itmx
-[0, 55, 67, 67, 78, 89]
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
-Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  251.17975736291135 2723.9802306082825 , flux balance  0.00011562496344858152
-Iteration number  1 , min , max temp  251.19528628256097 2723.9171730515573 , flux balance  -1.1556801840541808e-06
-In t_start: Converged Solution in iterations  1
-I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
-Quench=True; Adjusting quench chemistry
-Big iteration is  251.19528628256097 0
-Iteration number  0 , min , max temp  251.30116811843715 2723.026920246875 , flux balance  7.721785161965728e-05
+Big iteration is  249.65562820018673 0
+Iteration number  0 , min , max temp  250.22545888270875 2721.293364024795 , flux balance  0.0005622120381812013
 In t_start: Converged Solution in iterations  0
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Profile converged before itmx
+Profile converged before max_outer_iterations
+[0, 56, 64, 64, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  249.95605502067218 2725.4389045979315 , flux balance  0.0002256724026744298
+Iteration number  1 , min , max temp  249.95347147600597 2725.435730646332 , flux balance  2.2335923592265314e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  249.95347147600597 0
+Iteration number  0 , min , max temp  250.50201671317245 2721.25304937623 , flux balance  0.0005754776519113361
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 56, 65, 65, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  250.38397370755953 2725.319799127631 , flux balance  8.683191268619317e-05
+Iteration number  1 , min , max temp  250.38644167353465 2725.315855447758 , flux balance  2.555583692422366e-07
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  250.38644167353465 0
+Iteration number  0 , min , max temp  250.8662415188588 2721.1082821933824 , flux balance  0.0006439031087809991
+Iteration number  1 , min , max temp  250.86386780020246 2721.07591403355 , flux balance  7.680464440913108e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 55, 65, 65, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  250.5797452518462 2725.2598117113876 , flux balance  0.00015620307673083753
+Iteration number  1 , min , max temp  250.58094885915673 2725.2545337445044 , flux balance  1.1168102231999084e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  250.58094885915673 0
+Iteration number  0 , min , max temp  251.06559633636343 2721.0640256871534 , flux balance  0.0006173808936475986
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 55, 66, 66, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  250.93723724802732 2725.1419874802064 , flux balance  2.205123158137816e-05
+Iteration number  1 , min , max temp  250.94400714282747 2725.135654423727 , flux balance  -1.1267542984823537e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  250.94400714282747 0
+Iteration number  0 , min , max temp  251.37041550078075 2720.9300081578895 , flux balance  0.0006850673675536076
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 54, 66, 66, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  251.07417030290895 2725.1247452989082 , flux balance  3.195499959214249e-05
+Iteration number  1 , min , max temp  251.07768121615905 2725.1176487073403 , flux balance  -1.3029148713126302e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  251.07768121615905 0
+Iteration number  0 , min , max temp  251.4607648447167 2720.916055671242 , flux balance  0.0006972074375237345
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
+[0, 54, 67, 67, 79, 89]
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+I dont have fluxes, let me compute them
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
+Quench=True; Adjusting quench chemistry
+Iteration number  0 , min , max temp  251.23356171852754 2725.0814494147335 , flux balance  -4.7166160737003496e-05
+Iteration number  1 , min , max temp  251.2421519060187 2725.0717788633096 , flux balance  -3.1783924338505417e-06
+In t_start: Converged Solution in iterations  1
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Big iteration is  251.2421519060187 0
+Iteration number  0 , min , max temp  251.59703800819466 2720.8456342593645 , flux balance  0.0007629509543057032
+In t_start: Converged Solution in iterations  0
+I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
+Quench=True; Adjusting quench chemistry
+Profile converged before max_outer_iterations
 [0, 54, 67, 67, 78, 89]
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
 I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
 Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  251.42619388032932 2723.098310458198 , flux balance  -8.243792136360093e-05
+Iteration number  0 , min , max temp  251.26582396605028 2727.894474077628 , flux balance  -3.498398277094843e-05
 In t_start: Converged Solution in iterations  0
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
 Quench=True; Adjusting quench chemistry
-Big iteration is  251.42619388032932 0
-Iteration number  0 , min , max temp  251.38999512253335 2723.1083168851055 , flux balance  9.761464189932357e-06
+Big iteration is  251.26582396605028 0
+Iteration number  0 , min , max temp  251.6816971964791 2722.4121181072483 , flux balance  0.0007791944828965544
 In t_start: Converged Solution in iterations  0
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Profile converged before itmx
+Profile converged before max_outer_iterations
 final [0, 54, 67, 67, 78, 89]
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
 I dont have fluxes, let me compute them
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(79), &#39;HCN&#39;: np.int64(75), &#39;PH3&#39;: np.int64(73)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(75), &#39;CO2&#39;: np.int64(66), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
 Quench=True; Adjusting quench chemistry
-Iteration number  0 , min , max temp  251.49253806180914 2723.1318970761863 , flux balance  -2.622585644445452e-05
+Iteration number  0 , min , max temp  251.2845375055398 2727.8974558261734 , flux balance  -3.358255040595615e-05
 In t_start: Converged Solution in iterations  0
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(73)}
 Quench=True; Adjusting quench chemistry
-Big iteration is  251.49253806180914 0
-Iteration number  0 , min , max temp  251.41258670492712 2723.1223157510926 , flux balance  2.733990600121205e-05
+Big iteration is  251.2845375055398 0
+Iteration number  0 , min , max temp  251.68569419760348 2722.4117330887593 , flux balance  0.0007817562179592434
 In t_start: Converged Solution in iterations  0
 I am updating kzz. This could be either because clouds were requested (which always use self consistent kzz) or because self consistent kzz profiles were requested for chemistry.
-Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(77), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(76), &#39;PH3&#39;: np.int64(74)}
+Computed quenched levels at {&#39;CO-CH4-H2O&#39;: np.int64(76), &#39;CO2&#39;: np.int64(67), &#39;NH3-N2&#39;: np.int64(80), &#39;HCN&#39;: np.int64(77), &#39;PH3&#39;: np.int64(74)}
 Quench=True; Adjusting quench chemistry
-Profile converged before itmx
+Profile converged before max_outer_iterations
 YAY ! ENDING WITH CONVERGENCE
 </pre></div></div>
 </div>
@@ -654,7 +659,7 @@ YAY ! ENDING WITH CONVERGENCE
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&lt;matplotlib.lines.Line2D at 0x7f75ed62ccd0&gt;]
+[&lt;matplotlib.lines.Line2D at 0x7f552c5c8f50&gt;]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">

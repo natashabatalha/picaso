@@ -29,10 +29,10 @@
 #
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings(action='ignore')
-import picaso.justdoit as jdi
-import picaso.justplotit as jpi
 jpi.output_notebook()
 import os
 import pandas as pd

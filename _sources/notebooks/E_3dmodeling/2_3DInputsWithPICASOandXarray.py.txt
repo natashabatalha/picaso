@@ -30,10 +30,10 @@
 #
 
 # %%
+from picaso import justdoit as jdi
 import pandas as pd
 import numpy as np
 
-from picaso import justdoit as jdi
 
 # %% [markdown]
 # Two new packages you will need, that are not required components of other models: xesmf and xarray. You can read more about the installing these packages here:

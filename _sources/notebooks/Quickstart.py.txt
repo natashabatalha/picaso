@@ -125,15 +125,16 @@ data.get_data(category_download='stellar_grids')
 #
 # PICASO relies on lots of different kinds of data. However you might not need all of it depending on what you are working on. For example, if you are only working on substellar objects, you do not need to download stellar spectra.
 #
-# | Data Type                        | Req? | What it is primarily used for | Where it should go                                          |
-# |----------------------------------|------|-------------------------------|-------------------------------------------------------------|
-# | Reference                        | Yes  | everything                    | $picaso_refdata                                             |
-# | Resampled Opacities              | Yes  | Spectroscopic modeling        | $picaso_refdata/opacities/opacities*.db                     |
-# | Stellar Database                 | No   | Exoplanet modeling            | $PYSYN_CDBS/grid                                            |
-# | Pre-weighted correlated-K Tables | No   | Chemical equilibrium climate  | Your choice (default=$picaso_refdata/opacities/preweighted) |
-# | By molecule correlated-K Tables  | No   | Disequilibrium climate        | Your choice (default=$picaso_refdata/opacities/resortrebin) |
-# | Sonora grid models               | No   | Initial guess/grid fitting    | Your choice (default=$picaso_refdata/sonora_grids)          |
-# | Virga Mieff files                | No   | Virga cloud modeling          | Your choice (default=$picaso_refdata/virga)                 |
+# | Data Type                       | Req? | What it is primarily used for      | Where it should go                                           |
+# |---------------------------------|------|------------------------------------|--------------------------------------------------------------|
+# | Reference                       | Yes  | everything                         | `$picaso_refdata`                                            |
+# | Resampled Opacities             | Yes  | Spectroscopic modeling             | `$picaso_refdata/opacities/opacities*.db`                    |
+# | Stellar Database                | No   | Exoplanet modeling                 | `$PYSYN_CDBS/grid`                                           |
+# | Preweighted correlated-k Tables | No   | Chemical equilibrium climate       | Your choice (default=`$picaso_refdata/opacities/preweighted`)|
+# | By molecule correlated-k Tables | No   | Disequilibrium climate             | Your choice (default=`$picaso_refdata/opacities/resortrebin`)|
+# | Sonora grid models              | No   | Initial guess/grid fitting         | Your choice (default=`$picaso_refdata/sonora_grids`)         |
+# | Virga Mieff files               | No   | Virga cloud modeling               | Your choice (default=`$picaso_refdata/virga`)                |
+
 #
 #
 # ### Examples using get data in interactive mode

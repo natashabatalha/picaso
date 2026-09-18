@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brown Dwarf Climate Model with Moist Adiabat &mdash; picaso 4.0 documentation</title>
+  <title>Brown Dwarf Climate Model with Moist Adiabat &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -95,13 +95,13 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justdoit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jdi</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.justplotit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jpi</span>
 <span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -109,6 +109,14 @@
 <span class="o">%</span><span class="k">matplotlib</span> inline
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
@@ -124,7 +132,7 @@
 </style>
 <div>
     <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
-    <span id="a4402f37-8607-4644-a09f-0702ca5def1e">Loading BokehJS ...</span>
+    <span id="b9c87596-45c7-40db-af5e-08af885b80e8">Loading BokehJS ...</span>
 </div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -297,7 +305,7 @@ const JS_MIME_TYPE = 'application/javascript';
      "</div>"}};
 
   function display_loaded(error = null) {
-    const el = document.getElementById("a4402f37-8607-4644-a09f-0702ca5def1e");
+    const el = document.getElementById("b9c87596-45c7-40db-af5e-08af885b80e8");
     if (el != null) {
       const html = (() => {
         if (typeof root.Bokeh === "undefined") {
@@ -405,7 +413,7 @@ const JS_MIME_TYPE = 'application/javascript';
     document.body.appendChild(element);
   }
 
-  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.4.3.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.4.3.min.js"];
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.9.1.min.js"];
   const css_urls = [];
 
   const inline_js = [    function(Bokeh) {
@@ -431,7 +439,7 @@ function(Bokeh) {
       console.log("Bokeh: BokehJS failed to load within specified timeout.");
       root._bokeh_failed_load = true;
     } else if (force !== true) {
-      const cell = $(document.getElementById("a4402f37-8607-4644-a09f-0702ca5def1e")).parents('.cell').data().cell;
+      const cell = $(document.getElementById("b9c87596-45c7-40db-af5e-08af885b80e8")).parents('.cell').data().cell;
       cell.output_area.append_execute_result(NB_LOAD_WARNING)
     }
   }
@@ -547,7 +555,7 @@ Iteration number  6 , min , max temp  94.18442737958047 2012.4206439992229 , flu
 Iteration number  7 , min , max temp  94.55663283740381 2039.9303101400433 , flux balance  -0.6138428186306507
 Iteration number  8 , min , max temp  94.93289787901433 2067.373950813431 , flux balance  -0.5969934100028719
 Iteration number  9 , min , max temp  95.31277906093065 2094.518152667063 , flux balance  -0.5793638005300101
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  95.31277906093065 0
 Iteration number  0 , min , max temp  95.69576821167006 2120.335808675403 , flux balance  -0.5609406510484501
 Iteration number  1 , min , max temp  96.08139897982535 2146.9146721991883 , flux balance  -0.5416031779074237
@@ -559,7 +567,7 @@ Iteration number  6 , min , max temp  98.01960335706366 2276.351805877694 , flux
 Iteration number  7 , min , max temp  98.40070466271763 2301.6539694396083 , flux balance  -0.40349818428304424
 Iteration number  8 , min , max temp  98.77542406018819 2327.461222887703 , flux balance  -0.3759811121865196
 Iteration number  9 , min , max temp  99.06750714305103 2353.3295260116224 , flux balance  -0.3467997974786884
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  99.06750714305103 1
 Iteration number  0 , min , max temp  99.07556090188426 2379.2978831418623 , flux balance  -0.31581996243507493
 Iteration number  1 , min , max temp  99.04291931494087 2405.095604161834 , flux balance  -0.2828953228832644
@@ -575,7 +583,7 @@ In t_start: Converged Solution in iterations  9
 Big iteration is  95.04410197646378 2
 Iteration number  0 , min , max temp  95.09789902327144 2577.574504458492 , flux balance  0.0003025341853837638
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  95.3065151012169 2572.0159959531393 , flux balance  -0.3864433026446367
 Iteration number  1 , min , max temp  95.50300735248398 2599.526268148084 , flux balance  -0.3581746455837848
 Iteration number  2 , min , max temp  95.68400741409734 2627.7038207751916 , flux balance  -0.3284591142631461
@@ -583,7 +591,7 @@ Iteration number  3 , min , max temp  95.84592881384776 2655.728132378057 , flux
 Iteration number  4 , min , max temp  95.98426421197478 2683.5405628823796 , flux balance  -0.264318789224207
 Iteration number  5 , min , max temp  96.09265841004671 2710.2539810937888 , flux balance  -0.22974814223610618
 Iteration number  6 , min , max temp  96.16321743852247 2737.8860837132593 , flux balance  -0.1932693322789819
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  96.16321743852247 0
 Iteration number  0 , min , max temp  96.18330909529661 2765.3393737943006 , flux balance  -0.15478478831113834
 Iteration number  1 , min , max temp  96.1331575341838 2792.604648202768 , flux balance  -0.11425049152490699
@@ -595,7 +603,7 @@ In t_start: Converged Solution in iterations  5
 Big iteration is  94.89002198990808 1
 Iteration number  0 , min , max temp  94.91708679700284 2861.5813876117786 , flux balance  8.104149576414916e-05
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Move up two levels
 Iteration number  0 , min , max temp  95.6030010168678 2556.9086609300784 , flux balance  -0.37011005602382896
 Iteration number  1 , min , max temp  96.302750943142 2584.8614609821034 , flux balance  -0.34250014247021204
@@ -605,7 +613,7 @@ Iteration number  4 , min , max temp  98.44242901601156 2667.7896200347714 , flu
 Iteration number  5 , min , max temp  99.16474915534408 2695.5859776795683 , flux balance  -0.21568307151325583
 Iteration number  6 , min , max temp  99.88751877170156 2723.1420881249014 , flux balance  -0.17882668389851392
 Iteration number  7 , min , max temp  100.60582115060528 2752.1005408381106 , flux balance  -0.13897205874152596
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  100.60582115060528 0
 Iteration number  0 , min , max temp  101.30929159085612 2781.890997661354 , flux balance  -0.09527794580475418
 Iteration number  1 , min , max temp  101.97086093184366 2812.710413504829 , flux balance  -0.04583254843277306
@@ -615,7 +623,7 @@ In t_start: Converged Solution in iterations  3
 Big iteration is  101.90703291145913 1
 Iteration number  0 , min , max temp  102.00478213058906 2841.147716482632 , flux balance  0.00037213185176769863
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Move up two levels
 Iteration number  0 , min , max temp  102.68722870072885 2539.8591103568383 , flux balance  -0.36813109168248825
 Iteration number  1 , min , max temp  103.38167873690946 2569.759088080621 , flux balance  -0.33826252843244464
@@ -625,7 +633,7 @@ Iteration number  4 , min , max temp  105.47374195397124 2658.5550761067866 , fl
 Iteration number  5 , min , max temp  106.16260290250135 2688.9192202557597 , flux balance  -0.1984434099155908
 Iteration number  6 , min , max temp  106.83547500317489 2719.0993567204428 , flux balance  -0.1565120251514325
 Iteration number  7 , min , max temp  107.4755895549191 2751.617510840887 , flux balance  -0.10990367158033822
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  107.4755895549191 0
 Iteration number  0 , min , max temp  108.03640514971543 2786.6528850674376 , flux balance  -0.05593766755163985
 Iteration number  1 , min , max temp  108.26755050050014 2828.7728406057545 , flux balance  0.015513413538985573
@@ -635,7 +643,7 @@ In t_start: Converged Solution in iterations  3
 Big iteration is  107.66318635162618 1
 Iteration number  0 , min , max temp  107.61851329861568 2819.9993121708476 , flux balance  -0.00021197931588640842
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Move up two levels
 Iteration number  0 , min , max temp  108.3544234203004 2515.6006918697576 , flux balance  -0.3752071630113745
 Iteration number  1 , min , max temp  109.10900364853376 2559.479811949227 , flux balance  -0.3318090435372678
@@ -645,12 +653,12 @@ Iteration number  4 , min , max temp  111.30037836412228 2665.530435917413 , flu
 Iteration number  5 , min , max temp  111.98600578686404 2702.5709212265306 , flux balance  -0.15642172959568315
 Iteration number  6 , min , max temp  112.59640277809663 2743.911157382284 , flux balance  -0.09657111793460668
 Iteration number  7 , min , max temp  112.94597817415811 2793.394917484839 , flux balance  -0.01785820915799889
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  112.94597817415811 0
 Iteration number  0 , min , max temp  112.04475155199756 2807.7857648662703 , flux balance  0.006438771515172555
 Iteration number  1 , min , max temp  111.69757379002861 2803.253260001074 , flux balance  -0.001977525315809783
 In t_start: Converged Solution in iterations  1
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Move up two levels
 Iteration number  0 , min , max temp  112.51789891735537 2499.580467929177 , flux balance  -0.3820053904136567
 Iteration number  1 , min , max temp  113.34808458684009 2534.1054660992677 , flux balance  -0.3478135000685353
@@ -660,7 +668,7 @@ Iteration number  4 , min , max temp  115.82373813227852 2665.0983497978655 , fl
 Iteration number  5 , min , max temp  116.59414247184259 2704.8283985193516 , flux balance  -0.14015280299173394
 Iteration number  6 , min , max temp  117.2692218511625 2751.3877449918746 , flux balance  -0.07046065894701417
 Iteration number  7 , min , max temp  117.04835731081195 2810.9768455855137 , flux balance  0.030077064895376045
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  117.04835731081195 0
 Iteration number  0 , min , max temp  116.02236321805157 2796.9536695727356 , flux balance  0.0034823744792052995
 Iteration number  1 , min , max temp  115.82533019542396 2794.218245549559 , flux balance  -0.0013602225253168045
@@ -668,7 +676,7 @@ In t_start: Converged Solution in iterations  1
 Big iteration is  115.82533019542396 1
 Iteration number  0 , min , max temp  115.89712369350791 2795.299835394407 , flux balance  0.0005410550850380501
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Move up two levels
 Iteration number  0 , min , max temp  116.82429221357692 2479.3869561842025 , flux balance  -0.39090137736992553
 Iteration number  1 , min , max temp  117.68492886192385 2515.280678571004 , flux balance  -0.3548239263660731
@@ -678,7 +686,7 @@ Iteration number  4 , min , max temp  120.2387678008406 2643.4052049353263 , flu
 Iteration number  5 , min , max temp  121.04475944284019 2699.0905052879807 , flux balance  -0.13081165220028418
 Iteration number  6 , min , max temp  121.58088493686485 2759.1817069126196 , flux balance  -0.03675530338249593
 Iteration number  7 , min , max temp  120.52718915862991 2799.599285667947 , flux balance  0.031842786683240275
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  120.52718915862991 0
 Iteration number  0 , min , max temp  119.50091161843461 2785.4324467865426 , flux balance  0.006335461021694001
 Iteration number  1 , min , max temp  119.05912177977139 2780.140556569611 , flux balance  -0.002993137696571434
@@ -686,7 +694,7 @@ In t_start: Converged Solution in iterations  1
 Big iteration is  119.05912177977139 1
 Iteration number  0 , min , max temp  119.21694283873242 2782.6863374031973 , flux balance  0.0014552687017256058
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  120.22998552198135 2528.1293515997477 , flux balance  -0.3559141765419546
 Iteration number  1 , min , max temp  121.12027162590692 2577.948375603284 , flux balance  -0.3043172300217625
 Iteration number  2 , min , max temp  121.99947586883705 2617.1702705790303 , flux balance  -0.25797532425653924
@@ -695,11 +703,11 @@ Iteration number  4 , min , max temp  123.65696882887151 2720.2008784628065 , fl
 Iteration number  5 , min , max temp  124.16933947190758 2798.9078979587043 , flux balance  0.004693813105228742
 Iteration number  6 , min , max temp  123.09718716183924 2797.499231514398 , flux balance  0.001886740071068674
 Iteration number  7 , min , max temp  122.04335599625126 2796.6249745523332 , flux balance  3.3865920352709945e-05
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  122.04335599625126 0
 Iteration number  0 , min , max temp  121.6139753482103 2796.720758057845 , flux balance  6.122868412692993e-05
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  122.73678535496909 2560.7652902747864 , flux balance  -0.3301219578596893
 Iteration number  1 , min , max temp  123.63474935835691 2598.495887393066 , flux balance  -0.2875992859516106
 Iteration number  2 , min , max temp  124.53008448174687 2638.1843912002632 , flux balance  -0.24042423064146143
@@ -708,11 +716,11 @@ Iteration number  4 , min , max temp  126.20474351896947 2742.758323720844 , flu
 Iteration number  5 , min , max temp  126.50986610404146 2829.382666732379 , flux balance  0.04844779916406683
 Iteration number  6 , min , max temp  125.45895798602577 2816.418646169059 , flux balance  0.02486441121429527
 Iteration number  7 , min , max temp  124.42037548041094 2805.319338695563 , flux balance  0.004000334431101728
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  124.42037548041094 0
 Iteration number  0 , min , max temp  123.92214609958701 2801.9474444189973 , flux balance  -0.0021400115929883896
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  125.10474324459153 2566.1704990820854 , flux balance  -0.32989850436277246
 Iteration number  1 , min , max temp  126.00047565539859 2605.0456140618694 , flux balance  -0.28605692905401814
 Iteration number  2 , min , max temp  126.89179079617094 2646.0227228001477 , flux balance  -0.23717334660017883
@@ -721,11 +729,11 @@ Iteration number  4 , min , max temp  128.5260007786861 2755.8555995428815 , flu
 Iteration number  5 , min , max temp  128.42370755696533 2848.9781059466277 , flux balance  0.07483101232557621
 Iteration number  6 , min , max temp  127.38989226164702 2831.444712322485 , flux balance  0.04239945498688013
 Iteration number  7 , min , max temp  126.36930465250171 2814.141270545772 , flux balance  0.01142522507418803
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  126.36930465250171 0
 Iteration number  0 , min , max temp  125.75644145104201 2804.4868105105575 , flux balance  -0.006546409822848594
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  126.84591703395978 2583.081755109796 , flux balance  -0.32201432130660523
 Iteration number  1 , min , max temp  127.75533437519972 2619.9368439053624 , flux balance  -0.27998642368731697
 Iteration number  2 , min , max temp  128.66345029795613 2670.6977278436652 , flux balance  -0.2194194362809995
@@ -734,11 +742,11 @@ Iteration number  4 , min , max temp  130.3667362313807 2775.137853333283 , flux
 Iteration number  5 , min , max temp  129.85406567160038 2846.65986650911 , flux balance  0.052075481675967275
 Iteration number  6 , min , max temp  128.83062133470673 2828.2480936526313 , flux balance  0.01898594641908073
 Iteration number  7 , min , max temp  127.8653113303003 2810.6940410009943 , flux balance  -0.011532890774651803
-Iterations exceeded it_max ! sorry
+Iterations exceeded max_inner_iterations ! sorry
 Big iteration is  127.8653113303003 0
 Iteration number  0 , min , max temp  128.48233081176593 2821.6327085544212 , flux balance  0.007391785409944762
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  129.6875587666617 2630.201106127271 , flux balance  -0.2821998710045131
 Iteration number  1 , min , max temp  130.60622625188165 2679.3797937894265 , flux balance  -0.22399018281706443
 Iteration number  2 , min , max temp  131.50568500781804 2719.337777970278 , flux balance  -0.1701176139028297
@@ -751,7 +759,7 @@ In t_start: Converged Solution in iterations  7
 Big iteration is  130.7742262259962 0
 Iteration number  0 , min , max temp  130.59928991952071 2828.6579576179192 , flux balance  -0.0022137408067112686
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 Iteration number  0 , min , max temp  131.7826432121868 2690.190261024979 , flux balance  -0.23087029234980547
 Iteration number  1 , min , max temp  132.70980506305423 2724.30021012681 , flux balance  -0.18587345404714362
 Iteration number  2 , min , max temp  133.63156865832272 2773.2466937137997 , flux balance  -0.11826830862376173
@@ -762,7 +770,7 @@ Big iteration is  134.40741593548904 0
 Iteration number  0 , min , max temp  133.59321540216789 2853.0289455611182 , flux balance  0.010708429927043498
 Iteration number  1 , min , max temp  133.00059931140962 2842.451804498636 , flux balance  -0.007421385671664002
 In t_start: Converged Solution in iterations  1
-Profile converged before itmx
+Profile converged before max_outer_iterations
 final [0, 24, 89, 0, 0, 0]
 Iteration number  0 , min , max temp  134.23102039901127 2749.5153604618895 , flux balance  -0.16885973792795947
 Iteration number  1 , min , max temp  135.15921350917503 2798.0721829931263 , flux balance  -0.09985010802024577
@@ -772,7 +780,7 @@ In t_start: Converged Solution in iterations  3
 Big iteration is  135.7774051084359 0
 Iteration number  0 , min , max temp  135.6583911005036 2854.4012422605992 , flux balance  -0.008868979047365777
 In t_start: Converged Solution in iterations  0
-Profile converged before itmx
+Profile converged before max_outer_iterations
 YAY ! ENDING WITH CONVERGENCE
 </pre></div></div>
 </div>

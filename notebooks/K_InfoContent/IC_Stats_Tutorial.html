@@ -1,0 +1,997 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spectral Sensitivity Analysis: Jacobians, Linear-Gaussian Approximations, and Information Content &mdash; picaso 4.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=3b2dd2c4"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            picaso
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#reference-data">Reference Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#using-quickstart-notebook">Using Quickstart Notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebook_workflow.html">Tutorial Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">The Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../picaso.html">The Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribution.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workshops.html">Workshop Material</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://natashabatalha.github.io/picaso_dev">The Derivations</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/natashabatalha/picaso">Github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credit.html">What to Cite</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">picaso</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Spectral Sensitivity Analysis: Jacobians, Linear-Gaussian Approximations, and Information Content</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/K_InfoContent/IC_Stats_Tutorial.py.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference external" href="https://github.com/natashabatalha/picaso/tree/master/docs/notebooks/K_InfoContent/IC_Stats_Tutorial.py">Download full notebook here</a></p>
+</div>
+<section id="Spectral-Sensitivity-Analysis:-Jacobians,-Linear-Gaussian-Approximations,-and-Information-Content">
+<h1>Spectral Sensitivity Analysis: Jacobians, Linear-Gaussian Approximations, and Information Content<a class="headerlink" href="#Spectral-Sensitivity-Analysis:-Jacobians,-Linear-Gaussian-Approximations,-and-Information-Content" title="Link to this heading"></a></h1>
+<p>Users should cite Batalha &amp; Wogan 2026 RASTI</p>
+<p>In this tutorial you will learn how to:</p>
+<ol class="arabic simple">
+<li><p>Use PICASO’s Jacobian function</p></li>
+<li><p>Use PICASO’s infromation statistics packages</p></li>
+<li><p>Reproduce the IC statistics example shown in Batalha &amp; Wogan (submitted)</p></li>
+</ol>
+<p>You should already be familiar with the basics of computing a reflected light spectrum with PICASO.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justdoit</span> <span class="k">as</span> <span class="n">jdi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">picaso</span><span class="w"> </span><span class="kn">import</span> <span class="n">justplotit</span> <span class="k">as</span> <span class="n">jpi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">picaso.information_content</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ic</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">jpi</span><span class="o">.</span><span class="n">output_notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING: Failed to load Vega spectrum from /data/reference_data/picaso/ref4/stellar_grids/calspec/alpha_lyr_stis_011.fits; Functionality involving Vega will be severely limited: FileNotFoundError(2, &#39;No such file or directory&#39;) [stsynphot.spectrum]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<style>
+    .bk-notebook-logo {
+        display: block;
+        width: 20px;
+        height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAOkSURBVDiNjZRtaJVlGMd/1/08zzln5zjP1LWcU9N0NkN8m2CYjpgQYQXqSs0I84OLIC0hkEKoPtiH3gmKoiJDU7QpLgoLjLIQCpEsNJ1vqUOdO7ppbuec5+V+rj4ctwzd8IIbbi6u+8f1539dt3A78eXC7QizUF7gyV1fD1Yqg4JWz84yffhm0qkFqBogB9rM8tZdtwVsPUhWhGcFJngGeWrPzHm5oaMmkfEg1usvLFyc8jLRqDOMru7AyC8saQr7GG7f5fvDeH7Ej8CM66nIF+8yngt6HWaKh7k49Soy9nXurCi1o3qUbS3zWfrYeQDTB/Qj6kX6Ybhw4B+bOYoLKCC9H3Nu/leUTZ1JdRWkkn2ldcCamzrcf47KKXdAJllSlxAOkRgyHsGC/zRday5Qld9DyoM4/q/rUoy/CXh3jzOu3bHUVZeU+DEn8FInkPBFlu3+nW3Nw0mk6vCDiWg8CeJaxEwuHS3+z5RgY+YBR6V1Z1nxSOfoaPa4LASWxxdNp+VWTk7+4vzaou8v8PN+xo+KY2xsw6une2frhw05CTYOmQvsEhjhWjn0bmXPjpE1+kplmmkP3suftwTubK9Vq22qKmrBhpY4jvd5afdRA3wGjFAgcnTK2s4hY0/GPNIb0nErGMCRxWOOX64Z8RAC4oCXdklmEvcL8o0BfkNK4lUg9HTl+oPlQxdNo3Mg4Nv175e/1LDGzZen30MEjRUtmXSfiTVu1kK8W4txyV6BMKlbgk3lMwYCiusNy9fVfvvwMxv8Ynl6vxoByANLTWplvuj/nF9m2+PDtt1eiHPBr1oIfhCChQMBw6Aw0UulqTKZdfVvfG7VcfIqLG9bcldL/+pdWTLxLUy8Qq38heUIjh4XlzZxzQm19lLFlr8vdQ97rjZVOLf8nclzckbcD4wxXMidpX30sFd37Fv/GtwwhzhxGVAprjbg0gCAEeIgwCZyTV2Z1REEW8O4py0wsjeloKoMr6iCY6dP92H6Vw/oTyICIthibxjm/DfN9lVz8IqtqKYLUXfoKVMVQVVJOElGjrnnUt9T9wbgp8AyYKaGlqingHZU/uG2NTZSVqwHQTWkx9hxjkpWDaCg6Ckj5qebgBVbT3V3NNXMSiWSDdGV3hrtzla7J+duwPOToIg42ChPQOQjspnSlp1V+Gjdged7+8UN5CRAV7a5EdFNwCjEaBR27b3W890TE7g24NAP/mMDXRWrGoFPQI9ls/MWO2dWFAar/xcOIImbbpA3zgAAAABJRU5ErkJggg==);
+    }
+</style>
+<div>
+    <a href="https://bokeh.org" target="_blank" class="bk-notebook-logo"></a>
+    <span id="b63f5669-f3a5-4b53-bb12-86436746ef91">Loading BokehJS ...</span>
+</div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+'use strict';
+(function(root) {
+  function now() {
+    return new Date();
+  }
+
+  const force = true;
+
+  if (typeof root._bokeh_onload_callbacks === "undefined" || force === true) {
+    root._bokeh_onload_callbacks = [];
+    root._bokeh_is_loading = undefined;
+  }
+
+const JS_MIME_TYPE = 'application/javascript';
+  const HTML_MIME_TYPE = 'text/html';
+  const EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json';
+  const CLASS_NAME = 'output_bokeh rendered_html';
+
+  /**
+   * Render data to the DOM node
+   */
+  function render(props, node) {
+    const script = document.createElement("script");
+    node.appendChild(script);
+  }
+
+  /**
+   * Handle when an output is cleared or removed
+   */
+  function handleClearOutput(event, handle) {
+    function drop(id) {
+      const view = Bokeh.index.get_by_id(id)
+      if (view != null) {
+        view.model.document.clear()
+        Bokeh.index.delete(view)
+      }
+    }
+
+    const cell = handle.cell;
+
+    const id = cell.output_area._bokeh_element_id;
+    const server_id = cell.output_area._bokeh_server_id;
+
+    // Clean up Bokeh references
+    if (id != null) {
+      drop(id)
+    }
+
+    if (server_id !== undefined) {
+      // Clean up Bokeh references
+      const cmd_clean = "from bokeh.io.state import curstate; print(curstate().uuid_to_server['" + server_id + "'].get_sessions()[0].document.roots[0]._id)";
+      cell.notebook.kernel.execute(cmd_clean, {
+        iopub: {
+          output: function(msg) {
+            const id = msg.content.text.trim()
+            drop(id)
+          }
+        }
+      });
+      // Destroy server and session
+      const cmd_destroy = "import bokeh.io.notebook as ion; ion.destroy_server('" + server_id + "')";
+      cell.notebook.kernel.execute(cmd_destroy);
+    }
+  }
+
+  /**
+   * Handle when a new output is added
+   */
+  function handleAddOutput(event, handle) {
+    const output_area = handle.output_area;
+    const output = handle.output;
+
+    // limit handleAddOutput to display_data with EXEC_MIME_TYPE content only
+    if ((output.output_type != "display_data") || (!Object.prototype.hasOwnProperty.call(output.data, EXEC_MIME_TYPE))) {
+      return
+    }
+
+    const toinsert = output_area.element.find("." + CLASS_NAME.split(' ')[0]);
+
+    if (output.metadata[EXEC_MIME_TYPE]["id"] !== undefined) {
+      toinsert[toinsert.length - 1].firstChild.textContent = output.data[JS_MIME_TYPE];
+      // store reference to embed id on output_area
+      output_area._bokeh_element_id = output.metadata[EXEC_MIME_TYPE]["id"];
+    }
+    if (output.metadata[EXEC_MIME_TYPE]["server_id"] !== undefined) {
+      const bk_div = document.createElement("div");
+      bk_div.innerHTML = output.data[HTML_MIME_TYPE];
+      const script_attrs = bk_div.children[0].attributes;
+      for (let i = 0; i < script_attrs.length; i++) {
+        toinsert[toinsert.length - 1].firstChild.setAttribute(script_attrs[i].name, script_attrs[i].value);
+        toinsert[toinsert.length - 1].firstChild.textContent = bk_div.children[0].textContent
+      }
+      // store reference to server id on output_area
+      output_area._bokeh_server_id = output.metadata[EXEC_MIME_TYPE]["server_id"];
+    }
+  }
+
+  function register_renderer(events, OutputArea) {
+
+    function append_mime(data, metadata, element) {
+      // create a DOM node to render to
+      const toinsert = this.create_output_subarea(
+        metadata,
+        CLASS_NAME,
+        EXEC_MIME_TYPE
+      );
+      this.keyboard_manager.register_events(toinsert);
+      // Render to node
+      const props = {data: data, metadata: metadata[EXEC_MIME_TYPE]};
+      render(props, toinsert[toinsert.length - 1]);
+      element.append(toinsert);
+      return toinsert
+    }
+
+    /* Handle when an output is cleared or removed */
+    events.on('clear_output.CodeCell', handleClearOutput);
+    events.on('delete.Cell', handleClearOutput);
+
+    /* Handle when a new output is added */
+    events.on('output_added.OutputArea', handleAddOutput);
+
+    /**
+     * Register the mime type and append_mime function with output_area
+     */
+    OutputArea.prototype.register_mime_type(EXEC_MIME_TYPE, append_mime, {
+      /* Is output safe? */
+      safe: true,
+      /* Index of renderer in `output_area.display_order` */
+      index: 0
+    });
+  }
+
+  // register the mime type if in Jupyter Notebook environment and previously unregistered
+  if (root.Jupyter !== undefined) {
+    const events = require('base/js/events');
+    const OutputArea = require('notebook/js/outputarea').OutputArea;
+
+    if (OutputArea.prototype.mime_types().indexOf(EXEC_MIME_TYPE) == -1) {
+      register_renderer(events, OutputArea);
+    }
+  }
+  if (typeof (root._bokeh_timeout) === "undefined" || force === true) {
+    root._bokeh_timeout = Date.now() + 5000;
+    root._bokeh_failed_load = false;
+  }
+
+  const NB_LOAD_WARNING = {'data': {'text/html':
+     "<div style='background-color: #fdd'>\n"+
+     "<p>\n"+
+     "BokehJS does not appear to have successfully loaded. If loading BokehJS from CDN, this \n"+
+     "may be due to a slow or bad network connection. Possible fixes:\n"+
+     "</p>\n"+
+     "<ul>\n"+
+     "<li>re-rerun `output_notebook()` to attempt to load from CDN again, or</li>\n"+
+     "<li>use INLINE resources instead, as so:</li>\n"+
+     "</ul>\n"+
+     "<code>\n"+
+     "from bokeh.resources import INLINE\n"+
+     "output_notebook(resources=INLINE)\n"+
+     "</code>\n"+
+     "</div>"}};
+
+  function display_loaded(error = null) {
+    const el = document.getElementById("b63f5669-f3a5-4b53-bb12-86436746ef91");
+    if (el != null) {
+      const html = (() => {
+        if (typeof root.Bokeh === "undefined") {
+          if (error == null) {
+            return "BokehJS is loading ...";
+          } else {
+            return "BokehJS failed to load.";
+          }
+        } else {
+          const prefix = `BokehJS ${root.Bokeh.version}`;
+          if (error == null) {
+            return `${prefix} successfully loaded.`;
+          } else {
+            return `${prefix} <b>encountered errors</b> while loading and may not function as expected.`;
+          }
+        }
+      })();
+      el.innerHTML = html;
+
+      if (error != null) {
+        const wrapper = document.createElement("div");
+        wrapper.style.overflow = "auto";
+        wrapper.style.height = "5em";
+        wrapper.style.resize = "vertical";
+        const content = document.createElement("div");
+        content.style.fontFamily = "monospace";
+        content.style.whiteSpace = "pre-wrap";
+        content.style.backgroundColor = "rgb(255, 221, 221)";
+        content.textContent = error.stack ?? error.toString();
+        wrapper.append(content);
+        el.append(wrapper);
+      }
+    } else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(() => display_loaded(error), 100);
+    }
+  }
+
+  function run_callbacks() {
+    try {
+      root._bokeh_onload_callbacks.forEach(function(callback) {
+        if (callback != null)
+          callback();
+      });
+    } finally {
+      delete root._bokeh_onload_callbacks
+    }
+    console.debug("Bokeh: all callbacks have finished");
+  }
+
+  function load_libs(css_urls, js_urls, callback) {
+    if (css_urls == null) css_urls = [];
+    if (js_urls == null) js_urls = [];
+
+    root._bokeh_onload_callbacks.push(callback);
+    if (root._bokeh_is_loading > 0) {
+      console.debug("Bokeh: BokehJS is being loaded, scheduling callback at", now());
+      return null;
+    }
+    if (js_urls == null || js_urls.length === 0) {
+      run_callbacks();
+      return null;
+    }
+    console.debug("Bokeh: BokehJS not loaded, scheduling load and callback at", now());
+    root._bokeh_is_loading = css_urls.length + js_urls.length;
+
+    function on_load() {
+      root._bokeh_is_loading--;
+      if (root._bokeh_is_loading === 0) {
+        console.debug("Bokeh: all BokehJS libraries/stylesheets loaded");
+        run_callbacks()
+      }
+    }
+
+    function on_error(url) {
+      console.error("failed to load " + url);
+    }
+
+    for (let i = 0; i < css_urls.length; i++) {
+      const url = css_urls[i];
+      const element = document.createElement("link");
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.rel = "stylesheet";
+      element.type = "text/css";
+      element.href = url;
+      console.debug("Bokeh: injecting link tag for BokehJS stylesheet: ", url);
+      document.body.appendChild(element);
+    }
+
+    for (let i = 0; i < js_urls.length; i++) {
+      const url = js_urls[i];
+      const element = document.createElement('script');
+      element.onload = on_load;
+      element.onerror = on_error.bind(null, url);
+      element.async = false;
+      element.src = url;
+      console.debug("Bokeh: injecting script tag for BokehJS library: ", url);
+      document.head.appendChild(element);
+    }
+  };
+
+  function inject_raw_css(css) {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(css));
+    document.body.appendChild(element);
+  }
+
+  const js_urls = ["https://cdn.bokeh.org/bokeh/release/bokeh-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.9.1.min.js", "https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.9.1.min.js"];
+  const css_urls = [];
+
+  const inline_js = [    function(Bokeh) {
+      Bokeh.set_log_level("info");
+    },
+function(Bokeh) {
+    }
+  ];
+
+  function run_inline_js() {
+    if (root.Bokeh !== undefined || force === true) {
+      try {
+            for (let i = 0; i < inline_js.length; i++) {
+      inline_js[i].call(root, root.Bokeh);
+    }
+
+      } catch (error) {display_loaded(error);throw error;
+      }if (force === true) {
+        display_loaded();
+      }} else if (Date.now() < root._bokeh_timeout) {
+      setTimeout(run_inline_js, 100);
+    } else if (!root._bokeh_failed_load) {
+      console.log("Bokeh: BokehJS failed to load within specified timeout.");
+      root._bokeh_failed_load = true;
+    } else if (force !== true) {
+      const cell = $(document.getElementById("b63f5669-f3a5-4b53-bb12-86436746ef91")).parents('.cell').data().cell;
+      cell.output_area.append_execute_result(NB_LOAD_WARNING)
+    }
+  }
+
+  if (root._bokeh_is_loading === 0) {
+    console.debug("Bokeh: BokehJS loaded, going straight to plotting");
+    run_inline_js();
+  } else {
+    load_libs(css_urls, js_urls, function() {
+      console.debug("Bokeh: BokehJS plotting callback run at", now());
+      run_inline_js();
+    });
+  }
+}(window));
+</script></div>
+</div>
+<section id="Pick-Initial-State-Vector">
+<h2>Pick Initial State Vector<a class="headerlink" href="#Pick-Initial-State-Vector" title="Link to this heading"></a></h2>
+<p>This is equivalent to setting <span class="math notranslate nohighlight">\(x_a\)</span> as defined in Batalha &amp; Wogan</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#opacity file can be found here: https://zenodo.org/records/17381172</span>
+<span class="n">opacity</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">opannection</span><span class="p">(</span><span class="n">wave_range</span><span class="o">=</span><span class="p">[</span><span class="mf">0.35</span><span class="p">,</span><span class="mf">1.8</span><span class="p">],</span>
+        <span class="n">filename_db</span><span class="o">=</span><span class="s1">&#39;/data2/nwogan/wogan_opacities/HELIOS-K/opacities_photochem_0.1_250.0_R15000_v2.db&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>For this simple example, we will assume an isothermal PT profile and constant volume mixing ratio abundances. This tutorial is just meant to build intuition surrounding how to compute and leverage IC statistics.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pressure</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">90</span><span class="p">)</span>
+<span class="n">temperature</span> <span class="o">=</span> <span class="mi">280</span><span class="o">+</span><span class="mi">0</span><span class="o">*</span><span class="n">pressure</span>
+
+<span class="n">df_atmosphere</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s1">&#39;pressure&#39;</span><span class="p">:</span>    <span class="n">pressure</span><span class="p">,</span>
+    <span class="s1">&#39;temperature&#39;</span><span class="p">:</span> <span class="n">temperature</span><span class="p">,</span>
+    <span class="s1">&#39;H2O&#39;</span><span class="p">:</span>  <span class="mf">0.1</span><span class="p">,</span>
+    <span class="s1">&#39;CO2&#39;</span><span class="p">:</span>  <span class="mf">0.1</span><span class="p">,</span>
+    <span class="s1">&#39;N2&#39;</span><span class="p">:</span>   <span class="mf">0.8</span><span class="p">,</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">example</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">inputs</span><span class="p">()</span>
+
+<span class="c1"># Phase angle</span>
+<span class="n">example</span><span class="o">.</span><span class="n">phase_angle</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#radians</span>
+
+<span class="c1"># Define gravity</span>
+<span class="n">example</span><span class="o">.</span><span class="n">gravity</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_earth&#39;</span><span class="p">),</span>
+                <span class="n">mass</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mass_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;M_earth&#39;</span><span class="p">))</span> <span class="c1">#any astropy units available</span>
+<span class="n">example</span><span class="o">.</span><span class="n">approx</span><span class="p">(</span><span class="n">raman</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+
+<span class="c1"># Define star</span>
+<span class="n">example</span><span class="o">.</span><span class="n">star</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="mi">5778</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="n">semi_major</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius_unit</span><span class="o">=</span><span class="n">jdi</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;R_sun&#39;</span><span class="p">),</span>
+            <span class="n">semi_major_unit</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">Unit</span><span class="p">(</span><span class="s1">&#39;au&#39;</span><span class="p">))</span>
+
+<span class="n">example</span><span class="o">.</span><span class="n">surface_reflect</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span><span class="n">opacity</span><span class="o">.</span><span class="n">wno</span><span class="p">)</span>
+
+<span class="n">example</span><span class="o">.</span><span class="n">atmosphere</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df_atmosphere</span><span class="p">)</span>
+
+<span class="c1"># Define clouds</span>
+<span class="n">ptop</span> <span class="o">=</span> <span class="mf">0.6</span>
+<span class="n">pbot</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">logdp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">pbot</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ptop</span><span class="p">)</span>
+<span class="n">log_pbot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">pbot</span><span class="p">)</span>
+<span class="n">example</span><span class="o">.</span><span class="n">clouds</span><span class="p">(</span><span class="n">w0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.97</span><span class="p">],</span> <span class="n">g0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.85</span><span class="p">],</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="n">log_pbot</span><span class="p">],</span> <span class="n">dp</span> <span class="o">=</span> <span class="p">[</span><span class="n">logdp</span><span class="p">],</span> <span class="n">opd</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">do_holes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fhole</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span><span class="n">fthin_cld</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Cloudy spectrum</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">example</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">opacity</span><span class="p">,</span><span class="n">full_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">xspec</span><span class="p">,</span><span class="n">yspec</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;fpfs_reflected&#39;</span><span class="p">],</span><span class="n">R</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">jpi</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">spectrum</span><span class="p">(</span><span class="n">xspec</span><span class="p">,</span><span class="n">yspec</span><span class="p">,</span><span class="n">y_range</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-10</span><span class="p">,</span> <span class="mf">6e-10</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div id="e76e4d1d-7ee2-4885-ad43-de38cbb4ffac" data-root-id="p1008" style="display: contents;"></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="output_javascript"></div>
+<script type="text/javascript">
+var element = document.currentScript.previousSibling.previousSibling;
+(function(root) {
+  function embed_document(root) {
+  const docs_json = {"e4ca2aa8-f78c-41bb-b290-2adafe8a2778":{"version":"3.9.1","title":"Bokeh Application","config":{"type":"object","name":"DocumentConfig","id":"p1052","attributes":{"notifications":{"type":"object","name":"Notifications","id":"p1053"}}},"roots":[{"type":"object","name":"Figure","id":"p1008","attributes":{"width":1000,"height":345,"x_range":{"type":"object","name":"DataRange1d","id":"p1010"},"y_range":{"type":"object","name":"Range1d","id":"p1017","attributes":{"start":1e-10,"end":6e-10}},"x_scale":{"type":"object","name":"LinearScale","id":"p1018"},"y_scale":{"type":"object","name":"LinearScale","id":"p1019"},"title":{"type":"object","name":"Title","id":"p1015"},"renderers":[{"type":"object","name":"GlyphRenderer","id":"p1049","attributes":{"data_source":{"type":"object","name":"ColumnDataSource","id":"p1043","attributes":{"selected":{"type":"object","name":"Selection","id":"p1044","attributes":{"indices":[],"line_indices":[]}},"selection_policy":{"type":"object","name":"UnionRenderers","id":"p1045"},"data":{"type":"map","entries":[["x",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[492],"dtype":"float64","order":"little"}],["y",{"type":"ndarray","array":{"type":"bytes","data":"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"},"shape":[492],"dtype":"float64","order":"little"}]]}}},"view":{"type":"object","name":"CDSView","id":"p1050","attributes":{"filter":{"type":"object","name":"AllIndices","id":"p1051"}}},"glyph":{"type":"object","name":"Line","id":"p1046","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_width":3}},"nonselection_glyph":{"type":"object","name":"Line","id":"p1047","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.1,"line_width":3}},"muted_glyph":{"type":"object","name":"Line","id":"p1048","attributes":{"x":{"type":"field","field":"x"},"y":{"type":"field","field":"y"},"line_color":"#0072B2","line_alpha":0.2,"line_width":3}}}}],"toolbar":{"type":"object","name":"Toolbar","id":"p1016","attributes":{"tools":[{"type":"object","name":"PanTool","id":"p1030"},{"type":"object","name":"WheelZoomTool","id":"p1031","attributes":{"renderers":"auto"}},{"type":"object","name":"BoxZoomTool","id":"p1032","attributes":{"overlay":{"type":"object","name":"BoxAnnotation","id":"p1033","attributes":{"syncable":false,"line_color":"black","line_alpha":1.0,"line_width":2,"line_dash":[4,4],"fill_color":"lightgrey","fill_alpha":0.5,"level":"overlay","visible":false,"left":{"type":"number","value":"nan"},"right":{"type":"number","value":"nan"},"top":{"type":"number","value":"nan"},"bottom":{"type":"number","value":"nan"},"left_units":"canvas","right_units":"canvas","top_units":"canvas","bottom_units":"canvas","handles":{"type":"object","name":"BoxInteractionHandles","id":"p1039","attributes":{"all":{"type":"object","name":"AreaVisuals","id":"p1038","attributes":{"fill_color":"white","hover_fill_color":"lightgray"}}}}}}}},{"type":"object","name":"SaveTool","id":"p1040"},{"type":"object","name":"ResetTool","id":"p1041"},{"type":"object","name":"HelpTool","id":"p1042"}]}},"left":[{"type":"object","name":"LinearAxis","id":"p1025","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1026","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1027"},"axis_label":"Spectrum","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1028"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"below":[{"type":"object","name":"LinearAxis","id":"p1020","attributes":{"ticker":{"type":"object","name":"BasicTicker","id":"p1021","attributes":{"mantissas":[1,2,5]}},"formatter":{"type":"object","name":"BasicTickFormatter","id":"p1022"},"axis_label":"Wavelength [\u03bcm]","axis_label_text_font":"times","axis_label_text_font_size":"14pt","axis_label_text_font_style":"bold","major_label_policy":{"type":"object","name":"AllLabels","id":"p1023"},"major_label_text_font":"times","major_label_text_font_size":"14pt"}}],"center":[{"type":"object","name":"Grid","id":"p1024","attributes":{"axis":{"id":"p1020"}}},{"type":"object","name":"Grid","id":"p1029","attributes":{"dimension":1,"axis":{"id":"p1025"}}}]}}]}};
+  const render_items = [{"docid":"e4ca2aa8-f78c-41bb-b290-2adafe8a2778","roots":{"p1008":"e76e4d1d-7ee2-4885-ad43-de38cbb4ffac"},"root_ids":["p1008"]}];
+  void root.Bokeh.embed.embed_items_notebook(docs_json, render_items);
+  }
+  if (root.Bokeh !== undefined) {
+    embed_document(root);
+  } else {
+    let attempts = 0;
+    const timer = setInterval(function(root) {
+      if (root.Bokeh !== undefined) {
+        clearInterval(timer);
+        embed_document(root);
+      } else {
+        attempts++;
+        if (attempts > 100) {
+          clearInterval(timer);
+          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+        }
+      }
+    }, 10, root)
+  }
+})(window);
+</script></div>
+</div>
+</section>
+<section id="Compute-Jacobian">
+<h2>Compute Jacobian<a class="headerlink" href="#Compute-Jacobian" title="Link to this heading"></a></h2>
+<p>Now we will compute the Jacobian, <span class="math notranslate nohighlight">\(K_a\)</span>, as defined in Batalha &amp; Wogan.</p>
+<p>As explaiend in Batalha &amp; Wogan, choosing the perturbation value here is important. We will start the tutorial by computing the Jacobian for many perturbation values.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><br/><span></span><span class="n">perturb_example</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<section id="Formalism-for-defining-jacobian-parameters">
+<h3>Formalism for defining jacobian parameters<a class="headerlink" href="#Formalism-for-defining-jacobian-parameters" title="Link to this heading"></a></h3>
+<p>The formalism for definite the jacobian parameters in PICASO depends on if the value you wish to perturb is included in the <code class="docutils literal notranslate"><span class="pre">example.inputs</span></code> class or if it is a function. Here we will show a mixutre of both.</p>
+<p>First let’s consider the example of H2O, which can be found in the example.inputs class here:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">example</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;atmosphere&#39;</span><span class="p">][</span><span class="s1">&#39;profile&#39;</span><span class="p">][</span><span class="s1">&#39;H2O&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0     0.1
+1     0.1
+2     0.1
+3     0.1
+4     0.1
+     ...
+85    0.1
+86    0.1
+87    0.1
+88    0.1
+89    0.1
+Name: H2O, Length: 90, dtype: float64
+</pre></div></div>
+</div>
+<p>To specify that we want this to be perturbed we provide the str input:</p>
+<p><code class="docutils literal notranslate"><span class="pre">atmosphere.profile.H2O</span></code> which is the <strong>dot separated dictionary path to the value you want to perturb</strong></p>
+<p>Now let’s say we wanted to perturb <code class="docutils literal notranslate"><span class="pre">dp</span></code> in the clouds function which is not specifically archived in the picaso inputs dictionary. In this case we specify <code class="docutils literal notranslate"><span class="pre">def</span></code>, the function name, then the input argument:</p>
+<p>For example if perturbing this function:</p>
+<p><code class="docutils literal notranslate"><span class="pre">example.clouds(w0=[0.97],</span> <span class="pre">g0=[0.85],</span>&#160; <span class="pre">p</span> <span class="pre">=</span> <span class="pre">[log_pbot],</span> <span class="pre">dp</span> <span class="pre">=</span> <span class="pre">[logdp])</span></code></p>
+<p>we would simply specify:</p>
+<p><code class="docutils literal notranslate"><span class="pre">def.clouds.dp</span></code></p>
+<p>If choosing the latter option (<code class="docutils literal notranslate"><span class="pre">def.clouds.dp</span></code>) users must input a <code class="docutils literal notranslate"><span class="pre">def_kwargs</span></code> as shown below. <code class="docutils literal notranslate"><span class="pre">def_kwargs</span></code> specifies to <code class="docutils literal notranslate"><span class="pre">picaso</span></code> what other arguments in the function <code class="docutils literal notranslate"><span class="pre">clouds</span></code> needs to be held constant while pertrubing the paramter of interest (in this case <code class="docutils literal notranslate"><span class="pre">dp</span></code>)</p>
+<p>Let’s try</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#define jacobian parameters</span>
+<span class="n">jac_params</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;atmosphere.profile.H2O&#39;</span><span class="p">,</span> <span class="s1">&#39;atmosphere.profile.CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;planet.gravity&#39;</span><span class="p">,</span> <span class="s1">&#39;def.clouds.dp&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><br/><span></span><span class="c1">#define if they should be perturbed in log space</span>
+<span class="n">is_log</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">jac_params</span><span class="p">)</span>
+
+<span class="c1"># lets compute the Jacobian using center and forward differencing over</span>
+<span class="c1"># a range of perturbation balues</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">d_param</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span><span class="mf">0.3</span><span class="p">,</span><span class="mf">0.4</span> <span class="p">]</span> <span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">d_param</span><span class="p">)</span>
+    <span class="n">jac_mat_class_center</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span>
+        <span class="n">picaso_class</span> <span class="o">=</span> <span class="n">perturb_example</span><span class="p">,</span> <span class="c1">#this defines x_a</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">jac_params</span><span class="p">,</span> <span class="c1">#this defines the jacobian parameters above</span>
+        <span class="n">is_log</span><span class="o">=</span><span class="n">is_log</span><span class="p">,</span> <span class="c1">#defines log or not</span>
+        <span class="n">d_param</span><span class="o">=</span><span class="n">d_param</span><span class="p">,</span><span class="c1">#defines perturbation</span>
+        <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;albedo&#39;</span><span class="p">,</span><span class="c1">#could be reflected, thermal, or transmission</span>
+        <span class="n">opacityclass</span><span class="o">=</span><span class="n">opacity</span><span class="p">,</span> <span class="c1">#provides the opacities</span>
+        <span class="n">method</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="c1">#sets jacobian finite differencing method (center, forward, backward)</span>
+        <span class="c1">#this defines the other parameters that will be regarded as fixed when running the clouds function</span>
+        <span class="n">def_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;def.clouds.dp&#39;</span><span class="p">:</span><span class="nb">dict</span><span class="p">(</span><span class="n">w0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.97</span><span class="p">],</span> <span class="n">g0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.85</span><span class="p">],</span> <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="n">log_pbot</span><span class="p">],</span> <span class="n">dp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">logdp</span><span class="p">]),</span> <span class="n">opd</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">do_holes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">fhole</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span><span class="n">fthin_cld</span><span class="o">=</span><span class="mi">1</span><span class="p">)})</span>
+
+
+    <span class="n">jac_mat_class_foward</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span>
+        <span class="n">picaso_class</span> <span class="o">=</span> <span class="n">perturb_example</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">jac_params</span><span class="p">,</span> <span class="n">is_log</span><span class="o">=</span><span class="n">is_log</span><span class="p">,</span><span class="n">d_param</span><span class="o">=</span><span class="n">d_param</span><span class="p">,</span>
+        <span class="n">calculation</span><span class="o">=</span><span class="s1">&#39;albedo&#39;</span><span class="p">,</span> <span class="n">opacityclass</span><span class="o">=</span><span class="n">opacity</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;forward&#39;</span><span class="p">,</span>
+            <span class="n">def_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;def.clouds.dp&#39;</span><span class="p">:</span><span class="nb">dict</span><span class="p">(</span><span class="n">w0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.97</span><span class="p">],</span> <span class="n">g0</span><span class="o">=</span><span class="p">[</span><span class="mf">0.85</span><span class="p">],</span> <span class="n">p</span> <span class="o">=</span> <span class="p">[</span><span class="n">log_pbot</span><span class="p">],</span> <span class="n">dp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">logdp</span><span class="p">]),</span> <span class="n">opd</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span><span class="n">do_holes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">fhole</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span><span class="n">fthin_cld</span><span class="o">=</span><span class="mi">1</span><span class="p">)})</span>
+
+
+    <span class="n">results</span><span class="p">[</span><span class="n">d_param</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">jac_mat_class_foward</span><span class="p">,</span> <span class="n">jac_mat_class_center</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0.01
+0.1
+0.2
+0.3
+0.4
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Determine-how-Jacobian-is-sensitive-to-perturbation-choice">
+<h2>Determine how Jacobian is sensitive to perturbation choice<a class="headerlink" href="#Determine-how-Jacobian-is-sensitive-to-perturbation-choice" title="Link to this heading"></a></h2>
+<p>Reproducing Figure 1, Batalha &amp; Wogan 2026 RASTI</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span><span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">[</span><span class="mi">12</span><span class="p">,</span><span class="mi">9</span><span class="p">],</span><span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1">#plot the spectrum for clarity</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">xspec</span><span class="p">,</span><span class="n">yspec</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Contrast&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Wavelength ($\mu$m)&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">unpacked</span> <span class="o">=</span> <span class="p">[</span><span class="n">axs</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)]</span>
+<span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;-&#39;</span>
+
+<span class="c1"># loop through two different differencing methods</span>
+<span class="k">for</span> <span class="n">jm</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+
+    <span class="n">K_rebin</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ws</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cols</span> <span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">jpi</span><span class="o">.</span><span class="n">pals</span><span class="o">.</span><span class="n">Spectral5</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">ij</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ip</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">jac_params</span><span class="p">):</span>
+            <span class="c1"># rebin for clarity</span>
+            <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="n">jm</span><span class="p">][:,</span><span class="n">i</span><span class="p">],</span><span class="n">R</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+            <span class="c1">#set zero jacobian to small number since we will normalize and plot in log space</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-6</span>
+            <span class="c1"># normalize jacobian</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="n">jdi</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">jdi</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
+            <span class="n">ws</span> <span class="o">+=</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
+            <span class="n">ys</span> <span class="o">+=</span> <span class="p">[</span><span class="n">y</span><span class="p">]</span>
+            <span class="n">labels</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ip</span><span class="p">]</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">jm</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span>
+            <span class="k">if</span> <span class="n">jm</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="n">label</span><span class="o">=</span><span class="sa">rf</span><span class="s1">&#39;$\epsilon_j$=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">else</span><span class="p">:</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span>
+            <span class="n">unpacked</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">cols</span><span class="p">[</span><span class="n">ij</span><span class="p">],</span><span class="n">linestyle</span><span class="o">=</span><span class="n">linestyle</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">unpacked</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">ip</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;dp&#39;</span><span class="p">,</span><span class="s1">&#39;Cloud Thickness&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;g&#39;</span><span class="p">,</span><span class="s1">&#39;G&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">,</span><span class="sa">rf</span><span class="s1">&#39;$_2$&#39;</span><span class="p">)</span>
+            <span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+            <span class="n">unpacked</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mf">0.4</span><span class="p">,</span><span class="mf">1.8</span><span class="p">])</span>
+            <span class="n">unpacked</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Norm. Jacobian&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+    <span class="n">unpacked</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Wavelength ($\mu$m)&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">),</span><span class="c1">#fontsize=10,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+                <span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;upper center&#39;</span><span class="p">,</span>
+            <span class="n">ncol</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_K_InfoContent_IC_Stats_Tutorial_16_0.png" src="../../_images/notebooks_K_InfoContent_IC_Stats_Tutorial_16_0.png" />
+</div>
+</div>
+</section>
+<section id="Compute-IC-statistics-using-Jacobian">
+<h2>Compute IC statistics using Jacobian<a class="headerlink" href="#Compute-IC-statistics-using-Jacobian" title="Link to this heading"></a></h2>
+<p>Above 0.1 looks like it provides a good linear approximation to the Jacobian. Let’s proceed and compute IC statistics over an approxite range of resolutions and SNRs.</p>
+<p>PICASO’s main package is controled via <code class="docutils literal notranslate"><span class="pre">ic.Analyze</span></code>, which takes in:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">jacobian</span></code> : number of molecules by number of parameters from function above</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">error</span></code> : absolute error on spectrum.</p></li>
+</ul>
+<p>For the <code class="docutils literal notranslate"><span class="pre">error</span></code> there are three main options:</p>
+<ol class="arabic simple">
+<li><p>could be constant (if any binning is requested it is assumed that the error input is associated with those new requests. e.g., if R=70 is requested the constant error will be applied to the new R=70 wavenumber grid, not the original.)</p></li>
+<li><p>input array on the same coordinate system as wno_grid. In this case, any binning requests will also bin the error according to spectres.spectres error binning.</p></li>
+<li><p>a list [wno_error, error]. in this case wno_error becomes the new wavenumber grid and the jacobian will be binned to this error accordingly.</p></li>
+</ol>
+<p>The other optional arguments set how you want to bin the Jacobian (either with a new wavelength axis or a constant <code class="docutils literal notranslate"><span class="pre">R</span></code>, resolving power)</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jac_considered</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mf">0.1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+
+<span class="n">R</span> <span class="o">=</span> <span class="p">[</span><span class="mi">50</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">150</span><span class="p">,</span><span class="mi">200</span><span class="p">,</span><span class="mi">250</span><span class="p">,</span><span class="mi">300</span><span class="p">,</span><span class="mi">350</span><span class="p">,</span><span class="mi">400</span><span class="p">]</span>
+<span class="n">SNR</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">15</span><span class="p">,</span><span class="mi">20</span><span class="p">]</span>
+<span class="n">SNR_ref</span> <span class="o">=</span> <span class="mf">0.55</span> <span class="c1">#lambda</span>
+<span class="n">min_wave</span> <span class="o">=</span> <span class="mf">0.42</span>
+<span class="n">max_wave</span> <span class="o">=</span> <span class="mf">1.78</span>
+
+<span class="c1">#[&#39;atmosphere.profile.H2O&#39;, &#39;atmosphere.profile.CO2&#39;, &#39;planet.gravity&#39;, &#39;def.clouds.dp&#39;]</span>
+<span class="n">prior</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span>
+
+<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">cases</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">loss_by_wave</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">ir</span> <span class="ow">in</span> <span class="n">R</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">isnr</span> <span class="ow">in</span> <span class="n">SNR</span><span class="p">:</span>
+        <span class="n">wavegrid</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="n">create_grid</span><span class="p">(</span><span class="n">min_wave</span><span class="p">,</span> <span class="n">max_wave</span><span class="p">,</span> <span class="n">ir</span><span class="p">)</span>
+        <span class="n">xlow</span><span class="p">,</span><span class="n">ylow</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;albedo&#39;</span><span class="p">],</span><span class="n">newx</span><span class="o">=</span><span class="n">wavegrid</span><span class="p">)</span>
+        <span class="n">alb_at_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e4</span><span class="o">/</span><span class="n">SNR_ref</span><span class="p">]),</span> <span class="n">xlow</span><span class="p">,</span><span class="n">ylow</span> <span class="p">)</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">alb_at_ref</span><span class="o">/</span><span class="n">isnr</span>
+        <span class="n">cases</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">wavegrid</span><span class="p">,</span> <span class="n">wavegrid</span><span class="o">*</span><span class="mi">0</span><span class="o">+</span><span class="n">error</span><span class="p">]</span>
+        <span class="n">IC_analyzer_cl</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="n">Analyze</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">jac_considered</span><span class="p">,</span> <span class="n">cases</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="p">)</span>
+        <span class="c1">#DOF_SVD = IC_analyzer_cl.degrees_of_freedom_svd()</span>
+        <span class="n">SIC</span> <span class="o">=</span> <span class="n">IC_analyzer_cl</span><span class="o">.</span><span class="n">shannon_ic</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span>
+        <span class="n">all_results</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span><span class="n">SIC</span>
+
+        <span class="n">loss_by_wave</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span> <span class="mf">1e4</span><span class="o">/</span><span class="n">IC_analyzer_cl</span><span class="o">.</span><span class="n">new_wno</span> <span class="p">,</span> <span class="n">IC_analyzer_cl</span><span class="o">.</span><span class="n">loss_by_wave</span><span class="p">()]</span>
+<br/><br/></pre></div>
+</div>
+</div>
+<section id="Infromation-Loss-using-IC-Content-in-bits">
+<h3>Infromation Loss using IC Content in bits<a class="headerlink" href="#Infromation-Loss-using-IC-Content-in-bits" title="Link to this heading"></a></h3>
+<p>Reproducing Figure 2a, Batalha &amp; Wogan</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.cm</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcolors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpl_toolkits.axes_grid1</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_axes_locatable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_ref</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">,</span>
+                                 <span class="n">gridspec_kw</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;height_ratios&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]})</span>
+
+<span class="c1"># Adjust spacing so the plots are flush (optional)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;H$_2$O&#39;</span><span class="p">,</span><span class="sa">rf</span><span class="s1">&#39;CO$_2$&#39;</span><span class="p">]</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;#1E90FF&#39;</span><span class="p">,</span><span class="s1">&#39;#00FA9A&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">jac_considered</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span><span class="n">R</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">R</span><span class="p">))</span>
+    <span class="n">ax_ref</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">))),</span>
+    <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+<span class="n">norm</span> <span class="o">=</span> <span class="n">mcolors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">R</span><span class="p">),</span> <span class="n">vmax</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">R</span><span class="p">))</span>
+<span class="n">colormap</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">magma</span> <span class="c1"># Choose your preferred gradient</span>
+
+<span class="n">isnr</span><span class="o">=</span><span class="mi">10</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span><span class="n">ir</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">R</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">loss_by_wave</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">loss_by_wave</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+    <span class="n">color</span> <span class="o">=</span> <span class="n">colormap</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="n">ir</span><span class="p">))</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span><span class="n">where</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span><span class="c1">#, zorder=i+2)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span> <span class="n">ii</span><span class="o">+</span><span class="mi">0</span><span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span><span class="c1">#, zorder=i+1)</span>
+
+<span class="c1"># Add the Colorbar</span>
+<span class="n">sm</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">ScalarMappable</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">colormap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">set_array</span><span class="p">([])</span>
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span>  <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+<span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;Resolution ($R$)&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="c1">#ax_ref.set_position(ax.get_position())</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;H Loss ($\Delta$ bits)&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Wavelength [$\mu$m]&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax_ref</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Norm. Jacobian&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax_ref</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ax</span><span class="p">,</span><span class="n">ax_ref</span><span class="p">]:</span>
+    <span class="n">i</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mf">0.4</span><span class="p">,</span><span class="mf">1.8</span><span class="p">])</span>
+    <span class="n">i</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_2018320/1094167858.py:12: UserWarning: This figure was using a layout engine that is incompatible with subplots_adjust and/or tight_layout; not calling subplots_adjust.
+  fig.subplots_adjust(hspace=0.05)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_K_InfoContent_IC_Stats_Tutorial_20_1.png" src="../../_images/notebooks_K_InfoContent_IC_Stats_Tutorial_20_1.png" />
+</div>
+</div>
+</section>
+<section id="Infromation-Loss-using-1-\sigma-H2O-Constraint-Interval">
+<h3>Infromation Loss using 1 <span class="math notranslate nohighlight">\(\sigma\)</span> H2O Constraint Interval<a class="headerlink" href="#Infromation-Loss-using-1-\sigma-H2O-Constraint-Interval" title="Link to this heading"></a></h3>
+<p>Reproducing Figure 2b, Batalha &amp; Wogan</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax_ref</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span><span class="p">,</span>
+                                 <span class="n">gridspec_kw</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;height_ratios&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]})</span>
+
+<span class="c1"># Adjust spacing so the plots are flush (optional)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;H$_2$O&#39;</span><span class="p">,</span><span class="sa">rf</span><span class="s1">&#39;CO$_2$&#39;</span><span class="p">]</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;#1E90FF&#39;</span><span class="p">,</span><span class="s1">&#39;#00FA9A&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">jdi</span><span class="o">.</span><span class="n">mean_regrid</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;wavenumber&#39;</span><span class="p">],</span> <span class="n">jac_considered</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span><span class="n">R</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">R</span><span class="p">))</span>
+    <span class="n">ax_ref</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="mf">1e4</span><span class="o">/</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">))),</span>
+    <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+<span class="n">norm</span> <span class="o">=</span> <span class="n">mcolors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">R</span><span class="p">),</span> <span class="n">vmax</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">R</span><span class="p">))</span>
+<span class="n">colormap</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">magma</span> <span class="c1"># Choose your preferred gradient</span>
+
+<span class="n">isnr</span><span class="o">=</span><span class="mi">10</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span><span class="n">ir</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">R</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">loss_by_wave</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="n">loss_by_wave</span><span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;R=</span><span class="si">{</span><span class="n">ir</span><span class="si">}</span><span class="s1">,SNR=</span><span class="si">{</span><span class="n">isnr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]]))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+    <span class="n">color</span> <span class="o">=</span> <span class="n">colormap</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="n">ir</span><span class="p">))</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span><span class="n">where</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span><span class="c1">#, zorder=i+2)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span> <span class="n">ii</span><span class="o">+</span><span class="mi">0</span><span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="s1">&#39;mid&#39;</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span><span class="c1">#, zorder=i+1)</span>
+
+<span class="c1"># Add the Colorbar</span>
+<span class="n">sm</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">ScalarMappable</span><span class="p">(</span><span class="n">cmap</span><span class="o">=</span><span class="n">colormap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">set_array</span><span class="p">([])</span>
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span>  <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+<span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;Resolution ($R$)&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">270</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="c1">#ax_ref.set_position(ax.get_position())</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;1$\sigma$ CI Loss for H$_2$O ($\Delta$ dex)&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Wavelength [$\mu$m]&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax_ref</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;Norm. Jacobian&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax_ref</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ax</span><span class="p">,</span><span class="n">ax_ref</span><span class="p">]:</span>
+    <span class="n">i</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="mf">0.4</span><span class="p">,</span><span class="mf">1.8</span><span class="p">])</span>
+    <span class="n">i</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_2018320/404046092.py:6: UserWarning: This figure was using a layout engine that is incompatible with subplots_adjust and/or tight_layout; not calling subplots_adjust.
+  fig.subplots_adjust(hspace=0.05)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_K_InfoContent_IC_Stats_Tutorial_22_1.png" src="../../_images/notebooks_K_InfoContent_IC_Stats_Tutorial_22_1.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

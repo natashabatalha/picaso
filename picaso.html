@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Code &mdash; picaso 4.0 documentation</title>
+  <title>The Code &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -73,6 +73,9 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.atmsetup.convert_to_simple"><code class="docutils literal notranslate"><span class="pre">convert_to_simple()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.atmsetup.is_opacity_excluded"><code class="docutils literal notranslate"><span class="pre">is_opacity_excluded()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.atmsetup.molecule_has_excluded_line_opacity"><code class="docutils literal notranslate"><span class="pre">molecule_has_excluded_line_opacity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.atmsetup.normalize_exclude_mol"><code class="docutils literal notranslate"><span class="pre">normalize_exclude_mol()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.atmsetup.separate_molecule_name"><code class="docutils literal notranslate"><span class="pre">separate_molecule_name()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.atmsetup.separate_string_number"><code class="docutils literal notranslate"><span class="pre">separate_string_number()</span></code></a></li>
 </ul>
@@ -161,6 +164,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justdoit.brown_dwarf_pt"><code class="docutils literal notranslate"><span class="pre">brown_dwarf_pt()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justdoit.check_units"><code class="docutils literal notranslate"><span class="pre">check_units()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justdoit.convert_flux_units"><code class="docutils literal notranslate"><span class="pre">convert_flux_units()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.justdoit.earth_icrccm_pt"><code class="docutils literal notranslate"><span class="pre">earth_icrccm_pt()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justdoit.evolution_track"><code class="docutils literal notranslate"><span class="pre">evolution_track()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justdoit.find_press"><code class="docutils literal notranslate"><span class="pre">find_press()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justdoit.get_contribution"><code class="docutils literal notranslate"><span class="pre">get_contribution()</span></code></a></li>
@@ -185,6 +189,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#picaso.justdoit.inputs.channon_grid_low"><code class="docutils literal notranslate"><span class="pre">inputs.channon_grid_low()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#picaso.justdoit.inputs.chem_interp"><code class="docutils literal notranslate"><span class="pre">inputs.chem_interp()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#picaso.justdoit.inputs.chemeq_3d"><code class="docutils literal notranslate"><span class="pre">inputs.chemeq_3d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.justdoit.inputs.chemeq_on_the_fly"><code class="docutils literal notranslate"><span class="pre">inputs.chemeq_on_the_fly()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#picaso.justdoit.inputs.chemeq_visscher"><code class="docutils literal notranslate"><span class="pre">inputs.chemeq_visscher()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#picaso.justdoit.inputs.chemeq_visscher_1060"><code class="docutils literal notranslate"><span class="pre">inputs.chemeq_visscher_1060()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#picaso.justdoit.inputs.chemeq_visscher_2121"><code class="docutils literal notranslate"><span class="pre">inputs.chemeq_visscher_2121()</span></code></a></li>
@@ -247,7 +252,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.bin_errors"><code class="docutils literal notranslate"><span class="pre">bin_errors()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.brightness_temperature"><code class="docutils literal notranslate"><span class="pre">brightness_temperature()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.cloud"><code class="docutils literal notranslate"><span class="pre">cloud()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.create_heat_map"><code class="docutils literal notranslate"><span class="pre">create_heat_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.create_heat_map_deprecate"><code class="docutils literal notranslate"><span class="pre">create_heat_map_deprecate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.disco"><code class="docutils literal notranslate"><span class="pre">disco()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.explore"><code class="docutils literal notranslate"><span class="pre">explore()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.find_nearest_1d"><code class="docutils literal notranslate"><span class="pre">find_nearest_1d()</span></code></a></li>
@@ -273,7 +278,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.pt_adiabat"><code class="docutils literal notranslate"><span class="pre">pt_adiabat()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.rt_heatmap"><code class="docutils literal notranslate"><span class="pre">rt_heatmap()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.spectrum"><code class="docutils literal notranslate"><span class="pre">spectrum()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.spectrum_hires"><code class="docutils literal notranslate"><span class="pre">spectrum_hires()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.spectrum_hires_deprecate"><code class="docutils literal notranslate"><span class="pre">spectrum_hires_deprecate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.taumap"><code class="docutils literal notranslate"><span class="pre">taumap()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.thermal_contribution"><code class="docutils literal notranslate"><span class="pre">thermal_contribution()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.justplotit.transmission_contribution"><code class="docutils literal notranslate"><span class="pre">transmission_contribution()</span></code></a></li>
@@ -290,6 +295,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#picaso.opacity_factory.compute_sum_molecular"><code class="docutils literal notranslate"><span class="pre">compute_sum_molecular()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.opacity_factory.continuum_avail"><code class="docutils literal notranslate"><span class="pre">continuum_avail()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.opacity_factory.convert_array"><code class="docutils literal notranslate"><span class="pre">convert_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.opacity_factory.convert_sqlite_to_hdf5"><code class="docutils literal notranslate"><span class="pre">convert_sqlite_to_hdf5()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.opacity_factory.create_grid"><code class="docutils literal notranslate"><span class="pre">create_grid()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.opacity_factory.create_grid_minR"><code class="docutils literal notranslate"><span class="pre">create_grid_minR()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.opacity_factory.delete_molecule"><code class="docutils literal notranslate"><span class="pre">delete_molecule()</span></code></a></li>
@@ -384,9 +390,21 @@
 <li class="toctree-l4"><a class="reference internal" href="#picaso.optics.RetrieveOpacities.preload_opacities"><code class="docutils literal notranslate"><span class="pre">RetrieveOpacities.preload_opacities()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.optics.RetrieveOpacitiesHDF5"><code class="docutils literal notranslate"><span class="pre">RetrieveOpacitiesHDF5</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.optics.RetrieveOpacitiesHDF5.close"><code class="docutils literal notranslate"><span class="pre">RetrieveOpacitiesHDF5.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.optics.RetrieveOpacitiesHDF5.get_available_data"><code class="docutils literal notranslate"><span class="pre">RetrieveOpacitiesHDF5.get_available_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.optics.RetrieveOpacitiesHDF5.get_opacities"><code class="docutils literal notranslate"><span class="pre">RetrieveOpacitiesHDF5.get_opacities()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.optics.RetrieveOpacitiesHDF5.get_opacities_nearest"><code class="docutils literal notranslate"><span class="pre">RetrieveOpacitiesHDF5.get_opacities_nearest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.optics.RetrieveOpacitiesHDF5.preload_opacities"><code class="docutils literal notranslate"><span class="pre">RetrieveOpacitiesHDF5.preload_opacities()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.adapt_array"><code class="docutils literal notranslate"><span class="pre">adapt_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.optics.add_continuum_numba"><code class="docutils literal notranslate"><span class="pre">add_continuum_numba()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.optics.add_molecular_gauss_numba"><code class="docutils literal notranslate"><span class="pre">add_molecular_gauss_numba()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.optics.add_rayleigh_numba"><code class="docutils literal notranslate"><span class="pre">add_rayleigh_numba()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.bin_star"><code class="docutils literal notranslate"><span class="pre">bin_star()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.compute_opacity"><code class="docutils literal notranslate"><span class="pre">compute_opacity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.optics.compute_opacity_numba_WIP"><code class="docutils literal notranslate"><span class="pre">compute_opacity_numba_WIP()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.compute_raman"><code class="docutils literal notranslate"><span class="pre">compute_raman()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.convert_array"><code class="docutils literal notranslate"><span class="pre">convert_array()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.find_nearest"><code class="docutils literal notranslate"><span class="pre">find_nearest()</span></code></a></li>
@@ -398,6 +416,39 @@
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.raman_pollack"><code class="docutils literal notranslate"><span class="pre">raman_pollack()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.rayleigh_old"><code class="docutils literal notranslate"><span class="pre">rayleigh_old()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#picaso.optics.spline"><code class="docutils literal notranslate"><span class="pre">spline()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-picaso.parameterizations">picaso.parameterizations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.parameterizations.Parameterize"><code class="docutils literal notranslate"><span class="pre">Parameterize</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.add_class"><code class="docutils literal notranslate"><span class="pre">Parameterize.add_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.chem_chemeq_on_the_fly"><code class="docutils literal notranslate"><span class="pre">Parameterize.chem_chemeq_on_the_fly()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.chem_free"><code class="docutils literal notranslate"><span class="pre">Parameterize.chem_free()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.chem_visscher"><code class="docutils literal notranslate"><span class="pre">Parameterize.chem_visscher()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.chem_xarray_grid"><code class="docutils literal notranslate"><span class="pre">Parameterize.chem_xarray_grid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.cloud_brewster_grey"><code class="docutils literal notranslate"><span class="pre">Parameterize.cloud_brewster_grey()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.cloud_brewster_mie"><code class="docutils literal notranslate"><span class="pre">Parameterize.cloud_brewster_mie()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.cloud_flex_fsed"><code class="docutils literal notranslate"><span class="pre">Parameterize.cloud_flex_fsed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.cloud_hard_grey"><code class="docutils literal notranslate"><span class="pre">Parameterize.cloud_hard_grey()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.cloud_virga"><code class="docutils literal notranslate"><span class="pre">Parameterize.cloud_virga()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.deck_decay"><code class="docutils literal notranslate"><span class="pre">Parameterize.deck_decay()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.flex_cloud"><code class="docutils literal notranslate"><span class="pre">Parameterize.flex_cloud()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.get_particle_dist"><code class="docutils literal notranslate"><span class="pre">Parameterize.get_particle_dist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.load_grid"><code class="docutils literal notranslate"><span class="pre">Parameterize.load_grid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.pt_guillot"><code class="docutils literal notranslate"><span class="pre">Parameterize.pt_guillot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.pt_isothermal"><code class="docutils literal notranslate"><span class="pre">Parameterize.pt_isothermal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.pt_knots"><code class="docutils literal notranslate"><span class="pre">Parameterize.pt_knots()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.pt_madhu_seager_09_inversion"><code class="docutils literal notranslate"><span class="pre">Parameterize.pt_madhu_seager_09_inversion()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.pt_madhu_seager_09_noinversion"><code class="docutils literal notranslate"><span class="pre">Parameterize.pt_madhu_seager_09_noinversion()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.pt_xarray_grid"><code class="docutils literal notranslate"><span class="pre">Parameterize.pt_xarray_grid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.pt_zj24"><code class="docutils literal notranslate"><span class="pre">Parameterize.pt_zj24()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.slab_decay"><code class="docutils literal notranslate"><span class="pre">Parameterize.slab_decay()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.vmr_2gradients"><code class="docutils literal notranslate"><span class="pre">Parameterize.vmr_2gradients()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picaso.parameterizations.Parameterize.vmr_knots"><code class="docutils literal notranslate"><span class="pre">Parameterize.vmr_knots()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.parameterizations.atlev"><code class="docutils literal notranslate"><span class="pre">atlev()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.parameterizations.cloud_averaging"><code class="docutils literal notranslate"><span class="pre">cloud_averaging()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#picaso.parameterizations.picaso_format"><code class="docutils literal notranslate"><span class="pre">picaso_format()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#picaso-test-module">picaso.test module</a></li>
@@ -606,7 +657,7 @@ units of cm-3</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="picaso.atmsetup.ATMSETUP.get_needed_continuum">
-<span class="sig-name descname"><span class="pre">get_needed_continuum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">available_ray_mol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">available_continuum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_needed_continuum" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_needed_continuum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">available_ray_mol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">available_continuum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.ATMSETUP.get_needed_continuum" title="Link to this definition"></a></dt>
 <dd><p>This will define which molecules are needed for the continuum opacities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -688,6 +739,32 @@ then you would have 12C-O2.</p>
 <span class="sig-prename descclassname"><span class="pre">picaso.atmsetup.</span></span><span class="sig-name descname"><span class="pre">convert_to_simple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iso_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.convert_to_simple" title="Link to this definition"></a></dt>
 <dd><p>Converts iso name (e.g. 13C-16O2 to CO2)
 Returns same name if not (e.g. CO2 gives CO2)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.atmsetup.is_opacity_excluded">
+<span class="sig-prename descclassname"><span class="pre">picaso.atmsetup.</span></span><span class="sig-name descname"><span class="pre">is_opacity_excluded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">molecule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.is_opacity_excluded" title="Link to this definition"></a></dt>
+<dd><p>Return True if a given opacity type should be excluded for a molecule.</p>
+<p>Accepts normalized exclude_mol mappings and also tolerates legacy values.
+Matching is attempted against both the exact name and the simplified
+molecule name (e.g. isotopologue -&gt; simple species).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.atmsetup.molecule_has_excluded_line_opacity">
+<span class="sig-prename descclassname"><span class="pre">picaso.atmsetup.</span></span><span class="sig-name descname"><span class="pre">molecule_has_excluded_line_opacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.molecule_has_excluded_line_opacity" title="Link to this definition"></a></dt>
+<dd><p>Return True if any molecule requests line-opacity exclusion.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.atmsetup.normalize_exclude_mol">
+<span class="sig-prename descclassname"><span class="pre">picaso.atmsetup.</span></span><span class="sig-name descname"><span class="pre">normalize_exclude_mol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.atmsetup.normalize_exclude_mol" title="Link to this definition"></a></dt>
+<dd><p>Normalize exclude_mol into a per-molecule, per-opacity-type mapping.</p>
+<p>Accepted inputs:
+- None or 1: no exclusions
+- str: exclude all opacity types for one molecule
+- list[str]: exclude all opacity types for each molecule
+- dict[str, list[str] | str]: exclude only the requested opacity types</p>
 </dd></dl>
 
 <dl class="py function">
@@ -2312,6 +2389,14 @@ Always returns flux in ordered</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="picaso.justdoit.earth_icrccm_pt">
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">earth_icrccm_pt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.earth_icrccm_pt" title="Link to this definition"></a></dt>
+<dd><p>Return the path to the Earth ICRCCM mid-latitude summer P-T-X profile.
+The file is a PICASO-formatted rewrite of “icrccm_62_v2.atm”, from the
+rfast code.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.evolution_track">
 <span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">evolution_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">age</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.evolution_track" title="Link to this definition"></a></dt>
 <dd><p>Plot or grab an effective temperature for a certain age and mass planet.
@@ -2640,7 +2725,7 @@ Default is False</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="id7">
-<span class="sig-name descname"><span class="pre">atmosphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cto_absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cto_relative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chem_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quench</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_ph3</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cold_trap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vol_rainout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photochem_init_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_visscher_abunds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">pd_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">atmosphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cto_absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cto_relative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chem_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quench</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_ph3</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cold_trap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vol_rainout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photochem_init_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">pd_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id7" title="Link to this definition"></a></dt>
 <dd><p>Builds a dataframe and makes sure that minimum necessary parameters have been suplied.
 Sets number of layers in model.</p>
 <dl class="field-list simple">
@@ -2650,11 +2735,21 @@ Sets number of layers in model.</p>
 Must contain pressure (bars) at least one molecule</p></li>
 <li><p><strong>filename</strong> (<em>str</em>) – (Optional) Filename with pressure, temperature and volume mixing ratios.
 Must contain pressure at least one molecule</p></li>
-<li><p><strong>exclude_mol</strong> (<em>list</em><em> of </em><em>str</em>) – (Optional) List of molecules to ignore from opacity. It will NOT
-change other aspects of the calculation like mean molecular weight.
-This should be used as exploratory ONLY. if you actually want to remove
-the contribution of a molecule entirely from your profile you should remove
-it from your input data frame.</p></li>
+<li><p><strong>exclude_mol</strong> (<em>str</em><em>, </em><em>list</em><em> of </em><em>str</em><em>, or </em><em>dict</em>) – <p>(Optional) Opacity-only exclusion control used for exploratory
+spectroscopy. This does NOT change chemistry, mean molecular weight,
+density, or other non-opacity atmospheric properties.
+Supported forms are:
+- <code class="docutils literal notranslate"><span class="pre">'H2O'</span></code> or <code class="docutils literal notranslate"><span class="pre">['H2O',</span> <span class="pre">'CO2']</span></code> to exclude all opacity types</p>
+<blockquote>
+<div><p>associated with each molecule</p>
+</div></blockquote>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">{'H2O':</span> <span class="pre">['line',</span> <span class="pre">'continuum'],</span> <span class="pre">'CO2':</span> <span class="pre">['all']}</span></code> to exclude
+only selected opacity classes</p></li>
+</ul>
+<p>Valid opacity types are <code class="docutils literal notranslate"><span class="pre">line</span></code>, <code class="docutils literal notranslate"><span class="pre">continuum</span></code>, <code class="docutils literal notranslate"><span class="pre">rayleigh</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">all</span></code>.</p>
+</p></li>
 <li><p><strong>mh</strong> (<em>float</em>) – Metallicity relative to Solar</p></li>
 <li><p><strong>cto_relative</strong> (<em>float</em>) – Carbon-to-Oxygen Ratio relative to Solar (Solar value is determined by <cite>chem_method</cite>)</p></li>
 <li><p><strong>cto_absolute</strong> (<em>float</em>) – Carbon-to-Oxygen Ratio in absolute terms (e.g. 0.55)</p></li>
@@ -2674,6 +2769,7 @@ it from your input data frame.</p></li>
 </dd>
 </dl>
 </li>
+<li><p>’on-the-fly’ : Computes equilibrium chemistry on-the-fly with the equilibrium solver in <cite>Photochem</cite>.</p></li>
 </ul>
 </p></li>
 <li><p><strong>quench</strong> (<em>bool</em>) – Climate only, default = False: no quencing</p></li>
@@ -2720,7 +2816,6 @@ it from your input data frame.</p></li>
 </ul>
 <p>Pressure at the top of the atmosphere for photochem, by default 1e-7 bar. Unit must be in dynes/cm^2</p>
 </p></li>
-<li><p><strong>add_visscher_abunds</strong> (<em>bool</em>) – Default = False; Only used for photochemical results. Adds visscher to fill gaps covered by the photochemical mdoel</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em>) – (Optional) prints out warnings. Default set to True</p></li>
 <li><p><strong>pd_kwargs</strong> (<em>kwargs</em>) – Key word arguments for pd.read_csv to read in supplied atmosphere file</p></li>
 </ul>
@@ -2808,6 +2903,43 @@ chemistry onto your 3D grid.</p>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.justdoit.inputs.chemeq_on_the_fly">
+<span class="sig-name descname"><span class="pre">chemeq_on_the_fly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cto_absolute</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_mh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sonora-approx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chemeq_solver_init_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.chemeq_on_the_fly" title="Link to this definition"></a></dt>
+<dd><p>Compute chemical equilibrium abundances for the current pressure–temperature
+profile using the <cite>photochem.EquilibriumChemistry</cite> solver and attach the
+resulting gas-phase mixing ratios to <code class="docutils literal notranslate"><span class="pre">inputs['atmosphere']['profile']</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cto_absolute</strong> (<em>float</em>) – Absolute carbon-to-oxygen ratio. Converted internally to a
+solar-relative C/O ratio before passing to the equilibrium solver.</p></li>
+<li><p><strong>log_mh</strong> (<em>float</em>) – Base-10 logarithm of the metallicity relative to solar. This value,
+together with <code class="docutils literal notranslate"><span class="pre">cto_absolute</span></code>, defines the elemental composition used
+in the equilibrium calculation.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Equilibrium chemistry approach to use. Default <code class="docutils literal notranslate"><span class="pre">'sonora-approx'</span></code> loads the
+Sonora thermo data shipped with the reference data and caches the
+solver in <code class="docutils literal notranslate"><span class="pre">inputs['climate']['chemeq_solver']</span></code> for reuse. Set to
+<code class="docutils literal notranslate"><span class="pre">None</span></code> to build an <code class="docutils literal notranslate"><span class="pre">EquilibriumChemistry</span></code> instance with custom
+arguments supplied via <code class="docutils literal notranslate"><span class="pre">chemeq_solver_init_args</span></code>. Any other value
+raises an exception.</p></li>
+<li><p><strong>chemeq_solver_init_args</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments forwarded to <code class="docutils literal notranslate"><span class="pre">EquilibriumChemistry</span></code> when
+<code class="docutils literal notranslate"><span class="pre">method</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (e.g., custom thermodynamic files or solver
+options). Ignored when using the built-in Sonora grid.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Requires <code class="docutils literal notranslate"><span class="pre">inputs['atmosphere']['profile']</span></code> to already contain
+<code class="docutils literal notranslate"><span class="pre">pressure</span></code> (bar) and <code class="docutils literal notranslate"><span class="pre">temperature</span></code> (K) columns.</p></li>
+<li><p>The solver instance is cached on <code class="docutils literal notranslate"><span class="pre">inputs['climate']['chemeq_solver']</span></code>
+and reinitialized only when <code class="docutils literal notranslate"><span class="pre">method</span></code> changes.</p></li>
+<li><p>Only gas abundances returned by the solver are currently written back to
+the profile; condensate information is discarded.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py method">
@@ -2920,7 +3052,7 @@ do photohchemistry.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="picaso.justdoit.inputs.climate">
-<span class="sig-name descname"><span class="pre">climate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opacityclass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_all_profiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_all_kzz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diseq_chem</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_consistent_kzz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.climate" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">climate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opacityclass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_all_profiles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_spec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_all_kzz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diseq_chem</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_consistent_kzz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.inputs.climate" title="Link to this definition"></a></dt>
 <dd><p>Top Function to run the Climate Model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2938,6 +3070,11 @@ without having to run a separate PICASO run.</p></li>
 <li><p><strong>diseq_chem</strong> (<em>bool</em>) – If you want to run <a href="#id8"><span class="problematic" id="id9">`</span></a>on-the-fly’ mixing (takes longer),True/False</p></li>
 <li><p><strong>self_consistent_kzz</strong> (<em>bool</em>) – If you want to run MLT in convective zones and Moses in the radiative zones</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em>) – If True, triggers prints throughout code</p></li>
+<li><p><strong>damping</strong> (<em>bool</em>) – (Optional) Only used when diseq_chem=True. If True, under-relax the
+temperature update in the coupled temperature&lt;-&gt;photochem iteration
+(blend the new iterate 50/50 with the previous one). This damps
+period-2 limit cycles that can otherwise prevent convergence. Has no
+effect on chemical-equilibrium runs. Default False.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3643,7 +3780,7 @@ inputs.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.justdoit.opannection">
-<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">opannection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'resampled'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ck_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preload_gases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">picaso.justdoit.</span></span><span class="sig-name descname"><span class="pre">opannection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'resampled'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ck_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman_db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preload_gases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justdoit.opannection" title="Link to this definition"></a></dt>
 <dd><p>Sets up database connection to opacities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3661,6 +3798,11 @@ sampling requested is. Consult your local theorist before
 using this.</p></li>
 <li><p><strong>method</strong> (<em>str</em>) – By default method=’resampled’
 Other options include: [‘preweighted’,’resortrebin’]</p></li>
+<li><p><strong>query_method</strong> (<em>str</em>) – Only used when <code class="docutils literal notranslate"><span class="pre">method='resampled'</span></code>. Controls how molecular opacities
+are fetched from the resampled database.
+Options are:
+- <code class="docutils literal notranslate"><span class="pre">'nearest'</span></code>: nearest-neighbor selection in PT space
+- <code class="docutils literal notranslate"><span class="pre">'linear'</span></code>: bilinear interpolation in PT space</p></li>
 <li><p><strong>ck_db</strong> (<em>str</em>) – Can be:
 - (required if method is preweighted) ASCII dir of ck file
 - (required if method is preweighted) HDF5 filename
@@ -3901,8 +4043,8 @@ and cloud opacity as a function of altitude.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="picaso.justplotit.create_heat_map">
-<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">create_heat_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'12px'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.create_heat_map" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="picaso.justplotit.create_heat_map_deprecate">
+<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">create_heat_map_deprecate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rayleigh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'12px'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.create_heat_map_deprecate" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -4330,8 +4472,8 @@ give a different pallete</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="picaso.justplotit.spectrum_hires">
-<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">spectrum_hires</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.spectrum_hires" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="picaso.justplotit.spectrum_hires_deprecate">
+<span class="sig-prename descclassname"><span class="pre">picaso.justplotit.</span></span><span class="sig-name descname"><span class="pre">spectrum_hires_deprecate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.justplotit.spectrum_hires_deprecate" title="Link to this definition"></a></dt>
 <dd><p>Plot formated albedo spectrum</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -4565,6 +4707,48 @@ Must supply this OR combo of min, max wavelength and R</p></li>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="picaso.opacity_factory.convert_sqlite_to_hdf5">
+<span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">convert_sqlite_to_hdf5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_db</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_hdf5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lzf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storage_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'log10_uint16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1,</span> <span class="pre">4096)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">molecular_log10_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">continuum_log10_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.convert_sqlite_to_hdf5" title="Link to this definition"></a></dt>
+<dd><p>Convert a resampled PICASO SQLite opacity database to the HDF5 layout used by
+the runtime HDF5 resampled-opacity backend.</p>
+<p>The output file contains:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/header</span></code> metadata for the PT grid, continuum temperatures, and wavenumber grid</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/molecular/&lt;molecule&gt;</span></code> datasets with shape <code class="docutils literal notranslate"><span class="pre">(n_pt,</span> <span class="pre">n_wno)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/continuum/&lt;species&gt;</span></code> datasets with shape <code class="docutils literal notranslate"><span class="pre">(n_temp,</span> <span class="pre">n_wno)</span></code></p></li>
+</ul>
+<p>Supported storage formats are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">log10_uint16</span></code>: quantized <code class="docutils literal notranslate"><span class="pre">log10(opacity)</span></code> plus per-dataset <code class="docutils literal notranslate"><span class="pre">y_min</span></code>/<code class="docutils literal notranslate"><span class="pre">y_max</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log10_float32</span></code>: raw <code class="docutils literal notranslate"><span class="pre">log10(opacity)</span></code> stored as <code class="docutils literal notranslate"><span class="pre">float32</span></code></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_db</strong> (<em>str</em>) – Path to the input SQLite resampled-opacity database.</p></li>
+<li><p><strong>output_hdf5</strong> (<em>str</em>) – Path to the output HDF5 file.</p></li>
+<li><p><strong>compression</strong> (<em>{None</em><em>, </em><em>'lzf'}</em><em>, </em><em>optional</em>) – Optional HDF5 dataset compression. <code class="docutils literal notranslate"><span class="pre">None</span></code> writes uncompressed datasets.</p></li>
+<li><p><strong>shuffle</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, enable the HDF5 shuffle filter on written datasets.</p></li>
+<li><p><strong>storage_format</strong> (<em>{'log10_uint16'</em><em>, </em><em>'log10_float32'}</em><em>, </em><em>optional</em>) – On-disk opacity representation for both molecular and continuum datasets.</p></li>
+<li><p><strong>chunks</strong> (<em>tuple</em><em> of </em><em>int</em><em>, </em><em>optional</em>) – HDF5 chunk shape used when writing compressed datasets. Defaults to
+<code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">4096)</span></code>.</p></li>
+<li><p><strong>molecular_log10_floor</strong> (<em>float</em><em>, </em><em>optional</em>) – Positive floor applied to molecular opacities before taking <code class="docutils literal notranslate"><span class="pre">log10</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">1e-50</span></code>.</p></li>
+<li><p><strong>continuum_log10_floor</strong> (<em>float</em><em>, </em><em>optional</em>) – Positive floor applied to continuum opacities before taking <code class="docutils literal notranslate"><span class="pre">log10</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">1e-100</span></code>.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, print progress while writing molecular and continuum datasets.
+Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function preserves the row ordering from the SQLite database. The HDF5
+runtime backend uses row indices directly, so the important invariant is that
+the stored dataset row order matches the <code class="docutils literal notranslate"><span class="pre">pt_pairs</span></code> metadata written into
+the file.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.create_grid">
 <span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">create_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_wavelength</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_wavelength</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_R</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.create_grid" title="Link to this definition"></a></dt>
 <dd><p>Simple function to create a wavelength grid defined with a constant R.</p>
@@ -4721,11 +4905,11 @@ individual molecule files (resortrebin).</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.get_continuum">
 <span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">get_continuum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">species</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.get_continuum" title="Link to this definition"></a></dt>
-<dd><p>Grab continuum opacity from sqlite database</p>
+<dd><p>Grab continuum opacity from sqlite or HDF5 database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>db_file</strong> (<em>str</em>) – sqlite3 database filename</p></li>
+<li><p><strong>db_file</strong> (<em>str</em>) – sqlite3 or HDF5 database filename</p></li>
 <li><p><strong>species</strong> (<em>list</em><em> of </em><em>str</em>) – Single species name. you can run continuum_avail to see what species are present.</p></li>
 <li><p><strong>temperature</strong> (<em>list</em><em> of </em><em>float</em>) – Temperature to grab. can grab available temperatures from continuum_avail</p></li>
 </ul>
@@ -4831,11 +5015,11 @@ Also includes factor for simulated emission</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.get_metadata_item">
 <span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">get_metadata_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.get_metadata_item" title="Link to this definition"></a></dt>
-<dd><p>Retrieves a metadata item by key.</p>
+<dd><p>Retrieves a metadata item by key from SQLite or HDF5.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>db_path</strong> (<em>str</em>) – Path to the SQLite database file.</p></li>
+<li><p><strong>db_path</strong> (<em>str</em>) – Path to the SQLite or HDF5 database file.</p></li>
 <li><p><strong>key</strong> (<em>str</em>) – The metadata key.</p></li>
 </ul>
 </dd>
@@ -4848,11 +5032,11 @@ Also includes factor for simulated emission</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.opacity_factory.get_molecular">
 <span class="sig-prename descclassname"><span class="pre">picaso.opacity_factory.</span></span><span class="sig-name descname"><span class="pre">get_molecular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">species</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pressure</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.opacity_factory.get_molecular" title="Link to this definition"></a></dt>
-<dd><p>Grab molecular opacity from sqlite database</p>
+<dd><p>Grab molecular opacity from sqlite or HDF5 database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>db_file</strong> (<em>str</em>) – sqlite3 database filename</p></li>
+<li><p><strong>db_file</strong> (<em>str</em>) – sqlite3 or HDF5 database filename</p></li>
 <li><p><strong>species</strong> (<em>list</em><em> of </em><em>str</em>) – Single species name. you can run molecular_avail to see what species are present.</p></li>
 <li><p><strong>temperature</strong> (<em>list</em><em> of </em><em>flaot</em><em>,</em><em>int</em>) – Temperature to grab. This will grab the nearest pair neighbor so you dont
 have to be exact.
@@ -5630,11 +5814,72 @@ continuum. Continuum opacity is grabbed via nearest neighbor methodology.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="picaso.optics.RetrieveOpacitiesHDF5">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">RetrieveOpacitiesHDF5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wave_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'local'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nearest'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacitiesHDF5" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#picaso.optics.RetrieveOpacities" title="picaso.optics.RetrieveOpacities"><code class="xref py py-class docutils literal notranslate"><span class="pre">RetrieveOpacities</span></code></a></p>
+<p>HDF5 reader for resampled opacity databases.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.optics.RetrieveOpacitiesHDF5.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacitiesHDF5.close" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.optics.RetrieveOpacitiesHDF5.get_available_data">
+<span class="sig-name descname"><span class="pre">get_available_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wave_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacitiesHDF5.get_available_data" title="Link to this definition"></a></dt>
+<dd><p>Get the pressures and temperatures that are available for the continuum and molecules</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.optics.RetrieveOpacitiesHDF5.get_opacities">
+<span class="sig-name descname"><span class="pre">get_opacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atmosphere</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacitiesHDF5.get_opacities" title="Link to this definition"></a></dt>
+<dd><p>Get’s opacities using the atmosphere class using interpolation for molecular, but not
+continuum. Continuum opacity is grabbed via nearest neighbor methodology.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.optics.RetrieveOpacitiesHDF5.get_opacities_nearest">
+<span class="sig-name descname"><span class="pre">get_opacities_nearest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atmosphere</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_mol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacitiesHDF5.get_opacities_nearest" title="Link to this definition"></a></dt>
+<dd><p>Get’s opacities using the atmosphere class</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.optics.RetrieveOpacitiesHDF5.preload_opacities">
+<span class="sig-name descname"><span class="pre">preload_opacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">molecules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_range</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.RetrieveOpacitiesHDF5.preload_opacities" title="Link to this definition"></a></dt>
+<dd><p>Function that pre-loads opacities for certain molecules and p-t range</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>molecules</strong> (<em>list</em>) – list of molecule names</p></li>
+<li><p><strong>p_range</strong> (<em>list</em>) – list of floats in bars e.g [1e-2,1]</p></li>
+<li><p><strong>t_range</strong> (<em>list</em>) – List of floats in kelvin e.g [300,1000]</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.optics.adapt_array">
 <span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">adapt_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.adapt_array" title="Link to this definition"></a></dt>
 <dd><p>needed to interpret bytes to array</p>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.optics.add_continuum_numba">
+<span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">add_continuum_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">taugas_gauss_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transpose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.add_continuum_numba" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.optics.add_molecular_gauss_numba">
+<span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">add_molecular_gauss_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">taugas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">molecular_opa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colden</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mmw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.add_molecular_gauss_numba" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.optics.add_rayleigh_numba">
+<span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">add_rayleigh_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tauray_gauss_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rayleigh_opa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.add_rayleigh_numba" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="picaso.optics.bin_star">
@@ -5722,6 +5967,83 @@ It has dimensions: # layer by # wavelength
 except for hotter cases where Na &amp; K are present. This differences is not a product of the code
 but a product of the different opacities (1060 grid versus old 736 grid)</p>
 <div class="admonition-todo admonition" id="id24">
+<p class="admonition-title">Todo</p>
+<p>Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has
+a better methodology)</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.optics.compute_opacity_numba_WIP">
+<span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">compute_opacity_numba_WIP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atmosphere</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacityclass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ngauss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_eddington</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raman</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fthin_cld</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_holes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.compute_opacity_numba_WIP" title="Link to this definition"></a></dt>
+<dd><p>Returns total optical depth per slab layer including molecular opacity, continuum opacity.
+It should automatically select the molecules needed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>atmosphere</strong> (<em>class ATMSETUP</em>) – This inherets the class from atmsetup.py</p></li>
+<li><p><strong>opacityclass</strong> (<em>class opacity</em>) – This inherets the class from optics.py. It is done this way so that the opacity db doesnt have
+to be reloaded in a retrieval</p></li>
+<li><p><strong>ngauss</strong> (<em>int</em>) – Number of gauss angles if using correlated-k. If using monochromatic opacites,
+ngauss should one.</p></li>
+<li><p><strong>stream</strong> (<em>int</em>) – Number of streams (only affects detal eddington approximation)</p></li>
+<li><p><strong>delta_eddington</strong> (<em>bool</em>) – (Optional) Default=True, With Delta-eddington on, it incorporates the forward peak
+contribution by adjusting optical properties such that the fraction of scattered energy
+in the forward direction is removed from the scattering parameters</p></li>
+<li><p><strong>raman</strong> (<em>int</em>) – (Optional) Default =0 which corresponds to oklopcic+2018 raman scattering cross sections.
+Other options include 1 for original pollack approximation for a 6000K blackbody.
+And 2 for nothing.</p></li>
+<li><p><strong>test_mode</strong> (<em>bool</em>) – (Optional) Default = False to run as normal. This will overwrite the opacities and fix the
+delta tau at 0.5.</p></li>
+<li><p><strong>full_output</strong> (<em>bool</em>) – (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class.
+This is done so that the users can debug, plot, etc.</p></li>
+<li><p><strong>plot_opacity</strong> (<em>bool</em>) – (Optional) Default = False. If true, Will create a pop up plot of the weighted of each absorber
+at the middle layer</p></li>
+<li><p><strong>return_mode</strong> (<em>bool</em>) – (Optional) Default = False, If true, will only return matrices for all the weighted opacity
+contributions</p></li>
+<li><p><strong>do_holes</strong> (<em>bool</em>) – (Optional) Default = False, If true, will calculate clearsky</p></li>
+<li><p><strong>fthin_cld</strong> (<em>float</em>) – Fraction of thin clouds in patchy cloud column (from 0 to 1.0), default 0 for clear sky column</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>DTAU</strong> (<em>ndarray</em>) – This is a matrix with # layer by # wavelength. It is the opacity contained within a layer
+including the continuum, scattering, cloud (if specified), and molecular opacity
+<strong>If requested, this is corrected for with Delta-Eddington.</strong></p></li>
+<li><p><strong>TAU</strong> (<em>ndarray</em>) – This is a matrix with # level by # wavelength. It is the cumsum of opacity contained
+including the continuum, scattering, cloud (if specified), and molecular opacity
+<strong>If requested, this is corrected for with Delta-Eddington.</strong></p></li>
+<li><p><strong>WBAR</strong> (<em>ndarray</em>) – This is the single scattering albedo that includes rayleigh, raman and user input scattering sources.
+It has dimensions: # layer by # wavelength
+<strong>If requested, this is corrected for with Delta-Eddington.</strong></p></li>
+<li><p><strong>COSB</strong> (<em>ndarray</em>) – This is the asymettry factor which accounts for rayleigh and user specified values
+It has dimensions: # layer by # wavelength
+<strong>If requested, this is corrected for with Delta-Eddington.</strong></p></li>
+<li><p><strong>ftau_cld</strong> (<em>ndarray</em>) – This is the fraction of cloud opacity relative to the total TAUCLD/(TAUCLD + TAURAY)</p></li>
+<li><p><strong>ftau_ray</strong> (<em>ndarray</em>) – This is the fraction of rayleigh opacity relative to the total TAURAY/(TAUCLD + TAURAY)</p></li>
+<li><p><strong>GCOS2</strong> (<em>ndarray</em>) – This is used for Cahoy+2010 methodology for accounting for rayleigh scattering. It
+replaces the use of the actual rayleigh phase function by just multiplying ftau_ray by 2</p></li>
+<li><p><strong>DTAU</strong> (<em>ndarray</em>) – This is a matrix with # layer by # wavelength. It is the opacity contained within a layer
+including the continuum, scattering, cloud (if specified), and molecular opacity
+<strong>If requested, this is corrected for with Delta-Eddington.</strong></p></li>
+<li><p><strong>TAU</strong> (<em>ndarray</em>) – This is a matrix with # level by # wavelength. It is the cumsum of opacity contained
+including the continuum, scattering, cloud (if specified), and molecular opacity
+<strong>Original, never corrected for with Delta-Eddington.</strong></p></li>
+<li><p><strong>WBAR</strong> (<em>ndarray</em>) – This is the single scattering albedo that includes rayleigh, raman and user input scattering sources.
+It has dimensions: # layer by # wavelength
+<strong>Original, never corrected for with Delta-Eddington.</strong></p></li>
+<li><p><strong>COSB</strong> (<em>ndarray</em>) – This is the asymettry factor which accounts for rayleigh and user specified values
+It has dimensions: # layer by # wavelength
+<strong>Original, never corrected for with Delta-Eddington.</strong></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This was baselined against jupiter with the old fortran code. It matches 100% for all cases
+except for hotter cases where Na &amp; K are present. This differences is not a product of the code
+but a product of the different opacities (1060 grid versus old 736 grid)</p>
+<div class="admonition-todo admonition" id="id25">
 <p class="admonition-title">Todo</p>
 <p>Add a better approximation than delta-scale (e.g. M.Marley suggests a paper by Cuzzi that has
 a better methodology)</p>
@@ -5923,6 +6245,453 @@ to swap out different methods to calculate rayleigh opacity
 <dt class="sig sig-object py" id="picaso.optics.spline">
 <span class="sig-prename descclassname"><span class="pre">picaso.optics.</span></span><span class="sig-name descname"><span class="pre">spline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yp0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ypn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.optics.spline" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+</section>
+<section id="module-picaso.parameterizations">
+<span id="picaso-parameterizations-module"></span><h2>picaso.parameterizations module<a class="headerlink" href="#module-picaso.parameterizations" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">picaso.parameterizations.</span></span><span class="sig-name descname"><span class="pre">Parameterize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_cld_optical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mieff_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_fit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GridFitter</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.add_class">
+<span class="sig-name descname"><span class="pre">add_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">picaso_inputs_class</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.add_class" title="Link to this definition"></a></dt>
+<dd><p>Add a picaso class that loads in the pressure grid (at the very least)</p>
+<p class="rubric">Example</p>
+<p>start = jdi.inputs()
+start.add_pt(P=np.logspace(-6,3,91))
+param = Parameterize(load_cld_optical=[‘SiO2’,’Al2O3’],mieff_dir=’/data/virga’)
+param.add_class(start)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.chem_chemeq_on_the_fly">
+<span class="sig-name descname"><span class="pre">chem_chemeq_on_the_fly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cto_absolute</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_mh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.chem_chemeq_on_the_fly" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.chem_free">
+<span class="sig-name descname"><span class="pre">chem_free</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">species</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.chem_free" title="Link to this definition"></a></dt>
+<dd><p>‘
+Abundance profile for free chemistry.</p>
+<p>For non background species, it checks whether a constant or pressure-
+dependent abundance profile will be used. For pressure dependent profiles,
+it calls the relevant function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>species</strong> (<em>dict</em>) – Dictionary containing the species and their abundances. Should
+also contain background gases and their ratios.
+Example: species=dict(H2O=dict(value=1e-4, unit=’v/v’), background=dict(gases=[‘H2’, ‘He’], ratios=[0.85, 0.15]))</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Data frame with chemical abundances per level</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.chem_visscher">
+<span class="sig-name descname"><span class="pre">chem_visscher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cto_absolute</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_mh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.chem_visscher" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.chem_xarray_grid">
+<span class="sig-name descname"><span class="pre">chem_xarray_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">molecules</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">grid_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.chem_xarray_grid" title="Link to this definition"></a></dt>
+<dd><p>Allows chemistry to be interpolated from picaso’s standard xarray grid format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grid_name</strong> (<em>str</em>) – Name of grid for storage and bookeeping</p></li>
+<li><p><strong>molecules</strong> (<em>list</em><em>, </em><em>str</em>) – list of molecules from which to pull parameters for</p></li>
+<li><p><strong>grid_kwargs</strong> (<em>dict</em>) – dictionary of grid parameters and values on which to interpolate (must match grid)
+e.g., {‘logmh’:0,’cto’:0.55}</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.cloud_brewster_grey">
+<span class="sig-name descname"><span class="pre">cloud_brewster_grey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decay_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_wave</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'dp':</span> <span class="pre">nan,</span> <span class="pre">'ptop':</span> <span class="pre">nan,</span> <span class="pre">'reference_tau':</span> <span class="pre">nan}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deck_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'dp':</span> <span class="pre">nan,</span> <span class="pre">'ptop':</span> <span class="pre">nan}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.cloud_brewster_grey" title="Link to this definition"></a></dt>
+<dd><p>Creates grey cloud with either slab or deck decay and an alpha wavelength scaling</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>decay_type</strong> (<em>str</em>) – One of ‘deck’ or ‘slab’</p></li>
+<li><p><strong>ssa</strong> (<em>float</em>) – Single Scattering Albedo: can have values from 0 to 1</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – set to 0 for grey cloud</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PICASO formatted cld input dataframe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.cloud_brewster_mie">
+<span class="sig-name descname"><span class="pre">cloud_brewster_mie</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condensate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lognorm_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'lograd':</span> <span class="pre">nan,</span> <span class="pre">'sigma':</span> <span class="pre">nan}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hansen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'b':</span> <span class="pre">nan,</span> <span class="pre">'lograd':</span> <span class="pre">nan}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slab_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'dp':</span> <span class="pre">nan,</span> <span class="pre">'ptop':</span> <span class="pre">nan,</span> <span class="pre">'reference_tau':</span> <span class="pre">nan}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deck_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'dp':</span> <span class="pre">nan,</span> <span class="pre">'ptop':</span> <span class="pre">nan}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.cloud_brewster_mie" title="Link to this definition"></a></dt>
+<dd><p>Given a base_pressure and fsed to set the exponential drop of the cloud integrate a particle
+radius distribution via gaussian or hansen distributions to get optical properties in picaso
+format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>species</strong> (<em>str</em>) – Name of species. Should already have been preloaded via Parameterize options in load_cld_optical</p></li>
+<li><p><strong>base_pressure</strong> (<em>float</em>) – base of the cloud deck in bars</p></li>
+<li><p><strong>ndz</strong> (<em>float</em>) – number density of the cloud deck cgs</p></li>
+<li><p><strong>fsed</strong> (<em>float</em>) – sedimentation efficiency</p></li>
+<li><p><strong>distribution</strong> (<em>str</em>) – either lognormal or hansen</p></li>
+<li><p><strong>lognorm_kwargs</strong> (<em>dict</em>) – diectionary with the format: {‘sigma’:np.nan, ‘lograd’:np.nan}
+lograd median particle radius in um
+sigma width of the distribtuion must be &gt;1</p></li>
+<li><p><strong>hansen_kwargs</strong> (<em>dict</em>) – dictionary with the format: {‘b’:np.nan,’lograd’:np.nan}
+lograd and b from Hansen+1971: <a class="reference external" href="https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf">https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf</a>
+lograd = a = effective particle radius in um
+b = varience of the particle radius</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PICASO formatted cld input dataframe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.cloud_flex_fsed">
+<span class="sig-name descname"><span class="pre">cloud_flex_fsed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condensate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_pressure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fsed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lognorm_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'lograd':</span> <span class="pre">nan,</span> <span class="pre">'sigma':</span> <span class="pre">nan}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hansen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'b':</span> <span class="pre">nan,</span> <span class="pre">'lograd':</span> <span class="pre">nan}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.cloud_flex_fsed" title="Link to this definition"></a></dt>
+<dd><p>Given a base_pressure and fsed to set the exponential drop of the cloud integrate a particle
+radius distribution via gaussian or hansen distributions to get optical properties in picaso
+format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>species</strong> (<em>str</em>) – Name of species. Should already have been preloaded via Parameterize options in load_cld_optical</p></li>
+<li><p><strong>base_pressure</strong> (<em>float</em>) – base of the cloud deck in bars</p></li>
+<li><p><strong>ndz</strong> (<em>float</em>) – number density of the cloud deck cgs</p></li>
+<li><p><strong>fsed</strong> (<em>float</em>) – sedimentation efficiency</p></li>
+<li><p><strong>distribution</strong> (<em>str</em>) – either lognormal or hansen</p></li>
+<li><p><strong>lognorm_kwargs</strong> (<em>dict</em>) – diectionary with the format: {‘sigma’:np.nan, ‘lograd’:np.nan}
+lograd median particle radius in cm
+sigma width of the distribtuion must be &gt;1</p></li>
+<li><p><strong>hansen_kwargs</strong> (<em>dict</em>) – dictionary with the format: {‘b’:np.nan,’lograd’:np.nan}
+lograd and b from Hansen+1971: <a class="reference external" href="https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf">https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf</a>
+lograd = a = effective particle radius
+b = varience of the particle radius</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PICASO formatted cld input dataframe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.cloud_hard_grey">
+<span class="sig-name descname"><span class="pre">cloud_hard_grey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.cloud_hard_grey" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.cloud_virga">
+<span class="sig-name descname"><span class="pre">cloud_virga</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">virga_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.cloud_virga" title="Link to this definition"></a></dt>
+<dd><p>A function that runs picaso virga from justdoit.inputs class. modifies the toml inputs to run
+virga direct</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.deck_decay">
+<span class="sig-name descname"><span class="pre">deck_decay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ptop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.deck_decay" title="Link to this definition"></a></dt>
+<dd><p>Emualates brewster opacity decay for the deck model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ptop</strong> (<em>float</em>) – ptop is log pressure (bar) at which tau of cloud ~1</p></li>
+<li><p><strong>dp</strong> (<em>float</em>) – dtau / dP = const * exp((P-P0) / pressure_scale)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.flex_cloud">
+<span class="sig-name descname"><span class="pre">flex_cloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condensate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_pressure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fsed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lognorm_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'lograd':</span> <span class="pre">nan,</span> <span class="pre">'sigma':</span> <span class="pre">nan}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hansen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'b':</span> <span class="pre">nan,</span> <span class="pre">'lograd':</span> <span class="pre">nan}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.flex_cloud" title="Link to this definition"></a></dt>
+<dd><p>Given a base_pressure and fsed to set the exponential drop of the cloud integrate a particle
+radius distribution via gaussian or hansen distributions to get optical properties in picaso
+format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>species</strong> (<em>str</em>) – Name of species. Should already have been preloaded via Parameterize options in load_cld_optical</p></li>
+<li><p><strong>base_pressure</strong> (<em>float</em>) – base of the cloud deck in bars</p></li>
+<li><p><strong>ndz</strong> (<em>float</em>) – number density of the cloud deck cgs</p></li>
+<li><p><strong>fsed</strong> (<em>float</em>) – sedimentation efficiency</p></li>
+<li><p><strong>distribution</strong> (<em>str</em>) – either lognormal or hansen</p></li>
+<li><p><strong>lognorm_kwargs</strong> (<em>dict</em>) – diectionary with the format: {‘sigma’:np.nan, ‘lograd’:np.nan}
+lograd median particle radius in cm
+sigma width of the distribtuion must be &gt;1</p></li>
+<li><p><strong>hansen_kwargs</strong> (<em>dict</em>) – dictionary with the format: {‘b’:np.nan,’lograd’:np.nan}
+lograd and b from Hansen+1971: <a class="reference external" href="https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf">https://web.gps.caltech.edu/~vijay/Papers/Polarisation/hansen-71b.pdf</a>
+lograd = a = effective particle radius
+b = varience of the particle radius</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PICASO formatted cld input dataframe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.get_particle_dist">
+<span class="sig-name descname"><span class="pre">get_particle_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lognorm_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'lograd':</span> <span class="pre">nan,</span> <span class="pre">'sigma':</span> <span class="pre">nan}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hansen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'b':</span> <span class="pre">nan,</span> <span class="pre">'lograd':</span> <span class="pre">nan}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.get_particle_dist" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.load_grid">
+<span class="sig-name descname"><span class="pre">load_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.load_grid" title="Link to this definition"></a></dt>
+<dd><p>This is used for GridFitting to load a grid before conducting a retrieval run</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.pt_guillot">
+<span class="sig-name descname"><span class="pre">pt_guillot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Teq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logg1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logKir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.pt_guillot" title="Link to this definition"></a></dt>
+<dd><p>Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
+called in fx()
+:param Teq: equilibrium temperature
+:type Teq: float
+:param T_int: Internal temperature, if low (100) currently set to 100 for everything
+:type T_int: float
+:param kv1: see parameterization Guillot 2010 (10.**(logg1+logKir))
+:type kv1: float
+:param kv2: see parameterization Guillot 2010 (10.**(logg1+logKir))
+:type kv2: float
+:param kth: see parameterization Guillot 2010 (10.**logKir)
+:type kth: float
+:param alpha: set to 0.5
+:type alpha: float , optional</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>T</strong> (<em>numpy.array</em>) – Temperature grid</p></li>
+<li><p><strong>P</strong> (<em>numpy.array</em>) – Pressure grid</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.pt_isothermal">
+<span class="sig-name descname"><span class="pre">pt_isothermal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.pt_isothermal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.pt_knots">
+<span class="sig-name descname"><span class="pre">pt_knots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P_knots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_knots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'brewster'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scipy_interpolate_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.pt_knots" title="Link to this definition"></a></dt>
+<dd><p>”
+Knot-based temperature profile. Implements different types of interpolation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Temperature per layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.pt_madhu_seager_09_inversion">
+<span class="sig-name descname"><span class="pre">pt_madhu_seager_09_inversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.pt_madhu_seager_09_inversion" title="Link to this definition"></a></dt>
+<dd><p>”
+Implements the temperature structure parameterization from Madhusudhan &amp; Seager (2009)</p>
+<blockquote>
+<div><p>allowing for inversions</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Temperature per layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.pt_madhu_seager_09_noinversion">
+<span class="sig-name descname"><span class="pre">pt_madhu_seager_09_noinversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.pt_madhu_seager_09_noinversion" title="Link to this definition"></a></dt>
+<dd><p>”
+Implements the temperature structure parameterization from Madhusudhan &amp; Seager (2009)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Temperature per layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.pt_xarray_grid">
+<span class="sig-name descname"><span class="pre">pt_xarray_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">grid_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.pt_xarray_grid" title="Link to this definition"></a></dt>
+<dd><p>Allows temperature to be interpolated from picaso’s standard xarray grid format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grid_name</strong> (<em>str</em>) – Name of grid for storage and bookeeping</p></li>
+<li><p><strong>grid_kwargs</strong> (<em>dict</em>) – dictionary of grid parameters and values on which to interpolate (must match grid)
+e.g., {‘logmh’:0,’cto’:0.55}</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.pt_zj24">
+<span class="sig-name descname"><span class="pre">pt_zj24</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pressures</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dTs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Tbottom</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.pt_zj24" title="Link to this definition"></a></dt>
+<dd><p>”
+Zhang+24 profile (fits dlogT/dlogP instead of T)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.slab_decay">
+<span class="sig-name descname"><span class="pre">slab_decay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ptop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.slab_decay" title="Link to this definition"></a></dt>
+<dd><p>Modeled after brewster slabs see Eqn 13 and 14 Whiteford et al.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ptop</strong> (<em>float</em>) – pressure top in log bars</p></li>
+<li><p><strong>dp</strong> (<em>float</em>) – pressure thickness in dex bars, default - 0.005</p></li>
+<li><p><strong>reference_tau</strong> (<em>float</em>) – reference tau for 1 micron</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>optical depth per layer as a function of layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.vmr_2gradients">
+<span class="sig-name descname"><span class="pre">vmr_2gradients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.vmr_2gradients" title="Link to this definition"></a></dt>
+<dd><p>Compute the volume mixing ratio (VMR) profile using two gradients.</p>
+<p>This method calculates the VMR profile for a given species based on
+specified gradients above (‘gradient_top’) and below (‘gradient_bottom’)
+a switch pressure (‘p_switch’) and the VMR at that pressure (‘vmr_switch’).</p>
+<p>A quenched profile can be emulated by setting ‘gradient_top’ to 0.
+a rained out profile can be emulated by setting ‘gradient_bottom’ to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>species</strong> (<em>dict</em>) – <p>A dictionary containing the following keys:
+- ‘vmr_switch’: A dictionary with the key ‘value’ specifying</p>
+<blockquote>
+<div><p>the VMR at the switch pressure level.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>’p_switch’: A dictionary with the key ‘value’ specifying
+the switch pressure level.</p></li>
+<li><p>’gradient_top’: A dictionary with the key ‘value’ specifying
+the gradient above the switch pressure level.</p></li>
+<li><p>’gradient_bottom’: A dictionary with the key ‘value’
+specifying the gradient below the switch pressure level.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An array representing the VMR profile, with values
+capped at a maximum of 1.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="picaso.parameterizations.Parameterize.vmr_knots">
+<span class="sig-name descname"><span class="pre">vmr_knots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.Parameterize.vmr_knots" title="Link to this definition"></a></dt>
+<dd><p>Computes a pressure dependent abundance profile by interpolating
+from a given set of pressures and the VMRs at those pressures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>species</strong> (<em>dict</em>) – A dictionary containing the following keys:
+- ‘vmr_knots’: list of associated vmrs that match P_knots
+- ‘P_knots’: A dictionary or list of pressure knot values.</p></li>
+<li><p><strong>dictionaries</strong><strong>)</strong> (<em>(</em><em>I think now it should be possible to remove the 'value' key in the</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An array of VMR values interpolated across the
+pressure levels, clipped to the range [0, 1].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.parameterizations.atlev">
+<span class="sig-prename descclassname"><span class="pre">picaso.parameterizations.</span></span><span class="sig-name descname"><span class="pre">atlev</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pressure_layer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.atlev" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.parameterizations.cloud_averaging">
+<span class="sig-prename descclassname"><span class="pre">picaso.parameterizations.</span></span><span class="sig-name descname"><span class="pre">cloud_averaging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.cloud_averaging" title="Link to this definition"></a></dt>
+<dd><p>This is a function that takes a list of pre-formated picaso cloud dataframes and averages them.
+This is used for the case where a user might be computing several types of cloud decks and wants
+the final averaged cloud profile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dfs</strong> (<em>list</em><em>, </em><em>pd.DataFrame</em>) – This is a list of <cite>picaso_format</cite> dataframes for the cloud profiles
+Expected that these all have the same dimensionality</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>single picaso format cloud dictionary</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>df</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="picaso.parameterizations.picaso_format">
+<span class="sig-prename descclassname"><span class="pre">picaso.parameterizations.</span></span><span class="sig-name descname"><span class="pre">picaso_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavenumber_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pressure_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_bottom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_top</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opd_profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#picaso.parameterizations.picaso_format" title="Link to this definition"></a></dt>
+<dd><p>Sets up a PICASO-readable dataframe that inserts a wavelength dependent aerosol layer at the user’s
+given pressure bounds, i.e., a wavelength-dependent slab of clouds or haze.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p_bottom</strong> (<em>float</em>) – the cloud/haze base pressure
+the upper bound of pressure (i.e., lower altitude bound) to set the aerosol layer. (Bars)</p></li>
+<li><p><strong>opd</strong> (<em>ndarray</em>) – wavelength-dependent optical depth of the aerosol</p></li>
+<li><p><strong>w0</strong> (<em>ndarray</em>) – wavelength-dependent single scattering albedo of the aerosol</p></li>
+<li><p><strong>g0</strong> (<em>ndarray</em>) – asymmetry parameter = Q_scat wtd avg of &lt;cos theta&gt;</p></li>
+<li><p><strong>wavenumber_grid</strong> (<em>ndarray</em>) – wavenumber grid in (cm^-1)</p></li>
+<li><p><strong>pressure_grid</strong> (<em>ndarray</em>) – bars, user-defined pressure grid for the model atmosphere</p></li>
+<li><p><strong>p_top</strong> (<em>float</em>) – bars, the cloud/haze-top pressure
+This cuts off the upper cloud region as a step function.
+You must specify either p_top or p_decay.</p></li>
+<li><p><strong>p_decay</strong> (<em>ndarray</em>) – noramlized to 1, unitless
+array the same size as pressure_grid which specifies a
+height dependent optical depth. The usual format of p_decay is
+a fsed like exponential decay ~np.exp(-fsed*z/H)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataframe of aerosol layer with pressure (in levels - non-physical units!), wavenumber, opd, w0, and g0 to be read by PICASO</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="picaso-test-module">

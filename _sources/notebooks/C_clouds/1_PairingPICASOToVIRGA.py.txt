@@ -27,12 +27,12 @@
 #
 
 # %%
+from virga import justplotit as vpi
+from virga import justdoit as vdi
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import os
-from picaso import justdoit as pj
-from virga import justdoit as vj
 #plot tools
-from picaso import justplotit as picplt
-from virga import justplotit as cldplt
 
 
 import astropy.units as u
@@ -45,10 +45,10 @@ output_notebook()
 # Let's set up a basic spectrum plot
 
 # %%
-opacity = pj.opannection(wave_range=[0.3,1])
+opacity = jdi.opannection(wave_range=[0.3,1])
 
 # %%
-sum_planet = pj.inputs()
+sum_planet = jdi.inputs()
 sum_planet.phase_angle(0) #radians
 sum_planet.gravity(gravity=25, gravity_unit=u.Unit('m/(s**2)')) #any astropy units available
 sum_planet.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, metallicity, logg
@@ -58,7 +58,7 @@ sum_planet.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, meta
 # Let's do simple cloud run with the `jupiter_pt` profile and constant $K_z$
 
 # %%
-df_atmo = pd.read_csv(pj.jupiter_pt(), sep='\s+')
+df_atmo = pd.read_csv(jdi.jupiter_pt(), sep='\s+')
 #you will have to add kz to the picaso profile
 df_atmo['kz'] = [1e9]*df_atmo.shape[0]
 
@@ -69,7 +69,7 @@ sum_planet.atmosphere(df=df_atmo)
 #let's get the cloud free spectrum for reference
 cloud_free = sum_planet.spectrum(opacity)
 
-x_cld_free, y_cld_free = pj.mean_regrid(cloud_free['wavenumber'], cloud_free['albedo'], R=150)
+x_cld_free, y_cld_free = jdi.mean_regrid(cloud_free['wavenumber'], cloud_free['albedo'], R=150)
 
 
 # %% [markdown]
@@ -88,7 +88,7 @@ cld_out = sum_planet.virga(['H2O'],directory, fsed=1,mh=metallicity,
                  mmw = mean_molecular_weight)
 out = sum_planet.spectrum(opacity, full_output=True)
 
-x_cldy, y_cldy = pj.mean_regrid(out['wavenumber'], out['albedo'], R=150)
+x_cldy, y_cldy = jdi.mean_regrid(out['wavenumber'], out['albedo'], R=150)
 
 # %% [markdown]
 # ## Analyzing Cloudy versus Cloud-free
@@ -96,7 +96,7 @@ x_cldy, y_cldy = pj.mean_regrid(out['wavenumber'], out['albedo'], R=150)
 # Let's take a moment to understand the difference between the cloudy and the cloud free case
 
 # %%
-show(picplt.spectrum([x_cld_free, x_cldy],
+show(jpi.spectrum([x_cld_free, x_cldy],
                      [y_cld_free, y_cldy],plot_width=500, plot_height=300,
                   legend=['Cloud Free','Cloudy']))
 
@@ -111,7 +111,7 @@ show(picplt.spectrum([x_cld_free, x_cldy],
 # This will tell us at what pressure we attain $\tau \sim 1$ optical depth for the molecular opacity, cloud opacity, and rayleigh opacity.
 
 # %%
-show(picplt.photon_attenuation(out['full_output'],
+show(jpi.photon_attenuation(out['full_output'],
                             plot_width=500, plot_height=300))
 
 
@@ -127,7 +127,7 @@ show(picplt.photon_attenuation(out['full_output'],
 #
 
 # %%
-fig, dndr = cldplt.radii(cld_out,at_pressure=0.1)
+fig, dndr = vpi.radii(cld_out,at_pressure=0.1)
 show(fig)
 
 # %% [markdown]
@@ -139,11 +139,11 @@ show(fig)
 
 # %%
 #grab your mie parameters
-qext, qscat, g_qscat, nwave,radii,wave = vj.get_mie('H2O',directory)
+qext, qscat, g_qscat, nwave,radii,wave = vdi.get_mie('H2O',directory)
 
 # %%
 from bokeh.layouts import row,column
-ind = cldplt.find_nearest_1d(radii,30e-4) #remember the radii are in cm
+ind = vpi.find_nearest_1d(radii,30e-4) #remember the radii are in cm
 
 qfig = figure(width=300, height=300,
               x_axis_type='log',y_axis_label ='Asymmetry',
@@ -173,7 +173,7 @@ hot_atmo = df_atmo
 hot_atmo['temperature'] = hot_atmo['temperature'] + 600
 
 #remember we can use recommend_gas function to look at what the condensation curves look like
-recommended = vj.recommend_gas(hot_atmo['pressure'], hot_atmo['temperature'], metallicity,mean_molecular_weight,
+recommended = vdi.recommend_gas(hot_atmo['pressure'], hot_atmo['temperature'], metallicity,mean_molecular_weight,
                 #Turn on plotting and add kwargs for bokeh.figure
                  plot=True, y_axis_type='log',y_range=[1e2,1e-3],
                                plot_height=400, plot_width=600,
@@ -192,14 +192,14 @@ sum_planet.clouds_reset()
 
 #let's get the cloud free spectrum for reference
 cloud_free = sum_planet.spectrum(opacity)
-x_cld_free, y_cld_free = pj.mean_regrid(cloud_free['wavenumber'], cloud_free['albedo'], R=150)
+x_cld_free, y_cld_free = jdi.mean_regrid(cloud_free['wavenumber'], cloud_free['albedo'], R=150)
 
 #now the cloudy runs
 cld_out = sum_planet.virga(['Na2S','ZnS'],directory, fsed=1,mh=metallicity,
                  mmw = mean_molecular_weight)
 
 out = sum_planet.spectrum(opacity, full_output=True)
-x_cld, y_cld = pj.mean_regrid(out['wavenumber'], out['albedo'], R=150)
+x_cld, y_cld = jdi.mean_regrid(out['wavenumber'], out['albedo'], R=150)
 
 
 
@@ -212,7 +212,7 @@ x_cld, y_cld = pj.mean_regrid(out['wavenumber'], out['albedo'], R=150)
 # %%
 w = [x_cld_free, x_cld]
 a = [y_cld_free, y_cld]
-show(picplt.spectrum(w,a,plot_width=500, plot_height=300,
+show(jpi.spectrum(w,a,plot_width=500, plot_height=300,
                   legend=['Cloud Free','Cloudy']))
 
 
@@ -221,7 +221,7 @@ show(picplt.spectrum(w,a,plot_width=500, plot_height=300,
 # #### Is the cloud opacity at a different pressure than the water cloud?
 
 # %%
-show(picplt.photon_attenuation(out['full_output'],
+show(jpi.photon_attenuation(out['full_output'],
                             plot_width=500, plot_height=300))
 
 
@@ -231,7 +231,7 @@ show(picplt.photon_attenuation(out['full_output'],
 # #### Are the particle radii different?
 
 # %%
-fig, dndr = cldplt.radii(cld_out,at_pressure=0.5)
+fig, dndr = vpi.radii(cld_out,at_pressure=0.5)
 show(fig)
 
 # %% [markdown]
@@ -242,8 +242,8 @@ show(fig)
 # %%
 #grab your mie parameters
 gas_name = 'Na2S' #ZnS
-qext, qscat, g_qscat, nwave,radii,wave = vj.get_mie(gas_name,directory)
-ind = cldplt.find_nearest_1d(radii,10e-4) #remember the radii are in cm
+qext, qscat, g_qscat, nwave,radii,wave = vdi.get_mie(gas_name,directory)
+ind = vpi.find_nearest_1d(radii,10e-4) #remember the radii are in cm
 
 qfig = figure(width=300, height=300,
               x_axis_type='log',y_axis_label ='Asymmetry',
@@ -269,7 +269,7 @@ show(row(qfig, wfig))
 # Let's go back to your normal cool case with H2O clouds.
 
 # %%
-df_atmo = pd.read_csv(pj.jupiter_pt(), sep="\s+")
+df_atmo = pd.read_csv(jdi.jupiter_pt(), sep="\s+")
 df_atmo['kz'] = [1e10]*df_atmo.shape[0]
 
 sum_planet.atmosphere(df = df_atmo)
@@ -283,14 +283,14 @@ for fs in all_fseds:
                  mmw = mean_molecular_weight)
     cld_outs += [cld]
     out = sum_planet.spectrum(opacity,full_output=True)
-    x,y = pj.mean_regrid(out['wavenumber'], out['albedo'], R=150)
+    x,y = jdi.mean_regrid(out['wavenumber'], out['albedo'], R=150)
     w += [x]
     a += [y]
     all_outs += [out['full_output']]
 
 
 # %%
-show(picplt.spectrum(w,a,plot_width=500, plot_height=300,
+show(jpi.spectrum(w,a,plot_width=500, plot_height=300,
                      legend=['fs= '+str(i) for i in all_fseds]))
 
 # %% [markdown]
@@ -303,9 +303,9 @@ show(picplt.spectrum(w,a,plot_width=500, plot_height=300,
 # ### How $f_{sed}$ affects cloud optical depth
 
 # %%
-show(column(picplt.photon_attenuation(all_outs[0],title='fs=0.1',
+show(column(jpi.photon_attenuation(all_outs[0],title='fs=0.1',
                             plot_width=500, plot_height=300),
-   picplt.photon_attenuation(all_outs[2],title='fs=6',
+   jpi.photon_attenuation(all_outs[2],title='fs=6',
                             plot_width=500, plot_height=300)))
 
 # %% [markdown]
@@ -315,12 +315,12 @@ show(column(picplt.photon_attenuation(all_outs[0],title='fs=0.1',
 
 # %%
 #low fsed case
-fig, dndr = cldplt.radii(cld_outs[0],at_pressure=1e-3)
+fig, dndr = vpi.radii(cld_outs[0],at_pressure=1e-3)
 show(fig)
 
 # %%
 #high fsed case
-fig, dndr = cldplt.radii(cld_outs[2],at_pressure=1)
+fig, dndr = vpi.radii(cld_outs[2],at_pressure=1)
 show(fig)
 
 # %% [markdown]
@@ -329,10 +329,10 @@ show(fig)
 # %%
 #grab your mie parameters
 gas_name = 'H2O'
-qext, qscat, g_qscat, nwave,radii,wave = vj.get_mie(gas_name,directory)
+qext, qscat, g_qscat, nwave,radii,wave = vdi.get_mie(gas_name,directory)
 
-ind_low = cldplt.find_nearest_1d(radii,1e-4) #look at the plots to get these numberss
-ind_high = cldplt.find_nearest_1d(radii,50e-4)#remember radii is in cm
+ind_low = vpi.find_nearest_1d(radii,1e-4) #look at the plots to get these numberss
+ind_high = vpi.find_nearest_1d(radii,50e-4)#remember radii is in cm
 
 qfig = figure(width=300, height=300,
               x_axis_type='log',y_axis_label ='Asymmetry',
@@ -354,7 +354,7 @@ show(row(qfig, wfig))
 # Lastly, we can do the same thing with K_zz, the mixing parameter.
 
 # %%
-df_atmo = pd.read_csv(pj.jupiter_pt(), sep="\s+")
+df_atmo = pd.read_csv(jdi.jupiter_pt(), sep="\s+")
 
 all_kzz = [1e6, 1e8, 1e10]
 w = []
@@ -367,7 +367,7 @@ for kz in all_kzz:
                  mmw = mean_molecular_weight)
     cld_outs += [cld]
     out = sum_planet.spectrum(opacity,full_output=True)
-    x,y = pj.mean_regrid(out['wavenumber'], out['albedo'], R=150)
+    x,y = jdi.mean_regrid(out['wavenumber'], out['albedo'], R=150)
     w += [x]
     a += [y]
     all_outs += [out['full_output']]
@@ -377,7 +377,7 @@ for kz in all_kzz:
 # By looking at the spectra, you might suspect that increasing K_zz simply decreases the optical thickness of the cloud. Let's take a look at what else is changing in the cloud model.
 
 # %%
-f = picplt.spectrum(w,a,plot_width=500, plot_height=300,
+f = jpi.spectrum(w,a,plot_width=500, plot_height=300,
                      legend=['Kzz= '+str(i) for i in all_kzz])
 f.legend.location = 'bottom_left'
 show(f)
@@ -386,22 +386,22 @@ show(f)
 # From the lowest to the highest case, things don't immediately look very different. Close inspection of the photon attenuation plot reveals that the $\tau\sim$1 level of the highest mixing case is indeeed a bit lower than the lower mixing mixing case.
 
 # %%
-show(column(picplt.photon_attenuation(all_outs[0],title='kz=1e6',
+show(column(jpi.photon_attenuation(all_outs[0],title='kz=1e6',
                             plot_width=500, plot_height=300),
-   picplt.photon_attenuation(all_outs[2],title='kz=1e10',
+   jpi.photon_attenuation(all_outs[2],title='kz=1e10',
                             plot_width=500, plot_height=300)))
 
 # %% [markdown]
 # Lastly, inspecting the particle size distributions is where we see the largest differences. From the lowest, to highest K_zz cases we ran, we see an increase in 4 orders of magnitude in particle size!
 
 # %%
-fig, dndr = cldplt.radii(cld_outs[0],at_pressure=1e-2)
+fig, dndr = vpi.radii(cld_outs[0],at_pressure=1e-2)
 print('kz=1e6')
 show(fig)
 
 
 # %%
-fig, dndr = cldplt.radii(cld_outs[2],at_pressure=1e-1)
+fig, dndr = vpi.radii(cld_outs[2],at_pressure=1e-1)
 print('kz=1e10')
 show(fig)
 

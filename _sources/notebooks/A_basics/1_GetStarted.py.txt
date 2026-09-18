@@ -33,8 +33,8 @@
 
 # %%
 #picaso
-from picaso import justdoit as jdi
 from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import numpy as np
 
 jpi.output_notebook()

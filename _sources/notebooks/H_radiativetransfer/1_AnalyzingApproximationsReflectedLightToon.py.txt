@@ -24,11 +24,11 @@
 # - how to run run a benchmark test against reference data within the PICASO code (leverages data from [Dlugach & Yanovitskij (1974)](https://ui.adsabs.harvard.edu/abs/1974Icar...22...66D/abstract) to replicates the study of [Batalha et al. (2019)](https://ui.adsabs.harvard.edu/abs/2019ApJ...878...70B/abstract) )
 
 # %%
+from picaso import justplotit as jpi
+from picaso import justdoit as jdi
 import warnings
 warnings.filterwarnings('ignore')
 #picaso
-from picaso import justdoit as jdi
-from picaso import justplotit as jpi
 from bokeh.plotting import show, figure
 from bokeh.layouts import column
 from bokeh.palettes import Colorblind8

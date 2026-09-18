@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quickstart for Research &mdash; picaso 4.0 documentation</title>
+  <title>Quickstart for Research &mdash; picaso 4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
@@ -14,7 +14,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=9f5556dd"></script>
+      <script src="../_static/documentation_options.js?v=3b2dd2c4"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -23,8 +23,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Tutorial &amp; Notebook Workflow" href="../notebook_workflow.html" />
-    <link rel="prev" title="Installation" href="../installation.html" /> 
+    <link rel="next" title="Getting Started : Basic Inputs and Outputs" href="A_basics/1_GetStarted.html" />
+    <link rel="prev" title="Tutorials" href="../tutorials.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -72,6 +72,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#fitting-models-to-data">Fitting models to data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#opacities">Opacities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#radiative-transfer-techniques">Radiative Transfer Techniques</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#spectral-sensitivity-analyses">Spectral Sensitivity Analyses</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#useful-tools">Useful Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials.html#references">References</a></li>
 </ul>
@@ -98,7 +99,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../installation.html">Installation</a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
       <li class="breadcrumb-item active">Quickstart for Research</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/notebooks/Quickstart.py.txt" rel="nofollow"> View page source</a>
@@ -250,27 +251,37 @@ data.get_data(category_download=&#39;stellar_grids&#39;)
 <tr class="row-even"><td><p>Reference</p></td>
 <td><p>Yes</p></td>
 <td><p>everything</p></td>
-<td><p>$picaso_refdata</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$picaso_refdata</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Resampled Opacities</p></td>
 <td><p>Yes</p></td>
 <td><p>Spectroscopic modeling</p></td>
-<td><p>$picaso_refdata/opacities/opacities*.db</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$picaso_refdata/opacities/opacities*.db</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>Stellar Database</p></td>
 <td><p>No</p></td>
 <td><p>Exoplanet modeling</p></td>
-<td><p><span class="math notranslate nohighlight">\(PYSYN_CDBS/grid | | Pre-weighted correlated-K Tables | No | Chemical equilibrium climate | Your choice (default=\)</span>picaso_refdata/opacities/preweighted)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$PYSYN_CDBS/grid</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>By molecule correlated-K Tables</p></td>
+<tr class="row-odd"><td><p>Preweighted correlated-k Tables</p></td>
+<td><p>No</p></td>
+<td><p>Chemical equilibrium climate</p></td>
+<td><p>Your choice (default=<code class="docutils literal notranslate"><span class="pre">$picaso_refdata/opacities/preweighted</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p>By molecule correlated-k Tables</p></td>
 <td><p>No</p></td>
 <td><p>Disequilibrium climate</p></td>
-<td><p>Your choice (default=<span class="math notranslate nohighlight">\(picaso_refdata/opacities/resortrebin) | | Sonora grid models | No | Initial guess/grid fitting | Your choice (default=\)</span>picaso_refdata/sonora_grids)</p></td>
+<td><p>Your choice (default=<code class="docutils literal notranslate"><span class="pre">$picaso_refdata/opacities/resortrebin</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sonora grid models</p></td>
+<td><p>No</p></td>
+<td><p>Initial guess/grid fitting</p></td>
+<td><p>Your choice (default=<code class="docutils literal notranslate"><span class="pre">$picaso_refdata/sonora_grids</span></code>)</p></td>
 </tr>
 <tr class="row-even"><td><p>Virga Mieff files</p></td>
 <td><p>No</p></td>
 <td><p>Virga cloud modeling</p></td>
-<td><p>Your choice (default=$picaso_refdata/virga)</p></td>
+<td><p>Your choice (default=<code class="docutils literal notranslate"><span class="pre">$picaso_refdata/virga</span></code>)</p></td>
 </tr>
 </tbody>
 </table>
@@ -345,8 +356,8 @@ ck_dir = d.os.path.join(d.os.environ[&#39;picaso_refdata&#39;],&#39;opacities&#3
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../notebook_workflow.html" class="btn btn-neutral float-right" title="Tutorial &amp; Notebook Workflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="A_basics/1_GetStarted.html" class="btn btn-neutral float-right" title="Getting Started : Basic Inputs and Outputs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
