@@ -357,7 +357,7 @@ def pt(full_output,ng=None, nt=None, **kwargs):
     plot_format(fig)
     return fig
 
-def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8,muted_alpha=0.2, **kwargs):
+def spectrum(xarray, yarray, legend=None, wno_to_micron=True, palette=Colorblind8, muted_alpha=0.2, R=None, **kwargs):
     """Plot formated albedo spectrum
 
     Parameters
@@ -370,11 +370,13 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         legends for plotting 
     wno_to_micron : bool , optional
         Converts wavenumber to micron
-    palette : list,optional
+    palette : list, optional
         List of colors for lines. Default only has 8 colors so if you input more lines, you must
         give a different pallete 
     muted_alpha : float 
         number 0-1 to indicate how muted you want the click functionaity 
+    R : float, optional
+        Resolution to regrid x and y axis using mean_regrid function
     **kwargs : dict     
         Any key word argument for bokeh.plotting.figure()
 
@@ -382,12 +384,40 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
     -------
     bokeh plot
     """ 
-    if len(yarray)==len(xarray):
-        Y = [yarray]
-    else:
-        Y = yarray
+    def _is_multi(arr):
+        if isinstance(arr, np.ndarray):
+            return arr.ndim > 1
+        if isinstance(arr, (list, tuple)) and len(arr) > 0:
+            return isinstance(arr[0], (list, tuple, np.ndarray))
+        return False
 
-    if wno_to_micron : 
+    multi_x = _is_multi(xarray)
+    multi_y = _is_multi(yarray)
+
+    if multi_y:
+        Y = list(yarray)
+        if multi_x:
+            X = list(xarray)
+        else:
+            X = [xarray] * len(Y)
+    else:
+        Y = [yarray]
+        if multi_x:
+            X = list(xarray)
+        else:
+            X = [xarray]
+
+    if isinstance(legend, str):
+        legends = [legend]
+    elif legend is None:
+        legends = [None] * len(Y)
+    else:
+        legends = list(legend)
+
+    if len(legends) < len(Y):
+        legends.extend([None] * (len(Y) - len(legends)))
+
+    if wno_to_micron: 
         x_axis_label = 'Wavelength [μm]'
         def conv(x):
             return 1e4/x
@@ -395,40 +425,34 @@ def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind
         x_axis_label = 'Wavenumber [cm-1]'
         def conv(x):
             return x
-    if isinstance(legend, str): legend=[legend]
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
+
+    kwargs['height'] = kwargs.get('plot_height', kwargs.get('height', 345))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width', 1000))
     if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
     if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label', 'Spectrum')
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label', x_axis_label)
 
     fig = figure(**kwargs)
 
-    i = 0
-    legend_it=[] 
-    for yarray in Y:
-        if isinstance(xarray, list):
-            if isinstance(legend,type(None)): legend=[None]*len(xarray[0])
-            for w, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
-                if l == None: 
-                    fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
-                else:
-                    f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
-                    legend_it.append((l, [f]))
-        else: 
-            if isinstance(legend,type(None)):
-                fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
-            else:
-                f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
-                legend_it.append((legend[i], [f]))
-        i = i+1
+    legend_it = [] 
+    for i, (w, a, l) in enumerate(zip(X, Y, legends)):
+        if R is not None:
+            w, a = mean_regrid(w, a, R=R)
 
-    if not isinstance(legend,type(None)):
+        xw = conv(w)
+        color = palette[np.mod(i, len(palette))]
+
+        if l is None:
+            fig.line(xw, a, color=color, line_width=3)
+        else:
+            f = fig.line(xw, a, color=color, line_width=3,
+                         muted_color=color, muted_alpha=muted_alpha)
+            legend_it.append((l, [f]))
+
+    if any(l is not None for l in legends):
         plt_legend = Legend(items=legend_it, location=(0, 0),
-                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
+                            **_get_legend_cols(len(legend_it), kwargs.get('height')))
         
         plt_legend.click_policy="mute"
         fig.add_layout(plt_legend, 'left')

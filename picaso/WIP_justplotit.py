@@ -243,16 +243,44 @@ def plot_errorbar(x, y, e, plot=None, point_kwargs={}, error_kwargs={},
         fig.update_layout(height=height, width=width)
         return fig
 
-def spectrum(xarray, yarray, legend=None, wno_to_micron=True, palette=Colorblind8, muted_alpha=0.2, backend='plotly', **kwargs):
+def spectrum(xarray, yarray, legend=None, wno_to_micron=True, palette=Colorblind8, muted_alpha=0.2, backend='plotly', R=None, **kwargs):
     """
     Plot formatted albedo spectrum across bokeh, matplotlib, or plotly.
     """
-    if len(yarray) == len(xarray):
-        Y = [yarray]
-    else:
-        Y = yarray
+    def _is_multi(arr):
+        if isinstance(arr, np.ndarray):
+            return arr.ndim > 1
+        if isinstance(arr, (list, tuple)) and len(arr) > 0:
+            return isinstance(arr[0], (list, tuple, np.ndarray))
+        return False
 
-    if wno_to_micron : 
+    multi_x = _is_multi(xarray)
+    multi_y = _is_multi(yarray)
+
+    if multi_y:
+        Y = list(yarray)
+        if multi_x:
+            X = list(xarray)
+        else:
+            X = [xarray] * len(Y)
+    else:
+        Y = [yarray]
+        if multi_x:
+            X = list(xarray)
+        else:
+            X = [xarray]
+
+    if isinstance(legend, str):
+        legends = [legend]
+    elif legend is None:
+        legends = [None] * len(Y)
+    else:
+        legends = list(legend)
+
+    if len(legends) < len(Y):
+        legends.extend([None] * (len(Y) - len(legends)))
+
+    if wno_to_micron: 
         x_axis_label = 'Wavelength [μm]'
         def conv(x):
             return 1e4/x
@@ -260,9 +288,6 @@ def spectrum(xarray, yarray, legend=None, wno_to_micron=True, palette=Colorblind
         x_axis_label = 'Wavenumber [cm-1]'
         def conv(x):
             return x
-
-    if isinstance(legend, str): 
-        legend = [legend]
 
     if backend == 'bokeh':
         kwargs['height'] = kwargs.get('plot_height', kwargs.get('height', 345))
@@ -274,31 +299,25 @@ def spectrum(xarray, yarray, legend=None, wno_to_micron=True, palette=Colorblind
 
         fig = figure(**kwargs)
 
-        i = 0
         legend_it = [] 
-        for yarray in Y:
-            if isinstance(xarray, list):
-                if isinstance(legend, type(None)): legend = [None]*len(xarray[0])
-                for w, a, i, l in zip(xarray, yarray, range(len(xarray)), legend):
-                    if l == None: 
-                        fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3)
-                    else:
-                        f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
-                                    muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
-                        legend_it.append((l, [f]))
-            else: 
-                if isinstance(legend, type(None)):
-                    fig.line(conv(xarray), yarray, color=palette[i], line_width=3)
-                else:
-                    f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
-                                    muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
-                    legend_it.append((legend[i], [f]))
-            i = i+1
+        for i, (w, a, l) in enumerate(zip(X, Y, legends)):
+            if R is not None:
+                w, a = mean_regrid(w, a, R=R)
 
-        if not isinstance(legend, type(None)):
+            xw = conv(w)
+            color = palette[np.mod(i, len(palette))]
+
+            if l is None:
+                fig.line(xw, a, color=color, line_width=3)
+            else:
+                f = fig.line(xw, a, color=color, line_width=3,
+                             muted_color=color, muted_alpha=muted_alpha)
+                legend_it.append((l, [f]))
+
+        if any(l is not None for l in legends):
             plt_legend = Legend(items=legend_it, location=(0, 0),
                             **_get_legend_cols(len(legend_it), kwargs.get('height')))
-            plt_legend.click_policy="mute"
+            plt_legend.click_policy = "mute"
             fig.add_layout(plt_legend, 'left')
 
         plot_format(fig)
@@ -307,32 +326,30 @@ def spectrum(xarray, yarray, legend=None, wno_to_micron=True, palette=Colorblind
     elif backend == 'matplotlib':
         fig = plt.figure(figsize=(10, 5))
         ax = fig.add_subplot(1, 1, 1)
-        i = 0
-        for yarray in Y:
-            if isinstance(xarray, list):
-                for w, a, i, l in zip(xarray, yarray, range(len(xarray)), legend or [None]*len(xarray)):
-                    ax.plot(conv(w), a, color=palette[np.mod(i, len(palette))], label=l, linewidth=3)
-            else:
-                label = legend[i] if legend is not None and i < len(legend) else None
-                ax.plot(conv(xarray), yarray, color=palette[np.mod(i, len(palette))], label=label, linewidth=3)
-            i += 1
+        for i, (w, a, l) in enumerate(zip(X, Y, legends)):
+            if R is not None:
+                w, a = mean_regrid(w, a, R=R)
+
+            xw = conv(w)
+            color = palette[np.mod(i, len(palette))]
+            ax.plot(xw, a, color=color, label=l, linewidth=3)
+
         ax.set_xlabel(x_axis_label)
         ax.set_ylabel(kwargs.get('y_axis_label', 'Spectrum'))
-        if legend is not None:
+        if any(l is not None for l in legends):
             ax.legend()
         return fig
 
     elif backend == 'plotly':
         fig = go.Figure()
-        i = 0
-        for yarray in Y:
-            if isinstance(xarray, list):
-                for w, a, i, l in zip(xarray, yarray, range(len(xarray)), legend or [None]*len(xarray)):
-                    fig.add_trace(go.Scatter(x=conv(w), y=a, name=l, line=dict(color=palette[np.mod(i, len(palette))], width=3)))
-            else:
-                label = legend[i] if legend is not None and i < len(legend) else None
-                fig.add_trace(go.Scatter(x=conv(xarray), y=yarray, name=label, line=dict(color=palette[np.mod(i, len(palette))], width=3)))
-            i += 1
+        for i, (w, a, l) in enumerate(zip(X, Y, legends)):
+            if R is not None:
+                w, a = mean_regrid(w, a, R=R)
+
+            xw = conv(w)
+            color = palette[np.mod(i, len(palette))]
+            fig.add_trace(go.Scatter(x=xw, y=a, name=l, line=dict(color=color, width=3)))
+
         fig.update_xaxes(title_text=x_axis_label)
         fig.update_yaxes(title_text=kwargs.get('y_axis_label', 'Spectrum'))
         height = kwargs.get('height', kwargs.get('plot_height', 400))
