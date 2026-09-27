@@ -1,6 +1,8 @@
 import streamlit as st
+from picaso.driver_ui.style import inject_narrow_input_css
 
 st.set_page_config(page_title="PICASO UI", layout="wide")
+inject_narrow_input_css()
 
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
 

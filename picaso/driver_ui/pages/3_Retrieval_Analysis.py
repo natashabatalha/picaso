@@ -9,6 +9,9 @@ from streamlit_bokeh import streamlit_bokeh
 import picaso.driver as go
 from picaso import justplotit as jpi
 from picaso import retrieval as ret
+from picaso.driver_ui.style import inject_narrow_input_css
+
+inject_narrow_input_css()
 
 # HEADER
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")

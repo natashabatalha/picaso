@@ -7,9 +7,11 @@ from picaso import justdoit as jdi
 from picaso import justplotit as jpi
 import os
 import copy
+from picaso.driver_ui.style import inject_narrow_input_css
 
 
 st.set_page_config(page_title="Information Statistics Dashboard", layout="wide")
+inject_narrow_input_css()
 
 st.title("Information Statistics Dashboard")
 st.markdown("""

@@ -16,6 +16,9 @@ MOLECULES_LIMIT = 10
 import streamlit as st
 import os
 from pathlib import Path
+from picaso.driver_ui.style import inject_narrow_input_css
+
+inject_narrow_input_css()
 
 # HEADER
 st.logo('https://natashabatalha.github.io/picaso/_images/logo.png', size="large", link="https://github.com/natashabatalha/picaso")
@@ -43,13 +46,50 @@ from bokeh.models import Legend
 from streamlit_bokeh import streamlit_bokeh
 
 import picaso.driver as go
-from picaso import justdoit as jdi 
+from picaso import justdoit as jdi
 from picaso import WIP_justplotit as jpi
 from picaso.parameterizations import Parameterize
+from picaso.citations import get_citations
 
 # =======================================
-# HELPER FUNCTIONS 
+# HELPER FUNCTIONS
 # =======================================
+def render_learn_more(func_name):
+    """
+    Renders a 'Learn more' DOI link (or several, if more than one DOI is
+    registered) for a cited pt_/chem_/cloud_ parameterization, right under
+    the selectbox that picked it. No-op if the function has no citation.
+    """
+    dois = get_citations(func_name)
+    if not dois:
+        return
+    if len(dois) == 1:
+        links = [f"[Learn more]({f'https://doi.org/{dois[0]}'})"]
+    else:
+        links = [f"[Learn more #{i+1}](https://doi.org/{doi})" for i, doi in enumerate(dois)]
+    st.caption(" &nbsp;·&nbsp; ".join(links))
+
+def format_references_txt(references):
+    """
+    Formats the dict returned by driver.references() (one DOI list per
+    section) into a plain-text file for download.
+    """
+    section_titles = {'temperature': 'Temperature Profile', 'chemistry': 'Chemistry', 'clouds': 'Clouds'}
+    lines = ["PICASO References", "=================="]
+    any_found = False
+    for section, dois in references.items():
+        if not dois:
+            continue
+        any_found = True
+        lines.append("")
+        lines.append(section_titles.get(section, section.capitalize()))
+        for doi in dois:
+            lines.append(f"  https://doi.org/{doi}")
+    if not any_found:
+        lines.append("")
+        lines.append("No citations found for the selected parameterizations.")
+    return "\n".join(lines)
+
 def format_config_section_for_df(obj, ignore_keys=None):
     """
     Formats a driver.toml section to be rendered as an input 
@@ -408,10 +448,11 @@ def render_pressure_and_temperature(param_tools=None):
     if len(temperature_options) == 0:
         st.warning('No temperature options found in driver.toml file.')
     config['temperature']['profile'] = st.selectbox(
-        "Select a temperature profile", temperature_options, index=None 
+        "Select a temperature profile", temperature_options, index=None
     )
     temp_profile = config['temperature']['profile']
     if temp_profile:
+        render_learn_more(f'pt_{temp_profile}')
         temp_profile_obj = config['temperature'][f'{config['temperature']['profile']}']
         formatted_obj = format_config_section_for_df(temp_profile_obj)
         temp_df = pd.DataFrame([formatted_obj])
@@ -602,7 +643,8 @@ def render_chemistry():
     chem_method = config['chemistry']['method']
 
     if chem_method:
-        # RENDER FREE CHEMISTRY 
+        render_learn_more(f'chem_{chem_method}')
+        # RENDER FREE CHEMISTRY
         if 'free' in chem_method:
             render_free_chem_options()
         elif 'xarray' in chem_method: 
@@ -669,6 +711,7 @@ def render_clouds():
                 
             cloud_type = st.selectbox(f"Cloud type for {cloud_id}", type_options, index=type_index, key=f"{cloud_id}_type_select")
             config['clouds'][f'{cloud_id}_type'] = cloud_type
+            render_learn_more(f'cloud_{cloud_type}')
 
             # create editable df for cloud so users can set parameters
             cloud_type_df = pd.DataFrame([format_config_section_for_df(cloud_obj[cloud_type])])
@@ -1481,6 +1524,14 @@ d.run(driver_file="configured_toml.toml")""")
         data=toml.dumps(cleaned_config),
         file_name="configured_toml.toml",
         mime="application/toml"
+    )
+
+    references = go.references(driver_dict=cleaned_config)
+    st.download_button(
+        label="Download references",
+        data=format_references_txt(references),
+        file_name="references.txt",
+        mime="text/plain"
     )
 # ===========================
 # MAIN
