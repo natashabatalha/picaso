@@ -100,7 +100,7 @@ class Parameterize(GridFitter):
         
         return dist 
 
-    @cite('10.0000/TODO-cloud_virga')
+    @cite('10.3847/1538-3881/ae29e5')
     def cloud_virga(self,**virga_kwargs):
         """
         A function that runs picaso virga from justdoit.inputs class. modifies the toml inputs to run 
@@ -113,7 +113,7 @@ class Parameterize(GridFitter):
         df_cld = self.picaso.inputs['clouds']['profile']
         return df_cld.astype(float) 
 
-    @cite('10.0000/TODO-cloud_flex_fsed')
+    @cite('10.3847/1538-3881/ae29e5')
     def cloud_flex_fsed(self, condensate, base_pressure, ndz, fsed, distribution,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
                   hansen_kwargs={'b':np.nan,'lograd':np.nan}): 
@@ -168,7 +168,7 @@ class Parameterize(GridFitter):
 
         return df_cld.astype(float) 
     flex_cloud =  cloud_flex_fsed  
-    @cite('10.0000/TODO-cloud_brewster_mie')
+    @cite('10.1093/mnras/stab1361')
     def cloud_brewster_mie(self, condensate, distribution, decay_type,
                   lognorm_kwargs = {'sigma':np.nan, 'lograd':np.nan}, 
                   hansen_kwargs={'b':np.nan,'lograd':np.nan},
@@ -253,7 +253,7 @@ class Parameterize(GridFitter):
         df = picaso_format(opd, w0, g0, wavenumber_grid, self.pressure_layer, opd_profile=opd_profile)
         return df.astype(float)
     
-    @cite('10.0000/TODO-cloud_brewster_grey')
+    @cite('10.1093/mnras/stab1361')
     def cloud_brewster_grey(self, decay_type, alpha, ssa, reference_wave=1,
                   slab_kwargs={'ptop':np.nan,'dp':np.nan, 'reference_tau':np.nan},
                   deck_kwargs={'ptop':np.nan,'dp':np.nan}): 
@@ -300,7 +300,7 @@ class Parameterize(GridFitter):
 
         return df.astype(float)
 
-    @cite('10.0000/TODO-cloud_hard_grey')
+    @cite('10.3847/1538-4357/ab1b51')
     def cloud_hard_grey(self,g0, w0, opd,p, dp):
         if isinstance(g0,int):g0=[g0]
         if isinstance(w0,int):w0=[w0]
@@ -391,7 +391,7 @@ class Parameterize(GridFitter):
 
         return opd_by_layer
 
-    @cite('10.0000/TODO-chem_free')
+    @cite('10.3847/1538-4357/acbb07')
     def chem_free(self, **species):
         ''''
         Abundance profile for free chemistry.
@@ -518,17 +518,16 @@ class Parameterize(GridFitter):
 
         return vmr
 
-    @cite('10.0000/TODO-chem_visscher')
+    @cite('10.3847/1538-4357/ac141d')
     def chem_visscher(self,cto_absolute, log_mh):
         self.picaso.chemeq_visscher_2121(cto_absolute, log_mh)
         return self.picaso.inputs['atmosphere']['profile']
 
-    @cite('10.0000/TODO-chem_chemeq_on_the_fly')
+    @cite('10.3847/PSJ/ae0e1c')
     def chem_chemeq_on_the_fly(self,cto_absolute, log_mh):
         self.picaso.chemeq_on_the_fly(cto_absolute, log_mh)
         return self.picaso.inputs['atmosphere']['profile']
     
-    @cite('10.0000/TODO-chem_xarray_grid')
     def chem_xarray_grid(self, molecules,  **grid_kwargs):
         """
         Allows chemistry to be interpolated from picaso's standard xarray grid format.
@@ -563,7 +562,6 @@ class Parameterize(GridFitter):
             mixingratio_df[imol] = chem_vals
         return mixingratio_df
 
-    @cite('10.0000/TODO-pt_xarray_grid')
     def pt_xarray_grid(self, **grid_kwargs):
         """
         Allows temperature to be interpolated from picaso's standard xarray grid format.
@@ -587,7 +585,7 @@ class Parameterize(GridFitter):
         pressure = self.pressure[grid_name][0]
         return pd.DataFrame(dict(pressure=pressure, temperature=temp))
 
-    @cite('10.0000/TODO-pt_madhu_seager_09_noinversion')
+    @cite('10.1088/0004-637X/707/1/24')
     def pt_madhu_seager_09_noinversion(self, alpha_1, alpha_2, P_1, P_3, T_3, beta=0.5):
         """"
         Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
@@ -627,7 +625,7 @@ class Parameterize(GridFitter):
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    @cite('10.0000/TODO-pt_madhu_seager_09_inversion')
+    @cite('10.1088/0004-637X/707/1/24')
     def pt_madhu_seager_09_inversion(self, alpha_1, alpha_2, P_1, P_2, P_3, T_3, beta=0.5):
         """"
         Implements the temperature structure parameterization from Madhusudhan & Seager (2009)
@@ -667,7 +665,7 @@ class Parameterize(GridFitter):
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
     
-    @cite('10.0000/TODO-pt_knots')
+    @cite('10.1088/0004-637X/807/2/183')
     def pt_knots(self,  P_knots, T_knots, interpolation='brewster',scipy_interpolate_kwargs={}):
         """"
         Knot-based temperature profile. Implements different types of interpolation.
@@ -720,8 +718,8 @@ class Parameterize(GridFitter):
 
         return pd.DataFrame(dict(pressure=pressure, temperature=temp_by_level))
 
-    @cite('10.0000/TODO-pt_zj24')  # TODO: confirm exact Zhang+ reference (2023 MNRAS Z23 method vs. 2024 application) and DOI
-    def pt_zj24(self, pressures, dTs, Tbottom):
+    @cite('10.3847/1538-3881/acf768')  
+    def pt_zj23(self, pressures, dTs, Tbottom):
         """"
         Zhang+24 profile (fits dlogT/dlogP instead of T)
         """
@@ -748,7 +746,7 @@ class Parameterize(GridFitter):
 
         return pd.DataFrame(dict(pressure=pressure, temperature=clippedT[::-1]))
 
-    @cite('10.0000/TODO-pt_guillot')
+    @cite('10.1051/0004-6361/200913396')
     def pt_guillot(self, Teq, T_int, logg1, logKir, alpha):
         """
         Creates temperature pressure profile given parameterization in Guillot 2010 TP profile
@@ -810,7 +808,6 @@ class Parameterize(GridFitter):
         # Return TP profile
         return pd.DataFrame({'temperature': T, 'pressure':self.pressure_level})
     
-    @cite('10.0000/TODO-pt_isothermal')
     def pt_isothermal(self, T):
         return pd.DataFrame({'temperature': T, 'pressure':self.pressure_level})
 

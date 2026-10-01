@@ -37,7 +37,7 @@ import contextlib
 
 chem_options = ['visscher', 'free', 'chemeq_on_the_fly','userfile', 'xarray_grid']
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
-pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj24', 'xarray_grid'] #, 'molliere_20', 'Kitzman_20', 
+pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj23', 'xarray_grid'] #, 'molliere_20', 'Kitzman_20', 
 
 # Mappings for observation types to picaso calculation types
 OBSERVATION_CALC_MAP = {

@@ -219,10 +219,10 @@ print('Here are some default knot inputs',config['temperature']['knots'])
 #   * Parameters: `P_1`, `P_3`, `T_3`, `alpha_1`, `alpha_2`, `beta`
 #   * API Link: See [Parameterize.pt_madhu_seager_09_noinversion](../../picaso.html#picaso.parameterizations.Parameterize.pt_madhu_seager_09_noinversion) or Sphinx role: :meth:`picaso.parameterizations.Parameterize.pt_madhu_seager_09_noinversion`
 #
-# * **`'zj24'`**
-#   * Dict block: `[temperature.zj24]`
+# * **`'zj23'`**
+#   * Dict block: `[temperature.zj23]`
 #   * Parameters: `pressures`, `dTs`, `Tbottom` (based on Zhang+24 parameterization)
-#   * API Link: See [Parameterize.pt_zj24](../../picaso.html#picaso.parameterizations.Parameterize.pt_zj24) or Sphinx role: :meth:`picaso.parameterizations.Parameterize.pt_zj24`
+#   * API Link: See [Parameterize.pt_zj23](../../picaso.html#picaso.parameterizations.Parameterize.pt_zj23) or Sphinx role: :meth:`picaso.parameterizations.Parameterize.pt_zj23`
 #
 # * **`'sonora_bobcat'`**
 #   * Dict block: `[temperature.sonora_bobcat]`
@@ -375,4 +375,8 @@ for i in go.cloud_options:#running everything except userfile since the pressure
 #
 # You can see what citations are associated with the temperature, chemistry, and or cloud functions you use:
 # %%
+config = go.load_template_config()
+config['temperature']['profile']='zj23'
 go.references(driver_dict=config)
+
+# %%

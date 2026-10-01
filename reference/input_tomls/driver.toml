@@ -70,7 +70,7 @@ spacing = 'log'
 [temperature.isothermal]
 T = 500
 
-[temperature.zj24]
+[temperature.zj23]
 pressures=[1e3, 1e1, 1e0, 1e-1, 1e-2, 1e-4] # bar 
 Tbottom=2000.0 # K 
 dTs = [0.2857, 0.25, 0.0, 0.25, 0.2, 0.12]
