@@ -194,6 +194,40 @@ def test_model_storage():
 	#compare dimensions and variables
 	assert benchmark_model['albedo'].shape == preserve['albedo'].shape, 'Failed model_storage test: shape mismatch'
 	
+def test_citations_and_references():
+	from picaso.references import cite, get_citations, all_citations
+	import picaso.driver as go
+
+	@cite('10.0000/dummy_doi_1', '10.0000/dummy_doi_2')
+	def sample_func():
+		pass
+
+	assert get_citations('sample_func') == ('10.0000/dummy_doi_1', '10.0000/dummy_doi_2')
+	assert 'sample_func' in all_citations()
+
+	dummy_config = {
+		'temperature': {'profile': 'zj23'},
+		'chemistry': {'method': 'visscher'},
+		'clouds': {'cloud1_type': 'virga'}
+	}
+
+	ref_dict = go.references(driver_dict=dummy_config)
+	assert isinstance(ref_dict, dict)
+	assert 'temperature' in ref_dict
+	assert 'chemistry' in ref_dict
+	assert 'clouds' in ref_dict
+
+	assert 'pt_zj23' in ref_dict['temperature']
+	assert isinstance(ref_dict['temperature']['pt_zj23'], list)
+	assert '10.3847/1538-3881/acf768' in ref_dict['temperature']['pt_zj23']
+
+	assert 'chem_visscher' in ref_dict['chemistry']
+	assert isinstance(ref_dict['chemistry']['chem_visscher'], list)
+
+	assert 'cloud_virga' in ref_dict['clouds']
+	assert isinstance(ref_dict['clouds']['cloud_virga'], list)
+
+
 def test_it_all(): 
 	#reflected 1d 
 
