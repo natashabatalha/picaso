@@ -6,7 +6,7 @@ from astropy.convolution import convolve, Gaussian1DKernel
 
 from .analyze import GridFitter, custom_interp
 from .justdoit import vj,u,get_cld_input_grid,special
-from .citations import cite
+from .references import cite
 
 
 ## Parameterizations 

@@ -1,7 +1,7 @@
 from .justdoit import *
 from .justplotit import *
 from .parameterizations import Parameterize,cloud_averaging
-from .citations import get_citations
+from .references import get_citations
 
 import warnings
 import tomllib 
@@ -124,8 +124,8 @@ def references(driver_file=None, driver_dict=None):
     Returns
     -------
     dict
-        {'temperature': [doi,...], 'chemistry': [doi,...], 'clouds': [doi,...]}
-        Deduplicated DOI strings per section (toml-serializable, e.g. via toml.dump)
+        {'temperature': {func_name: [doi,...]}, 'chemistry': {func_name: [doi,...]}, 'clouds': {func_name: [doi,...]}}
+        Function names mapped to DOI lists per section (toml-serializable, e.g. via toml.dump)
     """
     if isinstance(driver_file,str):
         with open(driver_file, "rb") as f:
@@ -135,18 +135,24 @@ def references(driver_file=None, driver_dict=None):
     else:
         raise Exception('Could not interpret either driver file or dictionary input')
 
-    dois = {'temperature':[], 'chemistry':[], 'clouds':[]}
+    dois = {'temperature':{}, 'chemistry':{}, 'clouds':{}}
 
     #temperature: mirrors PT_handler's dispatch. userfile and sonora_bobcat
     #don't call a pt_ prefixed Parameterize method, everything else does
     pt_type = config.get('temperature',{}).get('profile')
     if pt_type and pt_type not in ('userfile','sonora_bobcat'):
-        dois['temperature'] = list(get_citations(f'pt_{pt_type}'))
+        func_name = f'pt_{pt_type}'
+        cites = list(get_citations(func_name))
+        if cites:
+            dois['temperature'][func_name] = cites
 
     #chemistry: mirrors setup_spectrum_class's dispatch
     chem_type = config.get('chemistry',{}).get('method','')
     if chem_type and chem_type != 'userfile':
-        dois['chemistry'] = list(get_citations(f'chem_{chem_type}'))
+        func_name = f'chem_{chem_type}'
+        cites = list(get_citations(func_name))
+        if cites:
+            dois['chemistry'][func_name] = cites
 
     #clouds: mirrors setup_spectrum_class's dispatch, one cloud_ function per cloud layer
     cloud_config = config.get('clouds',None)
@@ -155,9 +161,10 @@ def references(driver_file=None, driver_dict=None):
         for icld in cloud_names:
             cld_type = cloud_config.get(f'{icld}_type')
             if cld_type and cld_type != 'userfile':
-                for doi in get_citations(f'cloud_{cld_type}'):
-                    if doi not in dois['clouds']:
-                        dois['clouds'] += [doi]
+                func_name = f'cloud_{cld_type}'
+                cites = list(get_citations(func_name))
+                if cites:
+                    dois['clouds'][func_name] = cites
 
     return dois
 
