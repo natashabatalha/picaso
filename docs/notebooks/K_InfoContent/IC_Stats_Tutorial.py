@@ -50,7 +50,7 @@ jpi.output_notebook()
 # %%
 #opacity file can be found here: https://zenodo.org/records/17381172
 opacity = jdi.opannection(wave_range=[0.35,1.8], 
-        filename_db='/Users/nbatalh1/Documents/data/opacities/opacities_photochem_0.1_250.0_R15000.db')
+        filename_db='/data2/nwogan/wogan_opacities/HELIOS-K/opacities_photochem_0.1_250.0_R15000_v2.db')
 
 # %% [markdown]
 # For this simple example, we will assume an isothermal PT profile and constant volume mixing ratio abundances. This tutorial is just meant to build intuition surrounding how to compute and leverage IC statistics. 
