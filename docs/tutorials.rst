@@ -118,8 +118,8 @@ Relevant Citations: Batalha & Wogan 2026 RASTI'
 
 .. toctree::
    :maxdepth: 1
-   Jacobians, Linear-Gaussian Approximations, and Information Content </notebooks/K_InfoContent/IC_Stats_Tutorial.py>
 
+   Jacobians, Linear-Gaussian Approximations, and Information Content </notebooks/K_InfoContent/IC_Stats_Tutorial.py>
 
 Useful Tools
 ------------
