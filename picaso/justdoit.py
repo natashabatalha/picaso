@@ -1859,10 +1859,13 @@ class inputs():
             adiabat = 'H-H2-He'
         elif adiabat=='co2' or adiabat=='CO2':
             cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','adiabat_grad_co2.json')))
+            adiabat = 'CO2'
         elif adiabat=='n2' or adiabat=='N2':
             cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','adiabat_grad_n2.json')))
+            adiabat = 'N2'
         elif adiabat=='o2' or adiabat=='O2':
             cp_grad = json.load(open(os.path.join(__refdata__,'climate_INPUTS','adiabat_grad_o2.json')))
+            adiabat = 'O2'     
         else:
             raise Exception('You have selected an adiabatic gradient composition that PICASO does not recognize. Please change or remove your specified adiabat in jdi.inputs(). Acceptable adiabat choices are: \'H-H2-He\', \'CO2\', \'N2\', \'O2\'. Not specifying the adiabat will default to the legacy H-H2-He adiabat.')
 
@@ -4403,6 +4406,8 @@ class inputs():
                 self.inputs['surface_reflect'] = np.interp(wavenumber, wavenumber_ref[::-1], albedo[::-1])
             except:
                 raise Exception('You have selected a surface composition and/or surface type that PICASO does not recognize.')
+            self.inputs['surface_composition'] = surface_composition # save surface composition for output
+            self.inputs['surface_type'] = surface_type # save surface type for output
         
         self.inputs['hard_surface'] = 1 #let's the code know you have a hard surface at depth
     
@@ -5556,6 +5561,13 @@ class inputs():
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
         all_out['adiabat'] = self.inputs['climate']['adiabat']
+        if self.inputs['hard_surface'] == 1: # terrestrial surface information
+            try:
+                all_out['surface_composition'] = self.inputs['surface_composition']
+                all_out['surface_type'] = self.inputs['surface_type']
+                all_out['surface_albedo'] = self.inputs['surface_reflect']
+            except:
+                all_out['surface_albedo'] = self.inputs['surface_reflect']
         all_out['flux_ir_attop']=flux_plus_final
         flux_net_final = rfacv * flux_net_v_final + rfaci* flux_net_ir_final + tidal
         all_out['fnet/fnetir']=flux_net_final/flux_net_ir_final
