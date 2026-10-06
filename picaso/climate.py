@@ -1472,7 +1472,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
     A= np.zeros(shape=(nlevel,nlevel)) 
     
 
-    
     for its in range(max_inner_iterations):
         
         # the total net flux = optical + ir + tidal component
@@ -1561,7 +1560,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
         f = 0.5*sum # used in linesearch, defined in NR function fmin
 
         # test if we are already at a root
-        if (test/abs(tidal[0])) < 0.01*tolf :
+        if abs(tidal[0]) > 0 and (test / abs(tidal[0])) < 0.01 * tolf:
             if verbose: print(" We are already at a root, tolf , test = ",0.01*tolf,", ",test/abs(tidal[0]))
             flag_converge = 2
             dtdp=np.zeros(shape=(nlevel-1))
@@ -1571,7 +1570,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
             return   temp,  dtdp, all_profiles , flux_net_ir,flux_net_v, flux_plus_ir[0,:] 
             #return   temp,  dtdp, flag_converge, flux_net_ir, flux_plus_ir[0,:], all_profiles, cldsave_count
             
-        
         # NEB NOTE about step max 
         # In the original fortran code this was originally 
         if egp_stepmax == True:
@@ -1590,7 +1588,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
         no =n_top_r
         
         i_count= 1 #icount
-        
         flag_no = 0
         if no < 0 :
             no_temporary = no
@@ -1609,8 +1606,8 @@ def t_start(nofczns,nstr,convergence_criteria,#
             
             
             
-        # begin jacobian calculation here
-        # +1 to include last element
+            # begin jacobian calculation here
+            # +1 to include last element
             for jm in range(n_top, n_strt+1):
 
                 # chose perturbation for each level
@@ -1624,7 +1621,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
 
                 
                 # now reconstruct Temp profile
-
                 for nb in range(0, 3*nofczns, 3):
 
                     n_top_b = nstr[nb] + 1 # ntopb
@@ -1673,7 +1669,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 #        ubar0,ubar1,cos_theta, F0PI, single_phase,multi_phase,frac_a,frac_b,frac_c,constant_back,constant_forward,
                 #        wno,nwno,ng,nt,gweight,tweight, nlevel, ngauss, gauss_wts, False, True, fhole, DTAU_clear , TAU_clear , W0_clear , COSB_clear , 
                 #        DTAU_OG_clear , TAU_OG_clear , W0_OG_clear, COSB_OG_clear , W0_no_raman_clear, do_holes=True) #false for reflected, True for thermal
-                
                 Atmosphere=replace_temp(Atmosphere,temp)
                 if do_holes == True:
                     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
@@ -1684,7 +1679,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
                     flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                                 Disco,Opagrid, F0PI, compute_reflected, compute_thermal)
              
-
                 # extract ir fluxes
 
                 flux_net_ir_layer = flux_net_ir_layer_full[:] #fmneti
@@ -1729,7 +1723,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
                     
                     
                     # omitted -1 to include last element 
-                    
                     for im in range(n_top_c,n_strt_c):
                         #print(im+1-nco,jm-no, "3rd",jm,no)
                         A[im+1-nco,jm-no] = (flux_net_ir_layer[im]-flux_net_midpt_old[im])/del_t
@@ -1757,7 +1750,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
         
         # a long print statement here in original. dont know if needed
 
-        
+       
         for i in range(n_total):
             sum=0.0
             for j in range(n_total):
@@ -1773,7 +1766,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
         #    f_vec[0],f_vec[-1],min(f_vec),max(f_vec))
         #print(f_vec)
         #raise Exception ("stop")
-
         A, p = mat_sol(A, nlevel, n_total, p)
         
         #print(p)
@@ -1800,7 +1792,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 dflux[i] = -p[i]
         
         slope = 0.0
-
+       
         for i in range(n_total):
             slope += g[i]*p[i]
         # SM -- next two lines is problematic ? 
@@ -1814,10 +1806,10 @@ def t_start(nofczns,nstr,convergence_criteria,#
             tmp = abs(p[i])/temp_old[i]
             if tmp > test :
                 test= tmp 
-
+        
         alamin = tolx/test
         alam = 1.0
-        
+
         f2= f #################### to avoid call before assignment and run using numba
         #     Convergence test:  Find magnitude of correction by comparing
         #        temperature steps to a appropriate scale SCALT.  If average
@@ -1843,7 +1835,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 err += dzx
             
             err= err/(float(n_total)*scalt)
-
+            
             if jmx > nstr[1] :
                 jmx+= nstr[2]-nstr[1]
             
@@ -1896,7 +1888,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                     temp[j1] = tmin+ 0.1
                 elif temp[j1] > tmax:
                     temp[j1] = tmax- 0.1
-            
+
             # re calculate thermal flux
             #flux_net_v_layer_full, flux_net_v_full, flux_plus_v_full, flux_minus_v_full , flux_net_ir_layer_full, flux_net_ir_full, flux_plus_ir_full, flux_minus_ir_full = get_fluxes(pressure, temp, dwni, bb , y2, tp, tmin, tmax, DTAU, TAU, W0, 
             #COSB,ftau_cld, ftau_ray,GCOS2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, W0_no_raman , surf_reflect, 
@@ -1920,7 +1912,6 @@ def t_start(nofczns,nstr,convergence_criteria,#
                             Disco,Opagrid, F0PI,reflected = False, thermal=compute_thermal)
          
            
-
             # extract ir fluxes
 
             flux_net_ir_layer = flux_net_ir_layer_full[:] #fmneti
@@ -1931,7 +1922,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
             # re calculate net fluxes
             flux_net = rfaci* flux_net_ir + rfacv* flux_net_v +tidal #fnet
             flux_net_midpt = rfaci* flux_net_ir_layer + rfacv* flux_net_v_layer +tidal #fmnet
-            
+
             sum = 0.0
             nao = n_top_r
             flag_nao = 0
@@ -1969,7 +1960,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                         flag_nao = 0
                 
                 nao+= n_bot_a - n_strt_a
-                        
+        
             f= 0.5*sum
             # if verbose: print('cond1:alam.lt.alamin',alam, alamin)
             # if verbose: print('cond2:f.le.CCC',f,f_old + alf*alam*slope)
@@ -1979,7 +1970,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 check = True
                 #if verbose: print(' CONVERGED ON SMALL T STEP alam, alamin', alam, alamin)
                 flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx)
- 
+
             #Second check: Has the net flux decreased enough that we are happy in the line search
             #If so you can proceed
             elif f <= f_old + alf*alam*slope :
@@ -2020,6 +2011,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
                     if tmplam > 0.5*alam:
                         
                         tmplam= 0.5*alam
+                    
             if ((flag_converge != 2) & (flag_converge != 1)):
                 alam2=alam
                 f2=f
@@ -2032,8 +2024,10 @@ def t_start(nofczns,nstr,convergence_criteria,#
                 temp = temp_old.copy() +0.5
                 if verbose: print("Got stuck with temp NaN -- so escaping the while loop in tstart")
         
-
-        if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0])) #f/abs(tidal[0])**2) this other output here is slightly less straightforward with the square terms for exoplanets so making this just fnet/tidal for now
+        #if verbose: print("Iteration number ", its,", min , max temp ", min(temp),max(temp), ", flux balance ", flux_net[0]/abs(tidal[0])) #f/abs(tidal[0])**2) this other output here is slightly less straightforward with the square terms for exoplanets so making this just fnet/tidal for now
+        if verbose:
+            _tidal_norm = abs(tidal[0]) if abs(tidal[0]) > 0 else 1.0
+            print("Iteration number ", its, ", min , max temp ", min(temp), max(temp), ", flux balance ", flux_net[0] / _tidal_norm) #f/abs(tidal[0])**2) this other output here is slightly less straightforward with the square terms for exoplanets so making this just fnet/tidal for now
 
         if save_profile == 1:
             all_profiles = np.append(all_profiles,temp_old)
