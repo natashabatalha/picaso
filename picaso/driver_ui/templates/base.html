@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PICASO UI{% endblock %}</title>
+  <link rel="icon" href="https://natashabatalha.github.io/picaso/_images/logo.png">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='idiomorph-ext.min.js') }}"></script>
+  {% block head %}{% endblock %}
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body hx-ext="morph">
+  <header class="topbar">
+    <a href="https://github.com/natashabatalha/picaso" class="logo">
+      <img src="https://natashabatalha.github.io/picaso/_images/logo.png" alt="PICASO">
+    </a>
+    <nav>
+      {% set pages = [("/", "Home"), ("/refdata/", "Setup Reference Data"), ("/spectrum/", "Spectrum & Retrieval Setup"),
+                      ("/analysis/", "Retrieval Analysis"), ("/info-content/", "Information Content (WIP)")] %}
+      {% for path, label in pages %}
+        <a href="{{ path }}" {% if (request.path == path) or (path != "/" and request.path.startswith(path)) %}class="active"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <div id="error-toast" class="toast" hidden>
+    <span class="message"></span>
+    <button type="button" onclick="this.parentElement.hidden = true">Dismiss</button>
+  </div>
+</body>
+</html>

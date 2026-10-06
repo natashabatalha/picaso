@@ -1,0 +1,20 @@
+{% from "_fields.html" import render %}
+{% from "_macros.html" import notes, plot, action with context %}
+{# A page of cards (views/cards.py). The whole page is re-rendered after every change and
+   morphed in place. `endpoint` is the page's card-update view. #}
+<div id="sections">
+  {% for view in cards %}
+    {% set card = view.card %}
+    <section class="card" id="card-{{ card.name }}">
+      <h2>{{ card.title }}</h2>
+      {{ notes(view.notes) }}
+      {% if view.fields %}
+        <form hx-post="{{ url_for(endpoint, name=card.name) }}" hx-trigger="change, submit"
+              hx-encoding="multipart/form-data">
+          {{ render(view.fields, errors, root=True) }}
+        </form>
+      {% endif %}
+      {% if card.extra %}{% include card.extra %}{% endif %}
+    </section>
+  {% endfor %}
+</div>

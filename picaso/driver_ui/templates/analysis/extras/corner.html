@@ -1,0 +1,8 @@
+{% from "_macros.html" import action %}
+{% if a.corner_image %}
+  <img class="figure" src="{{ a.corner_image }}" alt="Corner plot">
+  <div class="button-row">
+    <a class="button" href="{{ url_for('analysis.download_corner') }}">Download high-resolution corner plot</a>
+    {{ action(url_for("analysis.save_corner"), "Save figure locally in retrieval directory", secondary=True) }}
+  </div>
+{% endif %}

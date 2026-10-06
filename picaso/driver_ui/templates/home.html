@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Welcome to the PICASO App</h1>
+
+<p><strong>PICASO</strong> (Planetary Intensity Code for Atmospheric Scattering Observations) is a state-of-the-art
+tool for exoplanet and brown dwarf atmospheric modeling.</p>
+
+<p>picaso enables the:</p>
+<ol>
+  <li><strong>Computation</strong> of exoplanet and brown dwarf spectroscopy in transmission, emission or reflected light.</li>
+  <li><strong>1D climate modeling</strong> of brown dwarfs and exoplanets.</li>
+  <li><strong>Fitting</strong> spectroscopic data to models.</li>
+</ol>
+
+<h2>Major Features</h2>
+<ul>
+  <li><strong>Reflected Light Spectroscopy</strong> of planets</li>
+  <li><strong>Thermal Emission Spectroscopy</strong> of planets and brown dwarfs</li>
+  <li><strong>Transit Spectroscopy</strong> of planets</li>
+  <li><strong>Phase Curves</strong> of planets</li>
+  <li><strong>1D Climate modeling</strong> of planets and brown dwarfs</li>
+  <li><strong>Fitting models</strong> to data</li>
+</ul>
+
+<h2>App Major Features</h2>
+<div class="columns">
+  <div>
+    <h3>1. Setup PICASO Reference Data</h3>
+    <p>Configure your environment variables and download necessary reference data (opacities, etc.) to get PICASO running.</p>
+  </div>
+  <div>
+    <h3>2. Run Spectral Model and/or Build Retrieval</h3>
+    <p>The main driver for running PICASO models. Configure your star, planet, atmosphere, and clouds to generate spectra or run retrievals.</p>
+  </div>
+  <div>
+    <h3>3. Compute Information Content Statistics</h3>
+    <p>Analyze information content, Degrees of Freedom (DOF), and Shannon Information Content for your model configurations.</p>
+  </div>
+</div>
+
+<hr>
+
+<h2>General PICASO Resources</h2>
+<div class="button-row">
+  <a class="button" href="https://natashabatalha.github.io/picaso">Documentation</a>
+  <a class="button" href="https://github.com/natashabatalha/picaso">GitHub Repository</a>
+  <a class="button" href="https://natashabatalha.github.io/picaso/installation.html">Installation Guide</a>
+  <a class="button" href="https://natashabatalha.github.io/picaso/tutorials.html">Tutorials</a>
+</div>
+{% endblock %}

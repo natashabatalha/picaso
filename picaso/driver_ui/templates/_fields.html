@@ -1,0 +1,69 @@
+{# Renders a field tree from core.config_schema. Input names are dotted config paths. #}
+{% macro render(f, errors, root=False) %}
+  {% if f.kind == "section" %}
+    {% if root or not f.path %}
+      {% for child in f.children %}{{ render(child, errors) }}{% endfor %}
+    {% else %}
+      <fieldset class="subsection">
+        <legend>{{ f.label or f.key }}</legend>
+        {% for child in f.children %}{{ render(child, errors) }}{% endfor %}
+      </fieldset>
+    {% endif %}
+
+  {% elif f.kind == "custom" %}
+    <div class="custom-placeholder"><code>{{ f.name }}</code> needs its own panel</div>
+
+  {% else %}
+    {% set id = "f-" ~ f.name|replace(".", "-")|replace(" ", "_") %}
+    <div class="field field-{{ f.kind }}{% if f.name in errors %} has-error{% endif %}">
+      <label for="{{ id }}">
+        {{ f.label or f.key }}{% if f.kind == "quantity" %} <span class="unit">({{ f.unit }})</span>{% endif %}
+      </label>
+
+      <div class="control">
+        {% if f.kind == "bool" %}
+          <input type="checkbox" id="{{ id }}" name="{{ f.name }}" {% if f.value %}checked{% endif %}>
+        {% elif f.kind in ("choice", "selector") %}
+          <select id="{{ id }}" name="{{ f.name }}">
+            {% for option in f.options %}
+              <option value="{{ option }}" {% if option == f.value %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        {% elif f.kind == "multi_choice" %}
+          <div class="checkbox-grid" id="{{ id }}">
+            {% for option in f.options %}
+              <label><input type="checkbox" name="{{ f.name }}" value="{{ option }}"
+                            id="{{ id }}-{{ loop.index }}" {% if option in f.value %}checked{% endif %}> {{ option }}</label>
+            {% endfor %}
+          </div>
+        {% elif f.kind == "text_list" and f.multiline %}
+          <textarea id="{{ id }}" name="{{ f.name }}" rows="{{ [f.value|length + 1, 3]|max }}">{{ f.value|join("\n") }}</textarea>
+        {% elif f.kind == "text" and f.multiline %}
+          <textarea id="{{ id }}" name="{{ f.name }}" rows="4">{{ f.value }}</textarea>
+        {% elif f.kind == "file" %}
+          <input type="file" id="{{ id }}" name="{{ f.name }}" accept="{{ f.accept }}">
+        {% elif f.kind in ("number_list", "text_list") %}
+          <input type="text" id="{{ id }}" name="{{ f.name }}" value="{{ f.value|join(', ') }}" placeholder="comma separated">
+        {% else %}
+          <input type="text" id="{{ id }}" name="{{ f.name }}" value="{{ f.value }}"
+                 {% if f.kind in ("number", "quantity") %}inputmode="decimal"{% endif %}>
+        {% endif %}
+
+        {% if f.hint %}<p class="hint">{{ f.hint }}</p>{% endif %}
+        {% if f.minimum is defined and f.minimum is not none and f.maximum is not none %}
+          <p class="hint">range {{ "%g"|format(f.minimum) }} to {{ "%g"|format(f.maximum) }}</p>
+        {% elif f.minimum is defined and f.minimum is not none %}
+          <p class="hint">at least {{ "%g"|format(f.minimum) }}</p>
+        {% elif f.maximum is defined and f.maximum is not none %}
+          <p class="hint">at most {{ "%g"|format(f.maximum) }}</p>
+        {% endif %}
+        {% if f.links %}
+          <p class="hint">{% for label, url in f.links %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+        {% endif %}
+        {% if f.name in errors %}<p class="error">{{ errors[f.name] }}</p>{% endif %}
+      </div>
+    </div>
+
+    {% if f.kind == "selector" and f.branch %}{{ render(f.branch, errors) }}{% endif %}
+  {% endif %}
+{% endmacro %}

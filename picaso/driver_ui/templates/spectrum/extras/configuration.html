@@ -1,0 +1,17 @@
+{% from "_macros.html" import action %}
+<pre><code># runs retrieval
+import picaso.driver as d
+d.retrieve(driver_file="configured_toml.toml")
+
+# recreates the spectrum
+d.run(driver_file="configured_toml.toml")</code></pre>
+<div class="button-row">
+  <a class="button" href="{{ url_for('spectrum.download_config') }}">Download current config</a>
+  <a class="button secondary" href="{{ url_for('spectrum.download_references') }}">Download references</a>
+  {{ action(url_for("spectrum.reset_all"), "Reset to defaults", secondary=True,
+            confirm="Reset all values to the driver.toml defaults?") }}
+</div>
+<details>
+  <summary>Preview</summary>
+  <pre>{{ exported_toml }}</pre>
+</details>

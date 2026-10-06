@@ -1,0 +1,6 @@
+{% from "_macros.html" import action %}
+<div class="button-row">
+  {{ action(url_for("analysis.add_attribute"), "Add attribute", secondary=True) }}
+  {{ action(url_for("analysis.export"), "Generate export package") }}
+  {% if a.zip %}<a class="button" href="{{ url_for('analysis.download_zip') }}">Download export package (.zip)</a>{% endif %}
+</div>

@@ -1,0 +1,9 @@
+{% from "_macros.html" import action %}
+<div class="actions">
+  {% if s.data is none %}
+    {{ action(url_for("info_content.example"), "Initialize example") }}
+    <p class="hint">Computes a Jupiter-like chemical equilibrium Jacobian example. This may take a minute.</p>
+  {% else %}
+    {{ action(url_for("info_content.reset_data"), "Reset Jacobian data", secondary=True) }}
+  {% endif %}
+</div>

@@ -1,0 +1,11 @@
+{% from "_macros.html" import plot, action %}
+{% if sess.config.calc_type == "spectrum" %}
+  <div class="actions">{{ action(url_for("spectrum.run"), "Run spectrum") }}</div>
+{% endif %}
+{{ plot(sess.results.get("spectrum_plot"), "spectrum") }}
+{% if sess.results.get("spectrum") %}
+  <div class="button-row">
+    <a class="button secondary" href="{{ url_for('spectrum.download_netcdf') }}">Download PICASO xarray (NetCDF)</a>
+    <a class="button secondary" href="{{ url_for('spectrum.download_csv') }}">Download ASCII (wavenumber, spectrum)</a>
+  </div>
+{% endif %}
