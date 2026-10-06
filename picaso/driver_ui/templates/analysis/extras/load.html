@@ -1,0 +1,4 @@
+{% from "_macros.html" import action %}
+{% if ready_to_load %}
+  <div class="actions">{{ action(url_for("analysis.load"), "Read retrievals & analyze") }}</div>
+{% endif %}

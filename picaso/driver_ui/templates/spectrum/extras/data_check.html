@@ -1,0 +1,8 @@
+{% from "_macros.html" import plot, action %}
+<div class="actions">
+  {{ action(url_for("spectrum.retrieval_action", action="data-check"), "Data check & plot", secondary=True) }}
+  {% if sess.results.get("spectrum") %}
+    {{ action(url_for("spectrum.retrieval_action", action="data-check-reference"), "Data check & plot w/ ref model", secondary=True) }}
+  {% endif %}
+</div>
+{{ plot(sess.results.get("data_plot"), "data") }}

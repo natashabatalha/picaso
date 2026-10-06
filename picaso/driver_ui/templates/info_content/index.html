@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Information Statistics{% endblock %}
+{% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
+{% block content %}
+<h1>Information Statistics Dashboard</h1>
+<p>This dashboard showcases information content statistics for your model. You can explore how different
+  observation cases affect the Degrees of Freedom (DOF) and Shannon Information Content.</p>
+<div hx-target="#sections" hx-swap="morph:outerHTML">
+  {{ page|safe }}
+</div>
+{% endblock %}

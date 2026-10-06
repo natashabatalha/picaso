@@ -1,0 +1,5 @@
+<form hx-post="{{ url_for('analysis.upload') }}" hx-encoding="multipart/form-data" hx-trigger="change">
+  <label class="file-input">Upload driver configuration TOML
+    <input type="file" name="toml" accept=".toml">
+  </label>
+</form>

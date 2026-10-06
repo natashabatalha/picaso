@@ -1,0 +1,16 @@
+{% from "_macros.html" import plot %}
+{% set comparison = s.plots.comparison %}
+<h3>Detailed analysis: {{ s.selected }}</h3>
+{{ plot(s.plots.case[0], "ic-jacobian") }}
+<h3>What wavelengths are most important?</h3>
+{{ plot(comparison.loss_h, "ic-loss-h") }}
+{{ plot(s.plots.case[1], "ic-loss-ci") }}
+<h3>Comparison across cases: Shannon information statistics</h3>
+<div class="plot-grid">
+  {{ plot(comparison.dof, "ic-dof") }}
+  {{ plot(comparison.h, "ic-h") }}
+  {{ plot(comparison.averaging_kernel, "ic-ak") }}
+  {{ plot(comparison.constraint_interval, "ic-ci") }}
+</div>
+<h3>Comparison across cases: SVD degrees of freedom</h3>
+{{ plot(comparison.svd, "ic-svd") }}

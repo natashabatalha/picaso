@@ -1,0 +1,2 @@
+{% from "spectrum/extras/_preview.html" import preview %}
+{% if sess.ui.include_clouds %}{{ preview(sess, "clouds", "See clouds") }}{% endif %}
