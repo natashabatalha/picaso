@@ -74,8 +74,13 @@ def normalize(free):
 
     for mol in selected:
         mol_config = free.setdefault(mol, {"profile": "constant", "unit": "v/v"})
-        for param in profile_params(free, mol_config["profile"]):
+        allowed = profile_params(free, mol_config["profile"])
+        for param in allowed:
             mol_config.setdefault(param, [] if param in LIST_PARAMS else TEXT_DEFAULTS.get(param, 0.0))
+        keep = set(["profile", "unit"] + allowed)
+        for key in list(mol_config.keys()):
+            if key not in keep:
+                del mol_config[key]
 
     background = [mol for mol in selected if free[mol]["profile"] == "background"]
     free["species"] = [mol for mol in selected if mol not in background]

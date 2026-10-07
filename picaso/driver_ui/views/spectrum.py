@@ -16,7 +16,7 @@ import toml
 from flask import Blueprint, Response, abort, current_app, render_template, request
 
 import picaso.driver as go
-from picaso.citations import get_citations
+from picaso.references import get_citations
 from picaso.driver_ui.core import clouds, free_chemistry, resources, runs
 from picaso.driver_ui.core.config_ops import format_references, is_irradiated
 from picaso.driver_ui.core.config_schema import (
@@ -131,7 +131,7 @@ class TemperatureCard(Card):
         return tree
 
     def notes(self, sess):
-        notes = [("info", "Configure pressure (can be ignored when using a userfile or sonora bobcat for temperature)")]
+        notes = [("info", "Configure pressure (can be ignored when using a userfile, sonora bobcat, or a custom xarray for temperature)")]
         if sess.config["temperature"]["profile"] == "xarray_grid":
             _, error = xarray_grid_tools(sess.config)
             notes += [("error", error)] if error else []
