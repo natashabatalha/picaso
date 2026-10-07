@@ -1,6 +1,7 @@
 """Reading a resampled opacity database and plotting its cross sections for the Opacity Viewer page."""
 import itertools
 import os
+import warnings
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -82,14 +83,33 @@ def resample(wno, opacity, wave_min, wave_max, R=None):
     return wno, opacity
 
 
+def read_observations(filenames, coord, data, error, coord_unit=None, data_unit=None):
+    """
+    Reads observation files with the same reader as the retrieval setup (picaso.driver.get_data).
+    Returns ({name: (wavenumber, y, error)}, notes).
+    """
+    # picaso.driver imports all of PICASO, which needs the reference data; only pay for it when asked
+    import picaso.driver as go
+    config = {"ObservationData": {"filenames": list(filenames), "coord": coord, "data": data, "error": error,
+                                  "coord_unit": coord_unit, "data_unit": data_unit}}
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        data_dict, _ = go.get_data(config)
+    notes = [("warning", str(w.message)) for w in caught if issubclass(w.category, UserWarning)]
+    return {name: tuple(np.asarray(v) for v in values) for name, values in data_dict.items()}, notes
+
+
 def opacity_figure(path, molecules, continuum, temperatures, pressures, wave_range, R=None,
-                   xscale="log", yscale="log", xunit="micron"):
+                   xscale="log", yscale="log", xunit="micron", observations=None, data_label="Data"):
     """
     Plotly figure of the requested cross sections, plus a list of (level, message) notes.
 
     Molecules are drawn for every temperature/pressure combination, at the nearest grid point.
     Continuum (CIA) opacities have no pressure dependence and different units, so they go on a
     second y axis, once per temperature.
+
+    `observations` ({name: (wavenumber, y, error)}, see read_observations) are drawn in a panel
+    half the height of the cross sections, directly above them on a shared x axis.
     """
     info = describe(path)
     wave_min, wave_max = wave_range
@@ -117,7 +137,12 @@ def opacity_figure(path, molecules, continuum, temperatures, pressures, wave_ran
 
     has_continuum = any(c for *_, c in traces)
     has_molecular = any(not c for *_, c in traces)
-    fig = make_subplots(specs=[[{"secondary_y": has_continuum and has_molecular}]])
+    two_axes = has_continuum and has_molecular
+    rows = 2 if observations else 1
+    row = rows  # the cross sections always go in the bottom panel
+    fig = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.03,
+                        row_heights=[1, 2] if observations else None,
+                        specs=[[{}]] * (rows - 1) + [[{"secondary_y": two_axes}]])
     colors = px.colors.qualitative.Plotly
     for i, (label, wno, y, is_continuum) in enumerate(traces):
         x = wno if xunit == "wavenumber" else 1e4 / wno
@@ -125,14 +150,28 @@ def opacity_figure(path, molecules, continuum, temperatures, pressures, wave_ran
             y = np.where(y > 0, y, np.nan)  # zeros cannot be drawn on a log axis
         fig.add_scatter(x=x, y=y, name=label, mode="lines", line=dict(width=1, color=colors[i % len(colors)],
                         dash="dot" if is_continuum and has_molecular else None),
-                        secondary_y=is_continuum and has_molecular)
+                        row=row, col=1, secondary_y=is_continuum and has_molecular)
 
-    fig.update_xaxes(type=xscale, title="Wavenumber [cm<sup>-1</sup>]" if xunit == "wavenumber" else "Wavelength [μm]")
-    fig.update_yaxes(type=yscale, exponentformat="power")
+    for name, (wno, y, err) in (observations or {}).items():
+        keep = (wno >= 1e4 / wave_max) & (wno <= 1e4 / wave_min)
+        if not keep.any():
+            notes.append(("warning", f"{name} has no data points between {wave_min:g} and {wave_max:g} μm."))
+        x = wno[keep] if xunit == "wavenumber" else 1e4 / wno[keep]
+        fig.add_scatter(x=x, y=y[keep], name=name, mode="lines", line=dict(width=1, color="black"),
+                        error_y=dict(type="data", array=err[keep], thickness=1, width=0, color="black"),
+                        row=1, col=1)
+
+    fig.update_xaxes(type=xscale)
+    fig.update_xaxes(title="Wavenumber [cm<sup>-1</sup>]" if xunit == "wavenumber" else "Wavelength [μm]", row=row, col=1)
+    fig.update_yaxes(type=yscale, exponentformat="power", row=row, col=1)
     if has_molecular:
-        fig.update_yaxes(title=f"Cross section [{MOLECULAR_UNIT}]", secondary_y=False)
+        fig.update_yaxes(title=f"Cross section [{MOLECULAR_UNIT}]", secondary_y=False, row=row, col=1)
     if has_continuum:
-        fig.update_yaxes(title=f"Continuum [{CONTINUUM_UNIT}]", secondary_y=has_molecular, showgrid=not has_molecular)
-    fig.update_layout(height=640, margin=dict(l=70, r=20, t=30, b=60),
-                      legend=dict(orientation="h", yanchor="top", y=-0.15, x=0))
+        fig.update_yaxes(title=f"Continuum [{CONTINUUM_UNIT}]", secondary_y=has_molecular, showgrid=not has_molecular,
+                         row=row, col=1)
+    if observations:
+        fig.update_yaxes(title=data_label, row=1, col=1)
+    height = 960 if observations else 640
+    fig.update_layout(height=height, margin=dict(l=70, r=20, t=30, b=60),
+                      legend=dict(orientation="h", yanchor="top", y=-96 / height, x=0))
     return fig, notes

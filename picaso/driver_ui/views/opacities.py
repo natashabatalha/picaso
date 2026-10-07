@@ -85,7 +85,37 @@ def submitted_choices(info):
     return choices, errors
 
 
-def render_page(db, submitted):
+# the data reader fields of the retrieval setup's Observational Data Configuration
+DATA_FIELDS = ("coord", "coord_unit", "data", "data_unit", "error")
+
+
+def data_choices():
+    """The observational data form. Kept even when the opacity file changes, since it does not depend on it."""
+    choices = {key: request.form.get(f"obs_{key}", "").strip() for key in DATA_FIELDS}
+    choices["show"] = request.form.get("show_data") == "on"
+    choices["filenames"] = [line.strip() for line in request.form.get("obs_filenames", "").splitlines() if line.strip()]
+    return choices
+
+
+def load_data(obs):
+    """Reads the observational data if it was asked for. Returns (observations or None, messages)."""
+    if not (obs["show"] and obs["filenames"]):
+        return None, []
+    missing = [key for key in ("coord", "data", "error") if not obs[key]]
+    if missing:
+        return None, [("error", f"Enter the {', '.join(missing)} name(s) to read the observational data.")]
+    try:
+        observations, notes = opacities.read_observations(
+            [os.path.expanduser(f) for f in obs["filenames"]], obs["coord"], obs["data"], obs["error"],
+            coord_unit=obs["coord_unit"] or None, data_unit=obs["data_unit"] or None)
+    except Exception as e:
+        return None, [("error", f"Could not read the observational data: {e}")]
+    if not observations:
+        return None, [("error", "No observational data was read.")]
+    return observations, notes
+
+
+def render_page(db, submitted, obs):
     """The page for opacity file `db`, using the posted form if `submitted`, else the defaults."""
     info, choices, figure, messages = None, None, None, []
     if not db:
@@ -103,27 +133,31 @@ def render_page(db, submitted):
         choices, errors = submitted_choices(info) if submitted else (default_choices(info), [])
         messages += [("error", e) for e in errors]
         if not errors:
+            observations, notes = load_data(obs)
+            messages += notes
             try:
                 fig, notes = opacities.opacity_figure(
                     db, choices["molecules"], choices["continuum"], choices["temperatures"], choices["pressures"],
                     (choices["wave_min"], choices["wave_max"]), R=choices["R"],
-                    xscale=choices["xscale"], yscale=choices["yscale"], xunit=choices["xunit"])
+                    xscale=choices["xscale"], yscale=choices["yscale"], xunit=choices["xunit"],
+                    observations=observations, data_label=obs["data"] or "Data")
                 figure = plotly_plot(fig)
                 messages += notes
             except Exception as e:
                 messages.append(("error", f"Could not plot the opacities: {e}"))
 
-    return render_template("opacities/index.html", db=db, info=info, choices=choices, figure=figure, messages=messages)
+    return render_template("opacities/index.html", db=db, info=info, choices=choices, obs=obs, figure=figure,
+                           messages=messages)
 
 
 @bp.get("/")
 def index():
     db = request.args.get("db")
-    return render_page(default_db() if db is None else db.strip(), submitted=False)
+    return render_page(default_db() if db is None else db.strip(), submitted=False, obs=data_choices())
 
 
 @bp.post("/plot")
 def plot():
     db = request.form.get("db", "").strip()
     # a new file path starts from that file's defaults; old selections may not exist in it
-    return render_page(db, submitted=db == request.form.get("loaded_db"))
+    return render_page(db, submitted=db == request.form.get("loaded_db"), obs=data_choices())

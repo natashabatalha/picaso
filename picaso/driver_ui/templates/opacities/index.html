@@ -94,6 +94,34 @@
         <div class="field"><label>y axis</label><div class="control">{{ radios("yscale", [("log", "Log"), ("linear", "Linear")], choices.yscale) }}</div></div>
         <div class="field"><label>x units</label><div class="control">{{ radios("xunit", [("micron", "Micron"), ("wavenumber", "Wavenumber")], choices.xunit) }}</div></div>
       </fieldset>
+
+      <div class="field field-bool">
+        <label for="opacity-show-data">Compare to data</label>
+        <div class="control">
+          <input type="checkbox" id="opacity-show-data" name="show_data" {% if obs.show %}checked{% endif %}
+                 hx-post="{{ url_for('opacities.plot') }}" hx-trigger="change" hx-sync="closest form:replace">
+          <p class="hint">Plot observational data above the cross sections.</p>
+        </div>
+      </div>
+      {# hidden rather than removed when unchecked, so the entries survive toggling the box #}
+      <fieldset class="subsection" id="opacity-data" {% if not obs.show %}hidden{% endif %}>
+        <legend>Observational data</legend>
+        <div class="field">
+          <label for="opacity-obs-filenames">filenames</label>
+          <div class="control">
+            <textarea id="opacity-obs-filenames" name="obs_filenames" rows="{{ [obs.filenames|length + 1, 3]|max }}">{{ obs.filenames|join("\n") }}</textarea>
+            <p class="hint">Path(s) to your observation data, one per line</p>
+          </div>
+        </div>
+        {% for key in ("coord", "coord_unit", "data", "data_unit", "error") %}
+          <div class="field">
+            <label for="opacity-obs-{{ key }}">{{ key }}</label>
+            <div class="control"><input type="text" id="opacity-obs-{{ key }}" name="obs_{{ key }}" value="{{ obs[key] }}"></div>
+          </div>
+        {% endfor %}
+        <p class="hint">Specify column, coord, or data_var names and units. Units are only required if not specified
+          through xarray, and should be in astropy format (enter unitless for e.g. albedo or transit depth).</p>
+      </fieldset>
     {% endif %}
 
     <div class="button-row"><button type="submit" class="button">{% if info %}Plot{% else %}Load file{% endif %}</button></div>
