@@ -29,6 +29,9 @@ GROUPS = (
              "Build a driver configuration (star, planet, pressure-temperature profile, chemistry, clouds) and "
              "compute transmission, emission or reflected light spectra. Add observational data, free parameters, "
              "priors and sampler options to export a ready-to-run retrieval."),
+        Page("/climate/", "1D Climate Calculations",
+             "Build a climate configuration (object, star, initial pressure-temperature guess, chemistry) and "
+             "compute a self-consistent radiative-convective temperature profile for a brown dwarf or planet."),
     )),
     Group("Analyze", "Interpret retrievals and observations.", (
         Page("/analysis/", "Retrieval Analysis",

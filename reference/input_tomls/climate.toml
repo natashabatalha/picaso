@@ -1,0 +1,128 @@
+#climate.toml mirrors driver.toml but sets up a 1D radiative-convective climate calculation
+#run with: picaso.driver.run_climate(driver_file='climate.toml')
+#The default values below reproduce the brown dwarf tutorial (D_climate/1_BrownDwarf_PreW)
+#  - for chemical equilibrium computed on the fly (D_climate/1b_BrownDwarf_ResortRebin_Chemeq) set:
+#    OpticalProperties.opacity_method='resortrebin', chemistry.method='visscher'
+#  - for an irradiated planet (D_climate/2_Exoplanet_PreW) set:
+#    irradiated=true, climate.rfacv=0.5, temperature.profile='guillot'
+irradiated=false #options: true or false (if true, user needs to input star properties)
+calc_type='climate' #spectrum climate or retrieval
+
+[InputOutput]
+climate_output = '' # if specified, the climate output is saved to this filename as an xarray netcdf file (requires climate.with_spec=true)
+
+[OpticalProperties]
+# preweighted: path to a preweighted correlated-k hdf5 file (chemistry is fixed by the file, e.g. feh0.0_co0.46 = solar M/H, C/O=0.46)
+# resortrebin: path to the directory of by-molecule correlated-k tables (leave '' for the picaso default _default_/opacities/resortrebin)
+opacity_file = '_default_/opacities/preweighted/sonora_2121grid_feh0.0_co0.46.hdf5'
+opacity_method = 'preweighted' #list of options: preweighted, resortrebin
+opacity_method_options = ['preweighted', 'resortrebin']
+opacity_kwargs = {} # any other inputs you want to give to justdoit.opannection() e.g., {preload_gases=['H2O','CH4']} for resortrebin
+
+[object]
+radius    = {value=1.0, unit='Rjup'} # if both radius and mass are given, gravity is computed from them
+mass      = {value=1.0, unit='Mjup'}
+gravity   = {value=1000.0, unit='m/s**2'}
+teff      = {value=1000.0, unit='K'} # effective temperature (brown dwarf) or intrinsic temperature (irradiated planet)
+
+[star]
+radius= {value=0.932, unit='Rsun'}
+semi_major= {value=0.0486, unit='AU'}
+type='grid' #'grid' or 'userfile'
+type_options=['grid', 'userfile']
+
+[star.grid]
+logg  = 4.38933
+teff  = 5326.6
+feh   = -0.03
+database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
+database_options=['ck04models', 'phoenix']
+
+[star.userfile]
+filename = '' # simple two column format no header column1=wavelength, column2=flux
+w_unit = ''
+f_unit = ''
+
+[climate]
+rcb_guess = 83 # index of the level at the top of the guessed convective zone (must be less than temperature.pressure.nlevel-1)
+rfacv = 0.0 # fraction of stellar flux in the energy balance: 0 = no irradiation (brown dwarfs), 0.5 = full day-night redistribution, 1 = dayside
+rfaci = 1.0 # fraction of thermal flux in the energy balance (usually kept at 1)
+moistgrad = false # use the moist adiabatic gradient
+save_all_profiles = true # save and return every iteration of the temperature profile
+with_spec = true # compute a spectrum of the converged profile (required to save climate_output)
+verbose = true
+
+# the temperature section sets the initial guess of the climate calculation
+[temperature]
+profile = 'isothermal'
+
+[temperature.userfile]
+filename='_default_/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (only temperature and pressure are used)
+
+pd_kwargs={sep=' '} #kwargs for pandas.read_csv
+
+[temperature.pressure]
+reference = {value=1e1,unit='bar'}
+min = {value=1e-4, unit='bar'}
+max = {value=500,unit='bar'}
+nlevel = 91
+spacing = 'log'
+
+[temperature.isothermal]
+T = 500
+
+[temperature.zj23]
+pressures=[1e3, 1e1, 1e0, 1e-1, 1e-2, 1e-4] # bar
+Tbottom=2000.0 # K
+dTs = [0.2857, 0.25, 0.0, 0.25, 0.2, 0.12]
+
+[temperature.knots]
+P_knots=[1e2,1e1,1e0,1e-1,1e-2, 1e-3]
+T_knots=[1000.0, 550.0, 300.0, 200.0, 100.0, 50.0]
+interpolation='brewster'
+interpolation_options = ['brewster', 'linear', 'quadratic_spline', 'cubic_spline']
+scipy_interpolate_kwargs={}
+
+[temperature.madhu_seager_09_inversion]
+P_1=1e1
+P_2=1e-3
+P_3=1e-5
+T_3=1000.0
+alpha_1=1
+alpha_2=1
+beta=0.5
+
+[temperature.madhu_seager_09_noinversion]
+P_1=1e1
+P_3=1e-5
+T_3=1000.0
+alpha_1=1
+alpha_2=1
+beta=0.5
+
+[temperature.guillot]
+Teq=1000.0
+T_int=200.0
+logg1=-1.0
+logKir=-1.5
+alpha=0.5
+
+[temperature.sonora_bobcat]
+sonora_path='_default_/sonora_grids/bobcat'
+teff=1000.0
+
+[chemistry]
+# preweighted: chemistry is set by the preweighted opacity_file (requires opacity_method='preweighted')
+# visscher, chemeq_on_the_fly: chemical equilibrium is recomputed every iteration (requires opacity_method='resortrebin')
+method='preweighted'
+no_ph3=false # remove PH3 from the atmosphere (visscher and chemeq_on_the_fly only)
+cold_trap=false # cold trap H2O and NH3 after condensation (visscher and chemeq_on_the_fly only)
+vol_rainout=false # rainout volatiles like H2O, CH4 and NH3 (visscher and chemeq_on_the_fly only)
+
+[chemistry.visscher]
+cto_absolute=0.55
+log_mh=0.0
+
+[chemistry.chemeq_on_the_fly]
+cto_absolute=0.55
+log_mh=0.0

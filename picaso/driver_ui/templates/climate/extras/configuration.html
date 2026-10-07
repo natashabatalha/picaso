@@ -1,0 +1,17 @@
+{% from "_macros.html" import action %}
+<pre><code># runs the climate model
+import picaso.driver as d
+out = d.run_climate(driver_file="climate.toml")
+
+# or set up the climate class without running it
+config = d.load_config("climate.toml")
+climate_class = d.setup_climate_class(config, d.climate_opacity(config))</code></pre>
+<div class="button-row">
+  <a class="button" href="{{ url_for('climate.download_config') }}">Download current config</a>
+  {{ action(url_for("climate.reset_all"), "Reset to defaults", secondary=True,
+            confirm="Reset all values to the climate.toml defaults?") }}
+</div>
+<details>
+  <summary>Preview</summary>
+  <pre>{{ exported_toml }}</pre>
+</details>

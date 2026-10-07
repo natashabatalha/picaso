@@ -24,6 +24,7 @@ class Session:
     results: dict = field(default_factory=dict)  # computed outputs (figures, model runs, messages)
     analysis: dict = field(default_factory=dict)  # Retrieval Analysis page
     info_content: dict = field(default_factory=dict)  # Information Content page
+    climate: dict = field(default_factory=dict)  # 1D Climate Calculations page; its cards apply forms themselves (views/climate.py)
 
     def apply(self, fields, form):
         """

@@ -15,7 +15,7 @@ from picaso.driver_ui.core.config_ops import driver_template_path
 from picaso.driver_ui.views import home, opacities, refdata
 
 # pages that import PICASO, which needs the reference data at import time
-PICASO_PAGES = ("/spectrum/", "/analysis/", "/info-content/")
+PICASO_PAGES = ("/spectrum/", "/climate/", "/analysis/", "/info-content/")
 
 
 def create_app(refdata_dir=None):
@@ -53,12 +53,12 @@ def register_picaso_pages(app):
         problem = "missing_refdata"
     else:
         try:
-            from picaso.driver_ui.views import analysis, info_content, spectrum
+            from picaso.driver_ui.views import analysis, climate, info_content, spectrum
         except Exception:
             problem = traceback.format_exc()
 
     if problem is None:
-        for view in (spectrum, analysis, info_content):
+        for view in (spectrum, climate, analysis, info_content):
             app.register_blueprint(view.bp)
         return
 

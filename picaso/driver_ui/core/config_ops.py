@@ -15,6 +15,21 @@ def driver_template_path(refdata):
     return os.path.join(refdata, "input_tomls", "driver.toml")
 
 
+def climate_template_path(refdata):
+    return os.path.join(refdata, "input_tomls", "climate.toml")
+
+
+def new_climate_config(refdata):
+    """The reference climate.toml that seeds the climate page, with `_default_` paths resolved."""
+    with open(climate_template_path(refdata), "rb") as f:
+        return resolve_climate_defaults(tomllib.load(f), refdata)
+
+
+def resolve_climate_defaults(config, refdata):
+    """Like resolve_defaults, but climate opacity files are ck tables, so they are not swapped for the resampled database."""
+    return _replace_in_strings(config, "_default_", refdata)
+
+
 def new_config(refdata):
     """The reference driver.toml that seeds every new UI session, with `_default_` paths resolved."""
     with open(driver_template_path(refdata), "rb") as f:
@@ -102,6 +117,14 @@ def export_config(config, include_clouds=True, retrieval=None, prune=False):
         config = prune_to_selected(config)
     if retrieval:
         config["retrieval"] = retrieval
+    return config
+
+
+def export_climate_config(config):
+    """The climate config as driver.run_climate should receive it: options stripped, star removed unless irradiated."""
+    config = clean_dictionary(config)
+    if not config.get("irradiated", False):
+        config.pop("star", None)
     return config
 
 

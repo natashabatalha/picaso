@@ -1,0 +1,8 @@
+{% from "_macros.html" import notes, plot, action %}
+{% set result = climate_state.results.get("preview") %}
+<div class="actions">{{ action(url_for("climate.preview"), "See initial guess", secondary=True) }}</div>
+{% if result %}
+  {{ notes([("warning", result.warning)] if result.warning else []) }}
+  {% if result.error %}<pre class="error-detail">{{ result.error }}</pre>{% endif %}
+  {{ plot(result.plot, "climate-guess") }}
+{% endif %}

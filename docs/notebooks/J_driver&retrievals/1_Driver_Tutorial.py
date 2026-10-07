@@ -101,7 +101,7 @@ print('Here are some default knot inputs',config['temperature']['knots'])
 # * `calc_type` (str):
 #   * `'spectrum'`: Calculate a single forward spectrum.
 #   * `'retrieval'`: Run a parameter retrieval.
-#   * `'climate'`: Undergo a self-consistent climate calculation (WIP -- not yet implemented).
+#   * `'climate'`: Run a self-consistent climate calculation. Climate runs use their own configuration file (`climate.toml`), see the [Climate Tutorial](6_Climate.html).
 #
 # ---
 #
