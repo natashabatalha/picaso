@@ -18,13 +18,14 @@
     </a>
     <nav>
       {% set pages = [("/", "Home"), ("/refdata/", "Setup Reference Data"), ("/spectrum/", "Spectrum & Retrieval Setup"),
-                      ("/analysis/", "Retrieval Analysis"), ("/info-content/", "Information Content (WIP)")] %}
+                      ("/analysis/", "Retrieval Analysis"), ("/info-content/", "Information Content (WIP)"),
+                      ("/opacities/", "Opacity Viewer")] %}
       {% for path, label in pages %}
         <a href="{{ path }}" {% if (request.path == path) or (path != "/" and request.path.startswith(path)) %}class="active"{% endif %}>{{ label }}</a>
       {% endfor %}
     </nav>
   </header>
-  <main>
+  <main class="{% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
   <div id="error-toast" class="toast" hidden>

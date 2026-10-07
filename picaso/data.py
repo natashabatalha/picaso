@@ -409,15 +409,32 @@ def check_environ(return_html=False):
                 print(f"[{msg_type.upper()}] {clean_msg}")
 
 
+def default_opacity_file(picaso_refdata):
+    """
+    Returns the default resampled opacity database, the alphabetically first
+    $picaso_refdata/opacities/opacities*.db file, and how many candidates were found.
+
+    Parameters
+    ----------
+    picaso_refdata : str
+        Path to the picaso reference data directory
+
+    Returns
+    -------
+    str or None, int
+        Default opacity filename (None if nothing was found), number of candidate files
+    """
+    candidates = sorted(glob.glob(os.path.join(picaso_refdata,'opacities','opacities*.db')))
+    return (candidates[0] if candidates else None), len(candidates)
+
 def check_default_opacity(picaso_refdata,messages): 
-    default_resampled = glob.glob(os.path.join(picaso_refdata,'opacities','opacities*.db'))
-    if len(default_resampled)==1: 
-        default_resampled = default_resampled[0]
+    default_resampled, ncandidates = default_opacity_file(picaso_refdata)
+    if ncandidates==1: 
         extra_text = ''
-    elif len(default_resampled)>1:
-        default_resampled = default_resampled[0]
+    elif ncandidates>1:
         extra_text = ' Note, found multiple opacities*.db filenames. PICASO has just picked the alphabetically first one. '    
     else: 
+        default_resampled = os.path.join(picaso_refdata,'opacities','opacities*.db')
         messages.append(('error', f'Resampled opacity file has not been set, which is usually required by the code. The file should live here: <code>{default_resampled}</code>. You can use get_data function to help you download or read the installation docs to do it manually.'))
         return messages
     

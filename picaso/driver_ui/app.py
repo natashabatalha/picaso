@@ -11,7 +11,7 @@ import plotly
 from flask import Flask, render_template, send_file
 
 from picaso.driver_ui.core.config_ops import driver_template_path
-from picaso.driver_ui.views import home, refdata
+from picaso.driver_ui.views import home, opacities, refdata
 
 # pages that import PICASO, which needs the reference data at import time
 PICASO_PAGES = ("/spectrum/", "/analysis/", "/info-content/")
@@ -28,6 +28,8 @@ def create_app(refdata_dir=None):
 
     app.register_blueprint(home.bp)
     app.register_blueprint(refdata.bp)
+    # reads the opacity database directly, so it works without importing PICASO
+    app.register_blueprint(opacities.bp)
     register_picaso_pages(app)
 
     @app.get("/vendor/plotly.min.js")

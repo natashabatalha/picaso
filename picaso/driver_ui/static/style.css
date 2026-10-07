@@ -99,7 +99,7 @@ main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
 .field-bool > label { padding-top: 0; }
 .control { min-width: 0; }
 .unit { font-size: 12px; }
-.field input[type="text"], .field select, .field textarea, .card input[type="text"] {
+.field input[type="text"], .field input[type="number"], .field select, .field textarea, .card input[type="text"] {
   width: 100%;
   padding: 5px 8px;
   border: 1px solid var(--border);
@@ -169,6 +169,20 @@ details summary { cursor: pointer; }
 img.figure { display: block; max-width: 100%; height: auto; margin: 12px 0; background: #fff; border-radius: 6px; }
 .environment-status { overflow-x: auto; }
 pre { overflow-x: auto; background: var(--bg); padding: 12px; border-radius: 6px; }
+
+/* ---------- sidebar form + plot (opacity viewer) ---------- */
+main.wide { max-width: 1500px; }
+.sidebar-layout { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.sidebar .field { grid-template-columns: 1fr; }
+.sidebar .field > label { padding-top: 0; }
+.sidebar .checkbox-grid { max-height: 160px; }
+.inline-inputs { display: flex; gap: 8px; align-items: center; }
+.radio-row { display: flex; gap: 4px 16px; flex-wrap: wrap; }
+.radio-row label { white-space: nowrap; }
+.plot-panel .plot { min-height: 640px; margin: 0; }
+@media (max-width: 900px) {
+  .sidebar-layout { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 560px) {
   .field { grid-template-columns: 1fr; }
