@@ -13,16 +13,29 @@
 </head>
 <body hx-ext="morph">
   <header class="topbar">
-    <a href="https://github.com/natashabatalha/picaso" class="logo">
-      <img src="https://natashabatalha.github.io/picaso/_images/logo.png" alt="PICASO">
+    <a href="/" class="logo">
+      <img src="https://natashabatalha.github.io/picaso/_images/logo.png" alt="PICASO home">
     </a>
+    {# One menu per group (see navigation.py); menus open on hover or keyboard focus. #}
     <nav>
-      {% set pages = [("/", "Home"), ("/refdata/", "Setup Reference Data"), ("/spectrum/", "Spectrum & Retrieval Setup"),
-                      ("/analysis/", "Retrieval Analysis"), ("/info-content/", "Information Content (WIP)"),
-                      ("/opacities/", "Opacity Viewer")] %}
-      {% for path, label in pages %}
-        <a href="{{ path }}" {% if (request.path == path) or (path != "/" and request.path.startswith(path)) %}class="active"{% endif %}>{{ label }}</a>
+      {% for group in nav_groups %}
+        <div class="nav-group">
+          <button type="button" class="nav-button{% if group.contains(request.path) %} active{% endif %}" aria-haspopup="true">{{ group.label }}</button>
+          <div class="nav-menu">
+            {% for page in group.pages %}
+              <a href="{{ page.path }}"{% if nav_active(page.path, request.path) %} class="active" aria-current="page"{% endif %}>
+                {{ page.label }}{% if page.wip %} <span class="badge">WIP</span>{% endif %}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
       {% endfor %}
+      <div class="nav-group nav-end">
+        <button type="button" class="nav-button" aria-haspopup="true">Help</button>
+        <div class="nav-menu">
+          {% for label, url in nav_resources %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }} ↗</a>{% endfor %}
+        </div>
+      </div>
     </nav>
   </header>
   <main class="{% block main_class %}{% endblock %}">

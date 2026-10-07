@@ -1,50 +1,52 @@
 {% extends "base.html" %}
+{% from "_macros.html" import notes %}
 {% block content %}
-<h1>Welcome to the PICASO App</h1>
+<section class="hero">
+  <h1>PICASO App</h1>
+  <p class="lead">A browser interface for <strong>PICASO</strong>, the Planetary Intensity Code for Atmospheric
+    Scattering Observations. Set up and run exoplanet and brown dwarf spectra, prepare and analyze retrievals,
+    and inspect the opacities behind your models, without writing a driver file by hand.</p>
+</section>
 
-<p><strong>PICASO</strong> (Planetary Intensity Code for Atmospheric Scattering Observations) is a state-of-the-art
-tool for exoplanet and brown dwarf atmospheric modeling.</p>
+{% if not refdata_ready %}
+  {{ notes([("warning", "PICASO's reference data was not found, so the modeling and analysis pages are unavailable. "
+                        "Start with Setup → Reference Data.")]) }}
+{% endif %}
 
-<p>picaso enables the:</p>
-<ol>
-  <li><strong>Computation</strong> of exoplanet and brown dwarf spectroscopy in transmission, emission or reflected light.</li>
-  <li><strong>1D climate modeling</strong> of brown dwarfs and exoplanets.</li>
-  <li><strong>Fitting</strong> spectroscopic data to models.</li>
-</ol>
+{% for group in nav_groups %}
+  <section class="home-section">
+    <h2>{{ group.label }}</h2>
+    <p class="hint">{{ group.summary }}</p>
+    <div class="feature-grid">
+      {% for page in group.pages %}
+        <a class="feature" href="{{ page.path }}">
+          <h3>{{ page.label }}{% if page.wip %} <span class="badge">WIP</span>{% endif %}</h3>
+          <p>{{ page.summary }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endfor %}
 
-<h2>Major Features</h2>
-<ul>
-  <li><strong>Reflected Light Spectroscopy</strong> of planets</li>
-  <li><strong>Thermal Emission Spectroscopy</strong> of planets and brown dwarfs</li>
-  <li><strong>Transit Spectroscopy</strong> of planets</li>
-  <li><strong>Phase Curves</strong> of planets</li>
-  <li><strong>1D Climate modeling</strong> of planets and brown dwarfs</li>
-  <li><strong>Fitting models</strong> to data</li>
-</ul>
+<section class="home-section">
+  <h2>About PICASO</h2>
+  <p class="hint">What the underlying code can do. Some of it is not in this app yet; the documentation covers all of it.</p>
+  <ul class="capabilities">
+    <li><strong>Transmission spectroscopy</strong> of planets</li>
+    <li><strong>Thermal emission spectroscopy</strong> of planets and brown dwarfs</li>
+    <li><strong>Reflected light spectroscopy</strong> of planets</li>
+    <li><strong>Phase curves</strong> of planets</li>
+    <li><strong>1D climate modeling</strong> of planets and brown dwarfs</li>
+    <li><strong>Fitting models</strong> to data with retrievals</li>
+  </ul>
+</section>
 
-<h2>App Major Features</h2>
-<div class="columns">
-  <div>
-    <h3>1. Setup PICASO Reference Data</h3>
-    <p>Configure your environment variables and download necessary reference data (opacities, etc.) to get PICASO running.</p>
+<section class="home-section">
+  <h2>PICASO Resources</h2>
+  <div class="button-row">
+    {% for label, url in nav_resources %}
+      <a class="button{% if not loop.first %} secondary{% endif %}" href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>
+    {% endfor %}
   </div>
-  <div>
-    <h3>2. Run Spectral Model and/or Build Retrieval</h3>
-    <p>The main driver for running PICASO models. Configure your star, planet, atmosphere, and clouds to generate spectra or run retrievals.</p>
-  </div>
-  <div>
-    <h3>3. Compute Information Content Statistics</h3>
-    <p>Analyze information content, Degrees of Freedom (DOF), and Shannon Information Content for your model configurations.</p>
-  </div>
-</div>
-
-<hr>
-
-<h2>General PICASO Resources</h2>
-<div class="button-row">
-  <a class="button" href="https://natashabatalha.github.io/picaso">Documentation</a>
-  <a class="button" href="https://github.com/natashabatalha/picaso">GitHub Repository</a>
-  <a class="button" href="https://natashabatalha.github.io/picaso/installation.html">Installation Guide</a>
-  <a class="button" href="https://natashabatalha.github.io/picaso/tutorials.html">Tutorials</a>
-</div>
+</section>
 {% endblock %}

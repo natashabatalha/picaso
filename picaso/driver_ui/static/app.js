@@ -85,3 +85,12 @@ document.addEventListener("toggle", (event) => {
   const filter = event.target.querySelector(".multiselect-filter");
   if (filter) filter.focus();
 }, true);
+
+// ---------- top-bar menus: hover/focus opens them in CSS; clicks toggle them for touch screens ----------
+document.addEventListener("click", (event) => {
+  const button = event.target.closest(".nav-button");
+  document.querySelectorAll(".nav-group.open").forEach((group) => {
+    if (!button || group !== button.parentElement) group.classList.remove("open");
+  });
+  if (button) button.parentElement.classList.toggle("open");
+});

@@ -10,6 +10,7 @@ import traceback
 import plotly
 from flask import Flask, render_template, send_file
 
+from picaso.driver_ui import navigation
 from picaso.driver_ui.core.config_ops import driver_template_path
 from picaso.driver_ui.views import home, opacities, refdata
 
@@ -31,6 +32,11 @@ def create_app(refdata_dir=None):
     # reads the opacity database directly, so it works without importing PICASO
     app.register_blueprint(opacities.bp)
     register_picaso_pages(app)
+
+    @app.context_processor
+    def nav_context():
+        return {"nav_groups": navigation.GROUPS, "nav_resources": navigation.RESOURCES,
+                "nav_active": navigation.is_active}
 
     @app.get("/vendor/plotly.min.js")
     def plotly_js():
