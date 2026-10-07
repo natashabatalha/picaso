@@ -179,6 +179,68 @@ main.wide { max-width: 1500px; }
 .inline-inputs { display: flex; gap: 8px; align-items: center; }
 .radio-row { display: flex; gap: 4px 16px; flex-wrap: wrap; }
 .radio-row label { white-space: nowrap; }
+
+/* multi-select dropdown (a <details> wrapping checkboxes) */
+.multiselect { position: relative; margin: 0; }
+.multiselect > summary {
+  list-style: none;
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  user-select: none;
+}
+.multiselect > summary::-webkit-details-marker { display: none; }
+.multiselect > summary::after {
+  content: ""; margin-left: auto; flex: none;
+  width: 7px; height: 7px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.15s;
+}
+.multiselect[open] > summary { border-color: var(--accent); }
+.multiselect[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+.multiselect > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.multiselect-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.multiselect-label.empty { color: var(--muted); }
+.multiselect-menu {
+  position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.multiselect-tools {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.multiselect-tools .multiselect-filter {
+  flex: 1; min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg); color: var(--text); font: inherit; font-size: 13px;
+}
+.link-button {
+  margin-left: auto; padding: 0; border: 0; background: none;
+  color: var(--accent); font: inherit; font-size: 13px; cursor: pointer;
+}
+.link-button + .link-button { margin-left: 0; }
+.multiselect-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.multiselect-options label {
+  color: var(--text); white-space: nowrap; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px;
+}
+.multiselect-options label:hover { background: var(--info-bg); }
+.multiselect-options label[hidden] { display: none; }
 .plot-panel .plot { min-height: 640px; margin: 0; }
 @media (max-width: 900px) {
   .sidebar-layout { grid-template-columns: 1fr; }

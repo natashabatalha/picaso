@@ -4,12 +4,31 @@
 {% block main_class %}wide{% endblock %}
 {% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
 
-{% macro checkboxes(name, values, selected, fmt="%g") %}
-  <div class="checkbox-grid">
-    {% for v in values %}
-      <label><input type="checkbox" name="{{ name }}" value="{{ v }}" {% if v in selected %}checked{% endif %}> {{ fmt|format(v) if v is number else v }}</label>
-    {% endfor %}
-  </div>
+{# A dropdown of checkboxes. The checkboxes keep their `name`, so the form posts exactly as a plain
+   checkbox list would; app.js keeps the summary text in sync and closes the menu on outside clicks. #}
+{% macro multiselect(name, values, selected, placeholder="None selected", fmt="%g") %}
+  {% set labels = [] %}
+  {% for v in values if v in selected %}{% if labels.append(fmt|format(v) if v is number else v) %}{% endif %}{% endfor %}
+  <details class="multiselect" id="multiselect-{{ name }}">
+    <summary>
+      <span class="multiselect-label{% if not labels %} empty{% endif %}" data-placeholder="{{ placeholder }}">
+        {%- if not labels %}{{ placeholder }}{% elif labels|length <= 3 %}{{ labels|join(", ") }}{% else %}{{ labels|length }} selected{% endif -%}
+      </span>
+    </summary>
+    <div class="multiselect-menu">
+      <div class="multiselect-tools">
+        {% if values|length > 10 %}<input type="search" class="multiselect-filter" placeholder="Filter…" aria-label="Filter options">{% endif %}
+        <button type="button" class="link-button" data-select="all">All</button>
+        <button type="button" class="link-button" data-select="none">None</button>
+      </div>
+      <div class="multiselect-options">
+        {% for v in values %}
+          {% set text = fmt|format(v) if v is number else v %}
+          <label><input type="checkbox" name="{{ name }}" value="{{ v }}" data-label="{{ text }}" {% if v in selected %}checked{% endif %}> {{ text }}</label>
+        {% endfor %}
+      </div>
+    </div>
+  </details>
 {% endmacro %}
 
 {% macro radios(name, options, selected) %}
@@ -37,20 +56,20 @@
     {% if info %}
       <div class="field">
         <label>Molecules</label>
-        <div class="control">{{ checkboxes("molecule", info.molecules, choices.molecules) }}</div>
+        <div class="control">{{ multiselect("molecule", info.molecules, choices.molecules) }}</div>
       </div>
       <div class="field">
         <label>Continuum</label>
-        <div class="control">{{ checkboxes("continuum", info.continuum, choices.continuum) }}</div>
+        <div class="control">{{ multiselect("continuum", info.continuum, choices.continuum) }}</div>
       </div>
       <div class="field">
         <label>Temperatures <span class="unit">[K]</span></label>
-        <div class="control">{{ checkboxes("temperature", info.temperatures, choices.temperatures) }}
+        <div class="control">{{ multiselect("temperature", info.temperatures, choices.temperatures) }}
           <p class="hint">Continuum uses its nearest grid temperature.</p></div>
       </div>
       <div class="field">
         <label>Pressures <span class="unit">[bar]</span></label>
-        <div class="control">{{ checkboxes("pressure", info.pressures, choices.pressures) }}</div>
+        <div class="control">{{ multiselect("pressure", info.pressures, choices.pressures) }}</div>
       </div>
       <div class="field">
         <label for="opacity-R">Resolution (R)</label>
