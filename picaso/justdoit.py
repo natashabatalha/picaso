@@ -4376,6 +4376,8 @@ class inputs():
             Original wavenumber grid (inverse cm) for the albedo which is used to interpolate onto the new wavenumber grid
         """
 
+        albedo_given = isinstance(albedo, (float, int, list, np.ndarray))
+
         # constant wavelength surface albedo
         if isinstance(albedo, (float, int)):
             self.inputs['surface_reflect'] = np.array([albedo]*len(wavenumber))
@@ -4388,27 +4390,44 @@ class inputs():
         # wavelength dependent surface albedo
         # NOTE: Paragas+25 ApJ 981 130 also provide emissivity measurements for different temperatures that could be implemented in the future
         elif isinstance(surface_composition, str) and isinstance(surface_type, str):
-            try:
-                # pull hemispherical reflectances from albedo file
-                # the albedo file is a reformatted version of the data in Figure 3 of Paragas+25 ApJ 981 130
-                albedo_file = os.path.join(os.environ['picaso_refdata'], 'surfaces', 'hemispherical_reflectances.h5')
-                with h5py.File(albedo_file, 'r') as f:
-                    albedo = f[surface_composition+'_'+surface_type][:]
-                    wavelength = f['wavelength'][:] # microns
-                    wavenumber_ref = 1e4/wavelength # cm^-1
+            # pull hemispherical reflectances from albedo file
+            # the albedo file is a reformatted version of the data in Figure 3 of Paragas+25 ApJ 981 130
+            albedo_file = os.path.join(os.environ['picaso_refdata'], 'surfaces', 'hemispherical_reflectances.h5')
+            if not os.path.exists(albedo_file):
+                raise FileNotFoundError(f'Surface albedo file not found at {albedo_file}. Check that your picaso_refdata is up to date.')
 
-                # interpolate reflectances onto the wavenumber grid of the opacities
-                # TODO update terra_wavenumber_grid file, for now it's 661 grid
-                if isinstance(wavenumber, type(None)):
-                    terra_wavenumber_file = os.path.join(os.environ['picaso_refdata'], 'opacities', 'terra_wavenumber_grid.h5')
-                    with h5py.File(terra_wavenumber_file, 'r') as f:
-                        wavenumber = f['wavenumber'][:] # cm^-1
-                self.inputs['surface_reflect'] = np.interp(wavenumber, wavenumber_ref[::-1], albedo[::-1])
-            except:
-                raise Exception('You have selected a surface composition and/or surface type that PICASO does not recognize.')
-            self.inputs['surface_composition'] = surface_composition # save surface composition for output
-            self.inputs['surface_type'] = surface_type # save surface type for output
-        
+            key = surface_composition + '_' + surface_type
+            with h5py.File(albedo_file, 'r') as f:
+                if key not in f:
+                    options = sorted(k for k in f.keys() if k != 'wavelength')
+                    raise ValueError(f'Surface "{key}" not found. Options are composition_type pairs: {options}')
+                albedo = f[key][:]
+                wavelength = f['wavelength'][:] # microns
+            wavenumber_ref = 1e4/wavelength # cm^-1
+
+            # interpolate reflectances onto the wavenumber grid of the opacities
+            # TODO update terra_wavenumber_grid file, for now it's 661 grid
+            if wavenumber is None:
+                terra_wavenumber_file = os.path.join(os.environ['picaso_refdata'], 'opacities', 'terra_wavenumber_grid.h5')
+                if not os.path.exists(terra_wavenumber_file):
+                    raise FileNotFoundError(f'Wavenumber grid file not found at {terra_wavenumber_file}. Pass wavenumber explicitly or update picaso_refdata.')
+                with h5py.File(terra_wavenumber_file, 'r') as f:
+                    wavenumber = f['wavenumber'][:] # cm^-1
+            self.inputs['surface_reflect'] = np.interp(wavenumber, wavenumber_ref[::-1], albedo[::-1])
+
+        else:
+            raise ValueError('surface_reflect requires either albedo (float, int, list, or array) '
+                             'or both surface_composition and surface_type as strings. '
+                             f'Got albedo={albedo!r}, surface_composition={surface_composition!r}, surface_type={surface_type!r}.')
+
+        # a user-supplied albedo takes precedence, so don't report a composition/type that wasn't used
+        if albedo_given:
+            surface_composition, surface_type = None, None
+
+        # always record what defined the surface (None if a user-supplied albedo was used)
+        # so outputs never carry stale composition/type from a previous call
+        self.inputs['surface_composition'] = surface_composition
+        self.inputs['surface_type'] = surface_type
         self.inputs['hard_surface'] = 1 #let's the code know you have a hard surface at depth
     
     def clouds_reset(self):
@@ -5561,13 +5580,10 @@ class inputs():
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
         all_out['adiabat'] = self.inputs['climate']['adiabat']
-        if self.inputs['hard_surface'] == 1: # terrestrial surface information
-            try:
-                all_out['surface_composition'] = self.inputs['surface_composition']
-                all_out['surface_type'] = self.inputs['surface_type']
-                all_out['surface_albedo'] = self.inputs['surface_reflect']
-            except:
-                all_out['surface_albedo'] = self.inputs['surface_reflect']
+        if self.inputs.get('hard_surface', 0) == 1: # terrestrial surface information
+            all_out['surface_albedo'] = self.inputs['surface_reflect']
+            all_out['surface_composition'] = self.inputs.get('surface_composition')
+            all_out['surface_type'] = self.inputs.get('surface_type')
         all_out['flux_ir_attop']=flux_plus_final
         flux_net_final = rfacv * flux_net_v_final + rfaci* flux_net_ir_final + tidal
         all_out['fnet/fnetir']=flux_net_final/flux_net_ir_final
