@@ -820,14 +820,19 @@ def lu_backsubs(a, n, ntot, indx, b):
     return b
 
 @jit(nopython=True, cache=True)
-def reconstruct_adiabat(temp, pressure, nstr, nofczns, AdiabatBundle, Atmosphere, moist):
+def reconstruct_adiabat(temp, rad_temp, pressure, nstr, nofczns, AdiabatBundle, Atmosphere, moist, grad_from_rad):
     """
-    Reconstructs the temperature profile by applying the adiabatic lapse rate in convective zones.
+    Reconstructs the temperature profile zone by zone: radiative levels are copied
+    from rad_temp, then the adiabatic lapse rate is applied in the convective zone below.
+    Zones are processed in order (radiative then convective) so that when zones share
+    a boundary level (e.g. nstr[3]==nstr[2]) the same value wins as in t_start.
 
     Parameters
     ----------
     temp : array
-        Temperature profile.
+        Temperature profile (updated in place).
+    rad_temp : array
+        Temperatures to use at the radiative levels.
     pressure : array
         Pressure profile.
     nstr : array
@@ -840,6 +845,9 @@ def reconstruct_adiabat(temp, pressure, nstr, nofczns, AdiabatBundle, Atmosphere
         Atmosphere information.
     moist : bool
         If True, use moist adiabat.
+    grad_from_rad : bool
+        If True, evaluate the lapse rate at rad_temp[j-1] (as in the t_start jacobian),
+        otherwise at the reconstructed temp[j-1] (as in the t_start line search).
 
     Returns
     -------
@@ -847,18 +855,28 @@ def reconstruct_adiabat(temp, pressure, nstr, nofczns, AdiabatBundle, Atmosphere
         Updated temperature profile.
     """
     for nb in range(0, 3 * nofczns, 3):
+        n_top_b = nstr[nb] + 1 # top of rad zone
+        if nb == 0:
+            n_top_b -= 1
         n_strt_b = nstr[nb + 1] # top of conv zone
         n_conv_top_b = n_strt_b + 1
         n_bot_b = nstr[nb + 2] + 1 # bottom of conv zone
+
+        for j1 in range(n_top_b, n_strt_b + 1):
+            temp[j1] = rad_temp[j1]
 
         for j1 in range(n_conv_top_b, n_bot_b + 1):
             press = sqrt(pressure[j1 - 1] * pressure[j1])
             # update temp before throwing to moist_grad function
             Atmosphere = replace_temp(Atmosphere, temp)
-            if moist == True:
-                grad_x, cp_x = moist_grad(temp[j1 - 1], press, AdiabatBundle, Atmosphere, j1 - 1)
+            if grad_from_rad == True:
+                t_grad = rad_temp[j1 - 1]
             else:
-                grad_x, cp_x = did_grad_cp(temp[j1 - 1], press, AdiabatBundle)
+                t_grad = temp[j1 - 1]
+            if moist == True:
+                grad_x, cp_x = moist_grad(t_grad, press, AdiabatBundle, Atmosphere, j1 - 1)
+            else:
+                grad_x, cp_x = did_grad_cp(t_grad, press, AdiabatBundle)
 
             temp[j1] = exp(log(temp[j1 - 1]) + grad_x * (log(pressure[j1]) - log(pressure[j1 - 1])))
     return temp
@@ -983,6 +1001,9 @@ def compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
     -------
     A : array
         Jacobian matrix of size (nlevel, nlevel).
+    beta : array
+        temp_old after perturb/un-perturb of each radiative level (carries the same
+        floating point round-off as t_start, which uses it as the line search base).
     """
     nlevel = len(temp_old)
     A = np.zeros(shape=(nlevel, nlevel))
@@ -1006,8 +1027,9 @@ def compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
             beta[jm] += del_t
             
             # Reconstruct profile
+            # (lapse rate evaluated on the unperturbed-convective beta vector, as in t_start)
             temp = beta.copy()
-            temp = reconstruct_adiabat(temp, Atmosphere.p_level, nstr, nofczns, AdiabatBundle, Atmosphere, moist)
+            temp = reconstruct_adiabat(temp, beta, Atmosphere.p_level, nstr, nofczns, AdiabatBundle, Atmosphere, moist, True)
             
             # Re-calculate fluxes (only IR is needed for Jacobian in the original code)
             Atmosphere_perturbed = replace_temp(Atmosphere, temp)
@@ -1057,7 +1079,7 @@ def compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
             flag_no = 0
         no += (nstr[nz+2] + 1) - n_strt
 
-    return A
+    return A, beta
 
 @jit(nopython=True, cache=True)
 def get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
@@ -1161,7 +1183,7 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
         flux_net_ir_layer_old = flux_results[4].copy()
 
         # Compute Jacobian
-        A = compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
+        A, beta_jac = compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
                              Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
                              F0PI, compute_reflected, compute_thermal, do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
                              moist, eps, flux_net_ir_old, flux_net_ir_layer_old)
@@ -1210,8 +1232,9 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
         check = False
 
         while flag_converge == 0:
-            # Update temperature along direction p
-            beta = temp_old.copy()
+            # Update radiative temperatures along direction p
+            beta = beta_jac.copy()
+            rad_temp = temp_old.copy()
             ndo = n_top_r
             flag_ndo = 0 
             if ndo < 0:
@@ -1226,15 +1249,15 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
                 n_bot_d = nstr[nd + 2] + 1
                 
                 for j in range(n_top_d, n_strt_d + 1):
-                    temp[j] = beta[j] + alam * p[j - ndo]
+                    rad_temp[j] = beta[j] + alam * p[j - ndo]
                 
                 if flag_ndo == 1:
                     ndo = ndo_temporary
                     flag_ndo = 0
                 ndo += n_bot_d - n_strt_d
             
-            # Reconstruct convective zones
-            temp = reconstruct_adiabat(temp, Atmosphere.p_level, nstr, nofczns, AdiabatBundle, Atmosphere, moist)
+            # Fill radiative levels and reconstruct convective zones, zone by zone
+            temp = reconstruct_adiabat(temp, rad_temp, Atmosphere.p_level, nstr, nofczns, AdiabatBundle, Atmosphere, moist, False)
             
             # Artificial damper
             for j1 in range(n_top_r + 1, nlevel):
