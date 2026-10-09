@@ -100,7 +100,7 @@ else:
         warnings.warn(msg)
 
 
-if not os.path.exists(os.environ.get('PYSYN_CDBS')): 
+if not os.path.exists(os.environ.get('PYSYN_CDBS', '')):
     warnings.warn("You have not downloaded the Stellar reference data. If you only plan on working on substellar objects that is okay but for exoplanets it will be required. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
 
 #hello peter

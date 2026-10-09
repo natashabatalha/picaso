@@ -92,15 +92,6 @@ picaso\.parameterizations module
     :undoc-members:
     :show-inheritance:
     
-picaso\.test module
--------------------
-
-.. automodule:: picaso.test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
 picaso\.wavelength module
 -------------------------
 

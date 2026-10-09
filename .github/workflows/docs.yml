@@ -1,0 +1,47 @@
+# Checks that the documentation still builds.
+#
+# Notebooks are NOT executed here: that needs the full opacity database, so
+# science builds and deploys happen locally (see docs/README.md). This job
+# catches broken markup, toctrees, and API pages that fail to import.
+name: docs
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "picaso/**"
+      - "pyproject.toml"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # the small reference data that ships with the repo is enough to import picaso
+      picaso_refdata: ${{ github.workspace }}/reference
+      PYSYN_CDBS: ${{ github.workspace }}/stellar_placeholder
+      PICASO_DOCS_EXECUTE: "off"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install picaso with docs dependencies
+        run: |
+          mkdir -p "$PYSYN_CDBS"
+          pip install -e ".[docs]"
+
+      - name: Build docs (no notebook execution)
+        working-directory: docs
+        run: make html
+
+      - name: Upload HTML for preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-html
+          path: docs/_build/html
+          retention-days: 7

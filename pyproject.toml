@@ -22,7 +22,6 @@ dependencies = [
     "astropy",
     "matplotlib",
     "stsynphot",
-    "sphinx",
     "scipy",
     "h5py",
     "virga-exo==2.0.2",
@@ -50,6 +49,19 @@ app = [
     "picaso[driver]",
     "flask",
     "plotly",
+]
+# building the documentation (see docs/README.md): pip install "picaso[docs]"
+docs = [
+    "picaso[driver]",
+    "sphinx>=7",
+    "pydata-sphinx-theme>=0.16",
+    "myst-nb>=1.1",
+    "jupytext",
+    "ipykernel",
+    "sphinx-design",
+    "sphinx-copybutton",
+    "sphinx-llms-txt>=0.7",
+    "packaging",
 ]
 
 [tool.setuptools.packages.find]

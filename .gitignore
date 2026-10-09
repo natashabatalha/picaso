@@ -47,3 +47,6 @@ docs/notebooks/sbi-logs/
 
 # small synthetic retrieval loaded by the picaso-app Retrieval Analysis example button
 !reference/base_cases/retrieval_example/**
+
+# sphinx build output and notebook execution cache
+docs/_build/
