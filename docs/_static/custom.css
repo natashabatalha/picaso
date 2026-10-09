@@ -21,3 +21,13 @@ img.landing-logo { margin: 1.5rem auto 0.5rem; }
 }
 .landing-buttons p { margin: 0; }
 section#picaso .sd-card-title { font-size: 1.05rem; }
+
+/* spectrum line art at the bottom of the landing cards */
+.sd-card-img-bottom.landing-spectrum {
+  padding: 0 0.75rem 0.75rem;
+  background: transparent;
+}
+html[data-theme="dark"] img[src$="phases.png"] {
+  /* the full-phase disk is dark purple; a faint glow keeps it visible */
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.35));
+}

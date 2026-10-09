@@ -39,6 +39,9 @@ Browse tutorials
 :gutter: 3
 
 :::{grid-item-card} {fas}`sun` Reflected light
+:img-bottom: _static/landing/reflected.svg
+:img-alt: PICASO reflected spectrum
+:class-img-bottom: landing-spectrum dark-light
 :link: notebooks/A_basics/1_GetStarted
 :link-type: doc
 
@@ -46,6 +49,9 @@ Albedo spectra of planets, with clouds, surfaces and full phase dependence.
 :::
 
 :::{grid-item-card} {fas}`fire` Thermal emission
+:img-bottom: _static/landing/thermal.svg
+:img-alt: PICASO thermal spectrum
+:class-img-bottom: landing-spectrum dark-light
 :link: notebooks/A_basics/5_AddingThermalFlux
 :link-type: doc
 
@@ -53,6 +59,9 @@ Emission spectra of planets and brown dwarfs.
 :::
 
 :::{grid-item-card} {fas}`circle-half-stroke` Transmission
+:img-bottom: _static/landing/transmission.svg
+:img-alt: PICASO transmission spectrum
+:class-img-bottom: landing-spectrum dark-light
 :link: notebooks/A_basics/6_AddingTransitSpectrum
 :link-type: doc
 
@@ -60,6 +69,9 @@ Transit spectra for interpreting JWST and other observations.
 :::
 
 :::{grid-item-card} {fas}`temperature-half` 1D climate
+:img-bottom: _static/landing/climate.svg
+:img-alt: PICASO pressure-temperature profile
+:class-img-bottom: landing-spectrum dark-light
 :link: notebooks/D_climate/1_BrownDwarf_PreW
 :link-type: doc
 
@@ -67,6 +79,9 @@ Radiative–convective equilibrium with clouds, disequilibrium chemistry and pho
 :::
 
 :::{grid-item-card} {fas}`earth-americas` 3D and phase curves
+:img-bottom: _static/landing/phases.png
+:img-alt: PICASO planet at several phase angles
+:class-img-bottom: landing-spectrum dark-light
 :link: notebooks/E_3dmodeling/2_3DInputsWithPICASOandXarray
 :link-type: doc
 
@@ -74,6 +89,9 @@ Post-process GCM output into 3D spectra and thermal or reflected phase curves.
 :::
 
 :::{grid-item-card} {fas}`chart-line` Fit data
+:img-bottom: _static/landing/fit.svg
+:img-alt: PICASO model fit to spectral data
+:class-img-bottom: landing-spectrum dark-light
 :link: notebooks/F_fitdata/1_GridSearch
 :link-type: doc
 

@@ -51,7 +51,7 @@ templates_path = ['_templates']
 master_doc = 'index'
 language = 'en'
 exclude_patterns = [
-    '_build', 'conf.py', 'README.md',
+    '_build', '_scripts', 'conf.py', 'README.md',
     '**.ipynb_checkpoints', '**/*WIP*', '**/*WIP*ipynb',
 ]
 todo_include_todos = True
