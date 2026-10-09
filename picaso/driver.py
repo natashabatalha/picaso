@@ -1631,8 +1631,8 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
         chemistry_function = getattr(param_tools, f'chem_{chem_type}')
         df_mixingratio  = chemistry_function(**chem_config[chem_type].get('grid_kwargs',chem_config[chem_type]))#note, this includes P and T already
     
-    #set final with chem
-    A.atmosphere(df = df_mixingratio)
+    #set final with chem. optional exclude_mol removes molecule opacity (e.g. for leave-one-out contributions)
+    A.atmosphere(df = df_mixingratio, exclude_mol=chem_config.get('exclude_mol',None))
     if stage == 'chemistry':
         return A
     # clouds 

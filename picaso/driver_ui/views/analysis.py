@@ -7,7 +7,7 @@ from flask import Blueprint, Response, abort, render_template, request
 
 from picaso.driver_ui import state
 from picaso.driver_ui.core import analysis
-from picaso.driver_ui.core.config_schema import Choice, MultiChoice, Number, Section, Text
+from picaso.driver_ui.core.config_schema import Bool, Choice, MultiChoice, Number, Section, Text
 from picaso.driver_ui.core.plots import matplotlib_bytes, matplotlib_image, plotly_plot
 from picaso.driver_ui.views.cards import Card, card_views, set_messages
 
@@ -23,7 +23,8 @@ def page_state(sess):
     if not a:
         a.update(config=None, retrieval_dir="", loaded=None, corner={}, corner_export={"dpi": 300, "format": "png"},
                  bands_n=10, bands_selected=[], bands=None, export=dict(EXPORT_DETAILS),
-                 attributes=[{"key": "", "value": ""}], zip=None)
+                 attributes=[{"key": "", "value": ""}], zip=None, contributions_on=False, contribution_options=[],
+                 contributions_selected=[], contributions_plot=None)
     return a
 
 
@@ -110,6 +111,21 @@ class MaxLoglCard(Card):
 
     def visible(self, sess):
         return is_loaded(sess)
+
+    def contribution_fields(self, sess):
+        """Rendered by the extra template below the plot rather than as the card's form above it."""
+        a = page_state(sess)
+        children = [Bool(("analysis", "contributions_on"), a["contributions_on"],
+                         label="Do you also want the individual species contribution (leave-one-out) for this model?")]
+        if a["contributions_on"]:
+            children.append(MultiChoice(
+                ("analysis", "contributions_selected"), a["contributions_selected"], a["contribution_options"],
+                label="Molecules to leave out",
+                hint="One spectrum is computed per molecule, with that molecule's opacity removed."))
+        return Section(("contributions_card",), children)
+
+    def update(self, sess, form):
+        return sess.apply(self.contribution_fields(sess), form)
 
 
 class BandsCard(Card):
@@ -222,8 +238,16 @@ def load():
     a["corner"] = analysis.default_corner_settings(loaded["info"])
     a["bands_selected"] = analysis.band_options(loaded["out"])[:2]
     a["bands"] = a["zip"] = None
+    a["contribution_options"], a["contributions_selected"] = analysis.contribution_options(a["config"], loaded["out"])
+    a["contributions_plot"] = None
     render_corner(sess)
-    set_messages(a, "directory", [("success", "Successfully loaded retrieval outputs!")])
+    messages = [("success", "Successfully loaded retrieval outputs!")]
+    info = loaded["info"]
+    if not info.get("converged", True):
+        messages.append(("warning", f"This retrieval has not converged. Results are intermediate, from {info['niter']} "
+                                    f"iterations with an effective sample size of {info['ess']:.0f}, and will change "
+                                    "as the run continues."))
+    set_messages(a, "directory", messages)
     return render_page(sess)
 
 
@@ -239,6 +263,24 @@ def save_corner():
     fig.savefig(path, format=export["format"], dpi=export["dpi"], bbox_inches="tight")
     plt.close(fig)
     set_messages(a, "corner", [("success", f"Successfully saved figure locally at: {path}")])
+    return render_page(sess)
+
+
+@bp.post("/contributions")
+def generate_contributions():
+    sess = state.current()
+    a = page_state(sess)
+    if not is_loaded(sess):
+        abort(404)
+    if not a["contributions_selected"]:
+        set_messages(a, "max_logl", [("warning", "Select at least one molecule to leave out.")])
+        return render_page(sess)
+    try:
+        excluded = analysis.leave_one_out(a["config"], a["loaded"]["info"], a["contributions_selected"])
+        fig = analysis.max_logl_figure(a["loaded"]["out"], {f"No {mol}": out for mol, out in excluded.items()})
+        a["contributions_plot"] = plotly_plot(fig.update_layout(title="Individual Species Contribution (Leave-One-Out)"))
+    except Exception as e:
+        set_messages(a, "max_logl", [("error", f"Could not compute species contributions: {e}")])
     return render_page(sess)
 
 
