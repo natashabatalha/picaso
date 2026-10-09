@@ -13,7 +13,9 @@
 # ---
 
 # %% [markdown]
-# # Setup `PICASO`
+# # JWST ERS Workshop 2021: Thermal Emission Spectroscopy
+#
+# ## Setup `PICASO`
 #
 # In this tutorial you will learn:
 #
@@ -67,9 +69,9 @@ jpi.output_notebook() #will force all our plots to appear in the notebook
 #os.environ['picaso_refdata']='your_path'
 
 # %% [markdown]
-# # Basic Inputs
+# ## Basic Inputs
 #
-# ## Cross Section Connection
+# ### Cross Section Connection
 #
 # As you will continue seeing throughout the ERS training sessions, all rapid radiative transfer codes rely on a database of pre-computed cross sections. Cross sections are computed by using line lists in combination with critical molecular pressure broadening parameters. Both can either be derived from theoretical first principles (e.g. [UCL ExoMol's line lists](https://www.exomol.com/)), measured in a lab, and/or some combination thereof (e.g. [HITRAN/HITEMP line lists](https://hitran.org/)).
 #
@@ -81,7 +83,7 @@ jpi.output_notebook() #will force all our plots to appear in the notebook
 opa = jdi.opannection(wave_range=[1,5])
 
 # %% [markdown]
-# ## Set Basic Planet and Stellar Inputs
+# ### Set Basic Planet and Stellar Inputs
 
 # %% [markdown]
 # Second step is to set basic planet parameters. To compute raw thermal flux, you only need gravity. However, if you want contrast units (relative flux of planet, to flux of star) you also need planet mass and radius, and stellar radius. Below, we specify the planet's mass and radius.
@@ -96,9 +98,9 @@ case1.gravity(mass=1, mass_unit=u.Unit('M_jup'), radius=1.2, radius_unit=u.Unit(
 case1.star(opa, 4000,0.0122,4.437,radius=0.7, radius_unit = u.Unit('R_sun') )
 
 # %% [markdown]
-# # Toy Models
+# ## Toy Models
 #
-# ## How does climate structure influence resultant thermal flux?
+# ### How does climate structure influence resultant thermal flux?
 #
 # Before we load in full atmospheric profiles. Let's first gain intuition for how temperature-pressure profile influences your spectrum.
 #
@@ -212,9 +214,9 @@ jpi.show(jpi.row([fig,pt_fig]))
 # The first obvious feature is that our isothermal case follows a perfect blackbody. The second two might not be immediately noticeable if you are not familiar with the absorption cross section of H2O. Let's take a look.
 
 # %% [markdown]
-# ## How does absorption influence resultant thermal flux?
+# ### How does absorption influence resultant thermal flux?
 #
-# ### Molecular Absorption
+# #### Molecular Absorption
 #
 # Our toy model included water absorption, along with H2/He. In order to see the cross section of H2O we can use `PICASO`'s opacity factory. This will show you the specific absorptive power of H2O at a specific pressure and temperature. Let's pick a single P and T that is representative of our toy models in order to gain an intuition for where water is absorbing
 
@@ -239,11 +241,11 @@ jpi.show(h2o_fig)
 #
 # In the case where temperature is increasing with increasing pressure, does the flux or your spectrum increase toward the peak of an absorption feature? And vice versa? What does this tell you about where the flux is emanating from at band center, band trough?
 #
-# ### Continuum Absorption
+# #### Continuum Absorption
 #
 # A second, more subtle contributor to the spectrum is the continuum absorption from H2, He, which we included. At first glance it might look like H2O contribution is the only contributor to our toy models. Let's take a closer look at one case by using the `get_contribution` function.
 #
-# ### Get contribution function
+# #### Get contribution function
 #
 # This output consists of three important items:
 #
@@ -376,7 +378,7 @@ jpi.show(jpi.molecule_contribution(contribution, opa,
 # **Confirm understanding:** Does this make sense with what you noted from the raw and normalized spectra? What is happening to the raw spectra in the regions most dominated by continuum opacity?
 
 # %% [markdown]
-# ## How to determine what pressures you are sensitive to?
+# ### How to determine what pressures you are sensitive to?
 #
 # One major aspect of understanding thermal emission is understanding where (in pressure) your flux is emanating from. The tau=1 surface plots should give you a rough idea of this. You can see that in our 0.01xH2O case above, the flux is coming from roughly 1 bars.
 #
@@ -435,7 +437,7 @@ f.legend.location='bottom_right'
 jpi.show(f)
 
 # %% [markdown]
-# # Parameterized Pressure-Temperature Profiles
+# ## Parameterized Pressure-Temperature Profiles
 #
 # In lecture you learned about the double gray model, which is an exoplanet-relevant analytic solution of the two-stream equation [Guillot et al. 2010](#References). You also encountered this in last week's transmission tutorial. The basic equation is:
 #
@@ -480,7 +482,7 @@ jpi.show(pt_fig)
 # We've already learned that the isothermal profile will return back the blackbody. Let's use one of the "greenhouse" limit pressure-temperature profiles to proceed with creating a full thermal emission spectrum.
 
 # %% [markdown]
-# # Combing parameterized climate with chemistry
+# ## Combing parameterized climate with chemistry
 
 # %%
 case1 = jdi.inputs()
@@ -554,7 +556,7 @@ jpi.show(jpi.molecule_contribution(contribution, opa,
 #     - What are the dominant continuum species?
 
 # %% [markdown]
-# # Combing parameterized climate with chemistry AND clouds
+# ## Combing parameterized climate with chemistry AND clouds
 #
 # In this last module we will think about how clouds affect your thermal emission spectrum. We will use the same general procedure outlined above but add one additional step to add a box model cloud.
 
@@ -572,7 +574,7 @@ c_o = 0.55 #absolute solar
 cld1.chemeq_visscher_2121( c_o, log_mh)
 
 # %% [markdown]
-# ## Adding a box model cloud
+# ### Adding a box model cloud
 #
 # Later in the ERS series, you will learn how to compute full cloud models. For now, we will use a simple box model cloud to understand the effect of adding a cloud.
 #
@@ -630,6 +632,6 @@ jpi.show(jpi.molecule_contribution(contribution_cld, opa,
 # 4. What JWST spectral models in 1-5 micron region are most susceptible to cloud coverage?
 
 # %% [markdown]
-# # References
+# ## References
 #
 # [Guillot, Tristan. "On the radiative equilibrium of irradiated planetary atmospheres." Astronomy & Astrophysics 520 (2010): A27.](https://arxiv.org/abs/1006.4702)

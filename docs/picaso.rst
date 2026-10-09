@@ -1,8 +1,7 @@
-The Code
-========
+API Reference
+=============
 
-Submodules
-----------
+Auto-generated documentation for every public module. Most users start from ``picaso.justdoit`` (imported as ``jdi`` in the tutorials) and ``picaso.justplotit`` (``jpi``).
 
 picaso\.atmsetup module
 -----------------------

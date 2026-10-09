@@ -188,7 +188,7 @@ jpi.show(fig)
 # We can directly compare all of them. Interestingly enough, this figure shows better agreement between the methods (compared to the Brown Dwarf case). As we explain in Rooney, this is because the Toon89 methodology is better suited for scattering regimes in the limit of single scattering -> 1 and -> 0. We will explore this further below.
 
 # %% [markdown]
-# # Dependence of Radiative Transfer Method on Scattering Parameters
+# ## Dependence of Radiative Transfer Method on Scattering Parameters
 #
 # As we alluded to above, there is a large accuracy dependence on single scattering and on single scattering and asymmetry. We can run `PICASO` Toon89 methodology, along with SH2 and SH4 and compare with a precomputed cdisort 32-stream calculation.
 #
@@ -222,7 +222,7 @@ compare_SH4_disort32 = (data_disort32-SH4)/data_disort32*100
 compare_SH2_disort32 = (data_disort32-SH2)/data_disort32*100
 
 # %% [markdown]
-# ## Plot heatmap comparing radiative transfer methods
+# ### Plot heatmap comparing radiative transfer methods
 #
 # Reproduce Figure 6 in Rooney et al. 2023 Part II Thermal.
 #

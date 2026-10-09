@@ -1,2 +1,23 @@
 /* Small overrides on top of pydata-sphinx-theme. */
 .build-info { margin: 0; }
+
+/* Landing page: the logo stands in for the visible title (the h1 stays for screen readers and search). */
+section#picaso > h1 {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+img.landing-logo { margin: 1.5rem auto 0.5rem; }
+.landing-tagline {
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+}
+/* the logo is a pill on a light background; clip it so dark mode shows no box */
+.bd-content img.landing-logo, .navbar-brand img { border-radius: 9999px; }
+.landing-buttons {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.landing-buttons p { margin: 0; }
+section#picaso .sd-card-title { font-size: 1.05rem; }

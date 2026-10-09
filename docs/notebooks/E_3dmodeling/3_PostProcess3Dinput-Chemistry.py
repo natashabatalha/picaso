@@ -14,7 +14,9 @@
 # ---
 
 # %% [markdown]
-# # What is post-processing?
+# # Post-Processing Chemistry for 3D Runs
+#
+# ## What is post-processing?
 #
 # To run a full radiative transfer model and create a spectrum, at a minimum we need:
 #
@@ -38,7 +40,7 @@
 # ![workflow-phase.png](workflow-phase.png)
 
 # %% [markdown]
-# # Post-Process 3D Chemistry Input
+# ## Post-Process 3D Chemistry Input
 #
 #
 # In this notebook you will learn:
@@ -63,7 +65,7 @@ import xarray as xr
 gcm_out =  jdi.HJ_pt_3d(as_xarray=True)
 
 # %% [markdown]
-# ## Post-Process Chemistry: User Options
+# ### Post-Process Chemistry: User Options
 #
 # 1. User-defined input: this would only be used to explore simplistic cases (e.g. 100% H2O, or 50/50 H2/H2O). It also might be the case that you have abundance models from elsewhere (e.g. 3D model or GCM) and want to add it to your pressure/temperature `xarray`
 #
@@ -79,7 +81,7 @@ gcm_out =  jdi.HJ_pt_3d(as_xarray=True)
 #
 
 # %% [markdown]
-# ## Post-Process Chemistry: User Defined Input
+# ### Post-Process Chemistry: User Defined Input
 
 # %%
 # create coords
@@ -106,7 +108,7 @@ ds_chem = xr.Dataset(
 
 
 # %% [markdown]
-# ### Add chemistry to an existing GCM xarray
+# #### Add chemistry to an existing GCM xarray
 
 # %%
 gcm_out.update(ds_chem)
@@ -116,7 +118,7 @@ all_gcm = gcm_out
 all_gcm['H2O'].isel(pressure=10).plot(x='lon',y='lat')
 
 # %% [markdown]
-# ### Auto-regrid all 3D input
+# #### Auto-regrid all 3D input
 
 # %%
 case_3d = jdi.inputs()
@@ -127,14 +129,14 @@ case_3d.atmosphere_3d(all_gcm, regrid=True)
 # Note there is no print warning about missing abundance info since we have added it directly to the input `xarray`
 
 # %% [markdown]
-# ### See regridded abundance input
+# #### See regridded abundance input
 
 # %%
 case_3d.inputs['atmosphere']['profile']['H2O'].isel(pressure=10).plot(
     x='lon',y='lat')
 
 # %% [markdown]
-# ## Post-Process Chemistry: Chemical Equilibrium
+# ### Post-Process Chemistry: Chemical Equilibrium
 #
 # We will run this example on a very coarse (5x5) grid to make it faster.
 #
@@ -150,7 +152,7 @@ case_3d.atmosphere_3d(gcm_no_chem, regrid=True)
 case_3d.chemeq_3d(n_cpu=3)#cpu sets parallelization (1=no parallelization)
 
 # %% [markdown]
-# ### Plot 3D Chemistry
+# #### Plot 3D Chemistry
 #
 # Now we can see structure that intuitively makes sense. Near the equator, where temperatures are hotter, there is less CH4.
 

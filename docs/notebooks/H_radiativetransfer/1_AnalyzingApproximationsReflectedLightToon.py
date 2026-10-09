@@ -254,7 +254,7 @@ jpi.plot_format(fig_no_cloud)
 show(column(fig_no_cloud,fig_cloudy ))
 
 # %% [markdown]
-# # Benchmark Toon89 w/ Dlugach & Yanovitskij (1974)
+# ## Benchmark Toon89 w/ Dlugach & Yanovitskij (1974)
 #
 # This replicates Figure 9 from Batalha et al. 2019, which is a benchmark study with [Dlugach & Yanovitskij (1974)](https://ui.adsabs.harvard.edu/abs/1974Icar...22...66D/abstract).
 

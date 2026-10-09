@@ -86,6 +86,7 @@ html_static_path = ['_static']
 html_css_files = ['custom.css']
 html_baseurl = 'https://natashabatalha.github.io/picaso/'
 html_show_sourcelink = True
+html_sidebars = {'index': []}   # landing page: no left sidebar
 
 html_context = {
     'github_user': 'natashabatalha',
@@ -96,9 +97,9 @@ html_context = {
 }
 
 html_theme_options = {
-    'logo': {'text': f'PICASO {release}'},
+    'logo': {'alt_text': f'PICASO {release} - Home'},
     'navbar_align': 'left',
-    'header_links_before_dropdown': 6,
+    'header_links_before_dropdown': 8,
     'icon_links': [
         {
             'name': 'GitHub',
@@ -130,3 +131,14 @@ llms_txt_summary = (
     '(environment variable picaso_refdata) and an opacity database. '
     f'These docs were built with picaso {release} and reference data {refdata_version}.'
 )
+
+# -- Setup -------------------------------------------------------------------
+
+def _write_all_pages(app, env):
+    # The navbar on every page comes from the root toctree, but Sphinx only
+    # rewrites pages whose own source changed. Rewrite all pages each build so
+    # navigation never goes stale; notebooks are not re-executed (cached).
+    return list(env.found_docs)
+
+def setup(app):
+    app.connect('env-get-updated', _write_all_pages)

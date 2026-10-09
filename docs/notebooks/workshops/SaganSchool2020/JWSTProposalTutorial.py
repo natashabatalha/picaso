@@ -14,20 +14,22 @@
 # ---
 
 # %% [markdown]
-# # Initial Setup
+# # Sagan School 2020: Writing a JWST Proposal
+#
+# ## Initial Setup
 #
 # This tutorial has two big package dependencies: 1) `PandExo`, 2) `PICASO`
 #
 # Each of these depend on pretty hefty reference data packages that include things such as opacities, chemistry, _JWST_ reference data.
 #
-# ## Download Files and Install Extra Packages beyond PICASO
+# ### Download Files and Install Extra Packages beyond PICASO
 #
 # This is a lot of data so I recommend downloading it early, and ensuring you have enough storage space. Make sure you've gone through the quickstart and have checked your environment. Note, this tutorial requires an additional isntall of PandExo, which is completely separate from PICASO. You will need to install this on your own
 #
 # 1. Install PandExo (separate package with separate installation instructions)
 #
 #
-# ### Make sure we have the right PICASO data
+# #### Make sure we have the right PICASO data
 #
 # 1. Are you a student and want to quickly run this without going through full PICASO data install setup? **PROCEED TO A do not edit B**
 #
@@ -85,10 +87,10 @@ output_notebook()
 #double check that you have loaded BokehJS 2.1.1
 
 # %% [markdown]
-# # What accuracy in planet properties do I need?
+# ## What accuracy in planet properties do I need?
 
 # %% [markdown]
-# ## Using `Exoplanet Archive API` to Query Confirmed Targets
+# ### Using `Exoplanet Archive API` to Query Confirmed Targets
 #
 # We can query from Exoplanet Archive to get a list of targets. Once we have all the targets we will have to narrow down the sample to only those that have suitable planet properties.
 
@@ -105,14 +107,14 @@ for i in planets_df.columns:
 planets_df.head()
 
 # %% [markdown]
-# ### Trouble finding what you are looking for?
+# #### Trouble finding what you are looking for?
 
 # %%
 #easy way to search through dataframe with many keys
 [i for i in planets_df.keys() if 'mass' in i]
 
 # %% [markdown]
-# ### Get rid of everything without a mass
+# #### Get rid of everything without a mass
 
 # %%
 #let's only grab targets with masses and errors
@@ -160,9 +162,9 @@ choose_from = potential_props.loc[potential_props['sy_jmag']<12]
 choose_from.shape[0]
 
 # %% [markdown]
-# # What tools do I need? How do I use them?
+# ## What tools do I need? How do I use them?
 #
-# ## Use `PandExo` to run initial constant $(R_p/R_*)^2$ to determine approx precision
+# ### Use `PandExo` to run initial constant $(R_p/R_*)^2$ to determine approx precision
 #
 # Let's choose a single planet GJ 436 b as our example to evaluate observability.
 #
@@ -209,7 +211,7 @@ to_run = ['NIRISS SOSS', 'NIRSpec G395H', 'NIRCam F444W','MIRI LRS']
 result = panjdi.run_pandexo(GJ436b, to_run)
 
 # %% [markdown]
-# ### What is the approximate precision achieved by each observing mode in a single transit at native resolution??
+# #### What is the approximate precision achieved by each observing mode in a single transit at native resolution??
 
 # %%
 prec_fig = figure(x_axis_type='log',y_range=[0,400],
@@ -228,7 +230,7 @@ prec_fig.ygrid.grid_line_alpha=0
 show(prec_fig)
 
 # %% [markdown]
-# ### What is the approximate precision achieved by each observing mode in a single transit at $R = 100$ ??
+# #### What is the approximate precision achieved by each observing mode in a single transit at $R = 100$ ??
 #
 
 # %%
@@ -273,7 +275,7 @@ output_notebook()
 show(prec_fig)
 
 # %% [markdown]
-# ## Use `PICASO` to determine first guess atmospheric transmission signal
+# ### Use `PICASO` to determine first guess atmospheric transmission signal
 #
 # From the `PandExo` exercise we've learned we can achieve approximately 30-50 ppm precision in a single transit. This is a great place to start. Now, we want to get a sense of _what this data precision gives us, scientifically speaking_.
 #
@@ -299,7 +301,7 @@ gj436_trans = jdi.load_planet(choose_from.loc[choose_from['pl_name']==planet_nam
 
 
 # %% [markdown]
-# ### The simplest, most optimistic case: Cloud free, Solar Metallicity, Solar C/O
+# #### The simplest, most optimistic case: Cloud free, Solar Metallicity, Solar C/O
 #
 #
 
@@ -334,7 +336,7 @@ show(spec)
 # %% [markdown]
 # This looks GREAT but highly sus. A water amplitude of 200pm at 1.4 $\mu$m means we could've easily detected something with _Hubble_. Was that the case? For this particular planet, we can check `Exo.MAST` to see if there is a transmission spectrum available.
 #
-# ## Check `Exo.MAST` for available data so we can validate our assumptions
+# ### Check `Exo.MAST` for available data so we can validate our assumptions
 #
 # First, let's check to see if a transmission spectrum exists. We can use `Exo.MAST`!
 #
@@ -386,13 +388,13 @@ show(spec)
 # %% [markdown]
 # The model is way off.
 #
-# ### Proposals with 1xSolar cloud free claims are *not realistic*. What can we do to bolster our argument?
+# #### Proposals with 1xSolar cloud free claims are *not realistic*. What can we do to bolster our argument?
 #
 # The data precision required to rule a 1xSolar CF model is not high enough. Therefore, if one bases their total observing time on a 1xSolar model, they would be largely _under-asking_ for time. And, a TAC member might call out your proposal for having _over simplified_ your model results.
 #
 # Let's see what we can do to rectify this.
 #
-# ### Try following the Mass-M/H plot to get a more "realistic" prediction of what the of M/H should be
+# #### Try following the Mass-M/H plot to get a more "realistic" prediction of what the of M/H should be
 #
 #
 # <a href="https://arxiv.org/pdf/2007.02651.pdf">
@@ -468,7 +470,7 @@ show(spec)
 #
 # But first, let's run some first guess emission cases.
 #
-# ## Use `PICASO` to determine first guess atmospheric emission signal
+# ### Use `PICASO` to determine first guess atmospheric emission signal
 #
 
 # %%
@@ -489,7 +491,7 @@ T = gj436_emis.inputs['atmosphere']['profile']['temperature'].values
 P = gj436_emis.inputs['atmosphere']['profile']['pressure'].values
 
 # %% [markdown]
-# ### The simplest case: Cloud free, Solar Metallicity, Solar C/O
+# #### The simplest case: Cloud free, Solar Metallicity, Solar C/O
 #
 #
 # For this demo we are going to use the same chemistry as chimera. Our little black body function contains the necessary function to grab the chemistry
@@ -561,7 +563,7 @@ show(spec)
 
 
 # %% [markdown]
-# ### My first guess transmission and/or emission signals look promising. What's next?
+# #### My first guess transmission and/or emission signals look promising. What's next?
 #
 # Based on our initial 1x and 200x Solar models of transmission and emission, our simulations look great. So what is next?
 #
@@ -569,7 +571,7 @@ show(spec)
 
 # %% [markdown]
 # <a id='section3'></a>
-# # How can I "prove" observability?
+# ## How can I "prove" observability?
 #
 # The classic hierarchical science levels are:
 #
@@ -580,7 +582,7 @@ show(spec)
 #
 # This section will walk you through steps to determine where you stand on in this hierarchy.
 #
-# ## Can an atmosphere be detected: Addressing cloud concerns and quantifying statistical significance in transmission
+# ### Can an atmosphere be detected: Addressing cloud concerns and quantifying statistical significance in transmission
 #
 # First, let's expand our initial 1xSolar M/H case. Let's add a few cloud cases (e.g. no cloud, medium cloud, high cloud) and a few M/H cases and show first show how these relate to the expected data precision. Next we will discuss how to make these address our ability to detect (or not) each case.
 
@@ -618,7 +620,7 @@ for logMH in logMHs:
 show(fig)
 
 # %% [markdown]
-# ### "Can an atmosphere be detected in transmission" usually translates to "can a $y=mx+b$ model be rejected"
+# #### "Can an atmosphere be detected in transmission" usually translates to "can a $y=mx+b$ model be rejected"
 
 # %%
 fig = [figure(title = i, height= 250, width=300, x_axis_label='log Metallicity',
@@ -683,7 +685,7 @@ show(column(row(fig[0:2]), row(fig[2:4])))
 # You can _always_ create scenarios where an atmosphere is not detectable. For your proposal, it's only important to justify the level at which an atmosphere could be robustly detected.
 
 # %% [markdown]
-# ## Can an atmosphere be detected: Addressing unknown climate and quantifying statistical significance in emission
+# ### Can an atmosphere be detected: Addressing unknown climate and quantifying statistical significance in emission
 #
 # First, let's expand our initial 1xSolar M/H case. In transmission we focused on M/H and cloud cross sectional strength. Although clouds will have an ultimate effect on the emission spectra, the first order affect is that of the pressure-temperature profile. So here, instead of running through M/H-cloud parameter space, we are going to run through a few M/H-temperature cases.
 #
@@ -724,7 +726,7 @@ fig.legend.location='top_left'
 show(fig)
 
 # %% [markdown]
-# ### "Can an atmosphere be detected in emission" usually translates to "can a blackbody model be rejected"
+# #### "Can an atmosphere be detected in emission" usually translates to "can a blackbody model be rejected"
 
 # %%
 fig = [figure(title = i, height= 250, width=300, x_axis_label='log Metallicity',
@@ -801,7 +803,7 @@ show(column(row(fig[0:2]), row(fig[2:4])))
 # 2. NIRSpec and NIRCam are best at rejecting the blackbody
 # 3. MIRI LRS is unable to differentiate high metallicity cases from a blackbody. This is a surprising result as you might suspect MIRI would always be best at thermal emission. Remember that MIRI precision was a bit higher in our first PandExo exercises.
 #
-# ### Revisiting the 4 questions
+# #### Revisiting the 4 questions
 #
 # Now that we've gone through our first observability test, we can revisit our 4 questions.
 #
@@ -810,13 +812,13 @@ show(column(row(fig[0:2]), row(fig[2:4])))
 # 3. Can you detect another physical process?
 # 4. Can you _constrain_ a molecular abundance? A metallicity? A climate profile? An aerosol species?
 #
-# ## Can a specific molecule be detected?
+# ### Can a specific molecule be detected?
 #
 # There are a few ways to tackle this question. We are going to determine if it is possible to solely detect CH4 in a 100xSolar model. The easiest way to do is to simply remove the opacity contribution from the molecule in question.
 #
 # **Theorists Caution**: You can always expand this to determine molecule detectability with different M/H, clouds, temperatures, etc.
 #
-# ### Detecting CH4 Molecules in Transmission versus Emission
+# #### Detecting CH4 Molecules in Transmission versus Emission
 
 # %%
 logMH = np.log10(100) #Solar metallicity taken by eye balling the Solar System fit #science
@@ -869,7 +871,7 @@ show(column(figt, fige))
 # %% [markdown]
 # To attach statistical significance to how well CH4 can be detected in 100xSolar model, one can now repeat the line/blackbody analysis to compute and compare the $\chi^2$ of the "removed CH4" model against the "fake data" -- in this case, the fake data would include the contribution from CH4. If the "removed CH4" model cannot be strongly rejected then that molecule cannot be detected.
 #
-# ### Revisiting the 4 questions
+# #### Revisiting the 4 questions
 #
 # 1. Can you detect an atmosphere? **Yes!** And we've provided rigorous tests to determine the relevant parameter space.
 # 2. Can you detect a specific molecule? **Yes!**
@@ -879,11 +881,11 @@ show(column(figt, fige))
 # Question (3) can be approached in an identical manner to that of question (2). One interesting analysis would be to determine if a temperature inversion is detectable in emission.
 
 # %% [markdown]
-# ## Can any physical parameters be constrained? Information content theory for initial constraint estimates
+# ### Can any physical parameters be constrained? Information content theory for initial constraint estimates
 #
 # The content below was created from the methodology described in Batalha & Line (2017) and Batalha et al. 2018. This methodology **should not** be used to replace retrievals as it cannot capture non-Gaussian posteriors (e.g. degenerate solutions, upper limits). However, it does offer a first order look at how well parameters can be constrained.
 #
-# ### IC Theory Terminology
+# #### IC Theory Terminology
 #
 # - **model, F(x)**: In this case the models we are looking at are spectral models. In particular, `CHIMERA` and `PICASO` produce:
 #
@@ -897,7 +899,7 @@ show(column(figt, fige))
 # Of course, this is an over simplification, but usually these are the properties we are interested in retrieving. I would encourage the user to start simple like this and expand from there.
 
 # %% [markdown]
-# ### Computing Jacobians via finite differencing
+# #### Computing Jacobians via finite differencing
 #
 # **Jacobians** (K) describe how sensitive the mode is to slight perturbations in each state vector $x_a$ parameter at each wavelength place. Given our model above the **Jacobian** can be computed via:
 #
@@ -923,7 +925,7 @@ show(column(figt, fige))
 # Because these jacobians are so specific to the $x_0$ about which they are computed. It's important to do your analysis for a wide range in temperatures, C/Os, M/Hs or whatever else you are interested in
 
 # %% [markdown]
-# ### Compute IC and other useful stats
+# #### Compute IC and other useful stats
 #
 # - **Posterior Covaraince**, $\mathbf{\hat{S}}$, describes uncertanties and correlations of the atmospheric state vector after the measurement is made
 #

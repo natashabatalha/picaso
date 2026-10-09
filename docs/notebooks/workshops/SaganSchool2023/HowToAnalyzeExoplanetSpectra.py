@@ -27,7 +27,7 @@
 # **NOTE: This tutorial is aimed at both beginner and advanced levels.** It is comprehensive and includes various locations to check understanding.
 
 # %% [markdown] id="6b13e969-791b-4a38-885a-82732ba5627d"
-# # Check PICASO Imports
+# ## Check PICASO Imports
 
 # %% [markdown] id="0a481e95-1809-43e4-8485-6ce5652ddc58"
 # Here are the two main PICASO functions you will be exploring:
@@ -47,7 +47,7 @@
 # - If you type class.function?, for example `jdi.mean_regrid`, it will describe the function and its parameters/returns. This also applies to any class with a function.
 
 # %% [markdown] id="b9ba3b9f"
-# ## Make sure we have the right data
+# ### Make sure we have the right data
 #
 # 1. Are you a student and want to quickly run this without going through full PICASO data install setup? **PROCEED TO A do not edit B**
 #
@@ -96,7 +96,7 @@ import numpy as np
 jpi.output_notebook()
 
 # %% [markdown] id="9698f8d6-21c1-4230-a9a9-253232319d49"
-# # Observed Spectrum
+# ## Observed Spectrum
 #
 # Before we start modeling a planet to match WASP-39 b, let's get hold of WASP-39 b's actual observed spectrum in data format, so we can plot it next to our modeled ones. If you did [part 1 of this tutorial](https://github.com/Kappibw/JWST/blob/main/2_retrieving_jwst_spectra.ipynb), you already downloaded the data prepared by the scientists who wrote [the CO2 discovery paper](https://arxiv.org/pdf/2208.11692.pdf).
 #
@@ -131,14 +131,14 @@ plt.xlabel('Wavelength (micrometers)')
 plt.show()
 
 # %% [markdown] id="6d21b8cc-f53a-4bd4-85fc-6db71f9309af"
-# # Spectra Ingredients
+# ## Spectra Ingredients
 #
 # Now what? Let's slowly build up a model that can match this data. What do we need?
 #
-# ## PICASO Basics
+# ### PICASO Basics
 #
 #
-# ### List of what you will need before getting started
+# #### List of what you will need before getting started
 #
 # 1. Planet properties
 #
@@ -157,9 +157,9 @@ plt.show()
 #
 
 # %% [markdown] id="1e0d9c4c"
-# # Basic Inputs
+# ## Basic Inputs
 #
-# ## Cross Section Connection
+# ### Cross Section Connection
 #
 # All rapid radiative transfer codes rely on a database of pre-computed cross sections. Cross sections are computed by using line lists in combination with critical molecular pressure broadening parameters. Both can either be derived from theoretical first principles (e.g., [UCL ExoMol's line lists](https://www.exomol.com/)), measured in a lab, and/or some combination thereof (e.g., [HITRAN/HITEMP line lists](https://hitran.org/)).
 #
@@ -173,7 +173,7 @@ plt.show()
 opa = jdi.opannection(wave_range=[2.7,6])
 
 # %% [markdown] id="a13f6558"
-# ## Set Basic Planet and Stellar Inputs
+# ### Set Basic Planet and Stellar Inputs
 #
 # Second step is to define the basic planet parameters. Depending on the kind of model you want to compute (transmission vs. emission vs. reflected light), there are different requirements for the minimum set of information you need to include.
 #
@@ -204,7 +204,7 @@ help(w39.star)
 w39.inputs['star']
 
 # %% [markdown] id="cbd735be"
-# ## Set Climate and Chemistry
+# ### Set Climate and Chemistry
 #
 # We now need to think about how we can model the climate and chemistry of this system. For the sake of this tutorial we will start really simple, then move forward to something more complex.
 #
@@ -219,7 +219,7 @@ w39.inputs['star']
 #
 
 # %% [markdown] id="ec4bd5a4-9dc7-498a-8db9-e7e3c392509b"
-# ### Pressure
+# #### Pressure
 # If we imagine our "nlevels" as equally spaced altitude bands on the planet, then we will assign pressures to decrease logarithmically as altitude increases.
 #
 # Gas is compressible and tends to behave in that way in planetary atmospheres (including on Earth).
@@ -236,7 +236,7 @@ pressure = np.logspace(-6,2,nlevels)
 print(pressure)
 
 # %% [markdown] id="a1df5148-9cc7-49ff-b19e-3ffeb57d5750"
-# ### Isothermal Temperature
+# #### Isothermal Temperature
 
 # %% [markdown]
 # Next we need to decide how the temperature of the atmosphere varies with pressure. On Earth, temperature generally drops as you travel further from the Earth's surface, i.e. higher in altitude and lower in pressure. But that is not always the case. For simplicity, we'll start by assuming the temperature of WASP-39 b's atmosphere is constant with pressure, which is called "isothermal." As our models get more sophisticated, we'll be able to refer back to this simple case.
@@ -252,7 +252,7 @@ isothermal_temperature = np.zeros(nlevels) + equilibrium_temperature
 print(isothermal_temperature)
 
 # %% [markdown] id="05e13ad1-1728-4dfb-9638-05b761608172"
-# #### Setting the Atmosphere in PICASO
+# ##### Setting the Atmosphere in PICASO
 
 # %% [markdown]
 # So far we have described the parent star and the planet. Now let's define the planet's atmosphere. Note, this is a common workflow, where you start by creating an object (w39) and then slowly add parameters (information) as you go.
@@ -267,7 +267,7 @@ w39.atmosphere(df = jdi.pd.DataFrame({
 w39.inputs['atmosphere']['profile']
 
 # %% [markdown] id="f5016fc9-1275-4a55-b9ec-adccceae4921"
-# ### Chemistry
+# #### Chemistry
 #
 # Now we need to add the chemistry! PICASO has a prebuilt chemistry table that was computed by Channon Visscher. You can use it by adding it to your input case. Two more chemistry parameters are now going to be introduced:
 #
@@ -276,7 +276,7 @@ w39.inputs['atmosphere']['profile']
 #
 
 # %% [markdown] id="bb981137-ccbc-4f77-9cad-e7fb35d397ea"
-# #### Metallicity
+# ##### Metallicity
 #
 # <img src="https://stellarplanetorg.files.wordpress.com/2020/04/wakeforddalba2020_rs_mass_metallicity_v1.jpg?w=736" width="800">
 #
@@ -287,7 +287,7 @@ log_mh = 1.0 # log relative to solar
 # so a value of 1 here represents 10^1 = 10x solar
 
 # %% [markdown] id="12494d50-6908-4ee4-85c4-5ce31fd580ec"
-# #### C/O Ratio
+# ##### C/O Ratio
 #
 # The elemental ratio of carbon to oxygen controls the dominant carbon-bearing species. For instance, take a look at Figure 1 from the paper [C/O RATIO AS A DIMENSION FOR CHARACTERIZING EXOPLANETARY ATMOSPHERES](https://iopscience.iop.org/article/10.1088/0004-637X/758/1/36/pdf).
 #
@@ -313,7 +313,7 @@ w39.chemeq_visscher_2121(c_o, log_mh)
 w39.inputs['atmosphere']['profile'].head()
 
 # %% [markdown] id="98aeb8fc-4b53-4457-870a-a899affc9a9c"
-# ### Reference Pressure
+# #### Reference Pressure
 #
 # Lastly, we need to decide on a "reference pressure." If our planet was terrestrial, this would be the pressure at the surface, and therefore also the pressure corresponding to the radius of the planet. For gas giants like WASP-39 b, this is a bit more complicated -- there is no "surface," so we need to pick a pressure that corresponds to our planet's "radius" or surface, so that PICASO can calculate gravity as a function of altitude from that level.
 #
@@ -327,7 +327,7 @@ w39.inputs['atmosphere']['profile'].head()
 w39.approx(p_reference=10)
 
 # %% [markdown] id="969c933b"
-# ### Want to check your inputs so far?
+# #### Want to check your inputs so far?
 #
 # If you want you can consult `w39.inputs` to check or reset inputs. Let's see how our WASP-39 b object is holding up!
 
@@ -354,11 +354,11 @@ w39.inputs['atmosphere']['profile']['CO2'].values
 w39.inputs['planet'], w39.inputs['star'] # All your inputs have been archived!
 
 # %% [markdown] id="4ed9002e-85a3-4b3b-a20f-2750e7004847"
-# # Creating a Transmission Spectrum
+# ## Creating a Transmission Spectrum
 #
 # Now that we have set up PICASO with everything it needs, and we understand the components needed to model an exoplanet, let's ask PICASO to output a transmission spectrum for our WASP-39 b.
 #
-# ## First Run PICASO
+# ### First Run PICASO
 #
 # We can use the <code>.spectrum</code> function to do so.
 #
@@ -373,7 +373,7 @@ model_iso = w39.spectrum(opa,
 
 
 # %% [markdown] id="ba6bba7f-3eb9-4a8a-8c5c-e88c7c371f7d"
-# ## Our Spectra
+# ### Our Spectra
 #
 # Let's set up a function to display the spectrum in our first output dictionary (first one is called `model_iso`). Moving forward  we will create more models and we want a way to easily display them.
 
@@ -405,7 +405,7 @@ show_spectra(model_iso)
 # Sweet! We have a spectrum that looks the right-ish shape, even though it isn't quite in the right place. Let's take a minute to work that out.
 
 # %% [markdown] id="bd05513b-9193-4e3c-b39e-74a8c877d446"
-# ### Transit Depth Offsets
+# #### Transit Depth Offsets
 #
 # Remember how we guessed what the reference pressure was? Well, it looks like we are a little off. That is okay! When fitting for transit spectra, we introduce a factor to account for this. In the retrieval tutorial, you will fit for a factor of the radius. For now, let's "mean subtract" our data so that the model and data lie on top of one another.
 
@@ -435,11 +435,11 @@ def show_spectra(output, x_range_min=3.0, x_range_max=5.5):
 show_spectra(model_iso)
 
 # %% [markdown] id="56c298ba"
-# ## Model Investigation
+# ### Model Investigation
 #
 # Before trying to improve the complexity of your model, let's make sure you know how to analyze the inputs.
 #
-# ### Identifying molecular features with optical depth contribution plot
+# #### Identifying molecular features with optical depth contribution plot
 #
 # `taus_per_layer` - Each dictionary entry is a nlayer x nwave that represents the per layer optical depth for that molecule.
 #
@@ -460,7 +460,7 @@ jpi.show(jpi.molecule_contribution(molecule_contribution,
                                    opa, plot_width=700, x_axis_type='log'))
 
 # %% [markdown] id="8d9d34fc"
-# ### Identifying molecular features with "leave-one-out" method
+# #### Identifying molecular features with "leave-one-out" method
 #
 # Another option for investigating model output is to remove the contribution of one gas from the model to see if it affects our spectrum. CO$_2$ was a fairly obvious feature for the 4.3$\mu$m. But what about H$_2$O and CO from 4.4-6$\mu$m. In this region there is no distinct "feature" in the spectrum. How sure are we that H$_2$O and CO are really there? We can use the "leave-one-out" method to see how individual molecules are shaping each part of our spectrum.
 #
@@ -488,12 +488,12 @@ jpi.show(jpi.spectrum(w,f,legend=l))
 # We can see clearly that when H$_2$O or CO$_2$ is not present, a completely different spectrum is created that veers far from our model. Therefore we can feel confident that H$_2$O or CO$_2$ are truly present. When we try leaving out CO, however, the spectrum changes more modestly; it appears that including CO improves the spectrum somewhat, but we are less certain about its presence.
 
 # %% [markdown] id="b1aab798-3d33-4582-9952-94e45e686474"
-# # Increasing Model Complexity to Improve Fit: Chemistry, Climate, Clouds
+# ## Increasing Model Complexity to Improve Fit: Chemistry, Climate, Clouds
 #
 # In the next sections we will try to improve our model fit. However, before we continue we need a way to quantify our "goodness of fit."
 
 # %% [markdown] id="8dbbe171-a38f-4bee-8b59-93e3108d6ca4"
-# ## Define Goodness of Fit
+# ### Define Goodness of Fit
 #
 # Let's implement a simple measurement of error called a "chi-squared test." This is a commonly used method to measure how well you are fitting data with a model, and sums up the distance between your model's output and the observed data at each data point.
 #
@@ -527,7 +527,7 @@ print('Simple First Guess', chisqr(model_iso))
 # Not great! Let's make it better.
 
 # %% [markdown] id="1fb463d1"
-# ## Revisiting Chemistry Assumption
+# ### Revisiting Chemistry Assumption
 #
 # Earlier, we assumed M/H and C/O values. Let's loop through a few M/H and C/O values to see if any of these seem to improve our model fit. Why? These values are faster to assess than climate or clouds, and they're easier to loop through while you're building intuition. We want to find the best fit combination of variables such as C/O and M/H that will gives us the closest fit to the data.
 
@@ -576,7 +576,7 @@ show_spectra(chemistry_grid)
 
 
 # %% [markdown]
-# ### Check your understanding
+# #### Check your understanding
 #
 #
 # Let's investigate how our chemistry choices affect our model spectrum. Explore the figure above by clicking on the legend to remove different lines.
@@ -798,7 +798,7 @@ plt.show()
 # </div>
 
 # %% [markdown] id="dd746bf8-c73e-4406-ae58-1b5286723437"
-# ## Revisiting Climate Assumption
+# ### Revisiting Climate Assumption
 #
 # 1D Radiative-Convective Equilibrium Models solve for atmospheric structures of brown dwarfs and exoplanets, which includes:
 #
@@ -811,11 +811,11 @@ plt.show()
 #
 # `PICASO` tries to find the atmospheric state of your object by taking care of all of these processes and their interconnections self-consistently and iteratively. Therefore, you will find that the climate portion of `PICASO` is slower than running a single forward model evaluation.
 #
-# ### Modeling the full temperature-pressure profile
+# #### Modeling the full temperature-pressure profile
 #
 # Remember our previous assumption of setting the isothermal profile to the equilibrium temperature? Let's improve that by modeling the one-dimensional temperature-pressure structure
 #
-# #### Correlated-K Tables where to download them?
+# ##### Correlated-K Tables where to download them?
 #
 # Earlier when we created a model atmosphere run we needed to edit our call to `opannection`. For climate calculations we need to make sure that we are covering the full range of the planetary energy distribution, which usually amounts to ~0.3-300 $\mu$m. This would be prohibitively slow if we used our same monochromatic opacities. Therefore, we instead use correlated-k tables which are on a very low resolution grid with only 196 wavelength points spanning 0.3-300 $\mu$m. We compute these correlated-K tables **as a function of M/H and C/O**. Therefore, unlike before, we are setting the chemistry of our calculation up front by specifying the correlated-K table.
 #
@@ -828,7 +828,7 @@ opacity_ck = jdi.opannection(ck_db=ck_db,method='preweighted') # grab your opaci
 
 
 # %% [markdown] id="16ae3740"
-# #### Effective and Intrinsic Temperatures
+# ##### Effective and Intrinsic Temperatures
 #
 # You will notice that starting a run is nearly identical as running a spectrum. However, how we will add `climate=True` to our inputs flag, telling PICASO to create a climate. Let's create a new object or "case" where we are running the exact same parameters of the star, planet but now we are going to end with the goal of having a climate model.
 #
@@ -867,7 +867,7 @@ cl_run.effective_temp(tint) # input intrinsic temperature
 
 
 # %% [markdown] id="a67de9ff"
-# ### Initial T(P)  Guess
+# #### Initial T(P)  Guess
 #
 # Every calculation requires an initial guess of the pressure temperature profile. The code will iterate from there to find the correct solution. A few tips:
 #
@@ -885,7 +885,7 @@ temp_guess = pt['temperature'].values
 pressure = pt['pressure'].values
 
 # %% [markdown] id="c4132d98"
-# ### Initial Convective Zone Guess
+# #### Initial Convective Zone Guess
 #
 # You also need to have a crude guess of the convective zone of your atmosphere. Generally the deeper atmosphere is always convective. Lets crudely assume that the bottom 7 levels of the atmosphere is convective.
 
@@ -910,7 +910,7 @@ cl_run.inputs_climate(temp_guess = temp_guess, pressure = pressure,
                       rcb_guess=rcb_guess, rfacv = rfacv)
 
 # %% [markdown] id="ac19b705"
-# ### Run the Climate Code
+# #### Run the Climate Code
 #
 #  The actual climate code can be run with the cl_run.run command. The save_all_profiles is set to True to save the T(P) profile at all steps. The code will now iterate from your guess to reach the correct atmospheric solution for your exoplanet.
 #
@@ -947,11 +947,11 @@ show_spectra({'clima':df_spec})
 print(f'Converged Climate Model Chi sq=', chisqr(df_spec ))
 
 # %% [markdown]
-# ## Revisiting Cloudless assumption
+# ### Revisiting Cloudless assumption
 #
 # So far, we've been pretending that WASP-39 b is cloudless. Let's change that by building off our previous `w39` model with the converged climate solution for M/H=10xSolar, C/O=1.
 #
-# ### First: Simple gray opacity source
+# #### First: Simple gray opacity source
 #
 # We can simply define the slab of a cloud in picaso by using the `.clouds` routine. You will need to learn a few extra parameters
 #
@@ -992,11 +992,11 @@ show_spectra(models)
 # Ooh wow! That made a difference on our chi sq. Overall the clouds work to mute the spectral features. W39b needed a little muting to get the features correct.
 
 # %% [markdown] id="4c32f3c9"
-# # Mystery absorbery : How to diagnose unfit spectral regions
+# ## Mystery absorbery : How to diagnose unfit spectral regions
 #
 # There is one last feature that we haven't quite got yet in our model! Let's explore what it could be.
 #
-# ## Explore opacity database
+# ### Explore opacity database
 #
 # To plot the raw opacities we can use a new picaso function called the `opacity_factory`
 
@@ -1029,7 +1029,7 @@ jpi.show(f)
 #
 
 # %% [markdown]
-# ## Create Model with Fixed Chemistry
+# ### Create Model with Fixed Chemistry
 
 # %% [markdown]
 # Let's create an object or "case" where SO$_2$ is present and see if that will create a model with a better fit to the data.
@@ -1054,13 +1054,13 @@ show_spectra(so2_models)
 # </div>
 
 # %% [markdown] id="c7a9e749"
-# # Xarray output (.nc) the model
+# ## Xarray output (.nc) the model
 
 # %% [markdown]
 # Now that we have our models created and all done, let's save our climate model as an [Xarray](https://docs.xarray.dev/en/stable/). This is a great tool to neatly wrap all of your models. This is very useful because we can continue our analysis from low-fidelty PICASO to the high fidelty bayesian fitting (which is the next tutorial)! It also allows anyone else to take a look and analyze the models you have created very easily.
 
 # %% [markdown]
-# ## Save W39 case w/o SO2
+# ### Save W39 case w/o SO2
 
 # %%
 savefile="W39b_climate.nc"
@@ -1070,7 +1070,7 @@ xarr_no_so2=jdi.output_xarray(df_spec, w39, savefile=savefile)
 xarr_no_so2
 
 # %% [markdown]
-# ### Access Xarray values similarly to a regular array
+# #### Access Xarray values similarly to a regular array
 
 # %%
 xarr_no_so2.keys()
@@ -1079,7 +1079,7 @@ xarr_no_so2.keys()
 xarr_no_so2['temperature']
 
 # %% [markdown]
-# ## Save SO2 case
+# ### Save SO2 case
 
 # %%
 savefile="W39b_climate_so2.nc"
@@ -1095,7 +1095,7 @@ xarr_so2['pressure']
 # Note that this has been a simplfied analysis of WASP-39b. A further analysis would include thick/thin clouds and photochemistry, which is below!
 
 # %% [markdown]
-# # Cloud Modeling with Virga
+# ## Cloud Modeling with Virga
 
 # %% [markdown]
 # Unfortunately, not every analysis will be this simple! In the case of WASP-39b, there may be some extra chemicals in the atmosphere (like SO2 we just added!) or even clouds we will have to "inject" into the model after the core parameters. In this section, we will be focusing on the basics of `virga` and how clouds are introduced and affect the complexity of your model.
@@ -1114,7 +1114,7 @@ xarr_no_so2 = jdi.xr.open_dataset("W39b_climate.nc")
 xarr_no_so2
 
 # %% [markdown]
-# ### Choosing a Gas Condensate
+# #### Choosing a Gas Condensate
 
 # %%
 # Check gas species to choose from
@@ -1138,7 +1138,7 @@ print(recommended)
 # Virga recommends that we use the following gases above. Although Virga recommends it, it doesn't mean you need to have it or it is even there physically. It is simply stating that these gases can physically exist, although they may not be present. For the sakes of this tutorial, we will be choosing *MnS, Na2S, MgSi03* to replicate what was done in the paper.
 
 # %% [markdown]
-# ### Running Virga
+# #### Running Virga
 
 # %% [markdown]
 # To run Virga we need two additional parameters: fsed and kzz.
@@ -1170,7 +1170,7 @@ all_out.keys()
 # Lot's of choices to index to and see, but let's visually plot and gain more information of what the clouds will look like.
 
 # %% [markdown]
-# ### Checking and Proving Gas Condensate
+# #### Checking and Proving Gas Condensate
 
 # %% [markdown]
 # The first plot we can create is our P-T profile with all of the chemicals respective P-T profiles. The thick lines are the gasses that we defined two cells above to be present in our cloud modeling. Anything to the right of the black dotted line, the user input, is a gas that more than likely can condensate in the atmosphere.
@@ -1198,7 +1198,7 @@ jpi.show(vpi.opd_by_gas(all_out))
 jpi.show(vpi.condensate_mmr(all_out))
 
 # %% [markdown]
-# ### Analyzing Cloud Interactions
+# #### Analyzing Cloud Interactions
 
 # %% [markdown]
 # Next, we can take visualizing the single scattering albedo, optical depth, and the asymmetry. Let's dissect each of these and see what they mean exactly.

@@ -17,12 +17,14 @@
 # ---
 
 # %% [markdown]
-# # Quickstart for Research 
+# # Quickstart
+#
+# ## Quickstart for Research 
 #
 # If you are student using PICASO for classrooms go to Quickstart for Students and Learning. 
 # Otherwise, here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need.
 #
-# Be sure to have followed the [installation instructions](https://github.com/James-Mang/dev_picaso/blob/9278a1df9bab306b9e03a2a427a59e7ddaaa7e09/docs/installation.rst) and follow the steps below depending on how you installed PICASO.
+# Be sure to have followed the [installation instructions](https://natashabatalha.github.io/picaso/installation.html) and follow the steps below depending on how you installed PICASO.
 #
 # This quickstart for research is organized as follows:
 # 1. Setup environment variable, if needed 
@@ -31,7 +33,7 @@
 # 4. Optional Data 
 
 # %% [markdown]
-# ## 1. Create `picaso_refdata` environment variable
+# ### 1. Create `picaso_refdata` environment variable
 #
 # We give [different ways of setting environment variables here](https://natashabatalha.github.io/picaso/installation). Setting them with `os` is perfectly fine though some users like setting them system wide so that they do not have to constantly set paths.
 #
@@ -51,7 +53,7 @@ os.environ['PYSYN_CDBS'] = os.path.join(os.environ['picaso_refdata'],'stellar_gr
 # Note what we did above sets the environment variable which is totally okay but this way you will need to add this to the top of all your future notebooks **before you import picaso** if you haven't set it in your bash file
 
 # %% [markdown]
-# ## 2. Download Required Data
+# ### 2. Download Required Data
 
 # %% [markdown]
 # Required data: 
@@ -65,7 +67,7 @@ os.environ['PYSYN_CDBS'] = os.path.join(os.environ['picaso_refdata'],'stellar_gr
 import picaso.data as data
 
 # %% [markdown]
-# ### 1) Req'd Data: Reference Directory 
+# #### 1) Req'd Data: Reference Directory 
 #
 # If you installed through pip or conda then you will need to do this step. If you did a **git clone then you should already have this** and just need to point `picaso_refdata` to the directory `reference`.
 
@@ -73,7 +75,7 @@ import picaso.data as data
 data.get_reference(os.environ['picaso_refdata']) #only ever need to do one time
 
 # %% [markdown]
-# ### 2) Req'd Data: Resampled opacity file
+# #### 2) Req'd Data: Resampled opacity file
 #
 # `get_data` will auto put this files here (where $picaso_refdata points to your ref directory).
 #
@@ -97,16 +99,16 @@ data.get_data(category_download='resampled_opacity',target_download='default')
 data.get_data_config()[1]['resampled_opacity']['default']['url']
 
 # %% [markdown]
-# ## 3. Run PICASO Environment Checker
+# ### 3. Run PICASO Environment Checker
 
 # %%
 data.check_environ()
 
 # %% [markdown]
-# ## 4. Optional reference data you may want for PICASO
+# ### 4. Optional reference data you may want for PICASO
 
 # %% [markdown]
-# ### Download the stellar grids needed for exoplanet modeling (optional)
+# #### Download the stellar grids needed for exoplanet modeling (optional)
 #
 # If you want to use these stellar files they will need to be accessed by stsynphot package which checks for them here:
 #
@@ -120,7 +122,7 @@ data.check_environ()
 data.get_data(category_download='stellar_grids')
 
 # %% [markdown]
-# ## Want anything else? Use `get_data` function
+# ### Want anything else? Use `get_data` function
 #
 #
 # PICASO relies on lots of different kinds of data. However you might not need all of it depending on what you are working on. For example, if you are only working on substellar objects, you do not need to download stellar spectra.
@@ -137,7 +139,7 @@ data.get_data(category_download='stellar_grids')
 
 #
 #
-# ### Examples using get data in interactive mode
+# #### Examples using get data in interactive mode
 # ```
 # data.get_data()
 # What data can I help you download? Options include:
@@ -159,7 +161,7 @@ data.get_data(category_download='stellar_grids')
 data.get_data()
 
 # %% [markdown]
-# # Quickstart for Students & Learning
+# ## Quickstart for Students & Learning
 #
 # Here is the quickstart to getting up and running with `PICASO` using `python` to set environment variables and `get_data` to get everything you need for PICASO-lite
 

@@ -74,7 +74,7 @@ full_out = chem_example.spectrum(opacity,calculation='thermal',full_output=True)
 jpi.show(jpi.mixing_ratio(full_out['full_output'], limit=15)) # plot top 15 chemical species
 
 # %% [markdown]
-# # Comparing Other Ways to get Chemical Equilibrium incl w/ Disequilibrium Hacks
+# ## Comparing Other Ways to get Chemical Equilibrium incl w/ Disequilibrium Hacks
 #
 # For climate calculations especially, we often are using chemical equilibrium from pre-computed correlated k tables. This next section relies on you have downloaded the `preweighted` correlated k tables and `resortrebin` files. 
 
@@ -112,7 +112,7 @@ cl_run.add_pt(P= pressure, T= temp)
 
 
 # %% [markdown]
-# ## Option 1: Chemistry from the Pre-Weighted CK Tables
+# ### Option 1: Chemistry from the Pre-Weighted CK Tables
 #
 # Dont need to run this cell if you haven't downloaded the preweighted correlated k files
 
@@ -121,7 +121,7 @@ cl_run.premix_atmosphere(opa=opacity_preweighted)
 df_pre = jdi.copy.deepcopy(cl_run.inputs['atmosphere']['profile'])
 
 # %% [markdown]
-# ## Option 2: Chemistry from Chemeq Visscher Functions
+# ### Option 2: Chemistry from Chemeq Visscher Functions
 
 # %%
 cl_run.chemeq_visscher_2121(log_mh=0, cto_absolute=0.549)#absolute c/o
@@ -132,14 +132,14 @@ cl_run.chemeq_visscher_1060(c_o=1, log_mh=0)#relative c/o!!!
 df_1060 = jdi.copy.deepcopy(cl_run.inputs['atmosphere']['profile'])
 
 # %% [markdown]
-# ## Option 3: Chemistry from on-the-fly equilibrium calculations
+# ### Option 3: Chemistry from on-the-fly equilibrium calculations
 
 # %%
 cl_run.chemeq_on_the_fly(log_mh=0, cto_absolute=0.549)
 df_onfly = jdi.copy.deepcopy(cl_run.inputs['atmosphere']['profile'])
 
 # %% [markdown]
-# ## Option 4: Chemistry from Atmosphere Function with Disequilibrium Hacks
+# ### Option 4: Chemistry from Atmosphere Function with Disequilibrium Hacks
 #
 # Note the use of chem_method below: "visscher" defaults to the newest visscher grid which is the 2121 grid. 'visscher_1060's is the older 1060 grid. 
 
