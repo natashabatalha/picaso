@@ -33,11 +33,31 @@ dependencies = [
     "netcdf4",
     "h5netcdf",
     "jupytext",
+    "toml",
+]
+
+[project.optional-dependencies]
+# picaso.driver (toml-driven runs and retrievals): pip install "picaso[driver]"
+driver = [
+    "dill",
+    "dynesty",
+    "schwimmbad",
+    "spectres",
+    "ultranest",
+]
+# the picaso-app web UI, which is built on picaso.driver: pip install "picaso[app]"
+app = [
+    "picaso[driver]",
+    "flask",
+    "plotly",
 ]
 
 [tool.setuptools.packages.find]
 include = ["picaso*"]
 exclude = ["reference*"]
+
+[tool.setuptools.package-data]
+"picaso.driver_ui" = ["templates/**/*.html", "static/*"]
 
 [project.urls]
 Homepage = "https://natashabatalha.github.io/picaso"

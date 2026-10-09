@@ -23,7 +23,7 @@
 #
 # ## Retrieval Setup Option 1
 #
-# The easiest way to setup a retrieval toml file is to go through the `streamlit` PICASO app. You can launch this app by typing: 
+# The easiest way to setup a retrieval toml file is to go through the PICASO app. The app is an optional add-on, so first install its dependencies with `pip install "picaso[app]"`. You can then launch this app by typing: 
 #
 # >> picaso-app
 #

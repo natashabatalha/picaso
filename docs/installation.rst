@@ -38,6 +38,58 @@ Install with conda
 
 	conda install conda-forge::picaso
 
+Optional: Driver and Retrievals (picaso.driver)
+-----------------------------------------------
+
+``picaso.driver`` runs spectra, climate models and retrievals from a ``toml`` configuration file. It needs a few extra packages (``dill``, ``dynesty``, ``schwimmbad``, ``spectres`` and ``ultranest``) that are not installed by default. To include them, install the ``driver`` add-on:
+
+.. code-block:: bash 
+
+	pip install "picaso[driver]"
+
+or, if you installed from source:
+
+.. code-block:: bash 
+
+	pip install ".[driver]"
+
+If you installed PICASO with conda, add the dependencies yourself:
+
+.. code-block:: bash 
+
+	conda install conda-forge::dill conda-forge::dynesty conda-forge::schwimmbad conda-forge::ultranest
+	pip install spectres
+
+Optional: PICASO App (picaso-app)
+---------------------------------
+
+PICASO comes with an optional web app for setting up spectra, climate models and retrievals, checking your reference data, and analyzing retrieval results in your browser. Its extra dependencies (``flask``, ``plotly`` and everything in the ``driver`` add-on above) are not installed by default. To include them, install the ``app`` add-on:
+
+.. code-block:: bash 
+
+	pip install "picaso[app]"
+
+or, if you installed from source:
+
+.. code-block:: bash 
+
+	pip install ".[app]"
+
+If you installed PICASO with conda, add the dependencies yourself:
+
+.. code-block:: bash 
+
+	conda install conda-forge::flask conda-forge::plotly conda-forge::dill conda-forge::dynesty conda-forge::schwimmbad conda-forge::ultranest
+	pip install spectres
+
+Then launch the app, which will open in your web browser:
+
+.. code-block:: bash 
+
+	picaso-app
+
+Run ``picaso-app --help`` for options such as ``--port`` and ``--refdata``. The app needs your reference data to be set up (see below).
+
 
 Reference Data 
 ==============
