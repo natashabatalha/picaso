@@ -6,6 +6,7 @@ import tempfile
 import zipfile
 
 import numpy as np
+import toml
 
 import picaso.driver as go
 from picaso import WIP_justplotit as jpi
@@ -143,9 +144,116 @@ def band_figures(returns):
     return [spectra, profiles]
 
 
-def export_package(evaluations, info, details, attributes):
+EXPORT_NAME = "retrieval_results"  # file prefix retrieval_results() writes into the package
+
+
+def _format_interval(median, lo, hi, digits=3):
+    return f"{median:.{digits}g} (+{hi - median:.{digits}g} / -{median - lo:.{digits}g})"
+
+
+def readme_from_config(config, info, max_logl_chisq=None):
     """
-    Zip of retrieval_results() output: the xarray dataset, sample pickle and standard plots.
+    Quick look README.md summarizing a retrieval: the model setup in the driver config, the fit result and the
+    DOIs of the parameterizations used.
+
+    Parameters
+    ----------
+    config : dict
+        Driver config of the retrieval
+    info : dict
+        ret.read_retrievals output
+    max_logl_chisq : float
+        Chi-sq per data point of the max log-likelihood model
+    """
+    lines = ["# PICASO Retrieval Results", "",
+             "Quick look summary of this retrieval, generated from the driver TOML file (`inputs.toml`).", ""]
+
+    lines += ["## Model setup", "",
+              f"- **Observation type:** {config.get('observation_type', 'not specified')}"]
+    temperature = config.get("temperature", {}).get("profile")
+    lines.append(f"- **Temperature profile:** {temperature or 'not specified'}")
+    chemistry = config.get("chemistry", {})
+    method = chemistry.get("method")
+    if method == "free":
+        # molecule tables have a profile; background is {gases, fraction}
+        free = chemistry.get("free", {})
+        species = [f"{mol} ({opts['profile']})" for mol, opts in free.items()
+                   if isinstance(opts, dict) and "profile" in opts and opts["profile"] != "background"]
+        background = free.get("background", {}).get("gases", [])
+        method = "free" + (f": {', '.join(species)}" if species else "")
+        if background:
+            method += f"; background: {', '.join(background)}"
+    lines.append(f"- **Chemistry:** {method or 'not specified'}")
+    clouds = config.get("clouds", {})
+    cloud_types = [f"{key.split('_type')[0]}: {value}" for key, value in clouds.items()
+                   if key.endswith("_type") and value] if isinstance(clouds, dict) else []
+    lines.append(f"- **Clouds:** {', '.join(cloud_types) if cloud_types else 'none'}")
+    sampler = config.get("retrieval", {}).get("sampler", {}).get("code")
+    if sampler:
+        lines.append(f"- **Sampler:** {sampler}")
+    filenames = config.get("ObservationData", {}).get("filenames", [])
+    filenames = [filenames] if isinstance(filenames, str) else filenames
+    lines += ["", "### Data files", ""] + ([f"- `{name}`" for name in filenames] or ["- none specified"])
+    retrieval_output = config.get("InputOutput", {}).get("retrieval_output")
+    if retrieval_output:
+        lines += ["", f"Retrieval output directory: `{retrieval_output}`"]
+
+    lines += ["", "## Retrieval result", ""]
+    if max_logl_chisq is not None:
+        lines.append(f"- **Max log-likelihood chi-sq per data point:** {float(np.squeeze(max_logl_chisq)):.3f}")
+    if info.get("max_logl") is not None:
+        lines.append(f"- **Max log-likelihood:** {float(info['max_logl']):.3f}")
+    if not info.get("converged", True):
+        lines.append(f"- **Warning:** this retrieval had not converged when exported ({info.get('niter')} iterations)")
+
+    lines += ["", "### 1-sigma constraints (median, +/- 1 sigma)", "",
+              "| Parameter | Constraint | log10 constraint | Max LogL value |", "|---|---|---|---|"]
+    intervals = info["med_intervals"]
+    log_params = info.get("log_params", [])
+    for i, param in enumerate(info["param_names"]):
+        median, lo, hi = (float(intervals[f"{param}_{key}"].values[0]) for key in ("median", "errlo", "errup"))
+        log_interval = _format_interval(*np.log10([median, lo, hi])) if param in log_params else ""
+        lines.append(f"| {param} | {_format_interval(median, lo, hi)} | {log_interval} "
+                     f"| {float(info['max_logl_point'][i]):.4g} |")
+
+    lines += ["", "## Reading the full results", "",
+              f"All of the median and max log-likelihood spectra, 1 and 2 sigma bands, profiles and metadata are in "
+              f"`{EXPORT_NAME}_median_and_max_logl.nc`. Open it with xarray:", "",
+              "```python",
+              "import xarray as xr",
+              f"ds = xr.load_dataset('{EXPORT_NAME}_median_and_max_logl.nc')",
+              "print(ds)  # data variables, coordinates and units",
+              "print(ds.attrs['intervals_params'])  # 1-sigma constraints",
+              "print(ds.attrs['max_logl_params'])  # max log-likelihood parameters",
+              "```", "",
+              f"The equally weighted posterior samples are pickled in `{EXPORT_NAME}_equally_weighted_samples.pk`:", "",
+              "```python",
+              "import pickle",
+              f"param_names, samples = pickle.load(open('{EXPORT_NAME}_equally_weighted_samples.pk', 'rb'))",
+              "```", ""]
+
+    lines += ["## References", "",
+              "Please cite PICASO along with the parameterizations used in this model:", ""]
+    try:
+        references = go.references(driver_dict=config)
+    except Exception as e:
+        references, error = {}, e
+    else:
+        error = None
+    cited = [(section, func, dois) for section, funcs in references.items() for func, dois in funcs.items()]
+    for section, func, dois in cited:
+        lines.append(f"- **{section}** (`{func}`): " + ", ".join(f"https://doi.org/{doi}" for doi in dois))
+    if error is not None:
+        lines.append(f"- Could not look up references: {error}")
+    elif not cited:
+        lines.append("- No DOIs are registered for the parameterizations in this model.")
+    return "\n".join(lines) + "\n"
+
+
+def export_package(evaluations, info, details, attributes, config=None, config_text=None):
+    """
+    Zip of retrieval_results() output: the xarray dataset, sample pickle and standard plots, plus the driver TOML
+    (inputs.toml) and a quick look README.md when `config` is given.
 
     Parameters
     ----------
@@ -153,9 +261,18 @@ def export_package(evaluations, info, details, attributes):
         spectrum_tag, spectrum_unit, author, contact, model_description, code
     attributes : dict
         Extra metadata attributes embedded in the NetCDF file
+    config : dict
+        Driver config of the retrieval
+    config_text : str
+        The driver TOML as uploaded (keeps its comments); otherwise `config` is written out as TOML
     """
     with tempfile.TemporaryDirectory() as tmpdir:
-        ret.retrieval_results(evaluations, info, os.path.join(tmpdir, "retrieval_results"), **details, **attributes)
+        ret.retrieval_results(evaluations, info, os.path.join(tmpdir, EXPORT_NAME), **details, **attributes)
+        if config is not None:
+            with open(os.path.join(tmpdir, "inputs.toml"), "w") as f:
+                f.write(config_text if config_text is not None else toml.dumps(config))
+            with open(os.path.join(tmpdir, "README.md"), "w") as f:
+                f.write(readme_from_config(config, info, evaluations.get("max_logl_chisq")))
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             for folder, _, filenames in os.walk(tmpdir):

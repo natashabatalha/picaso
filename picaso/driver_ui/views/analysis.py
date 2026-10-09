@@ -167,7 +167,7 @@ class ExportCard(Card):
 
     def notes(self, sess):
         return [("info", "Generate and download a package of retrieval results including the xarray dataset, "
-                         "sample pickle, and standard plots.")]
+                         "sample pickle, standard plots, the driver TOML and a quick look README.md with DOI info.")]
 
 
 CARDS = [UploadCard(), DirectoryCard(), CornerCard(), MaxLoglCard(), BandsCard(), ExportCard()]
@@ -212,7 +212,8 @@ def upload():
     sess = state.current()
     a = page_state(sess)
     try:
-        a["config"] = toml.loads(request.files["toml"].read().decode("utf-8"))
+        text = request.files["toml"].read().decode("utf-8")
+        a["config"], a["config_text"] = toml.loads(text), text
     except Exception as e:
         set_messages(a, "upload", [("error", f"Could not parse the retrieval TOML file: {e}")])
     else:
@@ -311,7 +312,8 @@ def export():
     a = page_state(sess)
     attributes = {row["key"].strip(): row["value"].strip() for row in a["attributes"] if row["key"].strip()}
     try:
-        a["zip"] = analysis.export_package(a["bands"], a["loaded"]["info"], a["export"], attributes)
+        a["zip"] = analysis.export_package(a["bands"], a["loaded"]["info"], a["export"], attributes,
+                                           config=a["config"], config_text=a.get("config_text"))
         set_messages(a, "export", [("success", "Successfully generated the export package!")])
     except Exception as e:
         set_messages(a, "export", [("error", f"Error generating export package: {e}")])
