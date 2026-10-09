@@ -1,7 +1,0 @@
-{% from "_macros.html" import action %}
-<div class="button-row">
-  {{ action(url_for("info_content.finalize"), "Finalize priors") }}
-  {% if s.results is not none %}
-    {{ action(url_for("info_content.reset_results"), "Reset/recompute results", secondary=True) }}
-  {% endif %}
-</div>

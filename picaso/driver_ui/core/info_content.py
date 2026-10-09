@@ -18,7 +18,7 @@ def example_jacobian():
     """Jacobian of a Jupiter-like reflected light case with chemical equilibrium and virga clouds (slow)."""
     refdata = jdi.__refdata__
     config = {
-        "OpticalProperties": {"opacity_file": os.path.join(refdata, "opacities", "opacities.db"),
+        "OpticalProperties": {"opacity_file": os.path.join(refdata, "opacities", "opacities_0.3_15_R15000.db"),
                               "opacity_kwargs": {"wave_range": [0.3, 2.0]},
                               "opacity_method": "resampled",
                               "virga_mieff": os.path.join(refdata, "virga/")},
@@ -32,7 +32,7 @@ def example_jacobian():
                    "radius": {"unit": "Rjup", "value": 1.2},
                    "teff": {"unit": "Kelvin", "value": 5400},
                    "teq": {"unit": "Kelvin", "value": 500}},
-        "observation_type": "reflected",
+        "observation_type": "albedo",
         "star": {"grid": {"database": "ck04models", "feh": 0, "logg": 4, "teff": 5400},
                  "radius": {"unit": "Rsun", "value": 1},
                  "semi_major": {"unit": "AU", "value": 200}},
@@ -87,7 +87,7 @@ def analyze(cases, data, priors):
     for case in cases:
         analyzer = analyzer_for(case, data["wno"], data["jacobian"])
         results["names"].append(case["name"])
-        results["svd"].append(analyzer.degrees_of_freedom_svd())
+        results["svd"].append(analyzer.degrees_of_freedom_svd()[0])  # (dfs, s, vh)
         results["shannon"].append(analyzer.shannon_ic(priors))
         loss_h, loss_ci = analyzer.loss_by_wave()  # uses the prior set by shannon_ic
         results["loss_h"].append(loss_h)
@@ -101,6 +101,20 @@ def analyze(cases, data, priors):
 # =======================================
 def _case_wno(analyzer, wno):
     return analyzer.new_wno if analyzer.new_wno is not None else wno
+
+
+def jacobian_figure(data):
+    """Normalized |Jacobian| of each parameter on the native wavelength grid."""
+    wavelength = 1e4 / np.asarray(data["wno"])
+    jacobian = np.asarray(data["jacobian"])  # (N_wavelengths, N_parameters)
+    fig = go.Figure()
+    for i, param in enumerate(data["params"]):
+        y = np.abs(jacobian[:, i])
+        peak = np.max(y)
+        fig.add_trace(go.Scatter(x=wavelength, y=y / peak if peak != 0 else y, name=param, mode="lines"))
+    fig.update_layout(xaxis_title="Wavelength [um]", yaxis_title="Normalized |Jacobian|", title="Jacobian",
+                      legend_title="Parameters")
+    return fig
 
 
 def case_figures(results, params, wno, index):

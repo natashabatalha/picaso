@@ -1,4 +1,4 @@
-{% from "_macros.html" import action %}
+{% from "_macros.html" import action, plot %}
 <div class="actions">
   {% if s.data is none %}
     {{ action(url_for("info_content.example"), "Initialize example") }}
@@ -7,3 +7,4 @@
     {{ action(url_for("info_content.reset_data"), "Reset Jacobian data", secondary=True) }}
   {% endif %}
 </div>
+{% if s.data is not none %}{{ plot(s.plots.jacobian, "ic-jacobian-raw") }}{% endif %}

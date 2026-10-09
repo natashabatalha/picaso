@@ -37,7 +37,7 @@ GROUPS = (
         Page("/analysis/", "Retrieval Analysis",
              "Load a finished retrieval to make corner plots, compare the maximum likelihood model to the data, "
              "generate banded profiles and spectra, and export the results."),
-        Page("/info-content/", "Information Content",
+        Page("/info-content/", "Spectral Diagnostics/IC Theory",
              "Compare observation cases by their degrees of freedom and Shannon information content.", wip=True),
     )),
     Group("Explore", "Look inside PICASO's inputs.", (

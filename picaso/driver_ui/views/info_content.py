@@ -1,4 +1,4 @@
-"""Information Content page (WIP): DOF and Shannon information for different observation cases."""
+"""Spectral Diagnostics/IC Theory page (WIP): DOF and Shannon information for different observation cases."""
 import pandas as pd
 from flask import Blueprint, abort, render_template, request
 
@@ -36,6 +36,14 @@ class CasesCard(Card):
     name, title = "cases", "Observation Cases"
     extra = "info_content/extras/cases.html"
 
+    def visible(self, sess):
+        return page_state(sess)["data"] is not None
+
+    def notes(self, sess):
+        if page_state(sess)["results"] is None:
+            return [("info", "Set up your observation cases and click 'Compute statistics' to continue.")]
+        return []
+
     def fields(self, sess):
         sections = []
         for i, case in enumerate(page_state(sess)["cases"]):
@@ -68,7 +76,7 @@ class CasesCard(Card):
 
 
 class DataCard(Card):
-    name, title = "data", "Data Initialization"
+    name, title = "data", "Jacobian Initialization"
     extra = "info_content/extras/data.html"
 
     def fields(self, sess):
@@ -89,7 +97,7 @@ class DataCard(Card):
         upload = request.files.get("info_content.npz_upload")
         if upload and upload.filename:
             try:
-                s["data"] = ic.load_npz(upload)
+                set_data(s, ic.load_npz(upload))
                 set_messages(s, self.name, [("success", "Data uploaded successfully!")])
             except Exception as e:
                 set_messages(s, self.name, [("error", str(e))])
@@ -98,7 +106,6 @@ class DataCard(Card):
 
 class PriorsCard(Card):
     name, title = "priors", "Input Priors for your Parameter Set"
-    extra = "info_content/extras/priors.html"
 
     def visible(self, sess):
         return page_state(sess)["data"] is not None
@@ -111,7 +118,7 @@ class PriorsCard(Card):
 
     def notes(self, sess):
         if page_state(sess)["results"] is None:
-            return [("info", "Enter a prior for each parameter and click 'Finalize priors' to continue.")]
+            return [("info", "Enter a prior for each parameter.")]
         return []
 
 
@@ -132,8 +139,18 @@ class ResultsCard(Card):
         build_case_plots(page_state(sess))
 
 
-CARDS = [CasesCard(), DataCard(), PriorsCard(), ResultsCard()]
+CARDS = [DataCard(), PriorsCard(), CasesCard(), ResultsCard()]
 CARDS_BY_NAME = {card.name: card for card in CARDS}
+
+
+def set_data(s, data):
+    s["data"] = data
+    s["plots"]["jacobian"] = plotly_plot(ic.jacobian_figure(data))
+
+
+def clear_results(s):
+    s["results"] = None
+    s["plots"] = {"jacobian": s["plots"]["jacobian"]} if "jacobian" in s["plots"] else {}
 
 
 def build_case_plots(s):
@@ -188,7 +205,7 @@ def example():
     sess = state.current()
     s = page_state(sess)
     try:
-        s["data"] = ic.example_jacobian()
+        set_data(s, ic.example_jacobian())
     except Exception as e:
         set_messages(s, "data", [("error", f"Could not compute the example Jacobian: {e}")])
     return render_page(sess)
@@ -220,13 +237,13 @@ def finalize():
     errors += [f"Please upload a CSV file for {c['name']}" for c in s["cases"]
                if c["method"] != "Manual" and c["csv"] is None]
     if errors:
-        set_messages(s, "priors", [("error", e) for e in errors])
+        set_messages(s, "cases", [("error", e) for e in errors])
         return render_page(sess)
 
     try:
         s["results"] = ic.analyze(s["cases"], s["data"], priors)
     except Exception as e:
-        set_messages(s, "priors", [("error", f"Could not compute the statistics: {e}")])
+        set_messages(s, "cases", [("error", f"Could not compute the statistics: {e}")])
         return render_page(sess)
     s["selected"] = s["results"]["names"][0]
     s["plots"]["comparison"] = {name: plotly_plot(fig) for name, fig in
@@ -238,6 +255,5 @@ def finalize():
 @bp.post("/reset-results")
 def reset_results():
     sess = state.current()
-    s = page_state(sess)
-    s.update(results=None, plots={})
+    clear_results(page_state(sess))
     return render_page(sess)
