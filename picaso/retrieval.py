@@ -253,6 +253,7 @@ def get_bands(config, retrieval_results,
         full_likelihood=True)
     
     returns['all_samples_out'] = out 
+    returns['observation_type'] = config.get('observation_type')
     
     xaxis = out['xdata']
     returns['wavenumber'] = xaxis
@@ -323,19 +324,36 @@ def plot_pressure_bands(returns,colors=pals.Muted5):
     ax[1].set_xlabel('Mixing Ratio (v/v)')
     return fig,ax 
 
-def plot_spectra_bands(returns,colors=pals.Muted5):
+SPECTRUM_YLABELS = {
+    'transit_depth': r'Transit Depth $(R_p/R_s)^2$',
+    'fpfs_reflected': 'Planet Flux / Stellar Flux',
+    'fpfs_thermal': 'Planet Flux / Stellar Flux',
+    'thermal': r'Flux [erg/cm$^2$/s/cm]',
+    'albedo': 'Apparent Albedo',
+}
+
+def plot_spectra_bands(returns,colors=pals.Muted5,observation_type=None):
+    """
+    observation_type : str 
+        Sets the y axis units (e.g. transit_depth). Default uses returns['observation_type'] from get_bands 
+    """
     fig,ax=plt.subplots()
-    xgrid = returns['wavelength']
+    #data can be stitched from several instruments out of order, sort so bands are contiguous
+    order = np.argsort(returns['wavelength'])
+    xgrid = np.asarray(returns['wavelength'])[order]
     for i in range(1,3):
-        lo=returns['bands_spectra'][f'{i}sig_lo']
-        hi= returns['bands_spectra'][f'{i}sig_hi']
+        lo=np.asarray(returns['bands_spectra'][f'{i}sig_lo'])[order]
+        hi= np.asarray(returns['bands_spectra'][f'{i}sig_hi'])[order]
         ax.fill_between(xgrid, lo,
                                   hi,
                                    color='red',alpha=0.2)
-    med=returns['bands_spectra']['median']
+    med=np.asarray(returns['bands_spectra']['median'])[order]
     ax.plot(xgrid,med,color='black', label='Median')
     ax.legend()
-    ax.set_xlabel('Wavelength')
+    ax.set_xlabel(r'Wavelength [$\mu$m]')
+    observation_type = observation_type or returns.get('observation_type')
+    if observation_type is not None:
+        ax.set_ylabel(SPECTRUM_YLABELS.get(observation_type, observation_type))
     return fig,ax
 
 def retrieval_results(evaluations, info, filename,round=3,return_samples=True,

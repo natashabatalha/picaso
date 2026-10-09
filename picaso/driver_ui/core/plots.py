@@ -31,7 +31,9 @@ SPECTRUM_YAXIS_TITLES = {
 
 def label_spectrum_yaxis(fig, observation_type):
     """Titles a spectrum figure's y axis with the physical units of `observation_type` (e.g. transit_depth)."""
-    return fig.update_yaxes(title_text=SPECTRUM_YAXIS_TITLES.get(observation_type, observation_type))
+    # automargin widens the left margin to fit long tick labels (e.g. 0.02215) so the title doesn't sit on them
+    return fig.update_yaxes(title_text=SPECTRUM_YAXIS_TITLES.get(observation_type, observation_type),
+                            automargin=True, title_standoff=10)
 
 
 def plotly_plot(fig):

@@ -47,7 +47,11 @@ def max_logl_figure(out, observation_type, others=None):
                        [np.asarray(m["ymodel"][0])[order[label]] for label, m in models.items()],
                        legend=[f"{label} (Chi-sq = {m['chi_sq_per_pt'][0]:.2f})" if others else label
                                for label, m in models.items()], backend="plotly")
-    fig = jpi.plot_errorbar(1e4 / out["xdata"], out["ydata"][0], out["edata"][0], plot=fig, backend="plotly")
+    fig.update_traces(selector=0, line=dict(color="black", width=4))  # others are width 3
+    fig = jpi.plot_errorbar(1e4 / out["xdata"], out["ydata"][0], out["edata"][0], plot=fig, backend="plotly",
+                            point_kwargs=dict(color="black"), error_kwargs=dict(color="black"))
+    fig.update_traces(selector=-1, name="Data", opacity=0.5)
+    fig.data = fig.data[-1:] + fig.data[:-1]  # traces draw in order, so the data goes behind the models
     fig.update_layout(title=f"Chi-sq = {out['chi_sq_per_pt'][0]:.2f}")
     return label_spectrum_yaxis(fig, observation_type)
 
