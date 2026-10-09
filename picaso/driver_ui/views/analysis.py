@@ -3,7 +3,7 @@ import os
 
 import matplotlib.pyplot as plt
 import toml
-from flask import Blueprint, Response, abort, render_template, request
+from flask import Blueprint, Response, abort, current_app, render_template, request
 
 from picaso.driver_ui import state
 from picaso.driver_ui.core import analysis
@@ -186,7 +186,8 @@ def render_corner(sess):
 def render_page(sess, errors=None):
     a = page_state(sess)
     return render_template("_cards.html", endpoint="analysis.update_card", cards=card_views(CARDS, sess, a),
-                           errors=errors or {}, sess=sess, a=a, ready_to_load=ready_to_load(sess) if a["config"] else False)
+                           errors=errors or {}, sess=sess, a=a, ready_to_load=ready_to_load(sess) if a["config"] else False,
+                           example_available=os.path.isfile(analysis.example_path(current_app.config["PICASO_REFDATA"])))
 
 
 # =======================================
@@ -223,12 +224,33 @@ def upload():
     return render_page(sess)
 
 
+@bp.post("/example")
+def example():
+    sess = state.current()
+    a = page_state(sess)
+    try:
+        a["config"], a["config_text"] = analysis.example_config(current_app.config["PICASO_REFDATA"])
+    except Exception as e:
+        set_messages(a, "upload", [("error", f"Could not load the example retrieval: {e}")])
+        return render_page(sess)
+    a["retrieval_dir"] = a["config"]["InputOutput"]["retrieval_output"]
+    a["loaded"] = None
+    set_messages(a, "upload", [("success", "Loaded the example: a synthetic WASP-39b-like transit (R=100, 30 ppm) "
+                                           "retrieving isothermal T, H2O, CO2 and radius. Truths: T=900 K, "
+                                           "H2O=1e-3, CO2=1e-4, radius=1.27 Rjup.")])
+    return load_retrieval(sess)
+
+
 @bp.post("/load")
 def load():
     sess = state.current()
-    a = page_state(sess)
     if not ready_to_load(sess):
         abort(400)
+    return load_retrieval(sess)
+
+
+def load_retrieval(sess):
+    a = page_state(sess)
     try:
         loaded = analysis.load(a["config"], a["retrieval_dir"])
     except Exception as e:

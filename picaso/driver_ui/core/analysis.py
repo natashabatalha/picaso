@@ -15,6 +15,19 @@ from picaso.driver_ui.core import resources
 from picaso.driver_ui.core.plots import label_spectrum_yaxis
 
 
+def example_path(refdata):
+    """The synthetic transit retrieval shipped with the reference data (built by reference/scripts/make_retrieval_example.py)."""
+    return os.path.join(refdata, "base_cases", "retrieval_example", "retrieval_example.toml")
+
+
+def example_config(refdata):
+    """(config with `_default_` paths resolved, raw toml text) of the example retrieval."""
+    with open(example_path(refdata)) as f:
+        text = f.read()
+    # plain replacement: config_ops.resolve_defaults would swap the example's small opacity db for the default one
+    return go.resolve_default_paths(toml.loads(text), refdata), text
+
+
 def parameters(config):
     """Free parameter paths in the config's [retrieval] section, in order."""
     return list(go.prior_finder(config.get("retrieval", {})))
