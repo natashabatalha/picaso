@@ -20,6 +20,20 @@ class Plot:
     json: str
 
 
+SPECTRUM_YAXIS_TITLES = {
+    "transit_depth": "Transit Depth (R<sub>p</sub>/R<sub>s</sub>)<sup>2</sup>",
+    "fpfs_reflected": "Planet Flux / Stellar Flux",
+    "fpfs_thermal": "Planet Flux / Stellar Flux",
+    "thermal": "Flux [erg/cm<sup>2</sup>/s/cm]",
+    "albedo": "Apparent Albedo",
+}
+
+
+def label_spectrum_yaxis(fig, observation_type):
+    """Titles a spectrum figure's y axis with the physical units of `observation_type` (e.g. transit_depth)."""
+    return fig.update_yaxes(title_text=SPECTRUM_YAXIS_TITLES.get(observation_type, observation_type))
+
+
 def plotly_plot(fig):
     fig.update_layout(width=None, autosize=True)  # fill the card instead of a fixed pixel width
     return Plot(uuid.uuid4().hex, fig.to_json())

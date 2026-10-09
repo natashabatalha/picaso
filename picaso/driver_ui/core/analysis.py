@@ -11,6 +11,7 @@ import picaso.driver as go
 from picaso import WIP_justplotit as jpi
 from picaso import retrieval as ret
 from picaso.driver_ui.core import resources
+from picaso.driver_ui.core.plots import label_spectrum_yaxis
 
 
 def parameters(config):
@@ -22,26 +23,32 @@ def load(config, retrieval_dir):
     """Reads the samples and evaluates the max log-likelihood model against the data."""
     info = ret.read_retrievals(retrieval_dir, go.prior_finder(config.get("retrieval", {})))
     out = go.check_model_samples(config, N=1, samples=np.atleast_2d(info["max_logl_point"]), full_likelihood=True)
-    return {"info": info, "out": out, "chi2": out["chi_sq_per_pt"][0], "figure": max_logl_figure(out)}
+    return {"info": info, "out": out, "chi2": out["chi_sq_per_pt"][0],
+            "figure": max_logl_figure(out, config["observation_type"])}
 
 
-def max_logl_figure(out, others=None):
+def max_logl_figure(out, observation_type, others=None):
     """
     Max log-likelihood model and data, plus optional extra models (e.g. leave-one-out spectra).
 
     Parameters
     ----------
+    observation_type : str
+        config["observation_type"], which sets the y axis units
     others : dict
         {legend label: check_model_samples(full_likelihood=True) output}
     """
     others = others or {}
     models = {"Max LogL Model": out, **others}
-    fig = jpi.spectrum([m["xdata"] for m in models.values()], [m["ymodel"][0] for m in models.values()],
+    # data can be stitched from several instruments out of order, which would draw the model lines back and forth
+    order = {label: np.argsort(np.asarray(m["xdata"])) for label, m in models.items()}
+    fig = jpi.spectrum([np.asarray(m["xdata"])[order[label]] for label, m in models.items()],
+                       [np.asarray(m["ymodel"][0])[order[label]] for label, m in models.items()],
                        legend=[f"{label} (Chi-sq = {m['chi_sq_per_pt'][0]:.2f})" if others else label
                                for label, m in models.items()], backend="plotly")
     fig = jpi.plot_errorbar(1e4 / out["xdata"], out["ydata"][0], out["edata"][0], plot=fig, backend="plotly")
     fig.update_layout(title=f"Chi-sq = {out['chi_sq_per_pt'][0]:.2f}")
-    return fig
+    return label_spectrum_yaxis(fig, observation_type)
 
 
 # =======================================

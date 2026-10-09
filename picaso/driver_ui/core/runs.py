@@ -14,7 +14,7 @@ import picaso.driver as go
 from picaso import WIP_justplotit as jpi
 from picaso import justdoit as jdi
 from picaso.driver_ui.core import resources
-from picaso.driver_ui.core.plots import cloud_layers, describe_nans
+from picaso.driver_ui.core.plots import cloud_layers, describe_nans, label_spectrum_yaxis
 
 MOLECULES_LIMIT = 10  # molecules shown in prior-sample mixing ratio plots
 
@@ -77,10 +77,10 @@ def run_spectrum(config, resolution):
             "observation_key": key, "warnings": warnings}
 
 
-def spectrum_figure(wavenumber, flux, wave_range):
+def spectrum_figure(wavenumber, flux, wave_range, observation_type):
     fig = jpi.spectrum(wavenumber, flux, backend="plotly")
     fig.update_xaxes(range=list(wave_range))
-    return fig
+    return label_spectrum_yaxis(fig, observation_type)
 
 
 def spectrum_netcdf(results):
@@ -132,7 +132,7 @@ def check_data(config, reference=None, wave_range=None):
         fig = jpi.plot_errorbar(1e4 / x, y, e, plot=fig, backend="plotly")
     if wave_range is not None:
         fig.update_xaxes(range=list(wave_range))
-    return messages, fig
+    return messages, label_spectrum_yaxis(fig, config["observation_type"])
 
 
 # =======================================
@@ -189,4 +189,4 @@ def prior_sample_spectra(configs, config, wave_range):
     for x, y, e in data_dict.values():
         fig = jpi.plot_errorbar(1e4 / x, y, e, plot=fig, backend="plotly")
     fig.update_xaxes(range=list(wave_range))
-    return warnings, fig
+    return warnings, label_spectrum_yaxis(fig, config["observation_type"])

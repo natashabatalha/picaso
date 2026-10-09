@@ -286,7 +286,8 @@ def render_page(sess, errors=None):
 def refresh_spectrum_plot(sess):
     results = sess.results.get("spectrum")
     if results is not None:
-        fig = runs.spectrum_figure(results["wavenumber"], results["flux"], wave_range(sess))
+        fig = runs.spectrum_figure(results["wavenumber"], results["flux"], wave_range(sess),
+                                  results["observation_key"])
         sess.results["spectrum_plot"] = plotly_plot(fig)
 
 

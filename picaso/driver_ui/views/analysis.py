@@ -277,7 +277,8 @@ def generate_contributions():
         return render_page(sess)
     try:
         excluded = analysis.leave_one_out(a["config"], a["loaded"]["info"], a["contributions_selected"])
-        fig = analysis.max_logl_figure(a["loaded"]["out"], {f"No {mol}": out for mol, out in excluded.items()})
+        fig = analysis.max_logl_figure(a["loaded"]["out"], a["config"]["observation_type"],
+                                       {f"No {mol}": out for mol, out in excluded.items()})
         a["contributions_plot"] = plotly_plot(fig.update_layout(title="Individual Species Contribution (Leave-One-Out)"))
     except Exception as e:
         set_messages(a, "max_logl", [("error", f"Could not compute species contributions: {e}")])
