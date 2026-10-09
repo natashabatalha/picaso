@@ -18,7 +18,7 @@ import picaso.justdoit as jdi
 
 project = 'picaso'
 author = 'Natasha E. Batalha'
-copyright = 'Natasha E. Batalha'
+copyright = 'PICASO Dev Team'
 
 # justdoit.__version__ is what users see; editable-install metadata can be stale
 release = str(jdi.__version__)
