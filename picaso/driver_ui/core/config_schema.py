@@ -126,6 +126,7 @@ class Selector(Choice):
 class MultiChoice(Field):
     value: list
     options: list
+    dropdown: bool = field(default=False, kw_only=True)  # a one-column dropdown instead of a checkbox grid
     kind = "multi_choice"
 
     def read(self, form):

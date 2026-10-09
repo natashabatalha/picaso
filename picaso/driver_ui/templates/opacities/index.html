@@ -1,35 +1,8 @@
 {% extends "base.html" %}
-{% from "_macros.html" import notes, plot %}
+{% from "_macros.html" import multiselect, notes, plot %}
 {% block title %}Opacity Viewer{% endblock %}
 {% block main_class %}wide{% endblock %}
 {% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
-
-{# A dropdown of checkboxes. The checkboxes keep their `name`, so the form posts exactly as a plain
-   checkbox list would; app.js keeps the summary text in sync and closes the menu on outside clicks. #}
-{% macro multiselect(name, values, selected, placeholder="None selected", fmt="%g") %}
-  {% set labels = [] %}
-  {% for v in values if v in selected %}{% if labels.append(fmt|format(v) if v is number else v) %}{% endif %}{% endfor %}
-  <details class="multiselect" id="multiselect-{{ name }}">
-    <summary>
-      <span class="multiselect-label{% if not labels %} empty{% endif %}" data-placeholder="{{ placeholder }}">
-        {%- if not labels %}{{ placeholder }}{% elif labels|length <= 3 %}{{ labels|join(", ") }}{% else %}{{ labels|length }} selected{% endif -%}
-      </span>
-    </summary>
-    <div class="multiselect-menu">
-      <div class="multiselect-tools">
-        {% if values|length > 10 %}<input type="search" class="multiselect-filter" placeholder="Filter…" aria-label="Filter options">{% endif %}
-        <button type="button" class="link-button" data-select="all">All</button>
-        <button type="button" class="link-button" data-select="none">None</button>
-      </div>
-      <div class="multiselect-options">
-        {% for v in values %}
-          {% set text = fmt|format(v) if v is number else v %}
-          <label><input type="checkbox" name="{{ name }}" value="{{ v }}" data-label="{{ text }}" {% if v in selected %}checked{% endif %}> {{ text }}</label>
-        {% endfor %}
-      </div>
-    </div>
-  </details>
-{% endmacro %}
 
 {% macro radios(name, options, selected) %}
   <div class="radio-row">

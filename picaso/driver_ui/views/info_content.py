@@ -1,11 +1,13 @@
 """Spectral Diagnostics/IC Theory page (WIP): DOF and Shannon information for different observation cases."""
 import pandas as pd
-from flask import Blueprint, abort, render_template, request
+from flask import Blueprint, abort, redirect, render_template, request, url_for
+from markupsafe import Markup
 
 from picaso.driver_ui import state
 from picaso.driver_ui.core import info_content as ic
-from picaso.driver_ui.core.config_schema import Choice, FileInput, Number, Section, Text
+from picaso.driver_ui.core.config_schema import Choice, FileInput, MultiChoice, Number, Section, Text
 from picaso.driver_ui.core.plots import plotly_plot
+from picaso.driver_ui.views import spectrum_session
 from picaso.driver_ui.views.cards import Card, card_views, set_messages
 
 bp = Blueprint("info_content", __name__, url_prefix="/info-content")
@@ -21,7 +23,8 @@ def new_case(number):
 def page_state(sess):
     s = sess.info_content
     if not s:
-        s.update(cases=[new_case(1)], data=None, priors={}, results=None, selected="", plots={})
+        s.update(cases=[new_case(1)], data=None, priors={}, results=None, selected="", plots={},
+                 source=None, jacobian_params=[], jacobian_dparam=1e-2)  # source: {config, wno, options} from the Spectrum page
     return s
 
 
@@ -80,20 +83,47 @@ class DataCard(Card):
     extra = "info_content/extras/data.html"
 
     def fields(self, sess):
-        if page_state(sess)["data"] is not None:
+        s = page_state(sess)
+        if s["source"] is not None:
+            return Section(("data_card",), [
+                MultiChoice(("info_content", "jacobian_params"), s["jacobian_params"],
+                            s["source"]["options"], label="Jacobian parameters", dropdown=True,
+                            hint="One extra spectrum is computed per parameter. You can add parameters later; "
+                                 "only the new ones are computed."),
+                Number(("info_content", "jacobian_dparam"), s["jacobian_dparam"], minimum=1e-6,
+                       label="Perturbation size (fraction of each parameter's value)",
+                       hint="Grid-based models (e.g. visscher chemistry) may need a larger step to respond.")])
+        if s["data"] is not None:
             return None
         return Section(("data_card",), [
             FileInput(("info_content", "npz_upload"), accept=".npz", label="Upload Jacobian data (.npz)",
                       hint="Must contain 'wno', 'jacobian', and 'params'")])
 
     def notes(self, sess):
-        data = page_state(sess)["data"]
-        if data is None:
-            return [("warning", "Please initialize the example or provide Jacobian data to begin.")]
-        return [("info", f"Jacobian parameters: {data['params']}")]
+        s = page_state(sess)
+        data, notes = s["data"], []
+        if s["source"] is not None:
+            notes.append(("info", "Using the model from the Spectrum & Retrieval Setup page "
+                                  f"({s['source']['config']['observation_type']})."))
+            if data is None:
+                return notes + [("warning", "Select parameters and click 'Compute Jacobian' to begin.")]
+            if data["params"] != s["jacobian_params"] or data["d_param"] != s["jacobian_dparam"]:
+                notes.append(("warning", "The selection has changed. Click 'Update Jacobian' to apply it."))
+        elif data is None:
+            return [("warning", Markup(
+                "Please initialize the example or provide Jacobian data to begin. Or, set up a starting case on the "
+                '<a href="{}">Spectrum &amp; Retrieval Setup</a> page, run the spectrum, and click '
+                "'Compute Jacobian &gt;&gt;'.").format(url_for("spectrum.index")))]
+        zeros = ic.zero_columns(data)
+        if zeros:
+            notes.append(("warning", f"The spectrum did not change for {zeros}, so their Jacobian is zero and the "
+                                     "statistics cannot be computed. Try a larger perturbation size or remove them."))
+        return notes + [("info", f"Jacobian parameters: {data['params']}")]
 
     def update(self, sess, form):
         s = page_state(sess)
+        if s["source"] is not None:
+            return super().update(sess, form)
         upload = request.files.get("info_content.npz_upload")
         if upload and upload.filename:
             try:
@@ -211,11 +241,48 @@ def example():
     return render_page(sess)
 
 
+@bp.post("/from-spectrum")
+def from_spectrum():
+    """'Compute Jacobian >>' on the Spectrum page: links its model here and opens this page."""
+    sess = spectrum_session.current()
+    spectrum = sess.results.get("spectrum") or abort(404)
+    # options come from the config pruned to the selected profiles (no parameters of unused branches)
+    options = ic.jacobian_options(spectrum_session.retrieval_base_config(sess))
+    s = page_state(sess)
+    case = new_case(1)
+    case["min_wave"], case["max_wave"] = (round(w, 4) for w in spectrum_session.wave_range(sess))
+    case["res"] = sess.ui["resolution"]
+    s.update(cases=[case], data=None, priors={}, results=None, plots={},
+             source={"config": spectrum_session.model_config(sess), "wno": spectrum["df"]["wavenumber"],
+                     "options": options},
+             jacobian_params=ic.default_jacobian_params(options))
+    return redirect(url_for("info_content.index"))
+
+
+@bp.post("/compute-jacobian")
+def compute_jacobian():
+    sess = state.current()
+    s = page_state(sess)
+    if s["source"] is None:
+        abort(404)
+    if not s["jacobian_params"]:
+        set_messages(s, "data", [("error", "Please select at least one parameter.")])
+        return render_page(sess)
+    try:
+        set_data(s, ic.model_jacobian(s["source"], s["jacobian_params"], s["jacobian_dparam"], s["data"]))
+    except Exception as e:
+        set_messages(s, "data", [("error", f"Could not compute the Jacobian: {e}")])
+        return render_page(sess)
+    clear_results(s)
+    return render_page(sess)
+
+
 @bp.post("/reset-data")
 def reset_data():
     sess = state.current()
     s = page_state(sess)
-    s.update(data=None, priors={}, results=None, plots={})
+    s.update(data=None, priors={}, results=None, plots={}, source=None, jacobian_params=[],
+             jacobian_dparam=1e-2)
     return render_page(sess)
 
 

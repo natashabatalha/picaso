@@ -290,6 +290,8 @@ main.wide { max-width: 1500px; }
   color: var(--text); white-space: nowrap; cursor: pointer;
   padding: 2px 6px; border-radius: 4px;
 }
+.multiselect-options.single-column { grid-template-columns: 1fr; max-height: 320px; }
+.multiselect-options.single-column label { white-space: normal; overflow-wrap: anywhere; }
 .multiselect-options label:hover { background: var(--info-bg); }
 .multiselect-options label[hidden] { display: none; }
 .plot-panel .plot { min-height: 640px; margin: 0; }

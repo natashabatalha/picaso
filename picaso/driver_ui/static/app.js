@@ -16,6 +16,10 @@ Idiomorph.defaults.callbacks.beforeNodeMorphed = (oldNode, newNode) =>
   !(oldNode.classList && oldNode.classList.contains("plot") &&
     oldNode.dataset.figureId === newNode.dataset.figureId);
 
+// A re-rendered page would close an open dropdown (the server never renders `open`); keep it open.
+Idiomorph.defaults.callbacks.beforeAttributeUpdated = (attribute, node) =>
+  !(attribute === "open" && node.classList && node.classList.contains("multiselect"));
+
 function showError(message) {
   const toast = document.getElementById("error-toast");
   toast.querySelector(".message").textContent = message;
@@ -52,6 +56,7 @@ document.addEventListener("click", (event) => {
     menu.querySelectorAll(".multiselect-options label:not([hidden]) input[type=checkbox]").forEach((el) => { el.checked = on; });
     if (!on) menu.querySelectorAll("input[type=checkbox]").forEach((el) => { el.checked = false; });
     updateMultiselectLabel(menu);
+    menu.dispatchEvent(new Event("change", { bubbles: true }));  // forms that post on change (cards) post now
     return;
   }
   // clicking anywhere outside an open dropdown closes it

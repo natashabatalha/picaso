@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 
 from picaso import information_content as ic
 from picaso import justdoit as jdi
+from picaso.driver_ui.core import retrieval_setup
 
 EXAMPLE_PARAMS = ["cto_absolute", "log_mh", "fsed", "Teq", "phase"]
 
@@ -50,6 +51,41 @@ def example_jacobian():
     spectrum = ic.run(driver_dict=config)
     return {"wno": spectrum["wavenumber"], "jacobian": ic.jacobian(driver_dict=config, params=EXAMPLE_PARAMS),
             "params": list(EXAMPLE_PARAMS)}
+
+
+def jacobian_options(config):
+    """Numeric scalar parameters of a spectrum config the Jacobian can be taken with respect to."""
+    return [path for path in retrieval_setup.free_parameters(config) if not path.split(".")[-1].isdigit()]
+
+
+def default_jacobian_params(options):
+    """Pre-selected parameters: chemistry, cloud and temperature-profile parameters (not the pressure grid)."""
+    return [path for path in options if path.startswith(("chemistry.", "clouds.", "temperature."))
+            and not path.startswith("temperature.pressure.")]
+
+
+def model_jacobian(source, params, d_param, data=None):
+    """
+    Jacobian of the Spectrum & Retrieval Setup model ({config, wno}) for `params`, perturbing each by the
+    fraction `d_param`. Columns already in `data` (for the same d_param) are reused, so only newly added
+    parameters are computed.
+    """
+    reuse = data is not None and data.get("d_param") == d_param
+    have = {p: data["jacobian"][:, i] for i, p in enumerate(data["params"])} if reuse else {}
+    missing = [p for p in params if p not in have]
+    if missing:
+        jacobian = ic.jacobian(driver_dict=copy.deepcopy(source["config"]), params=missing, d_param=d_param)
+        if jacobian.shape[0] != len(source["wno"]):
+            raise ValueError("The Jacobian does not match the spectrum's wavelength grid. "
+                             "Please rerun the spectrum and click 'Compute Jacobian >>' again.")
+        have.update({p: jacobian[:, i] for i, p in enumerate(missing)})
+    return {"wno": source["wno"], "jacobian": np.column_stack([have[p] for p in params]), "params": list(params),
+            "d_param": d_param}
+
+
+def zero_columns(data):
+    """Parameters the spectrum did not respond to (an all-zero Jacobian column)."""
+    return [p for i, p in enumerate(data["params"]) if not np.any(data["jacobian"][:, i])]
 
 
 def load_npz(file):

@@ -1,3 +1,4 @@
+{% from "_macros.html" import multiselect %}
 {# Renders a field tree from core.config_schema. Input names are dotted config paths. #}
 {% macro render(f, errors, root=False) %}
   {% if f.kind == "section" %}
@@ -29,6 +30,8 @@
               <option value="{{ option }}" {% if option == f.value %}selected{% endif %}>{{ option }}</option>
             {% endfor %}
           </select>
+        {% elif f.kind == "multi_choice" and f.dropdown %}
+          {{ multiselect(f.name, f.options, f.value, single_column=True) }}
         {% elif f.kind == "multi_choice" %}
           <div class="checkbox-grid" id="{{ id }}">
             {% for option in f.options %}

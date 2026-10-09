@@ -1,9 +1,14 @@
 {% from "_macros.html" import action, plot %}
 <div class="actions">
-  {% if s.data is none %}
+  {% if s.source is not none %}
+    {{ action(url_for("info_content.compute_jacobian"),
+              "Compute Jacobian" if s.data is none else "Update Jacobian") }}
+    <p class="hint">Runs the spectrum once more for each newly selected parameter. This may take a few minutes.</p>
+  {% elif s.data is none %}
     {{ action(url_for("info_content.example"), "Initialize example") }}
     <p class="hint">Computes a Jupiter-like chemical equilibrium Jacobian example. This may take a minute.</p>
-  {% else %}
+  {% endif %}
+  {% if s.data is not none or s.source is not none %}
     {{ action(url_for("info_content.reset_data"), "Reset Jacobian data", secondary=True) }}
   {% endif %}
 </div>
