@@ -1,0 +1,5 @@
+{% from "_macros.html" import action %}
+<div class="actions">{{ action(url_for("analysis.generate_bands"), "Generate") }}</div>
+{% if a.bands is not none %}
+  {% for image in a.band_images %}<img class="figure" src="{{ image }}" alt="Bands">{% endfor %}
+{% endif %}

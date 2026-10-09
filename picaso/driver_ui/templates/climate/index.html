@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import notes %}
+{% block title %}1D Climate Calculations{% endblock %}
+{% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
+{% block content %}
+<h1>1D Climate Calculations</h1>
+{% if missing_template %}
+  {{ notes([("error", "Could not find the climate template " ~ missing_template ~ ". Copy reference/input_tomls/climate.toml "
+                      "from the PICASO repository into your reference data's input_tomls folder.")]) }}
+{% else %}
+<div hx-target="#sections" hx-swap="morph:outerHTML">
+  {{ page|safe }}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% from "_macros.html" import multiselect, notes, plot %}
+{% block title %}Opacity Viewer{% endblock %}
+{% block main_class %}wide{% endblock %}
+{% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
+
+{% macro radios(name, options, selected) %}
+  <div class="radio-row">
+    {% for value, label in options %}
+      <label><input type="radio" name="{{ name }}" value="{{ value }}" {% if value == selected %}checked{% endif %}
+                    hx-post="{{ url_for('opacities.plot') }}" hx-trigger="change" hx-sync="closest form:replace"> {{ label }}</label>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% block content %}
+<h1>Opacity Viewer</h1>
+<div id="opacity-viewer" class="sidebar-layout" hx-target="#opacity-viewer" hx-select="#opacity-viewer" hx-swap="morph:outerHTML">
+  <form class="card sidebar" hx-post="{{ url_for('opacities.plot') }}" hx-sync="this:replace" hx-disabled-elt="find button[type=submit]">
+    <input type="hidden" name="loaded_db" value="{{ db }}">
+    <div class="field">
+      <label for="opacity-db">Opacity file</label>
+      <div class="control">
+        <input type="text" id="opacity-db" name="db" value="{{ db }}" hx-post="{{ url_for('opacities.plot') }}" hx-trigger="change" hx-sync="closest form:replace">
+        {% if info %}<p class="hint">{{ "%.3g"|format(info.wave_min) }}–{{ "%.3g"|format(info.wave_max) }} μm, native R~{{ "{:,.0f}".format(info.native_R) }}</p>{% endif %}
+      </div>
+    </div>
+
+    {% if info %}
+      <div class="field">
+        <label>Molecules</label>
+        <div class="control">{{ multiselect("molecule", info.molecules, choices.molecules) }}</div>
+      </div>
+      <div class="field">
+        <label>Continuum</label>
+        <div class="control">{{ multiselect("continuum", info.continuum, choices.continuum) }}</div>
+      </div>
+      <div class="field">
+        <label>Temperatures <span class="unit">[K]</span></label>
+        <div class="control">{{ multiselect("temperature", info.temperatures, choices.temperatures) }}
+          <p class="hint">Continuum uses its nearest grid temperature.</p></div>
+      </div>
+      <div class="field">
+        <label>Pressures <span class="unit">[bar]</span></label>
+        <div class="control">{{ multiselect("pressure", info.pressures, choices.pressures) }}</div>
+      </div>
+      <div class="field">
+        <label for="opacity-R">Resolution (R)</label>
+        <div class="control">
+          <input type="number" id="opacity-R" name="R" min="1" step="any" placeholder="native"
+                 value="{{ '%g'|format(choices.R) if choices.R else '' }}">
+          <p class="hint">Leave blank to plot at the native resolution.</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="opacity-wave-min">Wavelength range <span class="unit">[μm]</span></label>
+        <div class="control inline-inputs">
+          <input type="number" id="opacity-wave-min" name="wave_min" step="any" min="0" value="{{ '%g'|format(choices.wave_min) }}" aria-label="Minimum wavelength">
+          <span>to</span>
+          <input type="number" name="wave_max" step="any" min="0" value="{{ '%g'|format(choices.wave_max) }}" aria-label="Maximum wavelength">
+        </div>
+      </div>
+
+      <fieldset class="subsection">
+        <legend>Plot style</legend>
+        <div class="field"><label>x axis</label><div class="control">{{ radios("xscale", [("log", "Log"), ("linear", "Linear")], choices.xscale) }}</div></div>
+        <div class="field"><label>y axis</label><div class="control">{{ radios("yscale", [("log", "Log"), ("linear", "Linear")], choices.yscale) }}</div></div>
+        <div class="field"><label>x units</label><div class="control">{{ radios("xunit", [("micron", "Micron"), ("wavenumber", "Wavenumber")], choices.xunit) }}</div></div>
+      </fieldset>
+
+      <div class="field field-bool">
+        <label for="opacity-show-data">Compare to data</label>
+        <div class="control">
+          <input type="checkbox" id="opacity-show-data" name="show_data" {% if obs.show %}checked{% endif %}
+                 hx-post="{{ url_for('opacities.plot') }}" hx-trigger="change" hx-sync="closest form:replace">
+          <p class="hint">Plot observational data above the cross sections.</p>
+        </div>
+      </div>
+      {# hidden rather than removed when unchecked, so the entries survive toggling the box #}
+      <fieldset class="subsection" id="opacity-data" {% if not obs.show %}hidden{% endif %}>
+        <legend>Observational data</legend>
+        <div class="field">
+          <label for="opacity-obs-filenames">filenames</label>
+          <div class="control">
+            <textarea id="opacity-obs-filenames" name="obs_filenames" rows="{{ [obs.filenames|length + 1, 3]|max }}">{{ obs.filenames|join("\n") }}</textarea>
+            <p class="hint">Path(s) to your observation data, one per line</p>
+          </div>
+        </div>
+        {% for key in ("coord", "coord_unit", "data", "data_unit", "error") %}
+          <div class="field">
+            <label for="opacity-obs-{{ key }}">{{ key }}</label>
+            <div class="control"><input type="text" id="opacity-obs-{{ key }}" name="obs_{{ key }}" value="{{ obs[key] }}"></div>
+          </div>
+        {% endfor %}
+        <p class="hint">Specify column, coord, or data_var names and units. Units are only required if not specified
+          through xarray, and should be in astropy format (enter unitless for e.g. albedo or transit depth).</p>
+      </fieldset>
+    {% endif %}
+
+    <div class="button-row"><button type="submit" class="button">{% if info %}Plot{% else %}Load file{% endif %}</button></div>
+  </form>
+
+  <section class="card plot-panel">
+    {{ notes(messages) }}
+    {% if figure %}{{ plot(figure, "opacity") }}{% elif not messages %}<p class="hint">Choose species and conditions, then press Plot.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

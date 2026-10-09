@@ -1,0 +1,12 @@
+{% from "_macros.html" import plot, action %}
+{% set samples = sess.results.get("prior_samples") %}
+<div class="actions">
+  {{ action(url_for("spectrum.retrieval_action", action="sample"), "Sample priors") }}
+  {% if samples %}
+    {{ action(url_for("spectrum.retrieval_action", action="sample-spectra"), "Run samples for full spectra", secondary=True) }}
+  {% endif %}
+</div>
+{% if samples %}
+  {% for p in samples.plots %}{{ plot(p, "prior-" ~ loop.index) }}{% endfor %}
+  {{ plot(samples.spectrum_plot, "prior-spectrum") }}
+{% endif %}

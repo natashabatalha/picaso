@@ -6,6 +6,7 @@ import arviz as az
 import dynesty
 import pandas as pd
 from scipy import interpolate
+from scipy.stats import gaussian_kde
 
 from .justdoit import mean_regrid,vj,u,get_cld_input_grid,special
 
@@ -23,7 +24,23 @@ import re
 __refdata__ = os.environ.get('picaso_refdata')
 
 ## BEGIN ALL RETR ANALYSIS TOOLS 
-def read_retrievals(dirr, params):
+def log_parameters(fitpars):
+    """
+    Parameters whose prior is sampled in log10 space (log = true in the retrieval toml). 
+    The samples of these parameters are stored as 10**x, see driver.hypercube.
+
+    Parameters 
+    ----------
+    fitpars : dict 
+        output of driver.prior_finder(config['retrieval'])
+
+    Returns 
+    -------
+    list of str
+    """
+    return [key for key, prior in fitpars.items() if prior.get('log') in (True, 'True', 'true')]
+
+def read_retrievals(dirr, params, log_params=None):
     """
     Function to parse both ultranest and dynesty results.
 
@@ -31,18 +48,29 @@ def read_retrievals(dirr, params):
     ----------
     dirr : str
         directory of the output (either contains dynesty.save or ultranest files)
-    params : list of str
-        list of parameter names
+    params : list of str or dict
+        list of parameter names, or the output of driver.prior_finder(config['retrieval']) 
+        in which case the log sampled parameters are found automatically 
+    log_params : list of str 
+        parameters that were sampled in log10 space. Stored in the output as 'log_params' 
+        so that plot_pair can plot them in log space. Default = None, which uses params if 
+        it is a dict, and otherwise assumes no log sampled parameters 
 
     Returns 
     -------
     dict
     """
+    if isinstance(params, dict):
+        if log_params is None:
+            log_params = log_parameters(params)
+        params = list(params.keys())
     checkpoint_file = os.path.join(dirr, 'dynesty.save')
     if os.path.exists(checkpoint_file):
-        return read_dynesty(dirr, params)
+        info = read_dynesty(dirr, params)
     else: 
-        return read_ultranest(dirr, params)
+        info = read_ultranest(dirr, params)
+    info['log_params'] = [] if log_params is None else list(log_params)
+    return info
     
 def read_dynesty(dirr,params):
     """
@@ -116,6 +144,8 @@ def read_ultranest(dirr,params):
     - max_logl_point : the values of associated with the max likelihood point 
     - med_intervals : median, errlo, errup of all the constrained parameters 
     - param_names : list string of the parameter names 
+    - converged : False if the run has not finished, in which case all results are intermediate 
+    - niter, ess : number of iterations and effective sample size of the (possibly intermediate) results 
     - ultranest_out : all the raw output of ultranest 
 
     Parameters 
@@ -144,11 +174,13 @@ def read_ultranest(dirr,params):
     
     samples_rew = dynesty.utils.resample_equal(
         data, weights, rstate=np.random.RandomState(0))
-    try:
+    #ultranest only writes info/post_summary.csv once the run finishes, so without it these are intermediate results
+    converged = os.path.exists(os.path.join(dirr, 'info','post_summary.csv'))
+    if converged:
         summary = pd.read_csv(os.path.join(dirr, 'info','post_summary.csv'))
         eval_at_med = [summary[i+'_'+'median'].values[0] for i in params]   
-    except: 
-        print('not converged')
+    else: 
+        print(f"Ultranest run not converged: showing intermediate results after {results['niter']} iterations (ESS={results['ess']:.0f})")
         errlo = pd.DataFrame(samples_rew,columns=params).quantile(.158655)
         errup = pd.DataFrame(samples_rew,columns=params).quantile(.841345)
         median = pd.DataFrame(samples_rew,columns=params).quantile(0.50)
@@ -166,6 +198,9 @@ def read_ultranest(dirr,params):
             'med_point': eval_at_med, 
             'med_intervals': summary,
             'param_names': params,
+            'converged': converged,
+            'niter': results['niter'],
+            'ess': results['ess'],
             'ultranest_out':res[1]}
 
 def get_bands(config, retrieval_results,
@@ -218,6 +253,7 @@ def get_bands(config, retrieval_results,
         full_likelihood=True)
     
     returns['all_samples_out'] = out 
+    returns['observation_type'] = config.get('observation_type')
     
     xaxis = out['xdata']
     returns['wavenumber'] = xaxis
@@ -288,19 +324,36 @@ def plot_pressure_bands(returns,colors=pals.Muted5):
     ax[1].set_xlabel('Mixing Ratio (v/v)')
     return fig,ax 
 
-def plot_spectra_bands(returns,colors=pals.Muted5):
+SPECTRUM_YLABELS = {
+    'transit_depth': r'Transit Depth $(R_p/R_s)^2$',
+    'fpfs_reflected': 'Planet Flux / Stellar Flux',
+    'fpfs_thermal': 'Planet Flux / Stellar Flux',
+    'thermal': r'Flux [erg/cm$^2$/s/cm]',
+    'albedo': 'Apparent Albedo',
+}
+
+def plot_spectra_bands(returns,colors=pals.Muted5,observation_type=None):
+    """
+    observation_type : str 
+        Sets the y axis units (e.g. transit_depth). Default uses returns['observation_type'] from get_bands 
+    """
     fig,ax=plt.subplots()
-    xgrid = returns['wavelength']
+    #data can be stitched from several instruments out of order, sort so bands are contiguous
+    order = np.argsort(returns['wavelength'])
+    xgrid = np.asarray(returns['wavelength'])[order]
     for i in range(1,3):
-        lo=returns['bands_spectra'][f'{i}sig_lo']
-        hi= returns['bands_spectra'][f'{i}sig_hi']
+        lo=np.asarray(returns['bands_spectra'][f'{i}sig_lo'])[order]
+        hi= np.asarray(returns['bands_spectra'][f'{i}sig_hi'])[order]
         ax.fill_between(xgrid, lo,
                                   hi,
                                    color='red',alpha=0.2)
-    med=returns['bands_spectra']['median']
+    med=np.asarray(returns['bands_spectra']['median'])[order]
     ax.plot(xgrid,med,color='black', label='Median')
     ax.legend()
-    ax.set_xlabel('Wavelength')
+    ax.set_xlabel(r'Wavelength [$\mu$m]')
+    observation_type = observation_type or returns.get('observation_type')
+    if observation_type is not None:
+        ax.set_ylabel(SPECTRUM_YLABELS.get(observation_type, observation_type))
     return fig,ax
 
 def retrieval_results(evaluations, info, filename,round=3,return_samples=True,
@@ -409,7 +462,7 @@ def retrieval_results(evaluations, info, filename,round=3,return_samples=True,
         pk.dump([info['param_names'],info['samples_equal']], open(filename+'_equally_weighted_samples.pk','wb'))
 
     #finally make corner plot 
-    f, a = plot_pair(info['samples_equal'], info['param_names'])
+    f, a = plot_pair(info['samples_equal'], info['param_names'], log_params=info.get('log_params'))
     f.savefig(filename+'_plotpair.png')
     return build_xarray
 
@@ -461,7 +514,8 @@ def stylized_ticks(min_val, max_val, num_ticks):
 
     return ticks, [format_string.format(t) for t in ticks]
 
-def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), contour_cmap="GnBu",intervals=None):
+def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), contour_cmap="GnBu",intervals=None,
+              log_params=None):
     """
     Plot stylized corner plots 
 
@@ -487,12 +541,22 @@ def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), 
         String of matplotlib colormaps 
     intervals : list of str 
         list of stylized intervals for the top of the plots. you can get them from the xarray intervals. 
+    log_params : list of str 
+        parameters that were sampled in log10 space (e.g. info['log_params'] from read_retrievals). 
+        These are plotted as log10 of the samples, so ranges and intervals for them should be in log10 too. 
+        Default = None 
         
     """
-    az.style.use('default')
+    az.style.use('arviz-vibrant')
+
+    log_params = [] if log_params is None else list(log_params)
+    samples = np.array(samples, dtype=float)
+    for ip in log_params:
+        if ip in params:
+            samples[:, params.index(ip)] = np.log10(samples[:, params.index(ip)])
 
     if isinstance(pretty_labels,type(None)):
-        pretty_labels=params
+        pretty_labels=[f'log10({ip})' if ip in log_params else ip for ip in params]
     elif isinstance(pretty_labels,dict):
         pretty_labels=[pretty_labels[i] for i in params]
     elif isinstance(pretty_labels, list):
@@ -549,38 +613,65 @@ def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), 
 
 
 
-    if len(params)*len(params)>40:
-        az.rcParams["plot.max_subplots"] = len(params)*len(params)
-    
-    ax = az.plot_pair(
-        {ip:samples[:,i] for i,ip in enumerate(params)},
-        kind=["scatter", "kde"],
-        kde_kwargs={"fill_last": False,
-                    'hdi_probs':[0.393, 0.865, 0.989],  # 1, 2 and 3 sigma contours
-                    'contourf_kwargs':{"cmap": contour_cmap},
-                    'contour_kwargs':{"alpha": 0.5},
-                   },
-        scatter_kwargs={'color':'grey','alpha':0.5},
-        marginal_kwargs={'color':'grey','kind':"hist"},#,'hist_kwargs':{'bins':15}
-        marginals=True,
-        point_estimate="median",
-        figsize=figsize,
-    )
-    
+    #built directly on matplotlib because az.plot_pair changed its whole API in arviz>=1.0
+    nparams = len(params)
+    medians = np.median(samples, axis=0)
+    hdi_probs = [0.989, 0.865, 0.393]  # 3, 2 and 1 sigma contours
+    #kde cost scales with the number of samples, so thin the samples used for the contours
+    kde_samples = samples[np.random.RandomState(0).permutation(len(samples))[:2000]]
+
+    fig, ax = plt.subplots(nparams, nparams, figsize=figsize, squeeze=False, layout="constrained")
+    fig.get_layout_engine().set(w_pad=0.01, h_pad=0.01, wspace=0, hspace=0)
+    for i in range(nparams):
+        for j in range(nparams):
+            a = ax[i,j]
+            if j > i:
+                a.set_visible(False)
+                continue
+            if i == j:
+                a.hist(samples[:,i], bins=20, color='grey', alpha=0.7)
+                a.axvline(medians[i], color='k')
+                a.set_yticks([])
+            else:
+                x, y = samples[:,j], samples[:,i]
+                a.scatter(x, y, color='grey', alpha=0.5, s=2, rasterized=True)
+                try:
+                    kde = gaussian_kde(np.vstack([kde_samples[:,j], kde_samples[:,i]]))
+                    xx, yy = np.meshgrid(np.linspace(x.min(), x.max(), 60), np.linspace(y.min(), y.max(), 60))
+                    density = kde(np.vstack([xx.ravel(), yy.ravel()])).reshape(xx.shape)
+                    #density thresholds that enclose each hdi probability
+                    dsort = np.sort(density.ravel())[::-1]
+                    cumsum = np.cumsum(dsort) / np.sum(dsort)
+                    levels = [dsort[np.searchsorted(cumsum, p)] for p in hdi_probs] + [dsort[0]]
+                    a.contourf(xx, yy, density, levels=levels, cmap=contour_cmap, alpha=0.8)
+                    a.contour(xx, yy, density, levels=levels[:-1], colors='k', alpha=0.5, linewidths=0.8)
+                except (np.linalg.LinAlgError, ValueError):
+                    pass #parameter has no spread yet (e.g. very early in a run), so just show the scatter
+                a.plot(medians[j], medians[i], 'o', color='k', ms=4)
+                if j > 0:
+                    a.sharey(ax[i,0])
+            if i < nparams-1:
+                a.sharex(ax[-1,j])
+                a.tick_params(labelbottom=False)
+            if j > 0:
+                a.tick_params(labelleft=False)
+            a.set_xlabel(pretty_labels[j] if i == nparams-1 else '')
+            a.set_ylabel(pretty_labels[i] if (j == 0 and i > 0) else '')
+
     if not isinstance(pretty_labels,type(None)):
         assert len(pretty_labels)==len(params), "length of pretty labels must match length of parameters (second input)"
         for i,ip in enumerate(pretty_labels): 
-            ax[i,0].set_ylabel(ip)
-            ax[-1,i].set_xlabel(ip)
+            ax[i,0].set_ylabel(ip, rotation=45, ha='right', va='center')
+            ax[-1,i].set_xlabel(ip, rotation=45, ha='right')
     
     if ((not isinstance(pretty_labels,type(None))) & (not isinstance(intervals,type(None)))):  
         assert len(intervals)==len(params), "length of intervals must match length of parameters (second input)"
         for i,ip in enumerate(pretty_labels): 
-            ax[i,i].set_title(ip+'='+intervals[i])
+            ax[i,i].set_title(ip+'\n'+intervals[i], fontsize='small')
     elif ((isinstance(pretty_labels,type(None))) & (not isinstance(intervals,type(None)))):  
         assert len(intervals)==len(params), "length of intervals must match length of parameters (second input)"
         for i,ip in enumerate(params): 
-            ax[i,i].set_title(ip+'='+intervals[i])        
+            ax[i,i].set_title(ip+'\n'+intervals[i], fontsize='small')        
             
             
     
@@ -589,7 +680,7 @@ def plot_pair(samples, params, pretty_labels=None,ranges=None,figsize=(11, 11), 
         for i in range(len(ranges)): 
             ticks, form_ticks = stylized_ticks(ranges[i][0],ranges[i][1],2)
             ax[-1,i].set_xticks(ticks)
-            ax[-1,i].set_xticklabels(form_ticks) 
+            ax[-1,i].set_xticklabels(form_ticks, rotation=45) 
             ax[-1,i].set_xlim(ranges[i][0],ranges[i][1])
         
             if i!=0:
@@ -1799,6 +1890,6 @@ def data_output_deprecate(evaluations, info, chisqout, filename,round=3,return_s
     pk.dump([info['param_names'],info['samples_equal']], open(filename+'_equally_weighted_samples.pk','wb'))
 
     #finally make corner plot 
-    f, a = plot_pair(info['samples_equal'], info['param_names'])
+    f, a = plot_pair(info['samples_equal'], info['param_names'], log_params=info.get('log_params'))
     f.savefig(filename+'_plotpair.png')
     return build_xarray

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Page unavailable</h1>
+<section class="card">
+  {% if problem == "missing_refdata" %}
+    <p class="note note-error">Cannot find <code>input_tomls/driver.toml</code> in the reference data directory
+      {% if refdata %}<code>{{ refdata }}</code>{% else %}(the <code>picaso_refdata</code> environment variable is not set){% endif %}.</p>
+    <p>Use <a href="/refdata/">Setup Reference Data</a> to point at or download the reference data, then set
+      <code>picaso_refdata</code> to that folder and restart the app.</p>
+  {% else %}
+    <p class="note note-error">PICASO could not be imported:</p>
+    <pre class="error-detail">{{ problem }}</pre>
+  {% endif %}
+</section>
+{% endblock %}

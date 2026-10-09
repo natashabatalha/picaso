@@ -44,3 +44,6 @@ docs/notebooks/D_climate/photochem_rxns.yaml
 docs/notebooks/D_climate/photochem_thermo.yaml
 docs/notebooks/picaso_floppity_retrieval.ipynb
 docs/notebooks/sbi-logs/
+
+# small synthetic retrieval loaded by the picaso-app Retrieval Analysis example button
+!reference/base_cases/retrieval_example/**

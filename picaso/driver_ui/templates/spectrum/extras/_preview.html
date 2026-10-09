@@ -1,0 +1,11 @@
+{% from "_macros.html" import notes, plot, action %}
+{# "See ... plot" button plus its result for the temperature, chemistry and clouds cards. #}
+{% macro preview(sess, kind, label) %}
+  {% set result = sess.results.get("previews", {}).get(kind) %}
+  <div class="actions">{{ action(url_for("spectrum.preview", kind=kind), label, secondary=True) }}</div>
+  {% if result %}
+    {{ notes([("warning", result.warning)] if result.warning else []) }}
+    {% if result.error %}<pre class="error-detail">{{ result.error }}</pre>{% endif %}
+    {{ plot(result.plot, "preview-" ~ kind) }}
+  {% endif %}
+{% endmacro %}

@@ -1,0 +1,44 @@
+{# Small pieces shared by all pages. #}
+
+{% macro notes(items) %}
+  {% for level, message in items %}<p class="note note-{{ level }}">{{ message }}</p>{% endfor %}
+{% endmacro %}
+
+{# A plotly figure (core.plots.Plot), drawn by static/app.js. The id stays the same
+   for the same slot so updates morph in place; data-figure-id changes with the figure. #}
+{% macro plot(p, slot) %}
+  {% if p %}<div class="plot" id="plot-{{ slot }}" data-figure-id="{{ p.id }}" data-figure="{{ p.json }}"></div>{% endif %}
+{% endmacro %}
+
+{# A button that runs a (possibly slow) action and re-renders the page. #}
+{% macro action(url, label, secondary=False, confirm=None) %}
+  <button type="button" class="button{% if secondary %} secondary{% endif %}" hx-post="{{ url }}"
+          hx-disabled-elt="this"{% if confirm %} hx-confirm="{{ confirm }}"{% endif %}>{{ label }}</button>
+{% endmacro %}
+
+{# A dropdown of checkboxes. The checkboxes keep their `name`, so the form posts exactly as a plain
+   checkbox list would; app.js keeps the summary text in sync and closes the menu on outside clicks. #}
+{% macro multiselect(name, values, selected, placeholder="None selected", fmt="%g", single_column=False) %}
+  {% set labels = [] %}
+  {% for v in values if v in selected %}{% if labels.append(fmt|format(v) if v is number else v) %}{% endif %}{% endfor %}
+  <details class="multiselect" id="multiselect-{{ name }}">
+    <summary>
+      <span class="multiselect-label{% if not labels %} empty{% endif %}" data-placeholder="{{ placeholder }}">
+        {%- if not labels %}{{ placeholder }}{% elif labels|length <= 3 %}{{ labels|join(", ") }}{% else %}{{ labels|length }} selected{% endif -%}
+      </span>
+    </summary>
+    <div class="multiselect-menu">
+      <div class="multiselect-tools">
+        {% if values|length > 10 %}<input type="search" class="multiselect-filter" placeholder="Filter…" aria-label="Filter options">{% endif %}
+        <button type="button" class="link-button" data-select="all">All</button>
+        <button type="button" class="link-button" data-select="none">None</button>
+      </div>
+      <div class="multiselect-options{% if single_column %} single-column{% endif %}">
+        {% for v in values %}
+          {% set text = fmt|format(v) if v is number else v %}
+          <label><input type="checkbox" name="{{ name }}" value="{{ v }}" data-label="{{ text }}" {% if v in selected %}checked{% endif %}> {{ text }}</label>
+        {% endfor %}
+      </div>
+    </div>
+  </details>
+{% endmacro %}

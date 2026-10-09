@@ -1,0 +1,11 @@
+{% from "_macros.html" import action %}
+<form hx-post="{{ url_for('analysis.upload') }}" hx-encoding="multipart/form-data" hx-trigger="change">
+  <label class="file-input">Upload driver configuration TOML
+    <input type="file" name="toml" accept=".toml">
+  </label>
+</form>
+{% if example_available %}
+  <div class="actions">
+    {{ action(url_for("analysis.example"), "Or load an example retrieval", secondary=True) }}
+  </div>
+{% endif %}

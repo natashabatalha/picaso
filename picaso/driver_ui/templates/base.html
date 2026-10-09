@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PICASO UI{% endblock %}</title>
+  <link rel="icon" href="https://natashabatalha.github.io/picaso/_images/logo.png">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='idiomorph-ext.min.js') }}"></script>
+  {% block head %}{% endblock %}
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body hx-ext="morph">
+  <header class="topbar">
+    <a href="/" class="logo">
+      <img src="https://natashabatalha.github.io/picaso/_images/logo.png" alt="PICASO home">
+    </a>
+    {# One menu per group (see navigation.py); menus open on hover or keyboard focus. #}
+    <nav>
+      {% for group in nav_groups %}
+        <div class="nav-group">
+          <button type="button" class="nav-button{% if group.contains(request.path) %} active{% endif %}" aria-haspopup="true">{{ group.label }}</button>
+          <div class="nav-menu">
+            {% for page in group.pages %}
+              <a href="{{ page.path }}"{% if nav_active(page.path, request.path) %} class="active" aria-current="page"{% endif %}>
+                {{ page.label }}{% if page.wip %} <span class="badge">WIP</span>{% endif %}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+      <div class="nav-group nav-end">
+        <button type="button" class="nav-button" aria-haspopup="true">Help</button>
+        <div class="nav-menu">
+          {% for label, url in nav_resources %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }} ↗</a>{% endfor %}
+        </div>
+      </div>
+    </nav>
+  </header>
+  <main class="{% block main_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+  <div id="error-toast" class="toast" hidden>
+    <span class="message"></span>
+    <button type="button" onclick="this.parentElement.hidden = true">Dismiss</button>
+  </div>
+</body>
+</html>

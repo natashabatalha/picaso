@@ -1,0 +1,13 @@
+{% from "_macros.html" import action %}
+<div class="button-row">
+  {{ action(url_for("info_content.add_case"), "Add case", secondary=True) }}
+  {% for case in s.cases %}
+    {{ action(url_for("info_content.remove_case", index=loop.index0), "Remove " ~ case.name, secondary=True) }}
+  {% endfor %}
+</div>
+<div class="button-row">
+  {{ action(url_for("info_content.finalize"), "Compute statistics") }}
+  {% if s.results is not none %}
+    {{ action(url_for("info_content.reset_results"), "Reset/recompute results", secondary=True) }}
+  {% endif %}
+</div>

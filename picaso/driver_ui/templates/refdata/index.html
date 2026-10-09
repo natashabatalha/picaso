@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import notes %}
+{% block title %}Setup Reference Data{% endblock %}
+{% block content %}
+<h1>Setup Data for PICASO</h1>
+<div id="refdata" hx-target="#refdata" hx-select="#refdata" hx-swap="morph:outerHTML">
+  {% if message %}{{ notes([message]) }}{% endif %}
+
+  {% if not valid %}
+    <section class="card">
+      {% if refdata %}
+        {{ notes([("error", "The path " ~ refdata ~ " does not appear to be a valid directory.")]) }}
+      {% else %}
+        {{ notes([("warning", "The picaso_refdata environment variable is not set.")]) }}
+      {% endif %}
+      <form hx-post="{{ url_for('refdata.set_refdata') }}">
+        <div class="field">
+          <label for="refdata-path">Path to your picaso reference data directory</label>
+          <div class="control"><input type="text" id="refdata-path" name="path" value="{{ refdata }}"></div>
+        </div>
+        <div class="button-row">
+          <button class="button">Set environment variable</button>
+          <button type="button" class="button secondary" hx-post="{{ url_for('refdata.shutdown') }}"
+                  hx-confirm="Stop the app? You will need to start it again from the terminal.">Kill app</button>
+        </div>
+      </form>
+    </section>
+  {% else %}
+    <section class="card">
+      <h2>Current Environment Status</h2>
+      <div class="environment-status">{{ status_html|safe }}</div>
+    </section>
+
+    <section class="card">
+      <h2>Available Data Downloads</h2>
+      {% if downloads_error %}{{ notes([("error", downloads_error)]) }}{% endif %}
+      {% for category, targets in downloads.items() %}
+        <details class="download-category">
+          <summary>Category: {{ category.replace("_", " ")|title }}</summary>
+          {% for target, info in targets.items() %}
+            {% set default = cwd if info.get("default_destination", "cwd") == "cwd" else info.default_destination %}
+            <details class="download-target">
+              <summary>{{ target }}</summary>
+              <p>{{ info.description }}</p>
+              <form hx-post="{{ url_for('refdata.download') }}" hx-target="next .download-result" hx-select="unset"
+                    hx-swap="innerHTML" hx-disabled-elt="find button">
+                <input type="hidden" name="category" value="{{ category }}">
+                <input type="hidden" name="target" value="{{ target }}">
+                <label><input type="radio" name="destination" value="default" checked> Default destination: <code>{{ default }}</code></label>
+                <label><input type="radio" name="destination" value="custom"> Custom destination:
+                  <input type="text" name="custom_path" value="{{ cwd }}"></label>
+                <div class="button-row"><button class="button">Download {{ target }}</button></div>
+              </form>
+              <div class="download-result"></div>
+            </details>
+          {% endfor %}
+        </details>
+      {% endfor %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

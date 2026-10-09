@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Spectral Diagnostics{% endblock %}
+{% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
+{% block content %}
+<h1>Spectral Diagnostics and Information Theory</h1>
+<p>This dashboard showcases information content statistics for your model. You can explore how different
+  observation cases affect the Degrees of Freedom (DOF) and Shannon Information Content.</p>
+<div hx-target="#sections" hx-swap="morph:outerHTML">
+  {{ page|safe }}
+</div>
+{% endblock %}

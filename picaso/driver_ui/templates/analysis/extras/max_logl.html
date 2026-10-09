@@ -1,0 +1,11 @@
+{% from "_fields.html" import render %}
+{% from "_macros.html" import plot, action %}
+{{ plot(a.loaded.plot, "max-logl") }}
+{# Leave-one-out contributions, asked for below the plot (so this card's form lives here instead of above) #}
+<form hx-post="{{ url_for(endpoint, name=card.name) }}" hx-trigger="change, submit" hx-encoding="multipart/form-data">
+  {{ render(card.contribution_fields(sess), errors, root=True) }}
+</form>
+{% if a.contributions_on %}
+  <div class="actions">{{ action(url_for("analysis.generate_contributions"), "Compute species contributions") }}</div>
+  {{ plot(a.contributions_plot, "contributions") }}
+{% endif %}

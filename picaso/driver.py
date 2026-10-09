@@ -39,6 +39,16 @@ chem_options = ['visscher', 'free', 'chemeq_on_the_fly','userfile', 'xarray_grid
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
 pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj23', 'xarray_grid'] #, 'molliere_20', 'Kitzman_20', 
 
+# climate options (see reference/input_tomls/climate.toml)
+climate_opacity_options = ['preweighted', 'resortrebin']
+climate_pt_options = ['isothermal', 'guillot', 'sonora_bobcat', 'userfile', 'knots', 'zj23', 'madhu_seager_09_inversion', 'madhu_seager_09_noinversion'] #initial guess
+climate_chem_options = ['preweighted', 'visscher', 'chemeq_on_the_fly']
+# Mappings for climate chemistry methods to justdoit.inputs.atmosphere chem_method
+CLIMATE_CHEM_MAP = {
+    'visscher': 'visscher',
+    'chemeq_on_the_fly': 'on-the-fly'
+}
+
 # Mappings for observation types to picaso calculation types
 OBSERVATION_CALC_MAP = {
     'thermal': 'thermal',
@@ -60,6 +70,10 @@ def run(driver_file=None,driver_dict=None,return_class=False):
     else: 
         raise Exception('Could not interpret either driver file or dictionary input')
     
+    #climate uses correlated-k opacities and its own config (see climate.toml)
+    if config['calc_type']=='climate':
+        return run_climate(driver_dict=config, return_class=return_class)
+
     #PRELOAD OPACITIES OR OPTICAL CONSTANTS
     preload_cloud_miefs = find_values_for_key(config ,'condensate')
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
@@ -92,11 +106,6 @@ def run(driver_file=None,driver_dict=None,return_class=False):
         #run retrieval
         output = retrieve(config, param_tools)
 
-    ### I made these # because they stopped the run fucntion from doing return out and wouldn't let me use my plot PT fucntion
-    elif config['calc_type']=='climate':
-        raise Exception('WIP not ready yet')
-        out = climate(config)
-    
     if return_class:
         return output ,picaso_class
     else:
@@ -1595,38 +1604,7 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
 
     
     if irradiated: #calculating spectrum for a planet by defining star properties
-        typestar = config['star'].get('type')
-        
-        #check if userfile is requested
-        if typestar=='userfile':
-            filename = config['star'].get('userfile',{}).get('filename',None)
-            if os.path.exists(str(filename)): #file with wavelength and flux 
-                w_unit=config['star']['userfile'].get('w_unit')
-                f_unit=config['star']['userfile'].get('f_unit')
-            else: 
-                raise Exception('Stellar path provided does not exist ')
-        else: #properties of star 
-            w_unit=None
-            f_unit=None
-            filename=None
-            temp= config['star'].get('grid',{}).get('teff',None) #temperature of star
-            metal= config['star'].get('grid',{}).get('feh',None) #metallicity of star
-            logg= config['star'].get('grid',{}).get('logg',None) #log gravity of star
-            database= config['star'].get('grid',{}).get('database',None) #specify database
-
-        A.star(opacity,
-               temp=temp, 
-               metal=metal, 
-               logg=logg ,
-               database=database,
-               radius = config['star'].get('radius', {}).get('value',None), 
-               radius_unit= u.Unit(config['star'].get('radius', {}).get('unit',None)),
-               semi_major=config['star'].get('semi_major', {}).get('value',None), 
-               semi_major_unit = u.Unit(config['star'].get('semi_major', {}).get('unit',None)), 
-               filename=filename, 
-               w_unit=w_unit, 
-               f_unit=f_unit
-               ) 
+        setup_star(config, A, opacity)
         if stage == 'star':
             return A
     #WIP TODO: A.surface_reflect()
@@ -1653,8 +1631,8 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
         chemistry_function = getattr(param_tools, f'chem_{chem_type}')
         df_mixingratio  = chemistry_function(**chem_config[chem_type].get('grid_kwargs',chem_config[chem_type]))#note, this includes P and T already
     
-    #set final with chem
-    A.atmosphere(df = df_mixingratio)
+    #set final with chem. optional exclude_mol removes molecule opacity (e.g. for leave-one-out contributions)
+    A.atmosphere(df = df_mixingratio, exclude_mol=chem_config.get('exclude_mol',None))
     if stage == 'chemistry':
         return A
     # clouds 
@@ -1683,6 +1661,200 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
         A.clouds(df=df_cld)
 
     return A
+
+def setup_star(config, picaso_class, opacity):
+    """
+    Adds the host star in config['star'] to a picaso inputs class.
+    Shared by setup_spectrum_class and setup_climate_class.
+    """
+    typestar = config['star'].get('type')
+
+    #defaults for the userfile option
+    temp, metal, logg = None, None, None
+    database = 'ck04models'
+
+    #check if userfile is requested
+    if typestar=='userfile':
+        filename = config['star'].get('userfile',{}).get('filename',None)
+        if os.path.exists(str(filename)): #file with wavelength and flux
+            w_unit=config['star']['userfile'].get('w_unit')
+            f_unit=config['star']['userfile'].get('f_unit')
+        else:
+            raise Exception('Stellar path provided does not exist ')
+    else: #properties of star
+        w_unit=None
+        f_unit=None
+        filename=None
+        temp= config['star'].get('grid',{}).get('teff',None) #temperature of star
+        metal= config['star'].get('grid',{}).get('feh',None) #metallicity of star
+        logg= config['star'].get('grid',{}).get('logg',None) #log gravity of star
+        database= config['star'].get('grid',{}).get('database',None) #specify database
+
+    picaso_class.star(opacity,
+           temp=temp,
+           metal=metal,
+           logg=logg ,
+           database=database,
+           radius = config['star'].get('radius', {}).get('value',None),
+           radius_unit= u.Unit(config['star'].get('radius', {}).get('unit',None)),
+           semi_major=config['star'].get('semi_major', {}).get('value',None),
+           semi_major_unit = u.Unit(config['star'].get('semi_major', {}).get('unit',None)),
+           filename=filename,
+           w_unit=w_unit,
+           f_unit=f_unit
+           )
+    return picaso_class
+
+def climate_opacity(config):
+    """
+    Opens the correlated-k opacities for a climate config.
+    For climate runs OpticalProperties.opacity_file points to the ck tables (ck_db in opannection):
+    a preweighted hdf5 file, or a directory of by-molecule tables for resortrebin
+    ('' uses the picaso default directory).
+    """
+    optical = config['OpticalProperties']
+    method = optical['opacity_method']
+    if method not in climate_opacity_options:
+        raise Exception(f'Climate calculations need correlated-k opacities. opacity_method must be one of {climate_opacity_options}, not {method}')
+    ck_db = optical.get('opacity_file') or None
+    if (method == 'preweighted') and (ck_db is None):
+        raise Exception('opacity_method=preweighted requires opacity_file to point to a preweighted ck table')
+    return opannection(ck_db=ck_db, method=method, **optical.get('opacity_kwargs',{}))
+
+def setup_climate_class(config, opacity=None, param_tools=None):
+    """
+    Sets up, but does not run, a climate calculation from a climate config (see reference/input_tomls/climate.toml).
+    Run the returned class with picaso_class.climate(opacity, **kwargs), or use run_climate to do both.
+
+    Parameters
+    ----------
+    config : dict
+        Climate config (e.g., loaded climate.toml)
+    opacity : class
+        Correlated-k opacity connection (justdoit.opannection with method preweighted or resortrebin).
+        If None, it is opened from config['OpticalProperties'] with climate_opacity
+    param_tools : class
+        Parameterize class used to compute the initial temperature guess. If None, a new one is created.
+
+    Returns
+    -------
+    picaso.justdoit.inputs
+        Climate class ready to run
+    """
+    if opacity is None:
+        opacity = climate_opacity(config)
+    if param_tools is None:
+        param_tools = Parameterize()
+
+    irradiated = config.get('irradiated', False)
+    if not irradiated:
+        A = inputs(calculation='browndwarf', climate=True) #if it isn't irradiated we are calculating a browndwarf
+    else:
+        A = inputs(calculation='planet', climate=True) #if irradiated we are calculating a planet
+
+    #gravity: if both mass and radius are given gravity is computed from them
+    object_config = config['object']
+    kwargs = {}
+    for key in ['gravity', 'radius', 'mass']:
+        if key in object_config:
+            kwargs[key] = object_config[key]['value']
+            kwargs[f'{key}_unit'] = u.Unit(object_config[key]['unit'])
+    A.gravity(**kwargs)
+
+    #effective temperature (brown dwarf) or intrinsic temperature (planet)
+    teff = object_config['teff']
+    A.effective_temp((teff['value']*u.Unit(teff.get('unit','K'))).to(u.K, equivalencies=u.temperature()).value)
+
+    if irradiated:
+        setup_star(config, A, opacity)
+
+    #initial guess of the temperature profile
+    df_guess = PT_handler(config['temperature'], A, param_tools)
+    df_guess = df_guess.sort_values('pressure')
+    #climate needs float arrays (e.g., an isothermal guess with an integer T)
+    pressure = df_guess['pressure'].values.astype(float)
+    temp_guess = df_guess['temperature'].values.astype(float)
+
+    climate_config = config.get('climate', {})
+    rcb_guess = climate_config.get('rcb_guess')
+    if (rcb_guess is None) or not (0 < rcb_guess < len(pressure)-1):
+        raise Exception(f'climate.rcb_guess must be a level index between 1 and {len(pressure)-2} for the {len(pressure)} level pressure grid. Got: {rcb_guess}')
+    A.inputs_climate(temp_guess=temp_guess, pressure=pressure,
+                     rcb_guess=int(rcb_guess),
+                     rfacv=climate_config.get('rfacv', 0.0),
+                     rfaci=climate_config.get('rfaci', 1),
+                     moistgrad=climate_config.get('moistgrad', False))
+
+    #chemistry: preweighted ck tables already include the chemistry
+    chem_config = config.get('chemistry', {})
+    chem_type = chem_config.get('method', 'preweighted')
+    opacity_method = config['OpticalProperties']['opacity_method']
+    if chem_type == 'preweighted':
+        if opacity_method != 'preweighted':
+            raise Exception("chemistry.method='preweighted' requires OpticalProperties.opacity_method='preweighted'. To compute chemistry on the fly with resortrebin, choose chemistry.method visscher or chemeq_on_the_fly")
+    elif chem_type in CLIMATE_CHEM_MAP:
+        if opacity_method != 'resortrebin':
+            raise Exception(f"chemistry.method='{chem_type}' requires OpticalProperties.opacity_method='resortrebin'. Preweighted ck tables already include their chemistry (use chemistry.method='preweighted')")
+        chem_params = chem_config.get(chem_type, {})
+        cto = {'cto_relative': chem_params['cto_relative']} if 'cto_relative' in chem_params else {'cto_absolute': chem_params['cto_absolute']}
+        A.atmosphere(mh=10**chem_params['log_mh'], chem_method=CLIMATE_CHEM_MAP[chem_type],
+                     no_ph3=chem_config.get('no_ph3', False),
+                     cold_trap=chem_config.get('cold_trap', False),
+                     vol_rainout=chem_config.get('vol_rainout', False),
+                     **cto)
+    else:
+        raise Exception(f'Climate chemistry method {chem_type} is not available. Options are: {climate_chem_options}')
+
+    return A
+
+def run_climate(driver_file=None, driver_dict=None, return_class=False):
+    """
+    Reads a climate config (see reference/input_tomls/climate.toml), sets up the climate
+    class and runs the climate model.
+
+    Parameters
+    ----------
+    driver_file : str
+        Path to a climate toml file
+    driver_dict : dict
+        Already-loaded climate config (alternative to driver_file)
+    return_class : bool
+        If True, also returns the picaso climate class (needed for e.g. justdoit.output_xarray)
+
+    Returns
+    -------
+    dict, or (dict, picaso.justdoit.inputs) if return_class
+        Output of picaso_class.climate
+    """
+    if isinstance(driver_file,str):
+        with open(driver_file, "rb") as f:
+            config = tomllib.load(f)
+    elif isinstance(driver_dict,dict):
+        config = driver_dict
+    else:
+        raise Exception('Could not interpret either driver file or dictionary input')
+    #resolve_default_paths returns a copy, so pruning the UI-only option lists leaves the input untouched
+    config = prune_dict_by_key(resolve_default_paths(config), '_options')
+
+    opacity = climate_opacity(config)
+    picaso_class = setup_climate_class(config, opacity)
+
+    climate_config = config.get('climate', {})
+    output = picaso_class.climate(opacity,
+                                  save_all_profiles=climate_config.get('save_all_profiles', False),
+                                  with_spec=climate_config.get('with_spec', False),
+                                  verbose=climate_config.get('verbose', True))
+
+    climate_output = config.get('InputOutput', {}).get('climate_output', '')
+    if climate_output:
+        if not climate_config.get('with_spec', False):
+            raise Exception('InputOutput.climate_output requires climate.with_spec=true so the full output can be saved')
+        output_xarray(output, picaso_class, savefile=climate_output)
+
+    if return_class:
+        return output, picaso_class
+    else:
+        return output
 
 
 def PT_handler(pt_config, picaso_class, param_tools): #WIP
@@ -1980,7 +2152,26 @@ def load_template_config():
 
     return config
 
-def load_config(driver_file): 
+def resolve_default_paths(config, refdata=None):
+    """Replaces the `_default_` placeholder in every string of a config with the reference data directory."""
+    refdata = refdata or os.getenv('picaso_refdata')
+    if isinstance(config, dict):
+        return {k: resolve_default_paths(v, refdata) for k, v in config.items()}
+    if isinstance(config, list):
+        return [resolve_default_paths(v, refdata) for v in config]
+    if isinstance(config, str):
+        return config.replace('_default_', refdata)
+    return config
+
+def load_climate_template_config():
+    """Loads reference/input_tomls/climate.toml with `_default_` paths resolved and the _options lists removed."""
+    master_climate = os.path.join(os.getenv('picaso_refdata'), 'input_tomls', 'climate.toml')
+    with open(master_climate, "rb") as f:
+        config = tomllib.load(f)
+    config = prune_dict_by_key(config,'_options')
+    return resolve_default_paths(config)
+
+def load_config(driver_file):
     with open(driver_file, "rb") as f:
         config = tomllib.load(f)
     return config

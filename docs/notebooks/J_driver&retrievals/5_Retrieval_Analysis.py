@@ -68,7 +68,8 @@ print(params)
 # %%
 retrieval_dir = config['InputOutput']['retrieval_output']
 
-info = ret.read_retrievals(retrieval_dir, params)
+# Passing the `fitpars` dictionary (instead of the `params` list) lets read_retrievals find which parameters were sampled in log space
+info = ret.read_retrievals(retrieval_dir, fitpars)
 
 # For the sake of this tutorial, we describe the dictionary returned by read_retrievals:
 # - info['samples_equal']: numpy array of equally-weighted samples (n_samples, n_params)
@@ -76,14 +77,15 @@ info = ret.read_retrievals(retrieval_dir, params)
 # - info['max_logl_point']: parameters at the maximum likelihood point (array of length n_params)
 # - info['med_intervals']: DataFrame of parameter statistics/intervals
 # - info['param_names']: list of parameter names
+# - info['log_params']: parameters sampled in log10 space (the samples themselves are stored as 10**x)
 
 # %% [markdown]
 # ## 4. Display Corner Plot
 #
-# We can easily plot the parameter correlations and distributions using the `plot_pair` function.
+# We can easily plot the parameter correlations and distributions using the `plot_pair` function. Parameters in `log_params` are plotted as log10 of the samples.
 
 # %%
-fig, ax = ret.plot_pair(info['samples_equal'], info['param_names'])
+fig, ax = ret.plot_pair(info['samples_equal'], info['param_names'], log_params=info['log_params'])
 plt.show()
 
 # %% [markdown]

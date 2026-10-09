@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import notes %}
+{% block content %}
+<section class="hero">
+  <h1>PICASO App</h1>
+  <p class="lead">A browser interface for <strong>PICASO</strong>, the Planetary Intensity Code for Atmospheric
+    Scattering Observations. Set up and run exoplanet and brown dwarf spectra, prepare and analyze retrievals,
+    and inspect the opacities behind your models, without writing a driver file by hand.</p>
+</section>
+
+{% if not refdata_ready %}
+  {{ notes([("warning", "PICASO's reference data was not found, so the modeling and analysis pages are unavailable. "
+                        "Start with Setup → Reference Data.")]) }}
+{% endif %}
+
+{% for group in nav_groups %}
+  <section class="home-section">
+    <h2>{{ group.label }}</h2>
+    <p class="hint">{{ group.summary }}</p>
+    <div class="feature-grid">
+      {% for page in group.pages %}
+        <a class="feature" href="{{ page.path }}">
+          <h3>{{ page.label }}{% if page.wip %} <span class="badge">WIP</span>{% endif %}</h3>
+          <p>{{ page.summary }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endfor %}
+
+<section class="home-section">
+  <h2>About PICASO</h2>
+  <p class="hint">What the underlying code can do. Some of it is not in this app yet; the documentation covers all of it.</p>
+  <ul class="capabilities">
+    <li><strong>Transmission spectroscopy</strong> of planets</li>
+    <li><strong>Thermal emission spectroscopy</strong> of planets and brown dwarfs</li>
+    <li><strong>Reflected light spectroscopy</strong> of planets</li>
+    <li><strong>Phase curves</strong> of planets</li>
+    <li><strong>1D climate modeling</strong> of planets and brown dwarfs</li>
+    <li><strong>Fitting models</strong> to data with retrievals</li>
+  </ul>
+</section>
+
+<section class="home-section">
+  <h2>PICASO Resources</h2>
+  <div class="button-row">
+    {% for label, url in nav_resources %}
+      <a class="button{% if not loop.first %} secondary{% endif %}" href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
