@@ -111,6 +111,16 @@ def get_data_config():
             'url':{'all_opacities_4.8_15_R20000.db.tar.gz':'https://zenodo.org/records/6928501/files/all_opacities_4.8_15_R20000.db.tar.gz'},
             'description':'7.0 GB file resampled at R=20,000 from 4.8-15um. This is sufficient for doing low resolution JWST calculations.',
             'default_destination':inputs['opacities']['files']['resampled']
+            },
+        'photochem-R15000,0.1-250um':{
+            'url':{'opacities_photochem_0.1_250.0_R15000.db.zip':'https://zenodo.org/records/17381172/files/opacities_photochem_0.1_250.0_R15000.db.zip'},
+            'description':'6.0 GB file resampled at R=15,000 from 0.1-250um, built for rocky/temperate planets (T < 2000 K) from the HELIOS-K opacities used in the Photochem climate model (Wogan et al. 2025). Unlike the default database: lines are broadened mostly by Earth air (not H2/He), many rocky-planet CIA pairs are included (e.g., CO2-CO2, H2O-H2O), and fewer high-temperature absorbers are included. Appropriate for spectra up to R~150 (e.g., Modern Earth benchmark). Requires PICASO v4.0+. Recommended to store as "extra" so it does not compete with your default database.',
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['resampled'])
+            },
+        'photochem-R60000,0.1-5.5um':{
+            'url':{'opacities_photochem_0.1_5.5_R60000.db.zip':'https://zenodo.org/records/17381172/files/opacities_photochem_0.1_5.5_R60000.db.zip'},
+            'description':'10.2 GB file resampled at R=60,000 from 0.1-5.5um. Same rocky/temperate-planet Photochem opacities (Earth-air broadening, rocky-planet CIAs, T < 2000 K) at higher resolution. Appropriate for spectra up to R~3000. Requires PICASO v4.0+. Recommended to store as "extra" so it does not compete with your default database.',
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['resampled'])
             }
         },
     'stellar_grids':{

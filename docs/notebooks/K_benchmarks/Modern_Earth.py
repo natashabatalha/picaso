@@ -34,7 +34,7 @@ from matplotlib import pyplot as plt
 # %% [markdown]
 # ## Opacities for rocky planets
 #
-# First, we need to download the following resampled opacity database specifically designed for rocky planets: [https://zenodo.org/records/17381172](https://zenodo.org/records/17381172). For this notebook, download the R = 15,000 file that spans 0.1 to 250 microns and, after unzipping, place the file in your PICASO `reference/opacities/` folder. These opacities are similar to those use for climate modeling in the Photochem code ([Wogan et al. (2025)](https://doi.org/10.3847/PSJ/ae0e1c)) just reformatted for spectral calculations with PICASO. You can also optionally download the high resolution file in the zenodo archive (R = 60,000), but it is not needed for this notebook.
+# First, we need to download the following resampled opacity database specifically designed for rocky planets: [https://zenodo.org/records/17381172](https://zenodo.org/records/17381172). For this notebook, you need the R = 15,000 file that spans 0.1 to 250 microns. You can download it with `get_data` (see the commented cell below) and, when asked, choose "extra" so that it is stored in `$picaso_refdata/opacities/resampled` and does not compete with your default opacity database. These opacities are similar to those use for climate modeling in the Photochem code ([Wogan et al. (2025)](https://doi.org/10.3847/PSJ/ae0e1c)) just reformatted for spectral calculations with PICASO. You can also optionally download the high resolution file in the zenodo archive (R = 60,000), but it is not needed for this notebook.
 #
 # These opacities from Photochem are distinct from the "default" PICASO opacities (e.g., []()) in the following ways:
 # | Feature | Photochem Opacities | Default PICASO Opacities |
@@ -46,7 +46,11 @@ from matplotlib import pyplot as plt
 # Below, we create two opacities objects, one with small and one with big wavelength ranges:
 
 # %%
-filename_db = os.path.join(jdi.__refdata__, 'opacities', 'opacities_photochem_0.1_250.0_R15000.db')
+#from picaso import data
+#data.get_data(category_download='resampled_opacity', target_download='photochem-R15000,0.1-250um') #6Gb
+
+# %%
+filename_db = os.path.join(jdi.__refdata__, 'opacities', 'resampled', 'opacities_photochem_0.1_250.0_R15000.db')
 
 opacities_small = jdi.opannection(
     wave_range=[0.2, 2.0], 
