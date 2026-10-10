@@ -53,7 +53,7 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'userfile' 
+profile = 'isothermal' 
 
 [temperature.userfile]
 filename='_default_/base_cases/HJ.pt' #columns names: temperature,pressure # units:Kelvin,bar (can also include chemistry in the same file)
@@ -64,7 +64,7 @@ pd_kwargs={sep=' '} #kwargs for pandas.read_csv
 reference = {value=1e1,unit='bar'}
 min = {value=1e-5, unit='bar'}
 max = {value=1e3,unit='bar'}
-nlevel = 100
+nlevel = 91
 spacing = 'log'
 
 [temperature.isothermal]

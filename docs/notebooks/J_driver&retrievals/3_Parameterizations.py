@@ -97,11 +97,11 @@ df_cld_deck = param_tools.cloud_brewster_grey(decay_type='deck',alpha=-4,ssa=1,r
                                          deck_kwargs={'ptop': -1, 'dp': 1})
 
 df_cld_SiO2_deck = param_tools.cloud_brewster_mie('Al2O3',
-                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd':-3},
+                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd':1},
                                              decay_type='deck',deck_kwargs={'ptop': -1, 'dp': 1})
 
 df_cld_SiO2_slab = param_tools.cloud_brewster_mie('Al2O3',
-                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd': -3},
+                                             distribution='lognorm',lognorm_kwargs={'sigma': 1, 'lograd': 1},
                                              decay_type='slab',slab_kwargs={'ptop': -1, 'dp': 1, 'reference_tau': 1})
 
 
@@ -140,3 +140,5 @@ for ikey in clouds.keys():
 xs = [output[ikey]['lowres'][0] for ikey in output.keys()]
 ys = [output[ikey]['lowres'][1] for ikey in output.keys()]
 jpi.show(jpi.spectrum(xs,ys, legend=list(output.keys()),y_axis_type='log',x_axis_type='log'))
+
+# %%

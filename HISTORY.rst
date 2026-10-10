@@ -3,6 +3,16 @@
 History
 -------
 
+4.1 (2026-9-16)
+~~~~~~~~~~~~~~~
+Major functionality: 
+
+* New funtionality to support Spectra diagnostics paper (Batalha & Wogan 2026, RASTI)
+* Adds functionality to compute jacobians for any picaso class 
+* Adds functionality to compute information statistics 
+* Adds tutorial notebook 
+* Chemeq on the fly from photochem
+
 4.0.1 (2026-3-30)
 ~~~~~~~~~~~~~~~~~
 Ehancements:

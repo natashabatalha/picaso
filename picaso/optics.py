@@ -56,7 +56,7 @@ def add_rayleigh_numba(tauray_gauss_0, rayleigh_opa, factor):
             tauray_gauss_0[i, j] += rayleigh_opa[j] * f
 
 #@jit(nopython=True)
-def compute_opacity_numba(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
+def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
     test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False, fthin_cld = None, do_holes = False):
     """
     Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
@@ -450,7 +450,7 @@ def compute_opacity_numba(atmosphere, opacityclass, ngauss=1, stream=2, delta_ed
                 W0_no_raman, 0*COSB)          #W0_no_raman is used for thermal calculations only 
 
 
-def compute_opacity_deprecate(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
+def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
     test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False, fthin_cld = None, do_holes = False):
     """
     Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
@@ -780,7 +780,6 @@ def compute_opacity_deprecate(atmosphere, opacityclass, ngauss=1, stream=2, delt
     TAU = np.zeros((nlayer+1, nwno,ngauss))
     for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
 
-    # Clearsky case
     #removing this code as it is bug prone as it generally repeats all code 
     #by removing this I will only be modifying taucld 
     #if do_holes == True:
@@ -859,7 +858,6 @@ def compute_opacity_deprecate(atmosphere, opacityclass, ngauss=1, stream=2, delt
                 W0_no_raman, 0*COSB)          #W0_no_raman is used for thermal calculations only 
 
 
-compute_opacity = compute_opacity_numba
 @jit(nopython=True, cache=True)
 def compute_raman(nwno, nlayer, wno, stellar_shifts, tlayer, cross_sections, j_initial, deltanu):
     """

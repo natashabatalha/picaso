@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.19.6
 #   kernelspec:
 #     display_name: pic312
 #     language: python
@@ -65,7 +65,7 @@ if refdata_dir:
 
 # you can also load a slightly cleaned up version with a go function call 
 
-#config = go.load_template_config()
+config = go.load_template_config()
 
 # %% [markdown]
 # The master `driver.toml` in reference data has examples of every input option. Not every single block needs to be filled out. For example, let's inspect `config['temperature]`
@@ -368,6 +368,7 @@ for i in go.cloud_options:#running everything except userfile since the pressure
     config = go.load_template_config()
     config['clouds']['cloud1_type']=i
     print(i)
+    if i=='userfile':config['temperature']['profile']='userfile' #just to make sure that pressure grid matches
     test1 = go.run(driver_dict =config)
 
 # %% [markdown]

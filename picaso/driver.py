@@ -1,3 +1,8 @@
+"""
+The content in here is beta and should not be used for published works until the 
+release of PICASO 5. Please work with the developers if using this before the PICASO 5 release: 
+Authors: Natasha Batalha, Francisco Ardevol Martinez & Sierra Janson
+"""
 from .justdoit import *
 from .justplotit import *
 from .parameterizations import Parameterize,cloud_averaging
