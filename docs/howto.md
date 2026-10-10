@@ -29,6 +29,7 @@ Data Storage Uniformity <notebooks/I_usefultools/data_uniformity_tutorial.py>
 Spectral and Molecular Contribution Functions <notebooks/I_usefultools/ContributionFunctions.py>
 Integrated Level Fluxes <notebooks/I_usefultools/Level_Fluxes.py>
 SQLite Tutorial <notebooks/I_usefultools/Sqlite3Tutorial.py>
+Plotting with Bokeh, Matplotlib, or Plotly <notebooks/I_usefultools/PlottingBackends.py>
 ```
 
 ```{toctree}

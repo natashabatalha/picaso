@@ -10,6 +10,7 @@ from bokeh.layouts import row,column,gridplot
 from bokeh.io import output_notebook
 from bokeh.plotting import figure, output_file, show
 Colorblind8 = pals.Colorblind8
+RdGy = pals.RdGy
 
 import os 
 import copy
@@ -21,12 +22,119 @@ import matplotlib.colors as colors
 import matplotlib.animation as animation
 from matplotlib import rc
 
-from scipy.stats.stats import pearsonr  
-from scipy.stats import binned_statistic
+from scipy.stats import pearsonr, binned_statistic
 
 from .fluxes import blackbody, get_transit_1d
 from .opacity_factory import *
 from .climate import convec, namedtuple, calculate_atm
+
+# plotly is an optional dependency, so it is only imported when backend='plotly' is requested
+BACKENDS = ('bokeh', 'matplotlib', 'plotly')
+# max number of wavelength points drawn in bokeh/plotly heatmaps (matplotlib is unaffected)
+MAX_HEATMAP_COLUMNS = 500
+
+def _check_backend(backend):
+    """Make sure the requested plotting backend is supported"""
+    if backend not in BACKENDS:
+        raise ValueError(f"backend='{backend}' is not supported. Options are {BACKENDS}")
+    return backend
+
+def _plotly():
+    """Import plotly only when it is needed so that it remains optional"""
+    try:
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
+    except ImportError:
+        raise ImportError("backend='plotly' requires plotly. Install it with `pip install plotly`")
+    return go, make_subplots
+
+def _bokeh_size(kwargs, width, height):
+    """Pop bokeh's legacy plot_width/plot_height and set width/height defaults"""
+    kwargs['height'] = kwargs.get('plot_height', kwargs.get('height', height))
+    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width', width))
+    kwargs.pop('plot_width', None)
+    kwargs.pop('plot_height', None)
+    return kwargs
+
+def _mpl_format(ax, kwargs):
+    """Translate the common bokeh.figure keywords (labels, ranges, axis types, title)
+    so that the same kwargs can be used with backend='matplotlib'"""
+    if kwargs.get('x_axis_type') == 'log': ax.set_xscale('log')
+    if kwargs.get('y_axis_type') == 'log': ax.set_yscale('log')
+    if isinstance(kwargs.get('x_range'), (list, tuple)): ax.set_xlim(kwargs['x_range'])
+    if isinstance(kwargs.get('y_range'), (list, tuple)): ax.set_ylim(kwargs['y_range'])
+    if kwargs.get('x_axis_label') is not None: ax.set_xlabel(kwargs['x_axis_label'])
+    if kwargs.get('y_axis_label') is not None: ax.set_ylabel(kwargs['y_axis_label'])
+    if kwargs.get('title') is not None: ax.set_title(kwargs['title'])
+
+def _plotly_format(fig, kwargs):
+    """Translate the common bokeh.figure keywords (labels, ranges, axis types, title, size)
+    so that the same kwargs can be used with backend='plotly'"""
+    for axis, update in zip(['x', 'y'], [fig.update_xaxes, fig.update_yaxes]):
+        log = kwargs.get(f'{axis}_axis_type') == 'log'
+        rng = kwargs.get(f'{axis}_range')
+        axis_kwargs = {'title_text': kwargs.get(f'{axis}_axis_label')}
+        if log: axis_kwargs['type'] = 'log'
+        if isinstance(rng, (list, tuple)):
+            #plotly expects log axis ranges in log10 units. a reversed range flips the axis
+            axis_kwargs['range'] = list(np.log10(rng)) if log else list(rng)
+        update(**axis_kwargs)
+    fig.update_layout(title=kwargs.get('title'), width=kwargs.get('width'), height=kwargs.get('height'))
+
+def _bokeh_image(x, y, z, palette, low=None, high=None, log_color=False, log_y=True, **kwargs):
+    """
+    Bokeh heatmap of z[y,x]. Bokeh images assume evenly spaced pixels, so z is resampled
+    (nearest neighbor) onto an evenly spaced x grid and an evenly spaced (log) y grid
+    before it is drawn. Pressure is plotted increasing downward.
+    """
+    x = np.asarray(x); y = np.asarray(y); z = np.asarray(z)
+    ix = np.argsort(x); iy = np.argsort(y)
+    x, y, z = x[ix], y[iy], z[iy][:, ix]
+
+    x_even = np.linspace(x.min(), x.max(), min(len(x), MAX_HEATMAP_COLUMNS))
+    if log_y:
+        y_even = np.logspace(np.log10(y.min()), np.log10(y.max()), len(y))
+        y_near = [find_nearest_1d(np.log10(y), np.log10(i)) for i in y_even]
+    else:
+        y_even = np.linspace(y.min(), y.max(), len(y))
+        y_near = [find_nearest_1d(y, i) for i in y_even]
+    x_near = [find_nearest_1d(x, i) for i in x_even]
+    z = z[np.ix_(y_near, x_near)]
+
+    if log_color:
+        positive = z[z > 0]
+        low = positive.min() if low is None else low
+        high = positive.max() if high is None else high
+        mapper = LogColorMapper(palette=palette, low=low, high=high)
+    else:
+        mapper = LinearColorMapper(palette=palette,
+                                   low=np.nanmin(z) if low is None else low,
+                                   high=np.nanmax(z) if high is None else high)
+
+    kwargs['y_axis_type'] = kwargs.get('y_axis_type', 'log' if log_y else 'linear')
+    kwargs['y_range'] = kwargs.get('y_range', [y.max(), y.min()])
+    kwargs['x_range'] = kwargs.get('x_range', [x.min(), x.max()])
+    fig = figure(**kwargs)
+    fig.image(image=[z], x=x.min(), y=y.min(), dw=x.max()-x.min(), dh=y.max()-y.min(),
+              color_mapper=mapper)
+    fig.add_layout(ColorBar(color_mapper=mapper, label_standoff=8), 'right')
+    return fig
+
+def _thin_columns(x, z, n=None):
+    """
+    Sort by x and keep at most n (default MAX_HEATMAP_COLUMNS) evenly spaced columns of z[:, x]. 
+    Interactive heatmaps embed every point in the notebook, so this keeps them small. 
+    """
+    n = MAX_HEATMAP_COLUMNS if n is None else n
+    x = np.asarray(x); z = np.asarray(z)
+    order = np.argsort(x)
+    keep = order[np.unique(np.linspace(0, len(x)-1, min(len(x), n)).astype(int))]
+    return x[keep], z[:, keep]
+
+def _plotly_colorbar_x(fig, col):
+    """x position just right of subplot `col` so each heatmap gets its own colorbar"""
+    axis = 'xaxis' if col == 1 else f'xaxis{col}'
+    return fig.layout[axis].domain[1] + 0.01
 
 
 def _get_legend_cols(n_items, plot_height):
@@ -73,29 +181,34 @@ def mean_regrid(x, y, newx=None, R=None):
     return newx, y
 
 def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},
-    plot_type='bokeh', plot_kwargs={}):
+    plot_type='bokeh', plot_kwargs={}, backend=None):
     """
-    Plot only symmetric y error bars in bokeh plot
+    Plot only symmetric y error bars
 
     Parameters
     ----------
-    x : array 
-        x data 
-    y : array 
-        y data 
-    e : array 
+    x : array
+        x data
+    y : array
+        y data
+    e : array
         +- error for y which will be distributed as y+e, y-e on data point
-    plot : bokeh.figure, optional
-        Bokeh figure to add error bars to 
+    plot : bokeh.figure or plotly.graph_objects.Figure, optional
+        Figure to add error bars to
     plot_type : str, optional
-        type of plot (either bokeh or matplotlib)
-    point_kwargs : dict 
-        formatting for circles 
-    error_kwargs : dict 
+        type of plot (either bokeh, matplotlib or plotly)
+    point_kwargs : dict
+        formatting for circles
+    error_kwargs : dict
         formatting for error bar lines
-    plot_kwargs : dict 
+    plot_kwargs : dict
         plot attriutes for bokeh figure
+    backend : str, optional
+        Same as plot_type. If supplied, it takes precedence over plot_type
     """
+    if backend is not None: plot_type = backend
+    #copy so the mutable defaults are not modified between calls
+    point_kwargs, error_kwargs, plot_kwargs = dict(point_kwargs), dict(error_kwargs), dict(plot_kwargs)
     if plot_type=='bokeh':
         if isinstance(plot, type(None)):
             plot_kwargs['height'] = plot_kwargs.get('plot_height',plot_kwargs.get('height',345))
@@ -104,7 +217,7 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},
             if 'plot_height' in plot_kwargs.keys() : plot_kwargs.pop('plot_height')
             plot_kwargs['y_axis_label'] = plot_kwargs.get('y_axis_label','Spectrum')
             plot_kwargs['x_axis_label'] = plot_kwargs.get('x_axis_label','Wavelength')
-            plot = figure(**plot_kwargs) 
+            plot = figure(**plot_kwargs)
         y_err = []
         x_err = []
         for px, py, yerr in zip(x, y, e):
@@ -116,7 +229,7 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},
         return plot
     elif plot_type=='matplotlib':
         point_kwargs['color'] = point_kwargs.get('color','k')
-        
+
         plot_kwargs['xlabel'] = plot_kwargs.get('xlabel',r'Wavelength [$\mu$m]')
         plot_kwargs['ylabel'] = plot_kwargs.get('ylabel',r'(R$_p$/R$_*$)$^2$')
         plot_kwargs['figsize'] = plot_kwargs.get('figsize',(20,10))
@@ -134,6 +247,22 @@ def plot_errorbar(x,y,e,plot=None,point_kwargs={}, error_kwargs={},
         plt.tick_params(axis='x',which='major',length =20, width=3,direction='in',labelsize=20)
         plt.tick_params(axis='x',which='minor',length =10, width=2,direction='in',labelsize=20)
         return
+    elif plot_type=='plotly':
+        go, _ = _plotly()
+        fig = plot if plot is not None else go.Figure()
+        fig.add_trace(go.Scatter(x=x, y=y, mode='markers', marker=point_kwargs,
+                                 error_y=dict(type='data', array=e, visible=True, **error_kwargs)))
+        #only label axes if this is a new figure, or the user asked for it
+        x_label = plot_kwargs.get('x_axis_label', plot_kwargs.get('xlabel', None if plot is not None else 'Wavelength'))
+        y_label = plot_kwargs.get('y_axis_label', plot_kwargs.get('ylabel', None if plot is not None else 'Spectrum'))
+        if x_label is not None: fig.update_xaxes(title_text=x_label)
+        if y_label is not None: fig.update_yaxes(title_text=y_label)
+        if plot is None:
+            fig.update_layout(height=plot_kwargs.get('height', plot_kwargs.get('plot_height', 400)),
+                              width=plot_kwargs.get('width', plot_kwargs.get('plot_width', 600)))
+        return fig
+    else:
+        _check_backend(plot_type)
 
 def plot_multierror(x,y,plot, dx_up=0, dx_low=0, dy_up=0, dy_low=0, 
     point_kwargs={}, error_kwargs={}):
@@ -215,340 +344,184 @@ def bin_errors(newx, oldx, dy):
 
 
 def mixing_ratio(full_output,limit=50,ng=None,nt=None, plot_type='bokeh',
-        molecules=None,
+        molecules=None, backend=None,
         **kwargs):
-    """Returns plot of mixing ratios 
+    """Returns plot of mixing ratios
 
     Parameters
     ----------
     full_output : class
         picaso.atmsetup.ATMSETUP
     limit : int
-        Limits the number of curves to 20. Will plot the top 20 molecules 
-        with highest max(abundance). Limit must be >=3. 
-    molecules : list 
-        Directly specify which molecule to plot 
-    plot_type : str 
-        Options are "bokeh" or "matplotlib". Default is bokeh
-    **kwargs : dict 
-        Any key word argument for bokeh.figure() 
+        Limits the number of curves to 20. Will plot the top 20 molecules
+        with highest max(abundance). Limit must be >=3.
+    molecules : list
+        Directly specify which molecule to plot
+    plot_type : str
+        Options are "bokeh", "matplotlib" or "plotly". Default is bokeh
+    backend : str
+        Same as plot_type. If supplied, it takes precedence over plot_type
+    **kwargs : dict
+        Any key word argument for bokeh.figure()
     """
-    #set plot defaults
-    if ((ng==None) & (nt==None)):
-        pressure = full_output['layer']['pressure']
-        mixingratios = full_output['layer']['mixingratios']
-    else: 
-        pressure = full_output['layer']['pressure'][:,ng,nt]
-        mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
-
-    #both bokeh/matplotlib get data 
-    if isinstance(molecules, type(None)):
-    # Check if the inputted molecule is actually in the list and remove 'pressure' and 'temperature'
-        to_plot = [mol for mol in mixingratios.keys() if mol not in ['pressure', 'temperature', 'kz']][:limit]
-    elif isinstance(molecules , str):
-        to_plot = [molecules]
-    elif isinstance((molecules) , list):
-        to_plot = molecules
-
-    molecules=to_plot
-
-    #sets defaults for the user for BOKEH
-    if plot_type=='bokeh':
-        kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
-        kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
-        if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-        if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-        kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
-        kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
-        kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-        kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
-        kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
-        kwargs['x_range'] = kwargs.get('x_range',[1e-20, 5])
-    elif plot_type=='matplotlib':
-        #adjusted kwargs for matplotlib
-        kwargs.setdefault('height', kwargs.get('plot_height', kwargs.get('height', 5)))
-        kwargs.setdefault('width', kwargs.get('plot_width', kwargs.get('width', 7)))
-        kwargs.pop('plot_width', None)
-        kwargs.pop('plot_height', None)
-        kwargs.setdefault('y_axis_label', 'Pressure(Bars)')
-        kwargs.setdefault('x_axis_label', 'Mixing Ratio(v/v)')
-        kwargs.setdefault('y_axis_type', 'log')
-        kwargs.setdefault('x_axis_type', 'log')
-        kwargs.setdefault('y_range', [np.max(pressure), np.min(pressure)])
-        kwargs.setdefault('x_range', [1e-25, 5])
-
-   # Determine what molecules to plot for the user
-    if plot_type=='bokeh':
-        fig = figure(**kwargs)
-        if len(molecules) < 3: ncol = 5
-        else: ncol = len(molecules)
-        if limit<3: 
-            cols = pals.magma(5) #magma needs at least 5 colors
-        else: 
-            cols = pals.magma(min([ncol,limit]))
-        legend_it=[]    
-        for mol , c in zip(to_plot,cols):
-            ind = np.where(mol==np.array(molecules))[0][0]
-            f = fig.line(mixingratios[mol],pressure, color=c, line_width=3,
-                        muted_color=c, muted_alpha=0.2)
-            legend_it.append((mol, [f]))
-        
-        legend = Legend(items=legend_it, location=(0, -20),
-                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
-        
-        legend.click_policy="mute"
-        fig.add_layout(legend, 'left')  
-
-    elif plot_type=='matplotlib':
-
-        #or fig, ax = plt.subplots(**kwargs)
-        fig = plt.figure(figsize=(kwargs['width'], kwargs['height']))
-        axes = fig.add_subplot(1,1,1)
-        ind = np.where(mol for mol in np.array(molecules))[0][0]
-
-        for mol in to_plot:
-            axes.plot(mixingratios[mol], pressure, label=mol)
-        axes.set_xlim(kwargs['x_range'])
-        #set y lim 
-
-        #add the legend 
-        axes.legend()
-
-        axes.set_xlabel("Mixing Ratios [v/v]") #change this to use kwargs x_axis_label
-        axes.set_ylabel("Pressure")#add units  and change this to use kwargs y_axis_label
-        axes.set_yscale('log')
-        axes.set_xscale('log')
-        axes.invert_yaxis()
-
-    return fig
+    backend = plot_type if backend is None else backend
+    return Analyzer(full_output, backend=backend).mixing_ratio(limit=limit, ng=ng, nt=nt,
+                                                               molecules=molecules, **kwargs)
     
-def pt(full_output,ng=None, nt=None, **kwargs):
+def pt(full_output,ng=None, nt=None, backend='bokeh', **kwargs):
     """Returns plot of pressure temperature profile
 
     Parameters
     ----------
     full_output : class
         picaso.atmsetup.ATMSETUP
-    **kwargs : dict 
-        Any key word argument for bokeh.figure() 
+    backend : str
+        Options are "bokeh" (default), "matplotlib" or "plotly"
+    **kwargs : dict
+        Any key word argument for bokeh.figure()
     """
-    #set plot defaults
-    if ((ng==None) & (nt==None)):
-        pressure = full_output['layer']['pressure']
-        temperature = full_output['layer']['temperature']
-    else: 
-        pressure = full_output['layer']['pressure'][:,ng,nt]
-        temperature = full_output['layer']['temperature'][:,ng,nt]
+    return Analyzer(full_output, backend=backend).pt(ng=ng, nt=nt, **kwargs)
 
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
-    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['title'] = kwargs.get('title','Pressure-Temperature Profile')
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
-    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-    #kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
-    kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
-
-    fig = figure(**kwargs)
-
-    f = fig.line(temperature,pressure,line_width=3) 
-    plot_format(fig)
-    return fig
-
-def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8,muted_alpha=0.2, **kwargs):
+def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8,muted_alpha=0.2,
+    backend='bokeh', **kwargs):
     """Plot formated albedo spectrum
 
     Parameters
     ----------
     xarray : float array, list of arrays
-        wavenumber or micron 
-    yarray : float array, list of arrays 
-        albedo or fluxes 
+        wavenumber or micron
+    yarray : float array, list of arrays
+        albedo or fluxes
     legend : list of str , optional
-        legends for plotting 
+        legends for plotting
     wno_to_micron : bool , optional
         Converts wavenumber to micron
     palette : list,optional
         List of colors for lines. Default only has 8 colors so if you input more lines, you must
-        give a different pallete 
-    muted_alpha : float 
-        number 0-1 to indicate how muted you want the click functionaity 
-    **kwargs : dict     
-        Any key word argument for bokeh.plotting.figure()
+        give a different pallete
+    muted_alpha : float
+        number 0-1 to indicate how muted you want the click functionaity (bokeh only)
+    backend : str, optional
+        Plotting library to use: 'bokeh' (default), 'matplotlib', or 'plotly'
+    **kwargs : dict
+        Any key word argument for bokeh.plotting.figure(). For matplotlib and plotly,
+        the common ones (height, width, title, x/y_axis_label, x/y_axis_type, x/y_range) are
+        translated, and the rest are ignored.
 
     Returns
     -------
-    bokeh plot
-    """ 
+    bokeh, matplotlib or plotly figure
+    """
+    _check_backend(backend)
     if len(yarray)==len(xarray):
         Y = [yarray]
     else:
         Y = yarray
 
-    if wno_to_micron : 
+    if wno_to_micron :
         x_axis_label = 'Wavelength [μm]'
         def conv(x):
             return 1e4/x
-    else: 
+    else:
         x_axis_label = 'Wavenumber [cm-1]'
         def conv(x):
             return x
     if isinstance(legend, str): legend=[legend]
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
-    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
+    kwargs = _bokeh_size(kwargs, 1000, 345)
     kwargs['y_axis_label'] = kwargs.get('y_axis_label','Spectrum')
     kwargs['x_axis_label'] = kwargs.get('x_axis_label',x_axis_label)
 
-    fig = figure(**kwargs)
+    if backend == 'bokeh':
+        fig = figure(**kwargs)
 
-    i = 0
-    legend_it=[] 
-    for yarray in Y:
-        if isinstance(xarray, list):
-            if isinstance(legend,type(None)): legend=[None]*len(xarray[0])
-            for w, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
-                if l == None: 
-                    fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
-                else:
-                    f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
-                    legend_it.append((l, [f]))
-        else: 
-            if isinstance(legend,type(None)):
-                fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
+        i = 0
+        legend_it=[]
+        for yarray in Y:
+            if isinstance(xarray, list):
+                if isinstance(legend,type(None)): legend=[None]*len(xarray[0])
+                for w, a,i,l in zip(xarray, yarray, range(len(xarray)), legend):
+                    if l == None:
+                        fig.line(conv(w),  a,  color=palette[np.mod(i, len(palette))], line_width=3)
+                    else:
+                        f = fig.line(conv(w), a, color=palette[np.mod(i, len(palette))], line_width=3,
+                                    muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
+                        legend_it.append((l, [f]))
             else:
-                f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
-                                muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
-                legend_it.append((legend[i], [f]))
-        i = i+1
+                if isinstance(legend,type(None)):
+                    fig.line(conv(xarray), yarray,  color=palette[i], line_width=3)
+                else:
+                    f = fig.line(conv(xarray), yarray, color=palette[i], line_width=3,
+                                    muted_color=palette[np.mod(i, len(palette))], muted_alpha=muted_alpha)
+                    legend_it.append((legend[i], [f]))
+            i = i+1
 
-    if not isinstance(legend,type(None)):
-        plt_legend = Legend(items=legend_it, location=(0, 0),
-                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
-        
-        plt_legend.click_policy="mute"
-        fig.add_layout(plt_legend, 'left')
+        if not isinstance(legend,type(None)):
+            plt_legend = Legend(items=legend_it, location=(0, 0),
+                            **_get_legend_cols(len(legend_it), kwargs.get('height')))
 
-    plot_format(fig)
-    return fig
+            plt_legend.click_policy="mute"
+            fig.add_layout(plt_legend, 'left')
+
+        plot_format(fig)
+        return fig
+
+    #matplotlib and plotly: collect (x, y, label, color) for each line first
+    lines = []
+    for i, yarray in enumerate(Y):
+        if isinstance(xarray, list):
+            labels = legend if legend is not None else [None]*len(xarray)
+            for j, (w, a, l) in enumerate(zip(xarray, yarray, labels)):
+                lines.append((conv(w), a, l, palette[np.mod(j, len(palette))]))
+        else:
+            l = legend[i] if legend is not None else None
+            lines.append((conv(xarray), yarray, l, palette[np.mod(i, len(palette))]))
+
+    if backend == 'matplotlib':
+        fig, ax = plt.subplots(figsize=(kwargs['width']/100, kwargs['height']/100))
+        for x, y, l, c in lines:
+            ax.plot(x, y, color=c, label=l, linewidth=3)
+        _mpl_format(ax, kwargs)
+        if legend is not None: ax.legend()
+        return fig
+
+    elif backend == 'plotly':
+        go, _ = _plotly()
+        fig = go.Figure()
+        for x, y, l, c in lines:
+            fig.add_trace(go.Scatter(x=x, y=y, name=l, mode='lines', showlegend=l is not None,
+                                     line=dict(color=c, width=3)))
+        _plotly_format(fig, kwargs)
+        return fig
 
 
-def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, **kwargs):
+def photon_attenuation(full_output, at_tau=0.5,return_output=False,igauss=0, backend='bokeh', **kwargs):
     """
-    Plot breakdown of gas opacity, cloud opacity, 
-    Rayleigh scattering opacity at a specified pressure level. 
-    
+    Plot breakdown of gas opacity, cloud opacity,
+    Rayleigh scattering opacity at a specified pressure level.
+
     Parameters
     ----------
-    full_output : class 
+    full_output : class
         picaso.atmsetup.ATMSETUP
-    at_tau : float 
-        Opacity at which to plot the cumulative opacity. 
-        Default = 0.5. 
-    return_output : bool 
-        Return photon attenuation plot values 
-    igauss : int 
+    at_tau : float
+        Opacity at which to plot the cumulative opacity.
+        Default = 0.5.
+    return_output : bool
+        Return photon attenuation plot values
+    igauss : int
         Gauss angle to plot if using correlated-k method. If not, should always be 0.
-    **kwargs : dict 
+    backend : str
+        Options are "bokeh" (default), "matplotlib" or "plotly"
+    **kwargs : dict
         Any key word argument for bokeh.plotting.figure()
 
     Returns
     -------
-    if return_output=False: bokeh plot
-    else: bokeh plot,wave,at_pressures_gas,at_pressures_cld,at_pressures_ray
+    if return_output=False: plot
+    else: plot,wave,at_pressures_gas,at_pressures_cld,at_pressures_ray
     """
-    wave = 1e4/full_output['wavenumber']
-
-    dtaugas = full_output['taugas'][:,:,igauss]
-    dtaucld = full_output['taucld'][:,:,igauss]*full_output['layer']['cloud']['w0']
-    dtauray = full_output['tauray'][:,:,igauss]
-    shape = dtauray.shape
-    taugas = np.zeros((shape[0]+1, shape[1]))
-    taucld = np.zeros((shape[0]+1, shape[1]))
-    tauray = np.zeros((shape[0]+1, shape[1]))
-
-    #comptue cumulative opacity
-    taugas[1:,:]=numba_cumsum(dtaugas)
-    taucld[1:,:]=numba_cumsum(dtaucld)
-    tauray[1:,:]=numba_cumsum(dtauray)
-
-
-    pressure = full_output['level']['pressure']
-
-    at_pressures = np.zeros(shape[1]) #pressure for each wave point
-
-    ind_gas = find_nearest_2d(taugas, at_tau)
-    ind_cld = find_nearest_2d(taucld, at_tau)
-    ind_ray = find_nearest_2d(tauray, at_tau)
-
-    at_pressures_gas = np.zeros(shape[1])
-    at_pressures_cld = np.zeros(shape[1])
-    at_pressures_ray = np.zeros(shape[1])
-
-    for i in range(shape[1]):
-        at_pressures_gas[i] = pressure[ind_gas[i]]
-        at_pressures_cld[i] = pressure[ind_cld[i]]
-        at_pressures_ray[i] = pressure[ind_ray[i]]
-
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
-    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
-    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-    kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),1e-2])
-
-    fig = figure(**kwargs)
-
-    legend_it = []
-
-    f = fig.line(wave,at_pressures_gas,line_width=3, color=Colorblind8[0]) 
-    legend_it.append(('Gas Opacity', [f]))
-    f = fig.line(wave,at_pressures_cld,line_width=3, color=Colorblind8[3]) 
-    legend_it.append(('Cloud Opacity', [f]))
-    f = fig.line(wave,at_pressures_ray,line_width=3,color=Colorblind8[6]) 
-    legend_it.append(('Rayleigh Opacity', [f]))
-
-    legend = Legend(items=legend_it, location=(0, -20),
-                        **_get_legend_cols(len(legend_it), kwargs.get('height')))
-    legend.click_policy="mute"
-    fig.add_layout(legend, 'right')   
-
-    #finally add color sections 
-    gas_dominate_ind = np.where((at_pressures_gas<at_pressures_cld) & (at_pressures_gas<at_pressures_ray))[0]
-    cld_dominate_ind = np.where((at_pressures_cld<at_pressures_gas) & (at_pressures_cld<at_pressures_ray))[0]
-    ray_dominate_ind = np.where((at_pressures_ray<at_pressures_cld) & (at_pressures_ray<at_pressures_gas))[0]
-
-    gas_dominate = np.zeros(shape[1]) + 1e-8
-    cld_dominate = np.zeros(shape[1]) + 1e-8
-    ray_dominate = np.zeros(shape[1])+ 1e-8
-
-    gas_dominate[gas_dominate_ind] = at_pressures_gas[gas_dominate_ind]
-    cld_dominate[cld_dominate_ind] = at_pressures_cld[cld_dominate_ind]
-    ray_dominate[ray_dominate_ind] = at_pressures_ray[ray_dominate_ind]
-
-    if len(gas_dominate) > 0  :
-        band_x = np.append(np.array(wave), np.array(wave[::-1]))
-        band_y = np.append(np.array(gas_dominate), np.array(gas_dominate)[::-1]*0+1e-8)
-        fig.patch(band_x,band_y, color=Colorblind8[0], alpha=0.3)
-    if len(cld_dominate) > 0  :
-        band_x = np.append(np.array(wave), np.array(wave[::-1]))
-        band_y = np.append(np.array(cld_dominate), np.array(cld_dominate)[::-1]*0+1e-8)
-        fig.patch(band_x,band_y, color=Colorblind8[3], alpha=0.3)
-    if len(ray_dominate) > 0  :
-        band_x = np.append(np.array(wave), np.array(wave[::-1]))
-        band_y = np.append(np.array(ray_dominate), np.array(ray_dominate)[::-1]*0+1e-8)
-        fig.patch(band_x,band_y, color=Colorblind8[6], alpha=0.3)
-
-    plot_format(fig)
-    if return_output: return fig ,wave,at_pressures_gas,at_pressures_cld,at_pressures_ray
-    else: return fig
+    return Analyzer(full_output, backend=backend).photon_attenuation(at_tau=at_tau,
+                    return_output=return_output, igauss=igauss, **kwargs)
 
 def plot_format(df):
     """Function to reformat plots"""
@@ -645,7 +618,7 @@ def plot_cld_input(nwno, nlayer, filename=None,df=None,pressure=None, wavelength
     return fig
 
 
-def cloud(full_output):
+def cloud(full_output, backend='matplotlib'):
     """
     Plotting the cloud input from ``picaso``.
 
@@ -656,43 +629,14 @@ def cloud(full_output):
     Parameters
     ----------
     full_output
+    backend : str
+        Options are "matplotlib" (default), "bokeh" or "plotly"
 
     Returns
     -------
-    A matplotlib figure with three subplots showing heatmaps of single scattering, optical depth, and asymmetry.
+    A figure with three subplots showing heatmaps of single scattering, optical depth, and asymmetry.
     """
-    dat01 = full_output['layer']['cloud']
-    pressure = full_output['layer']['pressure']
-    wave = 1e4 / full_output['wavenumber']
-    
-    w0 = dat01['w0'] 
-    opd = dat01['opd'] + 1e-60
-    g0 = dat01['g0'] 
-
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
-    
-    # Plot W0
-    im1 = ax1.pcolormesh(wave, pressure, w0,  cmap='magma', vmin=0, vmax=1)
-    ax1.set_title("Single Scattering Albedo")
-    fig.colorbar(im1, ax=ax1)
-
-    # Plot OPD
-    im2 = ax2.pcolormesh(wave, pressure, opd,  cmap='viridis_r', norm=colors.LogNorm(vmin=1e-3, vmax=10))
-    ax2.set_title("Cloud Optical Depth Per Layer")
-    fig.colorbar(im2, ax=ax2)
-
-    # Plot G0
-    im3 = ax3.pcolormesh(wave, pressure, g0,  cmap='gray_r', vmin=0, vmax=1)
-    ax3.set_title("Asymmetry Parameter")
-    fig.colorbar(im3, ax=ax3)
-
-    for ax in [ax1, ax2, ax3]:
-        ax.set_xlabel('Wavelength (micron)')
-        ax.set_ylabel('Pressure (bar)')
-        ax.set_yscale('log')
-        ax.invert_yaxis()
-
-    return fig
+    return Analyzer(full_output, backend=backend).cloud()
 
 def lon_lat_to_cartesian(lon_r, lat_r, R = 1):
     """
@@ -704,156 +648,63 @@ def lon_lat_to_cartesian(lon_r, lat_r, R = 1):
     z = R * np.sin(lat_r)
     return x,y,z
 
-def disco(full_output,wavelength,calculation='reflected'):
+def disco(full_output,wavelength,calculation='reflected', backend='matplotlib'):
     """
-    Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib
+    Plot disco ball with facets.
 
     Parameters
     ----------
-    full_output : class 
+    full_output : class
         Full output from picaso
 
-    wavelength : list 
-        Where to plot 3d facets. Can input as many wavelengths as wanted. 
-        Must be a list, must be in microns. 
-    calculation : str, optional 
+    wavelength : list
+        Where to plot 3d facets. Can input as many wavelengths as wanted.
+        Must be a list, must be in microns.
+    calculation : str, optional
         Default is to plot 'reflected' light but can also switch to 'thermal' if it has been computed
-
+    backend : str
+        Options are "matplotlib" (default, shows the plot and returns None),
+        "plotly" (3D, returns figure) or "bokeh" (2D latitude-longitude maps, returns figure)
     """
-    if calculation=='reflected':to_plot='albedo_3d'
-    elif calculation=='thermal':to_plot='thermal_3d'
+    fig = Analyzer(full_output, backend=backend).disco(wavelength, calculation=calculation)
+    if backend == 'matplotlib':
+        plt.show()
+        return
+    return fig
 
-    if isinstance(wavelength,(float,int)): wavelength = [wavelength]
-
-    nrow = int(np.ceil(len(wavelength)/3))
-    ncol = int(np.min([3,len(wavelength)])) #at most 3 columns
-    fig = plt.figure(figsize=(6*ncol,4*nrow))
-    for i,w in zip(range(len(wavelength)),wavelength):
-        ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
-        #else:ax = fig.gca(projection='3d')
-        wave = 1e4/full_output['wavenumber']
-        indw = find_nearest_1d(wave,w)
-        #[umg, numt, nwno] this is xint_at_top
-
-        xint_at_top = full_output[to_plot][:,:,indw]
-
-        latitude = full_output['latitude']  #tangle
-        longitude = full_output['longitude'] #gangle
-
-        cm = plt.cm.get_cmap('plasma')
-        u, v = np.meshgrid(longitude, latitude)
-        
-        x,y,z = lon_lat_to_cartesian(u, v)
-
-        ax.plot_wireframe(x, y, z, color="gray")
-
-        sc = ax.scatter(x,y,z, c = xint_at_top.T.ravel(),cmap=cm,s=150)
-
-        fig.colorbar(sc)
-        ax.set_zlim3d(-1, 1)                    # viewrange for z-axis should be [-4,4]
-        ax.set_ylim3d(-1, 1)                    # viewrange for y-axis should be [-2,2]
-        ax.set_xlim3d(-1, 1)
-        ax.view_init(0, 0)
-        ax.set_title(str(wave[indw])+' Microns')
-        # Hide grid lines
-        ax.grid(False)
-
-        # Hide axes ticks
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_zticks([])
-        plt.axis('off')
-
-    plt.subplots_adjust(wspace=0.3, hspace=0.3)
-    plt.show()
-
-def map(full_output,pressure=[0.1], plot='temperature', wavelength = None,igauss=0):
+def map(full_output,pressure=[0.1], plot='temperature', wavelength = None,igauss=0, backend='matplotlib'):
     """
-    Plot disco ball with facets. Bokeh is not good with 3D things. So this is in matplotlib
+    Plot disco ball with facets.
 
     Parameters
     ----------
-    full_output : class 
+    full_output : class
         Full output from picaso
-    pressure : list 
-        What pressure (in bars) to make the map on. Note: this assumes that the 
-        pressure grid is the same for each ng,nt point accross the grid. 
-    plot : str, optional 
-        Default is to plot 'temperature' map but can also switch to any 
+    pressure : list
+        What pressure (in bars) to make the map on. Note: this assumes that the
+        pressure grid is the same for each ng,nt point accross the grid.
+    plot : str, optional
+        Default is to plot 'temperature' map but can also switch to any
         3d [nlayer, nlong, nlat] or 4d [nlayer, nwave, nlong, nlat] output in full_output. You can check what is available to plot by printing:
-        `print(full_output['layer'].keys()`. 
-        If you are plotting something that is ALSO wavelength dependent you have to 
-        also supply a single wavelength. 
+        `print(full_output['layer'].keys()`.
+        If you are plotting something that is ALSO wavelength dependent you have to
+        also supply a single wavelength.
     wavelength, float, optional
-        This allows users to plot maps of things that are wavelength dependent, like 
-        `taugas` and `taucld`. 
-    igauss : int 
-        Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise, 
-        This must be zero for monochromatic opacities.  
+        This allows users to plot maps of things that are wavelength dependent, like
+        `taugas` and `taucld`.
+    igauss : int
+        Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise,
+        This must be zero for monochromatic opacities.
+    backend : str
+        Options are "matplotlib" (default, shows the plot and returns None),
+        "plotly" (3D, returns figure) or "bokeh" (2D latitude-longitude maps, returns figure)
     """
-    
-    to_plot = explore(full_output, plot)
-
-    if isinstance(to_plot,np.ndarray):
-        if len(to_plot.shape) < 3: 
-            raise Exception("The key you are search for is not a 3D matrix. This function \
-                is used to plot out a map of a matrix that is [nlayer, nlong, nlat] or \
-                [nlayer, nwave, nlong, nlat, ].")
-        #here the four dimentions are nlayer, nwave, nlong, nlat
-        elif len(to_plot.shape) == 4: 
-            wave = 1e4/full_output['wavenumber']
-            indw = find_nearest_1d(wave,wavelength)
-            to_plot= to_plot[:,indw,:,:]
-        #here the five dimentions are nlayer, nwave, nlong, nlat, gauss
-        elif len(to_plot.shape) == 5: 
-            wave = 1e4/full_output['wavenumber']
-            indw = find_nearest_1d(wave,wavelength)
-            to_plot= to_plot[:,indw,:,:,igauss]
-    else:
-        raise Exception ("The key you are search for is not an np.ndarray. This function \
-                is used to plot out a map of an numpy.ndarray matrix that is [nlayer, nlong, nlat] or \
-                [nlayer, nwave, nlong, nlat, ]")
-
-    nrow = int(np.ceil(len(pressure)/3))
-    ncol = int(np.min([3,len(pressure)])) #at most 3 columns
-    fig = plt.figure(figsize=(6*ncol,4*nrow))
-    for i,p in zip(range(len(pressure)),pressure):
-        ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
-        #else:ax = fig.gca(projection='3d')
-        pressure = full_output['layer']['pressure'][:,0,0]
-        indp = find_nearest_1d(np.log10(pressure),np.log10(p))
-        
-        to_map = to_plot[indp, :,:]
-
-        latitude = full_output['latitude']  #tangle
-        longitude = full_output['longitude'] #gangle
-
-        cm = plt.cm.get_cmap('plasma')
-        u, v = np.meshgrid(longitude, latitude)
-        
-        x,y,z = lon_lat_to_cartesian(u, v)
-
-        ax.plot_wireframe(x, y, z, color="gray")
-
-        sc = ax.scatter(x,y,z, c = to_map.T.ravel(),cmap=cm,s=150)
-
-        fig.colorbar(sc)
-        ax.set_zlim3d(-1, 1)                    # viewrange for z-axis should be [-4,4]
-        ax.set_ylim3d(-1, 1)                    # viewrange for y-axis should be [-2,2]
-        ax.set_xlim3d(-1, 1)
-        ax.view_init(0, 0)
-        ax.set_title(str(p)+' bars')
-        # Hide grid lines
-        ax.grid(False)
-
-        # Hide axes ticks
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_zticks([])
-        plt.axis('off')
-
-    plt.subplots_adjust(wspace=0.3, hspace=0.3)
-    plt.show()
+    fig = Analyzer(full_output, backend=backend).map(pressure=pressure, plot=plot,
+                                                    wavelength=wavelength, igauss=igauss)
+    if backend == 'matplotlib':
+        plt.show()
+        return
+    return fig
 
 def find_nearest_old(array,value):
     #small program to find the nearest neighbor in a matrix
@@ -929,70 +780,35 @@ def spectrum_hires_deprecate(wno, alb,legend=None, **kwargs):
 
     return points_og
 
-def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3],ng=None, nt=None, **kwargs):
+def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3],ng=None, nt=None,
+    backend='bokeh', **kwargs):
     """
-    Routine to plot the OLR with overlaying black bodies. 
+    Routine to plot the OLR with overlaying black bodies.
 
-    Flux units are CGS = erg/s/cm^3 
-    
+    Flux units are CGS = erg/s/cm^3
+
     Parameters
     ----------
 
-    full_output : dict 
+    full_output : dict
         full dictionary output with {'wavenumber','thermal','full_output'}
-    plot_bb : bool , optional 
+    plot_bb : bool , optional
         Default is to plot black bodies for three pressures specified by `pressures`
-    R : float 
-        New constant R to bin to 
-    pressures : list, optional 
+    R : float
+        New constant R to bin to
+    pressures : list, optional
         Default is a list of three pressures (in bars) =  [1e-1,1e-2,1e-3]
-    ng : int    
+    ng : int
         Used for 3D calculations to select point on the sphere (equivalent to longitude point)
-    nt : int    
+    nt : int
         Used for 3D calculations to select point on the sphere (equivalent to latitude point)
-    **kwargs : dict 
-        Any key word argument for bokeh.figure() 
+    backend : str
+        Options are "bokeh" (default), "matplotlib" or "plotly"
+    **kwargs : dict
+        Any key word argument for bokeh.figure()
     """
-    if ((ng==None) & (nt ==None)):
-        pressure_all = full_output['full_output']['layer']['pressure']
-        temperature_all = full_output['full_output']['layer']['temperature']
-    else: 
-        pressure_all = full_output['full_output']['layer']['pressure'][:,ng,nt]
-        temperature_all = full_output['full_output']['layer']['temperature'][:,ng,nt]
-
-    if not isinstance(pressures, (np.ndarray, list)): 
-        raise Exception('check pressure input. It must be list or array. You can still input a single value as `pressures = [1e-3]`')
-
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',400))
-    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['title'] = kwargs.get('title','Outgoing Thermal Radiation')
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Flux (erg/s/cm^3)')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
-    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-    kwargs['x_axis_type'] = kwargs.get('x_axis_type','log') 
-
-    fig = figure(**kwargs)
-    if len(pressures) < 3: ncol = 5
-    else: ncol = len(pressures)
-    cols = pals.magma(ncol)
-
-    wno = full_output['wavenumber']
-    if isinstance(R,(int, float)): 
-        wno, thermal = mean_regrid(wno, full_output['thermal'], R=R)
-    else: 
-        thermal =  full_output['thermal']
-    fig.line(1e4/wno, thermal, color='black', line_width=4)
-
-    for p,c in zip(pressures,cols): 
-        ip = find_nearest_1d(pressure_all, p)
-        t = temperature_all[ip]
-        intensity = blackbody(t, 1/wno)[0] 
-        flux = np.pi * intensity
-        fig.line(1e4/wno, flux, color=c, alpha=0.5, legend_label=str(int(t))+' K at '+str(p)+' bars' , line_width=4)
-
-    return fig
+    return Analyzer(full_output, backend=backend).flux_at_top(plot_bb=plot_bb, R=R,
+                    pressures=pressures, ng=ng, nt=nt, **kwargs)
 
 def explore(df, key):
     """Function to explore a dictionary that is THREE levels deep and return the data sitting at 
@@ -1031,119 +847,30 @@ def explore(df, key):
     if True not in check: 
             raise Exception ('The key that was entered cloud not be found within three layers of the specified dictionary')
 
-def taumap(full_output, at_tau=1, wavelength=1,igauss=0):
+def taumap(full_output, at_tau=1, wavelength=1,igauss=0, backend='matplotlib'):
     """
-    Plot breakdown of gas opacity, cloud opacity, 
-    Rayleigh scattering opacity at a specified pressure level. 
-    
+    Plot breakdown of gas opacity, cloud opacity,
+    Rayleigh scattering opacity at a specified pressure level.
+
     Parameters
     ----------
-    full_output : class 
+    full_output : class
         full_output from dictionary picaso output
-    at_tau : float 
-        Opacity at which to plot the cumulative opacity. 
-        Default = 0.5. 
-    igauss : int 
-        Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise, 
-        This must be zero for monochromatic opacities. 
-    **kwargs : dict 
-        Any key word argument for bokeh.plotting.figure()
-
-    Returns
-    -------
-    bokeh plot
-    """ 
-    all_dtau_gas = full_output['taugas'][:,:,:,:,igauss]
-    all_dtau_cld = full_output['taucld'][:,:,:,:,igauss]*full_output['layer']['cloud']['w0'][:,:,:,:]
-    all_dtau_ray = full_output['tauray'][:,:,:,:,igauss]
-
-    ng = all_dtau_gas.shape[2]
-    nt = all_dtau_gas.shape[3]
-
-    map_gas = np.zeros((ng, nt))
-    map_cld = np.zeros((ng, nt))
-    map_ray = np.zeros((ng, nt))
-
-    wave = 1e4/full_output['wavenumber']
-
-    iw = find_nearest_1d(wave, wavelength)
-
-    #build tau 1 map 
-    for ig in range(ng):
-        for it in range(nt):
-
-            dtaugas = all_dtau_gas[:,iw, ig, it]
-            dtaucld = all_dtau_cld[:,iw, ig, it]
-            dtauray = all_dtau_ray[:,iw, ig, it]
-            
-            shape = len(dtaugas)
-
-            taugas = np.zeros(shape+1)
-            taucld = np.zeros(shape+1)
-            tauray = np.zeros(shape+1)
-
-            #comptue cumulative opacity
-            taugas[1:]=np.cumsum(dtaugas)
-            taucld[1:]=np.cumsum(dtaucld)
-            tauray[1:]=np.cumsum(dtauray)
-
-
-            pressure = full_output['level']['pressure'][:,ig,it]
-
-            ind_gas = find_nearest_1d(taugas, at_tau)
-            ind_cld = find_nearest_1d(taucld, at_tau)
-            ind_ray = find_nearest_1d(tauray, at_tau)
-
-            if (len(taucld[taucld == 0]) == len(taucld.shape)) : 
-                ind_cld = ind_cld*0 + shape
-
-            map_gas[ig, it] = pressure[ind_gas]
-            map_cld[ig, it] = pressure[ind_cld]
-            map_ray[ig, it] = pressure[ind_ray]
-
-    #now build three panel plot 
-    all_maps = [map_gas, map_cld, map_ray]
-    labels = ['Molecular Opacity','Cloud Opacity','Rayleigh Opacity']
-
-    nrow = 1
-    ncol = 3 #at most 3 columns
-    fig = plt.figure(figsize=(6*ncol,4*nrow))
-    for i,w,l in zip(range(len(all_maps)),all_maps,labels):
-        ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
-
-
-        #[umg, numt, nwno] this is xint_at_top
-        xint_at_top = w
-
-        latitude = full_output['latitude']  #tangle
-        longitude = full_output['longitude'] #gangle
-
-        cm = plt.cm.get_cmap('plasma')
-        u, v = np.meshgrid(longitude, latitude)
-        
-        x,y,z = lon_lat_to_cartesian(u, v)
-
-        ax.plot_wireframe(x, y, z, color="gray")
-
-        sc = ax.scatter(x,y,z, c = xint_at_top.T.ravel(),cmap=cm,s=150)
-
-        fig.colorbar(sc)
-        ax.set_zlim3d(-1, 1)                    # viewrange for z-axis should be [-4,4]
-        ax.set_ylim3d(-1, 1)                    # viewrange for y-axis should be [-2,2]
-        ax.set_xlim3d(-1, 1)
-        ax.view_init(0, 0)
-        ax.set_title(l)
-        # Hide grid lines
-        ax.grid(False)
-
-        # Hide axes ticks
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_zticks([])
-        plt.axis('off')
-
-    plt.subplots_adjust(wspace=0.3, hspace=0.3)
-    plt.show()  
+    at_tau : float
+        Opacity at which to plot the cumulative opacity.
+        Default = 0.5.
+    igauss : int
+        Gauss point to plot if using ktables this can be greater than 0 up to ngauss-1. Otherwise,
+        This must be zero for monochromatic opacities.
+    backend : str
+        Options are "matplotlib" (default, shows the plot and returns None),
+        "plotly" (3D, returns figure) or "bokeh" (2D latitude-longitude maps, returns figure)
+    """
+    fig = Analyzer(full_output, backend=backend).taumap(at_tau=at_tau, wavelength=wavelength, igauss=igauss)
+    if backend == 'matplotlib':
+        plt.show()
+        return
+    return fig
 
 def plot_evolution(evo, y = "Teff",**kwargs):
     """
@@ -1211,90 +938,33 @@ def plot_evolution(evo, y = "Teff",**kwargs):
 
 def all_optics_1d(full_output, wave_range, return_output = False,legend=None,
     ng=None, nt=None,
-    colors = Colorblind8, **kwargs):
+    colors = Colorblind8, backend='bokeh', **kwargs):
     """
-    Plots 1d profiles of optical depth per layer, single scattering, and 
-    asymmetry averaged over the user input wave_range. 
-    
+    Plots 1d profiles of optical depth per layer, single scattering, and
+    asymmetry averaged over the user input wave_range.
+
     Parameters
     ----------
-    full_output : list,dict 
+    full_output : list,dict
         Dictonary of outputs or list of dicts
-    wave_range : list 
-        min and max wavelength in microns 
-    return_output : bool 
-        Default is just to return a figure but you can also 
-        return all the 1d profiles 
-    legend : bool 
-        Default is none. Legend for each component of out 
-    ng : int 
-        gauss index 
-    nt : int    
+    wave_range : list
+        min and max wavelength in microns
+    return_output : bool
+        Default is just to return a figure but you can also
+        return all the 1d profiles
+    legend : bool
+        Default is none. Legend for each component of out
+    ng : int
+        gauss index
+    nt : int
         chebychev intex
+    backend : str
+        Options are "bokeh" (default), "matplotlib" or "plotly"
     **kwargs : keyword arguments
         Key word arguments will be supplied to each bokeh figure function
     """
-
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',300))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',300))
-    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-
-    if not isinstance(full_output, list):
-        full_output = [full_output]
-
-    if ((ng==None) & (nt==None)):
-        pressure = full_output[0]['layer']['pressure']
-    else: 
-        pressure = full_output[0]['layer']['pressure'][:,ng,nt]
-
-    kwargs['y_range'] = kwargs.get('y_range',[max(pressure),min(pressure)])     
-
-    fssa = figure(x_axis_label='Single Scattering Albedo',**kwargs)
-
-    fg0 = figure(x_axis_label='Asymmetry',**kwargs)
-
-    fopd = figure(x_axis_label='Optical Depth',y_axis_label='Pressure (bars)',
-        x_axis_type='log',**kwargs)
-
-    
-    for i,results in enumerate(full_output): 
-        if ((ng==None) & (nt==None)):
-            pressure = results['layer']['pressure']
-            ssa = results['layer']['cloud']['w0']
-            g0 = results['layer']['cloud']['g0']
-            opd = results['layer']['cloud']['opd']
-        else: 
-            pressure = results['layer']['pressure'][:,ng,nt]
-            ssa = results['layer']['cloud']['w0'][:,:,ng,nt]
-            g0 = results['layer']['cloud']['g0'][:,:,ng,nt]
-            opd = results['layer']['cloud']['opd'][:,:,ng,nt]
-
-        wno = results['wavenumber']
-
-        inds = np.where((1e4/wno>wave_range[0]) & 
-            (1e4/wno<wave_range[1]))
-
-        fopd.line(np.mean(opd[:,inds],axis=2)[:,0], 
-                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
-        
-        fg0.line(np.mean(g0[:,inds],axis=2)[:,0], 
-                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
-        
-        if isinstance(legend, type(None)):
-            fssa.line(np.mean(ssa[:,inds],axis=2)[:,0], 
-                 pressure, color=colors[np.mod(i, len(colors))],line_width=3)
-        else:
-            fssa.line(np.mean(ssa[:,inds],axis=2)[:,0], 
-                 pressure, color=colors[np.mod(i, len(colors))],line_width=3,
-                 legend_label=legend[i])
-            fssa.legend.location='top_left'
-
-    if return_output:   
-        return gridplot([[fopd,fssa,fg0]]), [opd,ssa,g0]
-    else:   
-        return gridplot([[fopd,fssa,fg0]])
+    return Analyzer(full_output, backend=backend).all_optics_1d(wave_range, return_output=return_output,
+                    legend=legend, ng=ng, nt=nt, colors=colors, **kwargs)
       
 def heatmap_taus(out, R=0):
     """
@@ -1586,7 +1256,7 @@ def phase_curve(allout, to_plot, collapse=None, R=100,
         legend2 = Legend(items=legend_it, location=(0, -20),
                         **_get_legend_cols(len(legend_it), kwargs.get('height')))
         legend2.click_policy="mute"
-        fig2.add_layout(legend, 'left')
+        fig2.add_layout(legend2, 'left')
 
         fig2.xgrid.grid_line_alpha=0
         fig2.ygrid.grid_line_alpha=0
@@ -1598,7 +1268,7 @@ def phase_curve(allout, to_plot, collapse=None, R=100,
     
     return phases, all_curves, all_ws, fig
 
-def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
+def thermal_contribution(full_output, tau_max=1.0,R=100, backend='matplotlib', **kwargs):
     """
     Computer the contribution function from https://doi.org/10.3847/1538-4357/aadd9e equation 4
     Note the equation in the paper is missing the - sign in the exponent
@@ -1608,56 +1278,17 @@ def thermal_contribution(full_output, tau_max=1.0,R=100,  **kwargs):
         full dictionary output with {'wavenumber','thermal','full_output'}
     tau_max : float, optional
         Maximum tau to consider as opaque, largely here to help prevent NaNs and the colorbar from being weird.
+    backend : str
+        Options are "matplotlib" (default), "bokeh" or "plotly"
     **kwargs : dict
-        Any key word argument for pcolormesh
+        Any key word argument for pcolormesh (matplotlib only)
+
+    Returns
+    -------
+    fig, ax, CF_bin
+        ax is None for bokeh and plotly
     """
-
-    kwargs['norm'] = kwargs.get('norm',colors.LogNorm())
-    kwargs['shading'] = kwargs.get('shading','auto')
-
-    all_taus = np.squeeze(full_output['taugas']+full_output['taucld']+full_output['tauray'])
-    all_taus[all_taus > tau_max] = tau_max
-    sum_taus = np.cumsum(all_taus, axis=0)
-
-    press2D = np.transpose(np.repeat(full_output['layer']['pressure'][np.newaxis], np.shape(sum_taus)[1], axis=0))
-
-    bb = np.ones(np.shape(press2D))
-    for i, temp in enumerate(full_output['layer']['temperature']):
-        for j, wave in enumerate(1/full_output['wavenumber']):
-            bb[i, j] = blackbody(temp, wave)[0][0]
-    CF = bb[0:-1, :] * np.exp(-sum_taus[0:-1, :]) * all_taus[0:-1, :] / np.diff(np.log(press2D), axis=0)
-
-    fig, ax = plt.subplots(figsize=(15,10))
-    #if not isinstance( clim , type(None)):
-    #    CF_clipped = np.clip(CF, clim[0],clim[1])
-    #else: 
-    #    CF_clipped = CF+0
-    
-    if not isinstance(R,type(None)):
-        wno,_ = mean_regrid(full_output['wavenumber'],full_output['wavenumber'],R=R)
-        CF_bin = np.zeros((len(full_output['layer']['pressure'])-1,
-                             len(wno)))
-        for i in range(len(full_output['layer']['pressure'])-1):
-            _,CF_bin[i,:] = mean_regrid(full_output['wavenumber'],
-                                            CF[i,:],newx=wno)
-    else: 
-        CF_bin = CF
-        wno=full_output['wavenumber']
-        
-    smap = ax.pcolormesh(1e4/wno, full_output['layer']['pressure'][0:-1], CF_bin, **kwargs)
-    ax.set_ylim(np.max(full_output['layer']['pressure']), np.min(full_output['layer']['pressure']))
-    ax.set_yscale('log')
-    ax.set_ylabel('Pressure (bar)', fontsize=20)
-    ax.set_xlabel(r'Wavelength ($\mu$m)', fontdict={'fontsize':20})
-    cm = plt.colorbar(smap)
-    cm.ax.set_ylabel('Emission Contribution Function', fontdict={'fontsize':18} )
-    for l in cm.ax.yaxis.get_ticklabels():
-        l.set_fontsize(16)
-    
-    ax.set_yticks(np.logspace(-5,1,7), minor=False)
-    ax.set_yticklabels(np.logspace(-5,1,7), fontdict={'fontsize':18})
-    
-    return fig, ax, CF_bin
+    return Analyzer(full_output, backend=backend).thermal_contribution(tau_max=tau_max, R=R, **kwargs)
  
 
 def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwargs):
@@ -1711,89 +1342,37 @@ def molecule_contribution(contribution_out, opa, min_pressure=4.5, R=100, **kwar
     fig = spectrum(wno,spec, legend=labels, **kwargs)
     return fig
 
-def transmission_contribution(full_output ,R=None,  **kwargs):
+def transmission_contribution(full_output ,R=None, backend='matplotlib', **kwargs):
     """
-    Compute the transmission contribution function from 
-    
+    Compute the transmission contribution function from
+
     https://petitradtrans.readthedocs.io/en/latest/content/notebooks/analysis.html#Transmission-contribution-functions
-    
-    
-    
+
+
+
     Parameters
     ----------
     full_output : dict
         full dictionary output with {'wavenumber','thermal','full_output'}
     R : float, optional
-        Resolution for rebinning 
+        Resolution for rebinning
+    backend : str
+        Options are "matplotlib" (default), "bokeh" or "plotly"
     **kwargs : dict
-        Any key word argument for pcolormesh
+        Any key word argument for pcolormesh (matplotlib only)
 
-    Returns 
+    Returns
     -------
     fig
-        matplotlib figure 
+        figure
     ax
-        matplotlib ax 
-    um 
+        matplotlib ax (None for bokeh and plotly)
+    um
         micron array
     CF_bin
         contribution function
     """
-    DTAU = (full_output['taugas'][:,:,0] + 
-            full_output['taucld'][:,:,0] +  
-            full_output['tauray'][:,:,0])
-    z = full_output['level']['z']
-    dz= full_output['level']['dz']
-    nlevel = len(dz)
-    nwno = DTAU.shape[1]
-    rstar=1
-    k_b=1
-    amu=1
-    player = full_output['layer']['pressure']
-    tlayer = full_output['layer']['temperature']
-    colden = full_output['layer']['column_density']
-    mmw = full_output['layer']['mmw']
-
-    zs = []
-    for i in range(DTAU.shape[0]):
-        dtau_copy = copy.deepcopy(DTAU)
-        dtau_copy[i,:] = 0 
-        if i == 0 : 
-            norm = get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
-                            player, tlayer, colden, DTAU)
-        zs+=[get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
-                            player, tlayer, colden, dtau_copy)]
-    
-    CF=(norm-np.array(zs))/np.sum(norm-np.array(zs),axis=0)
-    
-    if not isinstance(R,type(None)):
-        wno,_ = mean_regrid(full_output['wavenumber'],full_output['wavenumber'],R=R)
-        CF_bin = np.zeros((len(full_output['layer']['pressure']),
-                             len(wno)))
-        for i in range(len(full_output['layer']['pressure'])):
-            _,CF_bin[i,:] = mean_regrid(full_output['wavenumber'],
-                                            CF[i,:],newx=wno)
-    else: 
-        CF_bin = CF
-        wno=full_output['wavenumber']
-            
-    kwargs['norm'] = kwargs.get('norm',colors.LogNorm())
-    kwargs['shading'] = kwargs.get('shading','auto')
-
-    press2D = np.transpose(np.repeat(full_output['layer']['pressure'][np.newaxis],
-                                     np.shape(CF_bin)[1], axis=0))
-
-    fig, ax = plt.subplots()
-
-    smap = ax.pcolormesh(1e4/wno, full_output['layer']['pressure'], CF_bin, **kwargs)
-    ax.set_ylim(np.max(full_output['layer']['pressure']),
-                np.min(full_output['layer']['pressure']))
-    ax.set_yscale('log')
-    ax.set_ylabel('Pressure (bar)')
-    ax.set_xlabel(r'Wavelength ($\mu$m)')
-    plt.colorbar(smap, label='Transmission CF')
-    
-    return fig, ax, 1e4/wno, CF_bin
+    return Analyzer(full_output, backend=backend).transmission_contribution(R=R, **kwargs)
 
 def brightness_temperature(out_dict,plot=True, R = None, with_guide=True): 
     r"""
@@ -2207,3 +1786,803 @@ def pt_adiabat(clima_out, input_class, opacityclass, plot=True):
         plt.xlabel('dT/dP vs adiabat')
         plt.ylabel('Pressure(bars)')
     return cp, grad, clima_out['dtdp'], layer_p
+
+class Analyzer:
+    """
+    Diagnostic plots of a ``picaso`` run with a choice of plotting library.
+
+    Each method returns a figure from the chosen backend: a bokeh figure/layout
+    (display with ``show``), a matplotlib figure, or a plotly figure (display
+    by returning it from a cell or with ``fig.show()``).
+
+    Parameters
+    ----------
+    output : dict
+        Either the full dictionary returned by ``spectrum(opa, full_output=True)``
+        (which has the keys 'wavenumber', 'full_output', ...), or ``output['full_output']``.
+        Only ``flux_at_top`` requires the full dictionary.
+    backend : str
+        Default plotting library for every method: 'bokeh' (default), 'matplotlib', or
+        'plotly' (requires ``pip install plotly``). Every method also takes ``backend``
+        to override this for a single plot.
+
+    Examples
+    --------
+    >>> df = case.spectrum(opa, full_output=True)
+    >>> analyze = jpi.Analyzer(df, backend='matplotlib')
+    >>> analyze.pt()
+    >>> analyze.mixing_ratio(backend='plotly')
+    """
+    def __init__(self, output, backend='bokeh'):
+        self.backend = _check_backend(backend)
+        if isinstance(output, dict) and 'full_output' in output:
+            self.output = output
+            self.full_output = output['full_output']
+        else:
+            self.output = None
+            self.full_output = output
+
+    def _backend(self, backend):
+        return _check_backend(self.backend if backend is None else backend)
+
+    def mixing_ratio(self, limit=50, ng=None, nt=None, molecules=None, backend=None, **kwargs):
+        """Returns plot of mixing ratios. See ``justplotit.mixing_ratio``"""
+        backend = self._backend(backend)
+        full_output = self.full_output
+        if ((ng==None) & (nt==None)):
+            pressure = full_output['layer']['pressure']
+            mixingratios = full_output['layer']['mixingratios']
+        else:
+            pressure = full_output['layer']['pressure'][:,ng,nt]
+            mixingratios = pd.DataFrame(full_output['layer']['mixingratios'][:,:,ng,nt],columns=molecules)
+
+        if isinstance(molecules, type(None)):
+            # remove 'pressure' and 'temperature'
+            to_plot = [mol for mol in mixingratios.keys() if mol not in ['pressure', 'temperature', 'kz']][:limit]
+        elif isinstance(molecules , str):
+            to_plot = [molecules]
+        elif isinstance((molecules) , list):
+            to_plot = molecules
+
+        if len(to_plot) < 3: ncol = 5
+        else: ncol = len(to_plot)
+        if limit<3:
+            cols = pals.magma(5) #magma needs at least 5 colors
+        else:
+            cols = pals.magma(min([ncol,limit]))
+
+        if backend=='matplotlib':
+            #matplotlib sizes are in inches
+            kwargs.setdefault('height', kwargs.get('plot_height', kwargs.get('height', 5)))
+            kwargs.setdefault('width', kwargs.get('plot_width', kwargs.get('width', 7)))
+            kwargs.pop('plot_width', None)
+            kwargs.pop('plot_height', None)
+            kwargs.setdefault('x_range', [1e-25, 5])
+        else:
+            kwargs = _bokeh_size(kwargs, 400, 300)
+            kwargs['x_range'] = kwargs.get('x_range',[1e-20, 5])
+        kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
+        kwargs['x_axis_label'] = kwargs.get('x_axis_label','Mixing Ratio(v/v)')
+        kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+        kwargs['x_axis_type'] = kwargs.get('x_axis_type','log')
+        kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
+
+        if backend=='bokeh':
+            fig = figure(**kwargs)
+            legend_it=[]
+            for mol , c in zip(to_plot,cols):
+                f = fig.line(mixingratios[mol],pressure, color=c, line_width=3,
+                            muted_color=c, muted_alpha=0.2)
+                legend_it.append((mol, [f]))
+
+            legend = Legend(items=legend_it, location=(0, -20),
+                            **_get_legend_cols(len(legend_it), kwargs.get('height')))
+
+            legend.click_policy="mute"
+            fig.add_layout(legend, 'left')
+
+        elif backend=='matplotlib':
+            fig, ax = plt.subplots(figsize=(kwargs['width'], kwargs['height']))
+            for mol, c in zip(to_plot, cols):
+                ax.plot(mixingratios[mol], pressure, color=c, label=mol)
+            _mpl_format(ax, kwargs)
+            ax.legend()
+
+        elif backend=='plotly':
+            go, _ = _plotly()
+            fig = go.Figure()
+            for mol, c in zip(to_plot, cols):
+                fig.add_trace(go.Scatter(x=mixingratios[mol], y=pressure, mode='lines', name=mol,
+                                         line=dict(color=c, width=3)))
+            _plotly_format(fig, kwargs)
+
+        return fig
+
+    def pt(self, ng=None, nt=None, backend=None, **kwargs):
+        """Returns plot of pressure temperature profile. See ``justplotit.pt``"""
+        backend = self._backend(backend)
+        if ((ng==None) & (nt==None)):
+            pressure = self.full_output['layer']['pressure']
+            temperature = self.full_output['layer']['temperature']
+        else:
+            pressure = self.full_output['layer']['pressure'][:,ng,nt]
+            temperature = self.full_output['layer']['temperature'][:,ng,nt]
+
+        kwargs = _bokeh_size(kwargs, 400, 300)
+        kwargs['title'] = kwargs.get('title','Pressure-Temperature Profile')
+        kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
+        kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
+        kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+        kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
+
+        if backend == 'bokeh':
+            fig = figure(**kwargs)
+            fig.line(temperature,pressure,line_width=3)
+            plot_format(fig)
+
+        elif backend == 'matplotlib':
+            fig, ax = plt.subplots(figsize=(kwargs['width']/100, kwargs['height']/100))
+            ax.plot(temperature, pressure, linewidth=3)
+            _mpl_format(ax, kwargs)
+
+        elif backend == 'plotly':
+            go, _ = _plotly()
+            fig = go.Figure(go.Scatter(x=temperature, y=pressure, mode='lines', line=dict(width=3)))
+            _plotly_format(fig, kwargs)
+
+        return fig
+
+    def photon_attenuation(self, at_tau=0.5, return_output=False, igauss=0, backend=None, **kwargs):
+        """
+        Plot breakdown of gas opacity, cloud opacity, Rayleigh scattering opacity
+        at a specified pressure level. See ``justplotit.photon_attenuation``
+        """
+        backend = self._backend(backend)
+        full_output = self.full_output
+        wave = 1e4/full_output['wavenumber']
+
+        dtaugas = full_output['taugas'][:,:,igauss]
+        dtaucld = full_output['taucld'][:,:,igauss]*full_output['layer']['cloud']['w0']
+        dtauray = full_output['tauray'][:,:,igauss]
+        shape = dtauray.shape
+        taugas = np.zeros((shape[0]+1, shape[1]))
+        taucld = np.zeros((shape[0]+1, shape[1]))
+        tauray = np.zeros((shape[0]+1, shape[1]))
+
+        #comptue cumulative opacity
+        taugas[1:,:]=numba_cumsum(dtaugas)
+        taucld[1:,:]=numba_cumsum(dtaucld)
+        tauray[1:,:]=numba_cumsum(dtauray)
+
+        pressure = full_output['level']['pressure']
+
+        ind_gas = find_nearest_2d(taugas, at_tau)
+        ind_cld = find_nearest_2d(taucld, at_tau)
+        ind_ray = find_nearest_2d(tauray, at_tau)
+
+        at_pressures_gas = np.zeros(shape[1])
+        at_pressures_cld = np.zeros(shape[1])
+        at_pressures_ray = np.zeros(shape[1])
+
+        for i in range(shape[1]):
+            at_pressures_gas[i] = pressure[ind_gas[i]]
+            at_pressures_cld[i] = pressure[ind_cld[i]]
+            at_pressures_ray[i] = pressure[ind_ray[i]]
+
+        #color sections for whichever opacity source dominates
+        gas_dominate_ind = np.where((at_pressures_gas<at_pressures_cld) & (at_pressures_gas<at_pressures_ray))[0]
+        cld_dominate_ind = np.where((at_pressures_cld<at_pressures_gas) & (at_pressures_cld<at_pressures_ray))[0]
+        ray_dominate_ind = np.where((at_pressures_ray<at_pressures_cld) & (at_pressures_ray<at_pressures_gas))[0]
+
+        gas_dominate = np.zeros(shape[1]) + 1e-8
+        cld_dominate = np.zeros(shape[1]) + 1e-8
+        ray_dominate = np.zeros(shape[1])+ 1e-8
+
+        gas_dominate[gas_dominate_ind] = at_pressures_gas[gas_dominate_ind]
+        cld_dominate[cld_dominate_ind] = at_pressures_cld[cld_dominate_ind]
+        ray_dominate[ray_dominate_ind] = at_pressures_ray[ray_dominate_ind]
+
+        kwargs = _bokeh_size(kwargs, 1000, 345)
+        kwargs['title'] = kwargs.get('title','Pressure at 𝞽 =' +str(at_tau))
+        kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
+        kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
+        kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+        kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),1e-2])
+
+        labels = ['Gas Opacity', 'Cloud Opacity', 'Rayleigh Opacity']
+        cols = [Colorblind8[0], Colorblind8[3], Colorblind8[6]]
+        at_pressures = [at_pressures_gas, at_pressures_cld, at_pressures_ray]
+        dominates = [gas_dominate, cld_dominate, ray_dominate]
+
+        if backend == 'bokeh':
+            fig = figure(**kwargs)
+            legend_it = []
+            for l, c, p in zip(labels, cols, at_pressures):
+                f = fig.line(wave, p, line_width=3, color=c)
+                legend_it.append((l, [f]))
+
+            legend = Legend(items=legend_it, location=(0, -20),
+                                **_get_legend_cols(len(legend_it), kwargs.get('height')))
+            legend.click_policy="mute"
+            fig.add_layout(legend, 'right')
+
+            for c, d in zip(cols, dominates):
+                band_x = np.append(np.array(wave), np.array(wave[::-1]))
+                band_y = np.append(np.array(d), np.array(d)[::-1]*0+1e-8)
+                fig.patch(band_x,band_y, color=c, alpha=0.3)
+            plot_format(fig)
+
+        elif backend == 'matplotlib':
+            fig, ax = plt.subplots(figsize=(kwargs['width']/100, kwargs['height']/100))
+            for l, c, p, d in zip(labels, cols, at_pressures, dominates):
+                ax.plot(wave, p, label=l, color=c, linewidth=3)
+                ax.fill_between(wave, 1e-8, d, color=c, alpha=0.3)
+            _mpl_format(ax, kwargs)
+            ax.set_title(kwargs['title'].replace('𝞽', r'$\tau$')) #default matplotlib font has no 𝞽
+            ax.legend()
+
+        elif backend == 'plotly':
+            go, _ = _plotly()
+            fig = go.Figure()
+            for l, c, p, d in zip(labels, cols, at_pressures, dominates):
+                fig.add_trace(go.Scatter(x=wave, y=p, name=l, mode='lines', line=dict(color=c, width=3)))
+                band_x = np.append(np.array(wave), np.array(wave[::-1]))
+                band_y = np.append(np.array(d), np.array(d)[::-1]*0+1e-8)
+                fig.add_trace(go.Scatter(x=band_x, y=band_y, fill='toself', fillcolor=c, opacity=0.3,
+                                         mode='none', showlegend=False, hoverinfo='skip'))
+            _plotly_format(fig, kwargs)
+
+        if return_output: return fig ,wave,at_pressures_gas,at_pressures_cld,at_pressures_ray
+        else: return fig
+
+    def cloud(self, backend=None):
+        """
+        Heatmaps of the cloud single scattering albedo, optical depth, and asymmetry
+        as a function of wavelength and pressure. See ``justplotit.cloud``
+        """
+        backend = self._backend(backend)
+        dat01 = self.full_output['layer']['cloud']
+        pressure = self.full_output['layer']['pressure']
+        wave = 1e4 / self.full_output['wavenumber']
+
+        w0 = dat01['w0']
+        opd = dat01['opd'] + 1e-60
+        g0 = dat01['g0']
+
+        titles = ["Single Scattering Albedo", "Cloud Optical Depth Per Layer", "Asymmetry Parameter"]
+
+        if backend == 'matplotlib':
+            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+
+            # Plot W0
+            im1 = ax1.pcolormesh(wave, pressure, w0,  cmap='magma', vmin=0, vmax=1)
+            ax1.set_title(titles[0])
+            fig.colorbar(im1, ax=ax1)
+
+            # Plot OPD
+            im2 = ax2.pcolormesh(wave, pressure, opd,  cmap='viridis_r', norm=colors.LogNorm(vmin=1e-3, vmax=10))
+            ax2.set_title(titles[1])
+            fig.colorbar(im2, ax=ax2)
+
+            # Plot G0
+            im3 = ax3.pcolormesh(wave, pressure, g0,  cmap='gray_r', vmin=0, vmax=1)
+            ax3.set_title(titles[2])
+            fig.colorbar(im3, ax=ax3)
+
+            for ax in [ax1, ax2, ax3]:
+                ax.set_xlabel('Wavelength (micron)')
+                ax.set_ylabel('Pressure (bar)')
+                ax.set_yscale('log')
+                ax.invert_yaxis()
+
+        elif backend == 'bokeh':
+            fig_kwargs = dict(x_axis_label='Wavelength (micron)', y_axis_label='Pressure (bar)',
+                              width=400, height=350)
+            fig1 = _bokeh_image(wave, pressure, w0, pals.magma(256), low=0, high=1,
+                                title=titles[0], **fig_kwargs)
+            fig2 = _bokeh_image(wave, pressure, opd, pals.viridis(256)[::-1], low=1e-3, high=10, log_color=True,
+                                title=titles[1], **fig_kwargs)
+            fig3 = _bokeh_image(wave, pressure, g0, pals.gray(256)[::-1], low=0, high=1,
+                                title=titles[2], **fig_kwargs)
+            fig = row(fig1, fig2, fig3)
+
+        elif backend == 'plotly':
+            go, make_subplots = _plotly()
+            fig = make_subplots(rows=1, cols=3, subplot_titles=titles, horizontal_spacing=0.1)
+            heatmaps = [dict(z=w0, colorscale='Magma', zmin=0, zmax=1),
+                        dict(z=np.log10(opd), colorscale='Viridis_r', zmin=-3, zmax=1),
+                        dict(z=g0, colorscale='Greys', zmin=0, zmax=1)]
+            for i, h in enumerate(heatmaps):
+                x_thin, h['z'] = _thin_columns(wave, h['z'])
+                fig.add_trace(go.Heatmap(x=x_thin, y=pressure,
+                    colorbar=dict(x=_plotly_colorbar_x(fig, i+1), len=0.9,
+                                  title='log' if i==1 else None), **h), row=1, col=i+1)
+            fig.update_xaxes(title_text='Wavelength (micron)')
+            fig.update_yaxes(type="log", autorange="reversed", title_text='Pressure (bar)')
+            fig.update_layout(height=450, width=1300)
+
+        return fig
+
+    def disco(self, wavelength, calculation='reflected', backend=None):
+        """
+        Plot disco ball with facets. See ``justplotit.disco``.
+        The bokeh backend shows 2D latitude-longitude maps instead of 3D spheres.
+        """
+        backend = self._backend(backend)
+        if calculation=='reflected':to_plot='albedo_3d'
+        elif calculation=='thermal':to_plot='thermal_3d'
+
+        if isinstance(wavelength,(float,int)): wavelength = [wavelength]
+
+        wave = 1e4/self.full_output['wavenumber']
+        maps = []
+        titles = []
+        for w in wavelength:
+            indw = find_nearest_1d(wave,w)
+            #[umg, numt, nwno] this is xint_at_top
+            maps.append(self.full_output[to_plot][:,:,indw])
+            titles.append(str(wave[indw])+' Microns')
+
+        return self._sphere_maps(maps, titles, backend)
+
+    def map(self, pressure=[0.1], plot='temperature', wavelength=None, igauss=0, backend=None):
+        """
+        Plot a map of any 3d [nlayer, nlong, nlat] or 4d [nlayer, nwave, nlong, nlat]
+        output at several pressures. See ``justplotit.map``.
+        The bokeh backend shows 2D latitude-longitude maps instead of 3D spheres.
+        """
+        backend = self._backend(backend)
+        to_plot = explore(self.full_output, plot)
+
+        if isinstance(to_plot,np.ndarray):
+            if len(to_plot.shape) < 3:
+                raise Exception("The key you are search for is not a 3D matrix. This function \
+                    is used to plot out a map of a matrix that is [nlayer, nlong, nlat] or \
+                    [nlayer, nwave, nlong, nlat, ].")
+            #here the four dimentions are nlayer, nwave, nlong, nlat
+            elif len(to_plot.shape) == 4:
+                wave = 1e4/self.full_output['wavenumber']
+                indw = find_nearest_1d(wave,wavelength)
+                to_plot= to_plot[:,indw,:,:]
+            #here the five dimentions are nlayer, nwave, nlong, nlat, gauss
+            elif len(to_plot.shape) == 5:
+                wave = 1e4/self.full_output['wavenumber']
+                indw = find_nearest_1d(wave,wavelength)
+                to_plot= to_plot[:,indw,:,:,igauss]
+        else:
+            raise Exception ("The key you are search for is not an np.ndarray. This function \
+                    is used to plot out a map of an numpy.ndarray matrix that is [nlayer, nlong, nlat] or \
+                    [nlayer, nwave, nlong, nlat, ]")
+
+        pressure_grid = self.full_output['layer']['pressure'][:,0,0]
+        maps = []
+        for p in pressure:
+            indp = find_nearest_1d(np.log10(pressure_grid),np.log10(p))
+            maps.append(to_plot[indp, :,:])
+        titles = [str(p)+' bars' for p in pressure]
+
+        return self._sphere_maps(maps, titles, backend)
+
+    def taumap(self, at_tau=1, wavelength=1, igauss=0, backend=None):
+        """
+        Map of the pressure where the molecular, cloud, and Rayleigh opacity
+        reach ``at_tau``. See ``justplotit.taumap``.
+        The bokeh backend shows 2D latitude-longitude maps instead of 3D spheres.
+        """
+        backend = self._backend(backend)
+        full_output = self.full_output
+        all_dtau_gas = full_output['taugas'][:,:,:,:,igauss]
+        all_dtau_cld = full_output['taucld'][:,:,:,:,igauss]*full_output['layer']['cloud']['w0'][:,:,:,:]
+        all_dtau_ray = full_output['tauray'][:,:,:,:,igauss]
+
+        ng = all_dtau_gas.shape[2]
+        nt = all_dtau_gas.shape[3]
+
+        map_gas = np.zeros((ng, nt))
+        map_cld = np.zeros((ng, nt))
+        map_ray = np.zeros((ng, nt))
+
+        wave = 1e4/full_output['wavenumber']
+
+        iw = find_nearest_1d(wave, wavelength)
+
+        #build tau 1 map
+        for ig in range(ng):
+            for it in range(nt):
+
+                dtaugas = all_dtau_gas[:,iw, ig, it]
+                dtaucld = all_dtau_cld[:,iw, ig, it]
+                dtauray = all_dtau_ray[:,iw, ig, it]
+
+                shape = len(dtaugas)
+
+                taugas = np.zeros(shape+1)
+                taucld = np.zeros(shape+1)
+                tauray = np.zeros(shape+1)
+
+                #comptue cumulative opacity
+                taugas[1:]=np.cumsum(dtaugas)
+                taucld[1:]=np.cumsum(dtaucld)
+                tauray[1:]=np.cumsum(dtauray)
+
+                pressure = full_output['level']['pressure'][:,ig,it]
+
+                ind_gas = find_nearest_1d(taugas, at_tau)
+                ind_cld = find_nearest_1d(taucld, at_tau)
+                ind_ray = find_nearest_1d(tauray, at_tau)
+
+                if (len(taucld[taucld == 0]) == len(taucld.shape)) :
+                    ind_cld = ind_cld*0 + shape
+
+                map_gas[ig, it] = pressure[ind_gas]
+                map_cld[ig, it] = pressure[ind_cld]
+                map_ray[ig, it] = pressure[ind_ray]
+
+        return self._sphere_maps([map_gas, map_cld, map_ray],
+                                 ['Molecular Opacity','Cloud Opacity','Rayleigh Opacity'], backend)
+
+    def _sphere_maps(self, maps, titles, backend):
+        """
+        Shared plotting for disco, map and taumap. Each map is [nlong, nlat].
+        matplotlib and plotly draw facets on a sphere, bokeh draws flat latitude-longitude maps.
+        """
+        latitude = self.full_output['latitude']  #tangle
+        longitude = self.full_output['longitude'] #gangle
+        u, v = np.meshgrid(longitude, latitude)
+        x,y,z = lon_lat_to_cartesian(u, v)
+
+        if backend == 'matplotlib':
+            nrow = int(np.ceil(len(maps)/3))
+            ncol = int(np.min([3,len(maps)])) #at most 3 columns
+            fig = plt.figure(figsize=(6*ncol,4*nrow))
+            for i, (to_map, title) in enumerate(zip(maps, titles)):
+                ax = fig.add_subplot(nrow,ncol,i+1, projection='3d')
+                ax.plot_wireframe(x, y, z, color="gray")
+                sc = ax.scatter(x,y,z, c = to_map.T.ravel(),cmap=plt.get_cmap('plasma'),s=150)
+                fig.colorbar(sc)
+                ax.set_zlim3d(-1, 1)
+                ax.set_ylim3d(-1, 1)
+                ax.set_xlim3d(-1, 1)
+                ax.view_init(0, 0)
+                ax.set_title(title)
+                # Hide grid lines and ticks
+                ax.grid(False)
+                ax.set_xticks([])
+                ax.set_yticks([])
+                ax.set_zticks([])
+                ax.axis('off')
+            plt.subplots_adjust(wspace=0.3, hspace=0.3)
+
+        elif backend == 'plotly':
+            go, make_subplots = _plotly()
+            fig = make_subplots(rows=1, cols=len(maps), subplot_titles=titles,
+                                specs=[[{'type': 'scene'}]*len(maps)])
+            for i, to_map in enumerate(maps):
+                fig.add_trace(go.Scatter3d(x=x.ravel(), y=y.ravel(), z=z.ravel(), mode='markers',
+                    name=titles[i], showlegend=False,
+                    marker=dict(size=6, color=to_map.T.ravel(), colorscale='Plasma',
+                                colorbar=dict(x=(i+1)/len(maps), len=0.7))), row=1, col=i+1)
+            fig.update_scenes(xaxis_visible=False, yaxis_visible=False, zaxis_visible=False,
+                              camera=dict(eye=dict(x=1.6, y=0, z=0)))
+            fig.update_layout(height=450, width=450*len(maps))
+
+        elif backend == 'bokeh':
+            figs = []
+            for to_map, title in zip(maps, titles):
+                figs.append(_bokeh_image(longitude*180/np.pi, latitude*180/np.pi, to_map.T,
+                                         pals.plasma(256), log_y=False, title=title,
+                                         x_axis_label='Longitude', y_axis_label='Latitude',
+                                         y_range=[np.min(latitude)*180/np.pi, np.max(latitude)*180/np.pi],
+                                         width=350, height=300))
+            fig = row(*figs)
+
+        return fig
+
+    def flux_at_top(self, plot_bb=True, R=None, pressures=[1e-1,1e-2,1e-3], ng=None, nt=None,
+                    backend=None, **kwargs):
+        """
+        Plot the OLR with overlaying black bodies. See ``justplotit.flux_at_top``.
+        Requires the full dictionary output with {'wavenumber','thermal','full_output'}
+        """
+        backend = self._backend(backend)
+        if self.output is None:
+            raise Exception("flux_at_top needs the full dictionary returned by spectrum(opa, full_output=True), "
+                            "with keys {'wavenumber','thermal','full_output'}, not just full_output")
+        if ((ng==None) & (nt ==None)):
+            pressure_all = self.full_output['layer']['pressure']
+            temperature_all = self.full_output['layer']['temperature']
+        else:
+            pressure_all = self.full_output['layer']['pressure'][:,ng,nt]
+            temperature_all = self.full_output['layer']['temperature'][:,ng,nt]
+
+        if not isinstance(pressures, (np.ndarray, list)):
+            raise Exception('check pressure input. It must be list or array. You can still input a single value as `pressures = [1e-3]`')
+
+        kwargs = _bokeh_size(kwargs, 400, 300)
+        kwargs['title'] = kwargs.get('title','Outgoing Thermal Radiation')
+        kwargs['y_axis_label'] = kwargs.get('y_axis_label','Flux (erg/s/cm^3)')
+        kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
+        kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+        kwargs['x_axis_type'] = kwargs.get('x_axis_type','log')
+
+        if len(pressures) < 3: ncol = 5
+        else: ncol = len(pressures)
+        cols = pals.magma(ncol)
+
+        wno = self.output['wavenumber']
+        if isinstance(R,(int, float)):
+            wno, thermal = mean_regrid(wno, self.output['thermal'], R=R)
+        else:
+            thermal =  self.output['thermal']
+
+        #black bodies at each requested pressure
+        bbs = []
+        if plot_bb:
+            for p,c in zip(pressures,cols):
+                ip = find_nearest_1d(pressure_all, p)
+                t = temperature_all[ip]
+                intensity = blackbody(t, 1/wno)[0]
+                bbs.append((np.pi * intensity, c, str(int(t))+' K at '+str(p)+' bars'))
+
+        if backend == 'bokeh':
+            fig = figure(**kwargs)
+            fig.line(1e4/wno, thermal, color='black', line_width=4)
+            for flux, c, l in bbs:
+                fig.line(1e4/wno, flux, color=c, alpha=0.5, legend_label=l, line_width=4)
+
+        elif backend == 'matplotlib':
+            fig, ax = plt.subplots(figsize=(kwargs['width']/100, kwargs['height']/100))
+            ax.plot(1e4/wno, thermal, color='black', linewidth=4, label='Thermal')
+            for flux, c, l in bbs:
+                ax.plot(1e4/wno, flux, color=c, alpha=0.5, linewidth=4, label=l)
+            _mpl_format(ax, kwargs)
+            ax.legend()
+
+        elif backend == 'plotly':
+            go, _ = _plotly()
+            fig = go.Figure(go.Scatter(x=1e4/wno, y=thermal, name='Thermal', mode='lines',
+                                       line=dict(color='black', width=4)))
+            for flux, c, l in bbs:
+                fig.add_trace(go.Scatter(x=1e4/wno, y=flux, name=l, mode='lines',
+                                         line=dict(color=c, width=4), opacity=0.5))
+            _plotly_format(fig, kwargs)
+
+        return fig
+
+    def all_optics_1d(self, wave_range, return_output=False, legend=None, ng=None, nt=None,
+                      colors=Colorblind8, backend=None, **kwargs):
+        """
+        Plots 1d profiles of optical depth per layer, single scattering, and
+        asymmetry averaged over the user input wave_range. See ``justplotit.all_optics_1d``
+        """
+        backend = self._backend(backend)
+        kwargs = _bokeh_size(kwargs, 300, 300)
+        kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
+
+        full_output = self.full_output
+        if not isinstance(full_output, list):
+            full_output = [full_output]
+
+        if ((ng==None) & (nt==None)):
+            pressure = full_output[0]['layer']['pressure']
+        else:
+            pressure = full_output[0]['layer']['pressure'][:,ng,nt]
+
+        kwargs['y_range'] = kwargs.get('y_range',[max(pressure),min(pressure)])
+
+        #wavelength averaged profiles for each output
+        profiles = []
+        for i,results in enumerate(full_output):
+            if ((ng==None) & (nt==None)):
+                pressure = results['layer']['pressure']
+                ssa = results['layer']['cloud']['w0']
+                g0 = results['layer']['cloud']['g0']
+                opd = results['layer']['cloud']['opd']
+            else:
+                pressure = results['layer']['pressure'][:,ng,nt]
+                ssa = results['layer']['cloud']['w0'][:,:,ng,nt]
+                g0 = results['layer']['cloud']['g0'][:,:,ng,nt]
+                opd = results['layer']['cloud']['opd'][:,:,ng,nt]
+
+            wno = results['wavenumber']
+
+            inds = np.where((1e4/wno>wave_range[0]) &
+                (1e4/wno<wave_range[1]))
+
+            profiles.append(dict(pressure=pressure,
+                                 opd=np.mean(opd[:,inds],axis=2)[:,0],
+                                 ssa=np.mean(ssa[:,inds],axis=2)[:,0],
+                                 g0=np.mean(g0[:,inds],axis=2)[:,0],
+                                 color=colors[np.mod(i, len(colors))],
+                                 label=None if legend is None else legend[i]))
+
+        if backend == 'bokeh':
+            fssa = figure(x_axis_label='Single Scattering Albedo',**kwargs)
+            fg0 = figure(x_axis_label='Asymmetry',**kwargs)
+            fopd = figure(x_axis_label='Optical Depth',y_axis_label='Pressure (bars)',
+                x_axis_type='log',**kwargs)
+            for p in profiles:
+                fopd.line(p['opd'], p['pressure'], color=p['color'],line_width=3)
+                fg0.line(p['g0'], p['pressure'], color=p['color'],line_width=3)
+                if p['label'] is None:
+                    fssa.line(p['ssa'], p['pressure'], color=p['color'],line_width=3)
+                else:
+                    fssa.line(p['ssa'], p['pressure'], color=p['color'],line_width=3,
+                         legend_label=p['label'])
+                    fssa.legend.location='top_left'
+            fig = gridplot([[fopd,fssa,fg0]])
+
+        elif backend == 'matplotlib':
+            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True,
+                                    figsize=(3*kwargs['width']/100, kwargs['height']/100))
+            for p in profiles:
+                ax1.plot(p['opd'], p['pressure'], color=p['color'], linewidth=3)
+                ax2.plot(p['ssa'], p['pressure'], color=p['color'], linewidth=3, label=p['label'])
+                ax3.plot(p['g0'], p['pressure'], color=p['color'], linewidth=3)
+            ax1.set_xscale('log')
+            ax1.set_yscale(kwargs['y_axis_type'])
+            ax1.set_ylim(kwargs['y_range'])
+            ax1.set_ylabel('Pressure (bars)')
+            ax1.set_xlabel('Optical Depth')
+            ax2.set_xlabel('Single Scattering Albedo')
+            ax3.set_xlabel('Asymmetry')
+            if legend is not None: ax2.legend()
+            fig.tight_layout()
+
+        elif backend == 'plotly':
+            go, make_subplots = _plotly()
+            fig = make_subplots(rows=1, cols=3, shared_yaxes=True)
+            for p in profiles:
+                for col, key in enumerate(['opd', 'ssa', 'g0']):
+                    fig.add_trace(go.Scatter(x=p[key], y=p['pressure'], name=p['label'], mode='lines',
+                                             showlegend=(col==1) & (p['label'] is not None),
+                                             line=dict(color=p['color'], width=3)), row=1, col=col+1)
+            for col, label in enumerate(['Optical Depth', 'Single Scattering Albedo', 'Asymmetry']):
+                fig.update_xaxes(title_text=label, row=1, col=col+1)
+            fig.update_xaxes(type='log', row=1, col=1)
+            fig.update_yaxes(type=kwargs['y_axis_type'], title_text='Pressure (bars)', row=1, col=1)
+            fig.update_yaxes(range=list(np.log10(kwargs['y_range'])) if kwargs['y_axis_type']=='log'
+                                    else kwargs['y_range'])
+            fig.update_layout(height=kwargs['height'], width=3*kwargs['width'])
+
+        if return_output:
+            #same as previous versions: the un-averaged profiles of the last output
+            return fig, [opd,ssa,g0]
+        else:
+            return fig
+
+    def thermal_contribution(self, tau_max=1.0, R=100, backend=None, **kwargs):
+        """
+        Emission contribution function from https://doi.org/10.3847/1538-4357/aadd9e equation 4.
+        See ``justplotit.thermal_contribution``
+
+        Returns
+        -------
+        fig, ax, CF_bin
+            ax is None for bokeh and plotly
+        """
+        backend = self._backend(backend)
+        full_output = self.full_output
+        kwargs['norm'] = kwargs.get('norm',colors.LogNorm())
+        kwargs['shading'] = kwargs.get('shading','auto')
+
+        all_taus = np.squeeze(full_output['taugas']+full_output['taucld']+full_output['tauray'])
+        all_taus[all_taus > tau_max] = tau_max
+        sum_taus = np.cumsum(all_taus, axis=0)
+
+        pressure = full_output['layer']['pressure']
+        press2D = np.transpose(np.repeat(pressure[np.newaxis], np.shape(sum_taus)[1], axis=0))
+
+        bb = np.ones(np.shape(press2D))
+        for i, temp in enumerate(full_output['layer']['temperature']):
+            for j, wave in enumerate(1/full_output['wavenumber']):
+                bb[i, j] = blackbody(temp, wave)[0][0]
+        CF = bb[0:-1, :] * np.exp(-sum_taus[0:-1, :]) * all_taus[0:-1, :] / np.diff(np.log(press2D), axis=0)
+
+        if not isinstance(R,type(None)):
+            wno,_ = mean_regrid(full_output['wavenumber'],full_output['wavenumber'],R=R)
+            CF_bin = np.zeros((len(pressure)-1, len(wno)))
+            for i in range(len(pressure)-1):
+                _,CF_bin[i,:] = mean_regrid(full_output['wavenumber'], CF[i,:],newx=wno)
+        else:
+            CF_bin = CF
+            wno=full_output['wavenumber']
+
+        if backend == 'matplotlib':
+            fig, ax = plt.subplots(figsize=(15,10))
+            smap = ax.pcolormesh(1e4/wno, pressure[0:-1], CF_bin, **kwargs)
+            ax.set_ylim(np.max(pressure), np.min(pressure))
+            ax.set_yscale('log')
+            ax.set_ylabel('Pressure (bar)', fontsize=20)
+            ax.set_xlabel(r'Wavelength ($\mu$m)', fontdict={'fontsize':20})
+            cm = plt.colorbar(smap)
+            cm.ax.set_ylabel('Emission Contribution Function', fontdict={'fontsize':18} )
+            for l in cm.ax.yaxis.get_ticklabels():
+                l.set_fontsize(16)
+            ax.set_yticks(np.logspace(-5,1,7), minor=False)
+            ax.set_yticklabels(np.logspace(-5,1,7), fontdict={'fontsize':18})
+            return fig, ax, CF_bin
+
+        fig = self._contribution_heatmap(1e4/wno, pressure[0:-1], CF_bin,
+                                         'Emission Contribution Function', backend)
+        return fig, None, CF_bin
+
+    def transmission_contribution(self, R=None, backend=None, **kwargs):
+        """
+        Transmission contribution function. See ``justplotit.transmission_contribution``
+
+        Returns
+        -------
+        fig, ax, um, CF_bin
+            ax is None for bokeh and plotly
+        """
+        backend = self._backend(backend)
+        full_output = self.full_output
+        DTAU = (full_output['taugas'][:,:,0] +
+                full_output['taucld'][:,:,0] +
+                full_output['tauray'][:,:,0])
+        z = full_output['level']['z']
+        dz= full_output['level']['dz']
+        nlevel = len(dz)
+        nwno = DTAU.shape[1]
+        rstar=1
+        k_b=1
+        amu=1
+        player = full_output['layer']['pressure']
+        tlayer = full_output['layer']['temperature']
+        colden = full_output['layer']['column_density']
+        mmw = full_output['layer']['mmw']
+
+        zs = []
+        for i in range(DTAU.shape[0]):
+            dtau_copy = copy.deepcopy(DTAU)
+            dtau_copy[i,:] = 0
+            if i == 0 :
+                norm = get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
+                                player, tlayer, colden, DTAU)
+            zs+=[get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
+                                player, tlayer, colden, dtau_copy)]
+
+        CF=(norm-np.array(zs))/np.sum(norm-np.array(zs),axis=0)
+
+        if not isinstance(R,type(None)):
+            wno,_ = mean_regrid(full_output['wavenumber'],full_output['wavenumber'],R=R)
+            CF_bin = np.zeros((len(player), len(wno)))
+            for i in range(len(player)):
+                _,CF_bin[i,:] = mean_regrid(full_output['wavenumber'], CF[i,:],newx=wno)
+        else:
+            CF_bin = CF
+            wno=full_output['wavenumber']
+
+        if backend == 'matplotlib':
+            kwargs['norm'] = kwargs.get('norm',colors.LogNorm())
+            kwargs['shading'] = kwargs.get('shading','auto')
+            fig, ax = plt.subplots()
+            smap = ax.pcolormesh(1e4/wno, player, CF_bin, **kwargs)
+            ax.set_ylim(np.max(player), np.min(player))
+            ax.set_yscale('log')
+            ax.set_ylabel('Pressure (bar)')
+            ax.set_xlabel(r'Wavelength ($\mu$m)')
+            plt.colorbar(smap, label='Transmission CF')
+            return fig, ax, 1e4/wno, CF_bin
+
+        fig = self._contribution_heatmap(1e4/wno, player, CF_bin, 'Transmission Contribution Function', backend)
+        return fig, None, 1e4/wno, CF_bin
+
+    def _contribution_heatmap(self, wave, pressure, CF, title, backend):
+        """Log-scaled heatmap of a contribution function for the bokeh and plotly backends"""
+        if backend == 'bokeh':
+            return _bokeh_image(wave, pressure, CF, pals.viridis(256), log_color=True, title=title,
+                                x_axis_label='Wavelength (μm)', y_axis_label='Pressure (bar)',
+                                width=800, height=500)
+        elif backend == 'plotly':
+            go, _ = _plotly()
+            with np.errstate(divide='ignore'):
+                logCF = np.log10(CF)
+            logCF[~np.isfinite(logCF)] = np.nan
+            wave, logCF = _thin_columns(wave, logCF)
+            fig = go.Figure(go.Heatmap(z=logCF, x=wave, y=pressure, colorscale='Viridis',
+                                       colorbar=dict(title='log CF')))
+            fig.update_yaxes(type="log", autorange="reversed", title_text='Pressure (bar)')
+            fig.update_layout(title=title, xaxis_title="Wavelength (μm)", width=800, height=500)
+            return fig

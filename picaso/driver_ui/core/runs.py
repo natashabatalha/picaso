@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 import picaso.driver as go
-from picaso import WIP_justplotit as jpi
+from picaso import justplotit as jpi
 from picaso import justdoit as jdi
 from picaso.driver_ui.core import resources
 from picaso.driver_ui.core.plots import cloud_layers, describe_nans, label_spectrum_yaxis

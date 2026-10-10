@@ -62,6 +62,7 @@ docs = [
     "sphinx-copybutton",
     "sphinx-llms-txt>=0.7",
     "packaging",
+    "plotly",
 ]
 
 [tool.setuptools.packages.find]

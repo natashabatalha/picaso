@@ -9,7 +9,7 @@ import numpy as np
 import toml
 
 import picaso.driver as go
-from picaso import WIP_justplotit as jpi
+from picaso import justplotit as jpi
 from picaso import retrieval as ret
 from picaso.driver_ui.core import resources
 from picaso.driver_ui.core.plots import label_spectrum_yaxis

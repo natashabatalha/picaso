@@ -12,7 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go_plotly
 
 import picaso.driver as go
-from picaso import WIP_justplotit as jpi
+from picaso import justplotit as jpi
 from picaso import justdoit as jdi
 from picaso.driver_ui.core import resources
 

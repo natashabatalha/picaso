@@ -4,7 +4,11 @@ release of PICASO 5. Please work with the developers if using this before the PI
 Authors: Natasha Batalha, Francisco Ardevol Martinez & Sierra Janson
 """
 from .justdoit import *
-from .justplotit import *
+from . import justplotit as jpi
+from .justplotit import mean_regrid
+from bokeh.layouts import row, column
+from bokeh.models import Div
+from bokeh.plotting import output_file, show
 from .parameterizations import Parameterize,cloud_averaging
 from .references import get_citations
 
@@ -2118,7 +2122,7 @@ def plot_pt(picaso_output):
 
 def plot_cloud(picaso_output):
     full_output = picaso_output['full_output']
-    fig = jpi.cloud(full_output)
+    fig = jpi.cloud(full_output, backend='bokeh') #bokeh so it can be added to the dashboard layout
     return fig
 
 def plot_mr(picaso_output):
