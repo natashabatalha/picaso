@@ -6,7 +6,6 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-09T15:57:58.619072</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -111,7 +110,7 @@ L 66.893374 98.778111
 L 69.485789 99.987459 
 L 72.468455 101.196806 
 L 75.870173 102.406154 
-" clip-path="url(#p06fe0c79f5)" style="fill: none; stroke: #f2b134; stroke-width: 2; stroke-linecap: round"/>
+" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #f2b134; stroke-width: 2; stroke-linecap: round"/>
    </g>
    <g id="line2d_2">
     <path d="M 44.312704 6.867692 
@@ -194,7 +193,7 @@ L 112.40298 98.778111
 L 113.309694 99.987459 
 L 114.414041 101.196806 
 L 115.753567 102.406154 
-" clip-path="url(#p06fe0c79f5)" style="fill: none; stroke: #ec9a2c; stroke-width: 2; stroke-linecap: round"/>
+" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #ec9a2c; stroke-width: 2; stroke-linecap: round"/>
    </g>
    <g id="line2d_3">
     <path d="M 75.219879 6.867692 
@@ -277,7 +276,7 @@ L 165.072889 98.778111
 L 165.444205 99.987459 
 L 165.902645 101.196806 
 L 166.467788 102.406154 
-" clip-path="url(#p06fe0c79f5)" style="fill: none; stroke: #e07b28; stroke-width: 2; stroke-linecap: round"/>
+" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #e07b28; stroke-width: 2; stroke-linecap: round"/>
    </g>
    <g id="line2d_4">
     <path d="M 106.157551 6.867692 
@@ -360,7 +359,7 @@ L 219.319489 98.778111
 L 219.50248 99.987459 
 L 219.72924 101.196806 
 L 220.010033 102.406154 
-" clip-path="url(#p06fe0c79f5)" style="fill: none; stroke: #d45f27; stroke-width: 2; stroke-linecap: round"/>
+" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #d45f27; stroke-width: 2; stroke-linecap: round"/>
    </g>
    <g id="line2d_5">
     <path d="M 137.103694 6.867692 
@@ -443,12 +442,12 @@ L 274.026737 98.778111
 L 274.12949 99.987459 
 L 274.25698 101.196806 
 L 274.415094 102.406154 
-" clip-path="url(#p06fe0c79f5)" style="fill: none; stroke: #c44326; stroke-width: 2; stroke-linecap: round"/>
+" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #c44326; stroke-width: 2; stroke-linecap: round"/>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="p06fe0c79f5">
+  <clipPath id="p85b71cdc04">
    <rect x="5.76" y="4.32" width="276.48" height="99.36"/>
   </clipPath>
  </defs>

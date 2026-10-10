@@ -43,7 +43,7 @@ jpi.output_notebook()
 #
 # You should already know how to go from a GCM input with temperature, abundances to a phase curve calculation. Now we will explore the workflow below where you do **not** have abundances and need to post-process before doing your calculation.
 #
-# ![workflow-phase.png](attachment:workflow-phase.png)
+# ![workflow-phase.png](workflow-phase.png)
 
 # %%
 opacity = jdi.opannection(wave_range=[1,1.7])

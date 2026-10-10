@@ -4,7 +4,7 @@ Computes a reflected-light, thermal-emission and transmission spectrum, a
 pressure-temperature profile, and a model-vs-data eclipse spectrum with PICASO
 (same setups as the A_basics tutorials) and draws each as minimal, transparent
 SVG line art for the cards in docs/index.md. The phase crescents are cut from
-docs/usecases.png.
+phases_source.png (the bottom strip of the original PICASO use-cases figure).
 
     python docs/_scripts/make_landing_icons.py
 
@@ -27,7 +27,7 @@ DOCS = os.path.join(os.path.dirname(__file__), '..')
 OUT = os.path.join(DOCS, '_static', 'landing')
 R = 120   # resampling resolution: enough to show bands, smooth enough for an icon
 
-# colours follow docs/usecases.png, brightened slightly to read in dark mode too
+# colours follow the original use-cases figure, brightened slightly to read in dark mode too
 BLUE, MAGENTA, RED, ORANGE, TEAL = '#3b7dd8', '#c2368f', '#d23a48', '#e07b28', '#2a9d8f'
 
 
@@ -99,9 +99,9 @@ def draw_pt(name, colors):
 
 
 def crescents(name, phases=(0, 2, 4, 6, 8), pitch=235, pad=20):
-    """Cut the phase crescents (with their reflections) out of usecases.png."""
-    im = np.asarray(Image.open(os.path.join(DOCS, 'usecases.png')).convert('RGB')).astype(float)
-    strip = im[1240:1600]
+    """Cut the phase crescents (with their reflections) out of phases_source.png."""
+    src = os.path.join(os.path.dirname(__file__), 'phases_source.png')
+    strip = np.asarray(Image.open(src).convert('RGB')).astype(float)
     ink = strip.min(axis=2) < 235
     cols = np.where(ink.any(axis=0))[0]
     blobs, start = [], cols[0]
@@ -147,7 +147,7 @@ def crescents(name, phases=(0, 2, 4, 6, 8), pitch=235, pad=20):
 
 def save(fig, name):
     path = os.path.join(OUT, f'{name}.svg')
-    fig.savefig(path, format='svg', transparent=True)
+    fig.savefig(path, format='svg', transparent=True, metadata={'Date': None})
     plt.close(fig)
     print('wrote', os.path.relpath(path))
 
@@ -183,6 +183,7 @@ def draw(name, wave, flux, color, logx=False, data=False):
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     plt.rcParams['svg.fonttype'] = 'none'
+    plt.rcParams['svg.hashsalt'] = 'picaso'   # stable ids, so reruns don't churn git
     draw('reflected', *reflected(), BLUE)
     draw('thermal', *thermal(), MAGENTA, logx=True)
     draw('transmission', *transmission(), RED, logx=True)

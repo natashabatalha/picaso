@@ -6,7 +6,6 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-09T15:57:58.613488</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -32,7 +31,7 @@ z
   <g id="axes_1">
    <g id="FillBetweenPolyCollection_1">
     <defs>
-     <path id="m9b698e2016" d="M 5.76 -4.32 
+     <path id="m9b3e557b83" d="M 5.76 -4.32 
 L 5.76 -54.195307 
 L 6.848504 -51.357939 
 L 7.937008 -49.04016 
@@ -547,8 +546,8 @@ L 5.76 -4.32
 z
 "/>
     </defs>
-    <g clip-path="url(#p7bc1780aa8)">
-     <use xlink:href="#m9b698e2016" x="0" y="108" style="fill: #d23a48; fill-opacity: 0.12"/>
+    <g clip-path="url(#p85b71cdc04)">
+     <use xlink:href="#m9b3e557b83" x="0" y="108" style="fill: #d23a48; fill-opacity: 0.12"/>
     </g>
    </g>
    <g id="line2d_1">
@@ -791,12 +790,12 @@ L 280.062992 40.542562
 L 281.151496 41.868885 
 L 282.24 45.214468 
 L 282.24 45.214468 
-" clip-path="url(#p7bc1780aa8)" style="fill: none; stroke: #d23a48; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #d23a48; stroke-width: 2; stroke-linecap: square"/>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="p7bc1780aa8">
+  <clipPath id="p85b71cdc04">
    <rect x="5.76" y="4.32" width="276.48" height="99.36"/>
   </clipPath>
  </defs>
