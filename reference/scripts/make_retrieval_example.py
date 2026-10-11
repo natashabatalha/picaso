@@ -80,7 +80,6 @@ virga_mieff = '_default_/virga/'
 [object]
 radius = {{value={TRUTH['object.radius.value']}, unit='Rjup'}}
 mass = {{value=0.28, unit='Mjup'}}
-gravity = {{value=430.0, unit='cm/s**2'}} # unused: mass and radius set the gravity
 
 [geometry]
 phase = {{value=0, unit='radian'}}
