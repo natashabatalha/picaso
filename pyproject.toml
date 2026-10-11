@@ -82,6 +82,7 @@ exclude = ["reference*"]
 testpaths = ["tests"]
 markers = [
     "needs_full_data: needs the full opacity db and stellar grids, which are not in git; skipped automatically when missing",
+    "needs_ck_tables: needs the resortrebin correlated-k tables in reference/opacities/resortrebin, which are not in git; skipped automatically when missing",
 ]
 
 [project.urls]
