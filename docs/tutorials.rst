@@ -56,6 +56,7 @@ Relevant Citations: `Mukherjee et al. 2023 <https://ui.adsabs.harvard.edu/abs/20
 
    Brown Dwarfs </notebooks/D_climate/1_BrownDwarf_PreW.py>
    Planet </notebooks/D_climate/2_Exoplanet_PreW.py>
+   Intuition Building: Assessing Heating/Cooling Contributions from Individual Molecules </notebooks/D_climate/10_Exoplanet_ExcludeMol.py>
    Planet w/ Photochemistry </notebooks/D_climate/3_Exoplanet-Photochemistry.py>
    Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz) </notebooks/D_climate/4_BrownDwarf_DEQ_SC_kzz.py>
    Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz) </notebooks/D_climate/4b_BrownDwarf_DEQ_const_kzz.py>
