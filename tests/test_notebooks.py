@@ -53,96 +53,77 @@ __refdata__ = os.environ.get('picaso_refdata')
 # 		pd.DataFrame(dict(benchmark_spectrum=benchmark_spectrum)).to_csv('example_test.csv')
 
 
-@pytest.mark.needs_full_data
+MINI_OPACITY_DB = os.path.join(__refdata__,'base_cases','retrieval_example','testing_file_only_H2O_CO2_example_opacities.db')
+STAR_FILE = os.path.join(__refdata__,'base_cases','retrieval_example','star_5400K.txt')
+REFLECTED_BENCHMARK = os.path.join(__refdata__,'base_cases','testing','reflected_1d_mini_db.csv')
+
+def _reflected_case(opacity, h2o=1e-3, exclude_mol=None):
+	"""
+	Warm (800 K) clear H2/He atmosphere with H2O and CO2, the only molecules in the mini opacity db,
+	around a userfile star so that no stellar grids are needed
+	"""
+	start_case = jdi.inputs()
+	start_case.phase_angle(0) #radians
+	start_case.gravity(radius=1, radius_unit=jdi.u.Unit('R_jup'),
+					mass=1, mass_unit=jdi.u.Unit('M_jup'))
+	start_case.star(opacity, radius=1, radius_unit=jdi.u.Unit('R_sun'),
+					semi_major=0.05, semi_major_unit=jdi.u.Unit('au'),
+					filename=STAR_FILE, w_unit='um', f_unit='erg/(s*cm**2*AA)')
+	pressure = np.logspace(-6,2,60)
+	start_case.atmosphere(df=pd.DataFrame({'pressure':pressure,
+										   'temperature':pressure*0+800,
+										   'H2':pressure*0+0.837-h2o,
+										   'He':pressure*0+0.163,
+										   'H2O':pressure*0+h2o,
+										   'CO2':pressure*0+1e-4}),
+						  exclude_mol=exclude_mol)
+	df = start_case.spectrum(opacity, calculation='reflected')
+	return start_case, df
+
 def test_reflected_1d(create_data=False):
 	"""
 	This tests the functionality of 1D reflected light spectra from notebook #1 'Getting Started'
+	using the mini H2O/CO2 opacity db so that it can run in CI.
 
+	Rerun with create_data=True to rewrite the benchmark after an intended change in the output.
 	"""
+	opacity = jdi.opannection(filename_db=MINI_OPACITY_DB)
 
-	opacity = jdi.opannection(wave_range=[0.3,1])
+	start_case, df = _reflected_case(opacity)
+	wno, alb, fpfs = df['wavenumber'], df['albedo'], df['fpfs_reflected']
+	wave = 1e4/wno
+	water_band = (wave > 1.35) & (wave < 1.5)
+	continuum = (wave > 1.0) & (wave < 1.1)
 
-	start_case = jdi.inputs()
+	#physical checks that do not depend on the benchmark
+	assert np.all((alb >= 0) & (alb <= 1)), 'albedo outside of 0-1'
+	#at full phase the planet-star flux ratio is the geometric albedo times (Rp/a)^2
+	rp = start_case.inputs['planet']['radius']
+	semi_major = start_case.inputs['star']['semi_major']
+	assert np.allclose(fpfs, alb*(rp/semi_major)**2, rtol=1e-10), 'fpfs is not albedo*(Rp/a)^2 at phase 0'
+	assert np.mean(alb[water_band]) < 0.1*np.mean(alb[continuum]), 'water band is not dark'
 
-	#phase angle
-	start_case.phase_angle(0) #radians
+	#less water, or no water opacity at all, brightens the water band
+	_, df_low = _reflected_case(opacity, h2o=1e-5)
+	_, df_nowater = _reflected_case(opacity, exclude_mol='H2O')
+	assert np.mean(df_low['albedo'][water_band]) > np.mean(alb[water_band]), 'less H2O did not brighten water band'
+	assert np.mean(df_nowater['albedo'][water_band]) > np.mean(df_low['albedo'][water_band]), 'exclude_mol H2O did not remove water'
 
-	#define gravity
-	start_case.gravity(gravity=25, gravity_unit=jdi.u.Unit('m/(s**2)')) #any astropy units available
-
-	#define star
-	start_case.star(opacity, 5000,0,4.0) #opacity db, pysynphot database, temp, metallicity, logg
-
-	start_case.atmosphere(filename=jdi.jupiter_pt(), sep=r'\s+')
-
-	df = start_case.spectrum(opacity)
-
-	wno, alb, fpfs = df['wavenumber'] , df['albedo'] , df['fpfs_reflected']
-	wno, alb = jdi.mean_regrid(wno, alb , R=150)
-
-	if create_data: 
-		# Create a new dataframe
-		new_df = pd.DataFrame()
-
-		# Add new columns to the dataframe
-		new_df['wavenumber'] = wno
-		new_df['albedo'] = alb
-
-	# compare to benchmark
-	benchmark_path = os.path.join(__refdata__,'base_cases','testing','reflected_1d_basecase.csv')
-	assert os.path.isfile(benchmark_path), 'Benchmark file not found'
-	benchmark_spectrum = pd.read_csv(benchmark_path)
-	assert np.allclose(benchmark_spectrum['albedo'], alb, atol=0.01), 'Failed albedo reflected_1d test'
-
-	#get relative flux as well
-	start_case.star(opacity, 5000,0,4.0,semi_major=1, semi_major_unit=jdi.u.Unit('au'))
-	start_case.gravity(radius=1, radius_unit=jdi.u.Unit('R_jup'),
-					mass = 1, mass_unit=jdi.u.Unit('M_jup'))
-	df = start_case.spectrum(opacity)
-	wno, alb, fpfs = df['wavenumber'] , df['albedo'] , df['fpfs_reflected']
-	wno2, fpfs = jdi.mean_regrid(wno, fpfs , R=150)
+	wno_r, alb_r = jdi.mean_regrid(wno, alb, R=150)
+	_, fpfs_r = jdi.mean_regrid(wno, fpfs, R=150)
+	_, alb_nowater_r = jdi.mean_regrid(df_nowater['wavenumber'], df_nowater['albedo'], R=150)
 
 	if create_data:
-		# Add new columns to the dataframe
-		new_df['fpfs'] = fpfs
+		pd.DataFrame({'wavenumber':wno_r, 'albedo':alb_r, 'fpfs':fpfs_r,
+					  'albedo_nowater':alb_nowater_r}).to_csv(REFLECTED_BENCHMARK, index=False)
 
 	# compare to benchmark
-	assert np.allclose(benchmark_spectrum['fpfs'], fpfs, atol=0.01), 'Failed fpfs reflected_1d test'
-
-	# method 2
-	start_case.atmosphere( df = jdi.pd.DataFrame({'pressure':np.logspace(-6,2,60),
-                                                 'temperature':np.logspace(-6,2,60)*0+200,
-                                                 "H2":np.logspace(-6,2,60)*0+0.837,
-                                                 "He":np.logspace(-6,2,60)*0+0.163,
-                                                 "CH4":np.logspace(-6,2,60)*0+0.000466})
-                     )
-	
-	df = start_case.spectrum(opacity)
-	wno_ch4, alb_ch4, fpfs = df['wavenumber'] , df['albedo'] , df['fpfs_reflected']
-	wno_ch4, alb_ch4 = jdi.mean_regrid(wno_ch4, alb_ch4 , R=150)
-
-	if create_data:
-		# Add new columns to the dataframe
-		new_df['albedo_ch4'] = alb_ch4
-
-	# compare to benchmark
-	assert np.allclose(benchmark_spectrum['albedo_ch4'], alb_ch4, atol=0.01), 'Failed CH4 albedo reflected_1d test'
-
-	# exclude water molecule
-	start_case.atmosphere(filename=jdi.jupiter_pt(), exclude_mol='H2O', sep=r'\s+')
-
-	df = start_case.spectrum(opacity)
-	wno_nowater, alb_nowater, fpfs = df['wavenumber'] , df['albedo'] , df['fpfs_reflected']
-	wno_nowater, alb_nowater= jdi.mean_regrid(wno_ch4, alb_ch4 , R=150)
-
-	if create_data:
-		# Add new columns to the dataframe
-		new_df['albedo_nowater'] = alb_nowater
-		savepath = os.path.join(__refdata__,'base_cases','testing','reflected_1d_basecase.csv')
-		new_df.to_csv(savepath, index = False)
-
-	# compare to benchmark, added equal_nan=True to account for NaN values present in the benchmark
-	assert np.allclose(benchmark_spectrum['albedo_nowater'], alb_nowater, atol=0.01, equal_nan=True), 'Failed no H2O albedo reflected_1d test'
+	assert os.path.isfile(REFLECTED_BENCHMARK), 'Benchmark file not found'
+	benchmark_spectrum = pd.read_csv(REFLECTED_BENCHMARK)
+	assert np.allclose(benchmark_spectrum['wavenumber'], wno_r), 'Failed wavenumber grid reflected_1d test'
+	assert np.allclose(benchmark_spectrum['albedo'], alb_r, rtol=1e-3, atol=1e-8), 'Failed albedo reflected_1d test'
+	assert np.allclose(benchmark_spectrum['fpfs'], fpfs_r, rtol=1e-3, atol=1e-14), 'Failed fpfs reflected_1d test'
+	assert np.allclose(benchmark_spectrum['albedo_nowater'], alb_nowater_r, rtol=1e-3, atol=1e-8), 'Failed no H2O albedo reflected_1d test'
 
 
 @pytest.mark.needs_full_data
