@@ -979,7 +979,26 @@ def custom_interp(final_goal,fitter,grid_name, to_interp='spectra',array_to_inte
         spectra = array_to_interp
 
     
-    #transform to list of unique values 
+    #check that requested values are on the grid before interpolating
+    par_names = list(grid_pars.keys())
+    final_goal = np.atleast_1d(final_goal)
+    if len(final_goal) != len(par_names):
+        raise ValueError(f"custom_interp: final_goal has {len(final_goal)} values but grid "
+                         f"'{grid_name}' has {len(par_names)} parameters. Values must be given "
+                         f"in this order: {par_names}")
+    out_of_bounds = []
+    for name, val in zip(par_names, final_goal):
+        arr = np.asarray(grid_pars[name])
+        if len(arr) < 2:
+            raise ValueError(f"custom_interp: parameter '{name}' has only one grid value "
+                             f"({arr}) in grid '{grid_name}', so it cannot be interpolated.")
+        if (val < arr.min()) or (val > arr.max()):
+            out_of_bounds += [f"  {name} = {val} is outside grid bounds [{arr.min()}, {arr.max()}]"]
+    if len(out_of_bounds) > 0:
+        raise ValueError(f"custom_interp: requested values are off the grid '{grid_name}'. "
+                         "Extrapolation is not supported.\n" + "\n".join(out_of_bounds))
+
+    #transform to list of unique values
     grid_pars = list(grid_pars.values())
     hypercube = np.array(list(itertools.product([0,1],repeat=len(grid_pars))))
     hilos = np.array([find_bounding_values(arr, val)[0] for arr, val in 
