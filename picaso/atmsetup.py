@@ -868,6 +868,10 @@ class ATMSETUP():
 
         df['latitude'] = self.latitude
         df['longitude'] = self.longitude
+        #3d transit geometry (see inputs.transit_geometry)
+        if self.input['disco'].get('transit', False):
+            df['transit'] = {key: self.input['disco'][key] for key in
+                ['theta_edges', 'phi_edges', 'inclination', 'transit_latitude', 'transit_longitude']}
 
         df['star'] = {}
         df['star']['flux_unit'] = 'erg/cm2/s/cm'

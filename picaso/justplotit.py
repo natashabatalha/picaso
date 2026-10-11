@@ -872,6 +872,113 @@ def taumap(full_output, at_tau=1, wavelength=1,igauss=0, backend='matplotlib'):
         return
     return fig
 
+def transit_geometry(full_output, plane='day-night', sector=0, zenith=None, plot='temperature',
+    unit='R_jup', cmap='RdYlBu_r', ax=None, **kwargs):
+    """
+    Plot the columns of a 3D transmission calculation (to scale), colored by temperature
+    or a molecule's mixing ratio. Use this to check the geometry specified in
+    `transit_geometry`. Reproduces MacDonald & Lewis (2022) Figure 3 and Figure 9 (right).
+    Requires `spectrum(...,calculation='transmission', dimension='3d', full_output=True)`.
+
+    Parameters
+    ----------
+    full_output : dict
+        full_output from dictionary picaso output
+    plane : str
+        'day-night' (Default) plots the slice through the planet containing the observer
+        line of sight, for the azimuthal sector `sector` (top) and the opposite sector (bottom).
+        The star is to the left and the observer is to the right.
+        'terminator' plots the plane of the sky as seen by the observer, for the zenith
+        slice `zenith`. The leading limb (morning terminator) is to the right.
+    sector : int
+        Azimuthal sector index to plot for plane='day-night'. Default=0
+    zenith : int
+        Zenith slice index to plot for plane='terminator'. Default is the slice on the
+        dayside of the terminator plane.
+    plot : str
+        'temperature' (Default), or the name of a molecule to plot its mixing ratio
+    unit : str
+        Any astropy length unit for the axes. Default='R_jup'
+    cmap : str
+        Matplotlib colormap
+    ax : matplotlib axis
+        (Optional) Axis to plot on. If not supplied a new figure is created and shown.
+    kwargs : dict
+        Any of the common figure keywords (x_range, y_range, title, x_axis_label, y_axis_label),
+        and vmin, vmax for the color scale
+    """
+    from matplotlib.collections import PolyCollection
+    import astropy.units as u
+
+    if 'transit' not in full_output.keys():
+        raise Exception('full_output does not contain a 3D transit geometry. Run transit_geometry() and spectrum(...,dimension="3d", full_output=True)')
+
+    theta_edges = full_output['transit']['theta_edges']
+    phi_edges = full_output['transit']['phi_edges']
+    z = full_output['level']['z'] / (1*u.Unit(unit)).to(u.cm).value
+    vmin, vmax = kwargs.pop('vmin', None), kwargs.pop('vmax', None)
+    if plot == 'temperature':
+        value = full_output['layer']['temperature']
+        label, norm = 'Temperature (K)', colors.Normalize(vmin=vmin, vmax=vmax)
+    else:
+        imol = list(full_output['weights'].keys()).index(plot)
+        value = full_output['layer']['mixingratios'][:,imol,:,:]
+        label, norm = f'{plot} Mixing Ratio', colors.LogNorm(vmin=vmin, vmax=vmax)
+    nlayer, nzen, nsec = value.shape
+
+    def wedge(r_low, r_up, ang_a, ang_b, sign=1):
+        #polygon for an annular wedge, sampled every ~1 degree
+        ang = np.linspace(ang_a, ang_b, max(2, int(np.ceil(np.degrees(ang_b-ang_a)))+1))
+        r = np.concatenate([np.full(len(ang), r_up), np.full(len(ang), r_low)])
+        ang = np.concatenate([ang, ang[::-1]])
+        return np.column_stack([r*np.sin(ang), sign*r*np.cos(ang)])
+
+    polys, vals = [], []
+    if plane == 'day-night':
+        #the opposite sector is drawn on the bottom half
+        phi_center = 0.5*(phi_edges[1:] + phi_edges[:-1])
+        dist = np.abs(np.angle(np.exp(1j*(phi_center - phi_center[sector] - np.pi))))
+        opposite = np.argmin(dist)
+        for j, sign in [(sector, 1), (opposite, -1)]:
+            for k in range(nzen):
+                for l in range(nlayer):
+                    polys += [wedge(z[l+1,k,j], z[l,k,j], theta_edges[k], theta_edges[k+1], sign)]
+                    vals += [value[l,k,j]]
+        title = f'Day-Night Plane (sector {sector} and {opposite})'
+        xlabel, ylabel = f'Distance Toward Observer ({unit})', f'Impact Parameter ({unit})'
+    elif plane == 'terminator':
+        if zenith is None: zenith = np.argmin(np.abs(theta_edges[1:]))
+        for j in range(nsec):
+            for l in range(nlayer):
+                polys += [wedge(z[l+1,zenith,j], z[l,zenith,j], phi_edges[j], phi_edges[j+1])]
+                vals += [value[l,zenith,j]]
+        th_a, th_b = np.degrees(theta_edges[zenith:zenith+2])
+        title = f'Terminator Plane (zenith slice {zenith}: {th_a:.1f} to {th_b:.1f} deg)'
+        xlabel, ylabel = f'Morning Terminator Direction ({unit})', f'North ({unit})'
+    else:
+        raise Exception("plane must be 'day-night' or 'terminator'")
+
+    show = ax is None
+    if show: fig, ax = plt.subplots(figsize=(6,6))
+    collection = PolyCollection(polys, array=np.array(vals), cmap=cmap, norm=norm, edgecolors='face', linewidths=0.2)
+    ax.add_collection(collection)
+    ax.add_patch(plt.Circle((0,0), np.min(z[-1]), color='0.3'))
+    rmax = np.max(z[0])*1.05
+    ax.set_xlim(-rmax, rmax); ax.set_ylim(-rmax, rmax)
+    ax.set_aspect('equal')
+    if plane == 'day-night':
+        ax.axvline(0, color='k', ls=':', lw=1)
+        ax.annotate('to star', xy=(-rmax*0.95, -rmax*0.95), ha='left')
+        ax.annotate('to observer', xy=(rmax*0.95, -rmax*0.95), ha='right')
+    plt.colorbar(collection, ax=ax, label=label, shrink=0.8)
+    kwargs['title'] = kwargs.get('title', title)
+    kwargs['x_axis_label'] = kwargs.get('x_axis_label', xlabel)
+    kwargs['y_axis_label'] = kwargs.get('y_axis_label', ylabel)
+    _mpl_format(ax, kwargs)
+    if show:
+        plt.show()
+    return
+
 def plot_evolution(evo, y = "Teff",**kwargs):
     """
     Plot evolution of tracks. Requires input from justdoit: 

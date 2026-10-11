@@ -2667,12 +2667,84 @@ def get_transit_1d(z, dz,nlevel, nwno, rstar, mmw, k_b,amu,
     return F
 
 
-def get_transit_3d(nlevel, nwno, radius, gravity,rstar, mass, mmw, k_b, G,amu,
-                   p_reference, plevel, tlevel, player, tlayer, colden, DTAU):
+def get_transit_3d(z, DTAU, theta_edges, phi_edges, rstar):
     """
-    Routine to get the 3D transmission spectrum 
+    Routine to get the 3D transmission spectrum in the geometric limit
+    (no refraction, scattering treated as extinction). Follows the path
+    distribution approach of TRIDENT (MacDonald & Lewis 2022).
+
+    Each atmospheric column is defined by a zenith slice, k, (angle from the terminator
+    plane, from the dayside to the nightside) and an azimuthal sector, j, (angle in the
+    terminator plane measured from the north pole). Each column has its own radial grid.
+
+    Parameters
+    ----------
+    z : float, array
+        Radius of each level (cm), with dimensions (nlevel, nzenith, nsector).
+        z[0] is the top of the atmosphere. This is atm.level['z'] from a 3d transit geometry.
+    DTAU : float, array
+        Vertical optical depth of each layer with dimensions (nlayer, nwno, nzenith, nsector).
+        This is TAUGAS + TAURAY + TAUCLD (DTAU_OG from optics)
+    theta_edges : float, array
+        Zenith angle boundaries of each slice (radians), with dimensions nzenith+1.
+        Must increase from -pi/2 (dayside) to pi/2 (nightside) and include 0 as an edge
+    phi_edges : float, array
+        Azimuthal boundaries of each sector (radians), with dimensions nsector+1 and
+        spanning 2pi
+    rstar : float
+        Radius of star (cm)
+
+    Returns
+    -------
+    array
+        Rp**2 /Rs**2 as a function of wavelength
+
+    Notes
+    -----
+    .. [1] MacDonald, R. J. & Lewis, N. K. "TRIDENT: A Rapid 3D Radiative Transfer Model for Exoplanet Transmission Spectra." The Astrophysical Journal 929.1 (2022): 20.
     """
-    return 
+    nlayer, nwno, nzen, nsec = DTAU.shape
+
+    r_up = z[:-1]
+    r_low = z[1:]
+    dr = r_up - r_low
+    #all columns share a common radius at the bottom of the atmosphere
+    #(choose p_reference at the bottom of the pressure grid)
+    r_deep = np.max(z[-1])
+    r_top = z[0]
+
+    #impact parameters coincide with the levels of the column with greatest radial extent
+    itop = np.unravel_index(np.argmax(r_top), r_top.shape)
+    b_edges = np.sort(z[:, itop[0], itop[1]])
+    b = 0.5*(b_edges[1:] + b_edges[:-1])
+    db = np.diff(b_edges)
+
+    #minimum and maximum radius encountered by each ray in each column (Eqn 28-29)
+    abs_theta = np.abs(theta_edges)
+    cos_min = np.cos(np.minimum(abs_theta[:-1], abs_theta[1:]))
+    cos_max = np.cos(np.maximum(abs_theta[:-1], abs_theta[1:]))
+    cos_max[cos_max < 1e-10] = 1e-10 #rays at theta=pi/2 never return to r_top
+    rmin = np.minimum(r_top[None,:,:], b[:,None,None]/cos_min[None,:,None])
+    rmax = np.minimum(r_top[None,:,:], b[:,None,None]/cos_max[None,:,None])
+
+    #path distribution tensor (Eqn 26). Clipping the layer boundaries to
+    #[rmin, rmax] reproduces all six conditions of Eqn 27
+    lo = np.clip(r_low[None,:,:,:], rmin[:,None,:,:], rmax[:,None,:,:])
+    hi = np.clip(r_up[None,:,:,:], rmin[:,None,:,:], rmax[:,None,:,:])
+    b2 = (b**2)[:,None,None,None]
+    path = (np.sqrt(np.maximum(hi**2 - b2, 0)) - np.sqrt(np.maximum(lo**2 - b2, 0))) / dr[None,:,:,:]
+
+    #wavelength independent, so we can loop over sectors to save memory
+    #(Eqn 30-32 rewritten in terms of the absorbing area, 1-T)
+    dphi = np.diff(phi_edges)
+    absorbed = zeros(nwno)
+    for j in range(nsec):
+        tau_path = np.tensordot(path[:,:,:,j], DTAU[:,:,:,j], axes=([1,2],[0,2]))
+        absorbed += dphi[j] * dot(b*db, 1.0 - exp(-tau_path))
+
+    F = (r_deep**2 + absorbed/pi) / rstar**2
+
+    return F
 
 
 #@jit(nopython=True, cache=True, debug=True)
