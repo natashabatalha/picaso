@@ -1,0 +1,44 @@
+# Runs the unit tests on every pull request and on pushes to master and dev.
+#
+# Only data that is in git is available here: the small reference/ files and the mini H2O/CO2
+# opacity db in reference/base_cases/retrieval_example/. Tests that need the full opacity db or
+# stellar grids are marked needs_full_data and skip themselves; run those locally with `pytest`.
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [master, dev]
+  workflow_dispatch:
+
+# a new push to the same branch cancels the run that is still going
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install picaso with test dependencies
+        run: pip install -e ".[test]"
+
+      - name: Run tests
+        run: pytest -ra --cov=picaso --cov-report=term --cov-report=markdown:coverage.md
+
+      - name: Add coverage to the job summary
+        if: always() && hashFiles('coverage.md') != ''
+        run: cat coverage.md >> "$GITHUB_STEP_SUMMARY"

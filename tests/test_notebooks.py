@@ -1,4 +1,5 @@
 import json
+import pytest
 import pandas as pd
 #from bokeh.plotting import figure, show, output_file
 #from bokeh.palettes import inferno
@@ -52,6 +53,7 @@ __refdata__ = os.environ.get('picaso_refdata')
 # 		pd.DataFrame(dict(benchmark_spectrum=benchmark_spectrum)).to_csv('example_test.csv')
 
 
+@pytest.mark.needs_full_data
 def test_reflected_1d(create_data=False):
 	"""
 	This tests the functionality of 1D reflected light spectra from notebook #1 'Getting Started'
@@ -143,6 +145,7 @@ def test_reflected_1d(create_data=False):
 	assert np.allclose(benchmark_spectrum['albedo_nowater'], alb_nowater, atol=0.01, equal_nan=True), 'Failed no H2O albedo reflected_1d test'
 
 
+@pytest.mark.needs_full_data
 def test_model_storage():
 	"""
 	This tests the functionality of model storage and read-in from notebook 'Model Storage'
