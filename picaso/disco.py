@@ -1,6 +1,7 @@
 from numba import jit
 from numpy import pi, zeros, cos, arcsin, sin, arccos,outer,array,sum,zeros, linspace
 from numpy import polynomial
+import numpy as np
 import json 
 import os 
 
@@ -113,6 +114,44 @@ def get_angles_3d(num_gangle, num_tangle):
     gangle, gweight=polynomial.legendre.leggauss(num_gangle)
 
     return gangle,gweight,tangle,tweight
+
+def compute_transit_disco(theta, phi, inclination):
+    """
+    Computes the planetary latitude and longitude of each column used in a 3D
+    transmission calculation (evaluated at mid-transit).
+
+    Ray frame: x points toward the observer, y along the orbital motion, z toward
+    sky-projected north. A column at zenith angle theta (from the terminator plane,
+    negative on the dayside) and azimuth phi (in the terminator plane, from north,
+    positive toward +y) points along (sin theta, cos theta sin phi, cos theta cos phi).
+
+    Planet frame: longitude=0 at the substellar point and increases eastward, such
+    that the evening terminator is at longitude=+90 and the morning terminator
+    (leading limb) is at longitude=-90. Zero obliquity is assumed.
+
+    Parameters
+    ----------
+    theta : array
+        Zenith angle of each column (radians), dimension nzenith
+    phi : array
+        Azimuthal angle of each column (radians), dimension nsector
+    inclination : float
+        Orbital inclination (radians). pi/2 is edge on
+
+    Returns
+    -------
+    np.ndarray, np.ndarray
+        latitude, longitude (radians) each with dimensions (nzenith, nsector)
+    """
+    theta2d, phi2d = np.meshgrid(theta, phi, indexing='ij')
+    v = np.array([np.sin(theta2d), np.cos(theta2d)*np.sin(phi2d), np.cos(theta2d)*np.cos(phi2d)])
+    #orbit normal, substellar direction and east, in the ray frame
+    pole = np.array([np.cos(inclination), 0, np.sin(inclination)])
+    substellar = np.array([-np.sin(inclination), 0, np.cos(inclination)])
+    east = np.cross(pole, substellar)
+    latitude = np.arcsin(np.clip(np.einsum('i,ijk->jk', pole, v), -1, 1))
+    longitude = np.arctan2(np.einsum('i,ijk->jk', east, v), np.einsum('i,ijk->jk', substellar, v))
+    return latitude, longitude
 
 @jit(nopython=True, cache=True)
 def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI): 

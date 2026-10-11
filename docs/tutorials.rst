@@ -62,6 +62,7 @@ Step-by-step introductions to each part of PICASO, from a first spectrum to 3D m
    Thermal Phase Curve pt 1 (Robbins-Blanch et al. 2022) <notebooks/E_3dmodeling/6_PhaseCurves.py>
    Thermal Phase Curve pt 2 (Robbins-Blanch et al. 2022) <notebooks/E_3dmodeling/7_PhaseCurves-wChemEq.py>
    Reflected Light Phase Curve (Hamill et al. 2024) <notebooks/E_3dmodeling/8_ReflectedPhaseCurve.py>
+   3D Transmission Spectra: Benchmark with TRIDENT (MacDonald & Lewis 2022) <notebooks/E_3dmodeling/9_3DTransmissionBenchmark.py>
 
 Fitting data: cite the papers listed under *Grid fits* and *Retrievals* in :doc:`credit`.
 

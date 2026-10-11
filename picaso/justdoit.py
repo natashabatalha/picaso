@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
-from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, tidal_flux
+from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, get_transit_3d, tidal_flux
 from .fluxes_noalloc import get_reflected_1d
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
@@ -7,9 +7,9 @@ from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_w
 
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities, RetrieveOpacitiesHDF5, compute_opacity, RetrieveCKs
-from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
+from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal, compute_transit_disco
 from .justplotit import numba_cumsum, mean_regrid
-from .build_3d_input import regrid_xarray
+from .build_3d_input import regrid_xarray, regrid_transit
 
 
 from virga import justdoit as vj
@@ -555,8 +555,21 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                             PLEVEL_3d,ubar1, atm.surf_reflect, atm.hard_surface)
                 flux_at_top += flux*gauss_wts[ig]
             #if full output is requested add in flux at top for 3d plots
-            if full_output: 
+            if full_output:
                 atm.flux_at_top = flux_at_top
+
+        if 'transmission' in calculation:
+            if not geom.get('transit', False):
+                raise Exception('3D transmission requires the transit geometry. Please run transit_geometry() before atmosphere_3d()')
+            #only full transits are currently supported (no grazing, ingress or egress)
+            if not np.isnan(sa):
+                b_planet = sa*np.cos(geom['inclination'])
+                if b_planet + np.max(atm.level['z']) > radius_star:
+                    warnings.warn('The atmosphere does not fully overlap the star at mid-transit (grazing transit). get_transit_3d assumes a full transit so the transit depth will be overestimated.')
+            rprs2 = 0
+            for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
+                rprs2 += get_transit_3d(atm.level['z'], DTAU_OG_3d[:,:,:,:,ig],
+                                        geom['theta_edges'], geom['phi_edges'], radius_star)*gauss_wts[ig]
 
     #set up initial returns
     returns = {}
@@ -1667,9 +1680,81 @@ class inputs():
                 #add this to disco
                 self.inputs['disco'] = unique_geom
                 self.inputs['disco']['full_geometry'] = full_geom
-            else: 
+            else:
                 full_geom['symmetry'] = 'false'
                 self.inputs['disco'] = full_geom
+
+    def transit_geometry(self, num_zenith=10, num_sector=8, inclination=np.pi/2,
+        zenith_edges=None, sector_edges=None):
+        """
+        Defines the geometry for a 3D transmission calculation (evaluated at mid-transit).
+        Use this instead of `phase_angle` before running `atmosphere_3d`, `clouds_3d` and
+        `spectrum(opa, calculation='transmission', dimension='3d')`.
+
+        The atmosphere is divided into columns defined by a zenith slice (angle from the
+        terminator plane, from -pi/2 on the dayside to pi/2 on the nightside) and an
+        azimuthal sector (angle in the terminator plane, measured from the north pole).
+        See MacDonald & Lewis (2022) Figure 2.
+
+        Parameters
+        ----------
+        num_zenith : int
+            Number of zenith slices from the dayside to the nightside. Must be even so
+            that the terminator plane is a slice boundary. Default=10, uniformly spaced
+        num_sector : int
+            Number of azimuthal sectors around the terminator. Default=8, uniformly spaced
+        inclination : float
+            Orbital inclination in radians (Default = pi/2, edge on). This tilts the
+            terminator with respect to the planet's equator by pi/2-inclination.
+        zenith_edges : array
+            (Optional) Supply your own zenith slice boundaries (radians), increasing from
+            -pi/2 to pi/2 and including 0. Useful for resolving a narrow day-night transition.
+            Overrides num_zenith.
+        sector_edges : array
+            (Optional) Supply your own azimuthal sector boundaries (radians), increasing
+            and spanning 2pi. Overrides num_sector.
+        """
+        if isinstance(zenith_edges, type(None)):
+            if np.mod(num_zenith, 2) != 0:
+                raise Exception('num_zenith must be even so that the terminator plane is a slice boundary')
+            zenith_edges = np.linspace(-np.pi/2, np.pi/2, num_zenith+1)
+        zenith_edges = np.array(zenith_edges, dtype=float)
+        if ((not np.isclose(zenith_edges[0], -np.pi/2)) or (not np.isclose(zenith_edges[-1], np.pi/2))
+            or (np.min(np.abs(zenith_edges)) > 1e-10) or np.any(np.diff(zenith_edges) <= 0)):
+            raise Exception('zenith_edges must increase from -pi/2 to pi/2 and include 0')
+
+        if isinstance(sector_edges, type(None)):
+            sector_edges = np.linspace(-np.pi, np.pi, num_sector+1)
+        sector_edges = np.array(sector_edges, dtype=float)
+        if ((not np.isclose(sector_edges[-1]-sector_edges[0], 2*np.pi)) or np.any(np.diff(sector_edges) <= 0)):
+            raise Exception('sector_edges must increase and span 2pi')
+
+        theta = 0.5*(zenith_edges[1:] + zenith_edges[:-1])
+        phi = 0.5*(sector_edges[1:] + sector_edges[:-1])
+        ng, nt = len(theta), len(phi)
+
+        lat2d, lon2d = compute_transit_disco(theta, phi, inclination)
+
+        #zenith slices take the place of gauss angles, and azimuthal sectors
+        #take the place of tchebychev angles so the 3d machinery is unchanged
+        geom = {}
+        geom['transit'] = True
+        geom['calculation'] = 'transmission'
+        geom['symmetry'] = 'false'
+        geom['num_gangle'], geom['num_tangle'] = ng, nt
+        geom['gangle'], geom['gweight'] = theta, np.diff(zenith_edges)
+        geom['tangle'], geom['tweight'] = phi, np.diff(sector_edges)
+        #these are the column labels used to read the regridded 3d input (see regrid_transit)
+        geom['longitude'], geom['latitude'] = theta, phi
+        #these are the true planet latitude/longitude of each column
+        geom['transit_latitude'], geom['transit_longitude'] = lat2d, lon2d
+        geom['theta_edges'], geom['phi_edges'] = zenith_edges, sector_edges
+        geom['inclination'] = inclination
+        geom['cos_theta'] = 1.0
+        geom['ubar0'], geom['ubar1'] = np.ones((ng, nt)), np.ones((ng, nt))
+
+        self.inputs['phase_angle'] = 0
+        self.inputs['disco'] = geom
 
     def phase_curve_geometry(self, calculation, phase_grid, num_gangle=10, num_tangle=10): 
         """
@@ -3649,9 +3734,14 @@ class inputs():
             #cannot regrid from a course grid to a high one
             assert nt <= len(lat), f'Cannot regrid from a course grid. num_tangle={nt} and input grid has len(lat)={len_lat}'
             assert ng <= len(lon), f'Cannot regrid from a course grid. num_gangle={nt} and input grid has len(lon)={len_lon}'
-            #call regridder to get to gauss angle chevychev angle grid
-            if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to ngangle={ng}, ntangle={nt}, with phase={phase}.')
-            ds = regrid_xarray(ds, num_gangle=ng, num_tangle=nt, phase_angle=phase)
+            if self.inputs['disco'].get('transit', False):
+                #call regridder to get to zenith slice, azimuthal sector grid
+                if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to transit geometry with nzenith={ng}, nsector={nt}.')
+                ds = regrid_transit(ds, self.inputs['disco'])
+            else:
+                #call regridder to get to gauss angle chevychev angle grid
+                if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to ngangle={ng}, ntangle={nt}, with phase={phase}.')
+                ds = regrid_xarray(ds, num_gangle=ng, num_tangle=nt, phase_angle=phase)
         else: 
             #check lat and lons match up
             assert np.array_equal(self.inputs['disco']['latitude']*180/np.pi,
@@ -4771,9 +4861,14 @@ class inputs():
             #cannot regrid from a course grid to a high one
             assert nt <= len(lat), f'Cannot regrid from a course grid. num_tangle={nt} and input grid has len(lat)={len_lat}'
             assert ng <= len(lon), f'Cannot regrid from a course grid. num_gangle={nt} and input grid has len(lon)={len_lon}'
-            #call regridder to get to gauss angle chevychev angle grid
-            if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to ngangle={ng}, ntangle={nt}, with phase={phase}.')
-            ds = regrid_xarray(ds, num_gangle=ng, num_tangle=nt, phase_angle=phase)
+            if self.inputs['disco'].get('transit', False):
+                #call regridder to get to zenith slice, azimuthal sector grid
+                if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to transit geometry with nzenith={ng}, nsector={nt}.')
+                ds = regrid_transit(ds, self.inputs['disco'])
+            else:
+                #call regridder to get to gauss angle chevychev angle grid
+                if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to ngangle={ng}, ntangle={nt}, with phase={phase}.')
+                ds = regrid_xarray(ds, num_gangle=ng, num_tangle=nt, phase_angle=phase)
         else: 
             #check lat and lons match up
             assert np.array_equal(self.inputs['disco']['latitude']*180/np.pi,

@@ -61,6 +61,55 @@ def regrid_xarray(xarray_original, num_gangle=None, num_tangle=None,phase_angle=
 
     return ds_out
 
+def regrid_transit(xarray_original, geom):
+    """
+    Regrids a lat/lon xarray onto the columns of a 3D transit geometry
+    (see `inputs.transit_geometry`). Uses linear interpolation (periodic in longitude).
+
+    The columns are not a rectilinear grid in latitude/longitude. Therefore, the output
+    is relabeled so that the coordinate 'lon' holds the zenith angle of each column and
+    'lat' holds the azimuthal angle of each column (both in degrees). These are the
+    values stored in geom['longitude'] and geom['latitude'], so the rest of the 3D
+    machinery can read each column as usual. Here we store the "real" latitude/longitude 
+    of each column are in inputs['disco']['transit_latitude'] and ['transit_longitude'].
+
+    Parameters
+    ----------
+    xarray_original : xarray
+        xarray with 'lat' and 'lon' coordinates in degrees, with longitude=0 at the
+        substellar point
+    geom : dict
+        Transit geometry dictionary, inputs['disco'], built by `inputs.transit_geometry`
+
+    Returns
+    -------
+    xarray regridded onto the transit columns
+    """
+    ds = xarray_original.sortby('lon').sortby('lat')
+    lon_in = ds.coords['lon'].values
+    lat_in = ds.coords['lat'].values
+
+    lat2d = geom['transit_latitude']*180/np.pi
+    lon2d = geom['transit_longitude']*180/np.pi
+    #match the longitude convention of the input (-180 to 180 or 0 to 360)
+    if np.max(lon_in) > 180:
+        lon2d = np.mod(lon2d, 360)
+    #pad one column on either side so longitude interpolation is periodic
+    ds = xr.concat([ds.isel(lon=[-1]).assign_coords(lon=[lon_in[-1]-360]), ds,
+                    ds.isel(lon=[0]).assign_coords(lon=[lon_in[0]+360])], dim='lon')
+    #columns poleward of the input grid take the value of the closest latitude
+    lat2d = np.clip(lat2d, np.min(lat_in), np.max(lat_in))
+
+    ds_out = ds.interp(lon=xr.DataArray(lon2d, dims=['lon_transit','lat_transit']),
+                       lat=xr.DataArray(lat2d, dims=['lon_transit','lat_transit']),
+                       kwargs={'fill_value':None})
+    ds_out = ds_out.drop_vars(['lon','lat']).rename({'lon_transit':'lon','lat_transit':'lat'})
+    ds_out = ds_out.assign_coords(lon=geom['longitude']*180/np.pi, lat=geom['latitude']*180/np.pi)
+    ds_out.coords['lon'].attrs['units'] = 'degrees (transit zenith angle)'
+    ds_out.coords['lat'].attrs['units'] = 'degrees (transit azimuthal angle)'
+
+    return ds_out
+
 def rebin_mitgcm_pt(ng, nt, phase_angle, input_file, output_file,p_unit='Pa', kzz_unit = 'm*m/s',run_chem=False, MH=None, CtoO=None):
     """
     Rebin GCM grid to a smaller grid. This function creates a pickle file 
