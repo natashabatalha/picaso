@@ -745,41 +745,6 @@ def numba_cumsum(mat):
         new_mat[:,i] = np.cumsum(mat[:,i])
     return new_mat
 
-def spectrum_hires_deprecate(wno, alb,legend=None, **kwargs):
-    """Plot formated albedo spectrum
-
-    Parameters
-    ----------
-    wno : float array, list of arrays
-        wavenumber 
-    alb : float array, list of arrays 
-        albedo 
-    legend : list of str 
-        legends for plotting 
-    **kwargs : dict     
-        Any key word argument for hv.opts
-
-    Returns
-    -------
-    bokeh plot
-    """
-    import holoviews as hv
-    from holoviews.operation.datashader import datashade
-
-    hv.extension('bokeh')
-
-    kwargs['height'] = kwargs.get('plot_height',kwargs.get('height',345))
-    kwargs['width'] = kwargs.get('plot_width', kwargs.get('width',1000))
-    if 'plot_width' in kwargs.keys() : kwargs.pop('plot_width')
-    if 'plot_height' in kwargs.keys() : kwargs.pop('plot_height')
-    kwargs['y_axis_label'] = kwargs.get('y_axis_label','Albedo')
-    kwargs['x_axis_label'] = kwargs.get('x_axis_label','Wavelength [μm]')
-    kwargs['y_range'] = kwargs.get('y_range',[0,1.2])
-    kwargs['x_range'] = kwargs.get('x_range',[0.3,1])
-
-    points_og = datashade(hv.Curve((1e4/wno, alb)))
-
-    return points_og
 
 def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3],ng=None, nt=None,
     backend='bokeh', **kwargs):

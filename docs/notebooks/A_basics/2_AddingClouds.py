@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.19.6
 #   kernelspec:
-#     display_name: pic312
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -176,4 +176,4 @@ jpi.show(jpi.spectrum(wno, alb, plot_width=500))
 # ### Plot cloud from output data
 
 # %%
-fig=jpi.cloud(df['full_output'])
+fig=jpi.cloud(df['full_output'],backend='matplotlib')
