@@ -3091,7 +3091,7 @@ class inputs():
         for key in gases:
             self.inputs['atmosphere']['profile'][key] = gases[key]
 
-    def chemeq_visscher_2121(self, cto_absolute, log_mh):#, interp_window = 11, interp_poly=2):
+    def chemeq_visscher_2121(self, cto_absolute, log_mh, feh_tolerance=0.1, co_tolerance=0.05):#, interp_window = 11, interp_poly=2):
         """
         Author of Data: Channon Visscher
 
@@ -3170,13 +3170,20 @@ class inputs():
 
         Parameters
         ----------
-        cto_absolute : int 
+        cto_absolute : float
             carbon to oxygen ratio absolute units.
+            Will find the nearest grid value (grid spans 0.14 to 1.10)
             Solar = 0.55
-        log_mh : int 
+        log_mh : float
             metallicity (relative to solar)
-            Will find the nearest value to 0.0, 0.5, 1.0, 1.5, 1.7, 2.0
+            Will find the nearest grid value (grid spans -2.0 to 2.0)
             Solar = 0
+        feh_tolerance : float
+            (Optional) How far (in dex) log_mh is allowed to fall outside the edges of the grid
+            before an exception is raised. Default = 0.1
+        co_tolerance : float
+            (Optional) How far cto_absolute is allowed to fall outside the edges of the grid
+            before an exception is raised. Default = 0.05
         """
         target_feh=log_mh
         target_co=cto_absolute
@@ -3225,6 +3232,18 @@ class inputs():
 
         if not candidate_files:
             raise Exception(f"No files matching the pattern '{filename_pattern_str}' found in directory '{directory}'.")
+
+        #make sure we are not too far outside the grid before picking a nearest neighbor
+        grid_fehs = [i["feh"] for i in candidate_files]
+        grid_cos = [i["co"] for i in candidate_files]
+        if ((target_feh < min(grid_fehs) - feh_tolerance) or (target_feh > max(grid_fehs) + feh_tolerance)):
+            raise Exception(f"log_mh={target_feh} is outside the bounds of the visscher 2121 chemistry grid "
+                f"({min(grid_fehs)} to {max(grid_fehs)}, with a tolerance of {feh_tolerance} dex). "
+                "Choose a metallicity within the grid or use a different chem_method (e.g. on-the-fly or photochem).")
+        if ((target_co < min(grid_cos) - co_tolerance) or (target_co > max(grid_cos) + co_tolerance)):
+            raise Exception(f"cto_absolute={target_co} is outside the bounds of the visscher 2121 chemistry grid "
+                f"({min(grid_cos)} to {max(grid_cos)}, with a tolerance of {co_tolerance}). "
+                "Choose a C/O within the grid or use a different chem_method (e.g. on-the-fly or photochem).")
 
         closest_file_info = None
         min_distance = float('inf')
@@ -3325,10 +3344,14 @@ class inputs():
         #allowable fehs
         fehs = np.array([-0.3, 0.0,0.3,0.5,0.7,1.0,1.5,1.7,2.0])
 
-        if log_mh > max(fehs): 
+        if log_mh > max(fehs):
             raise Exception('Choose a log metallicity less than 2.0')
-        if c_o > max(cos): 
+        if log_mh < min(fehs):
+            raise Exception('Choose a log metallicity greater than -0.3')
+        if c_o > max(cos):
             raise Exception('Choose a C/O less than 2.5xSolar')
+        if c_o < min(cos):
+            raise Exception('Choose a C/O greater than 0.25xSolar')
 
         grid_co = cos[np.argmin(np.abs(cos-c_o))]
         grid_feh = fehs[np.argmin(np.abs(fehs-log_mh))]
