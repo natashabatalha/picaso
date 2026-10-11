@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.19.6
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -86,6 +86,31 @@ jpi.show(jpi.flux_at_top(out3d ,
 
 # %%
 jpi.disco(out3d['full_output'] ,wavelength=[1.1, 1.4], calculation='thermal')
+
+# %% [markdown]
+# ### 3D Map of Brightness Temperature
+#
+# The brightness temperature plot is 1D by default (computed from the disk integrated `thermal` output). Setting `dimension='3d'` instead uses the `thermal_3d` output to compute the brightness temperature of every facet, and plots it as a latitude-longitude map. `R` rebins the spectrum of each facet before mapping.
+#
+# `wavelength` can either be a single value (maps the nearest wavelength) or `[min, max]` (maps the brightness temperature averaged over that wavelength region). If it is not specified, the average over the full spectrum is mapped. Note that `with_guide` is not available in 3D, and that the 3D map is only available with the matplotlib backend.
+
+# %%
+#single wavelength
+T_B_3d, fig = jpi.brightness_temperature(out3d, R=100, dimension='3d', wavelength=1.4)
+
+# %%
+#averaged over a wavelength region
+T_B_3d, fig = jpi.brightness_temperature(out3d, R=100, dimension='3d', wavelength=[1.2, 1.5])
+#T_B_3d is [ng, nt, nwave]
+print(T_B_3d.shape)
+
+# %% [markdown]
+# The same plot is available through the `Analyzer` class, which also offers bokeh and plotly versions of the 1D brightness temperature
+
+# %%
+analyze = jpi.Analyzer(out3d, backend='bokeh')
+fig, T_B_1d = analyze.brightness_temperature(R=100)
+jpi.show(fig)
 
 # %% [markdown]
 # ### 3D Map of Gas Opacity Sources

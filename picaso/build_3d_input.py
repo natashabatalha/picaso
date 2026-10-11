@@ -54,6 +54,13 @@ def regrid_xarray(xarray_original, num_gangle=None, num_tangle=None,phase_angle=
                     }
                    )
 
+    #xesmf regrids over the last two dimensions (lat, lon). If the input is stored in a different
+    #order (e.g. lon, lat, pressure) xesmf transposes it, which creates a non C_CONTIGUOUS array and
+    #raises a performance warning. So here we put lat, lon last and make the data contiguous in memory
+    xarray_original = xarray_original.transpose(..., 'lat', 'lon')
+    xarray_original = xarray_original.copy(data={v: np.ascontiguousarray(xarray_original[v].values)
+                                                 for v in xarray_original.data_vars})
+
     regridder = xe.Regridder(xarray_original, ds_out, 'bilinear')
     ds_out = regridder(xarray_original,keep_attrs=True)
 

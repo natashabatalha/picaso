@@ -13,6 +13,7 @@ Colorblind8 = pals.Colorblind8
 RdGy = pals.RdGy
 
 import os 
+import warnings
 import copy
 from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
@@ -1481,7 +1482,8 @@ def transmission_contribution(full_output ,R=None, backend='matplotlib', **kwarg
     """
     return Analyzer(full_output, backend=backend).transmission_contribution(R=R, **kwargs)
 
-def brightness_temperature(out_dict,plot=True, R = None, with_guide=True): 
+def brightness_temperature(out_dict,plot=True, R = None, with_guide=None, dimension='1d',
+    wavelength=None, backend='matplotlib'): 
     r"""
     Plots and returns brightness temperature
 
@@ -1497,12 +1499,43 @@ def brightness_temperature(out_dict,plot=True, R = None, with_guide=True):
     plot : bool 
         If true creates and returns a plot 
     R : float 
-        If not None, rebins the brightness temperature 
+        If not None, rebins the brightness temperature. In 3d mode every 
+        facet (ng, nt) is rebinned 
     with_guide : bool 
-        Plots points from the minimum and maximum pt values 
+        Plots points from the minimum and maximum pt values. Default is True in 1d 
+        mode. Not available in 3d mode (a warning is raised if requested).
+    dimension : str 
+        '1d' (default) uses the disk integrated output['thermal']. '3d' uses 
+        output['full_output']['thermal_3d'] and plots a latitude-longitude map 
+        of the brightness temperature of each facet
+    wavelength : float or list, optional
+        3d mode only. Wavelength in micron to map. Either a single value (maps the nearest 
+        wavelength) or [min, max] (maps the brightness temperature averaged over that 
+        wavelength region). Default (None) averages over all wavelengths. Only one map is created.
+    backend : str 
+        'matplotlib' (default), 'bokeh', or 'plotly'. 3d mode is only available 
+        with 'matplotlib'
+
+    Returns
+    -------
+    T_B, fig if plot=True, else T_B. 
+        In 1d mode T_B is [nwave], in 3d mode T_B is [ng, nt, nwave]
     """
-    flux = out_dict['thermal']/np.pi*1e-7
-    wno = out_dict['wavenumber']
+    analyze = Analyzer(out_dict, backend=backend)
+    if plot: 
+        fig, T_B = analyze.brightness_temperature(R=R, with_guide=with_guide, dimension=dimension,
+                                                  wavelength=wavelength)
+        return T_B , fig
+    else: 
+        _, T_B = analyze._brightness_temperature_data(R=R, dimension=dimension)
+        return T_B
+
+def _brightness_temperature(wno, thermal):
+    """
+    Brightness temperature from thermal flux in erg/cm2/s/cm. 
+    Wavelength must be the last axis of thermal
+    """
+    flux = thermal/np.pi*1e-7
     lam = 1e4/wno
     a=1.43877735e-2  #m K
     hc2=2*5.95521476e-17   # m^4 kg/s^3
@@ -1511,32 +1544,7 @@ def brightness_temperature(out_dict,plot=True, R = None, with_guide=True):
     ## converting wv to m from microns
     lam=lam*1e-6
 
-    T_B  = (a/lam)/np.log(1+(hc2/flux/lam**5))
-
-    
-
-
-    if not isinstance(R, type(None)):
-        wno, T_B = mean_regrid(wno, T_B, R=R)
-
-    if plot: 
-        if with_guide: t_eq = out_dict['full_output']['layer']['temperature']
-        f = plt.figure(figsize=(15,8))
-        plt.xlabel("Wavelength [microns]",fontsize=20)
-        plt.ylabel("Brightness Temperature [K]",fontsize=20)
-        plt.xlim(min(1e4/wno),max(1e4/wno))
-        if with_guide: plt.ylim(np.min(t_eq)-0.1*np.min(t_eq),np.max(t_eq)+0.1*np.min(t_eq))
-
-
-        plt.semilogx(1e4/wno,T_B,color='k', label="Brightness Temperature")
-        if with_guide: plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
-        if with_guide: plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
-
-        plt.legend(fontsize=10)        
-    
-        return T_B , f
-    else: 
-        return T_B
+    return (a/lam)/np.log(1+(hc2/flux/lam**5))
 
 
 def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal',
@@ -1907,7 +1915,8 @@ class Analyzer:
     output : dict
         Either the full dictionary returned by ``spectrum(opa, full_output=True)``
         (which has the keys 'wavenumber', 'full_output', ...), or ``output['full_output']``.
-        Only ``flux_at_top`` requires the full dictionary.
+        Only ``flux_at_top`` and 1d ``brightness_temperature`` require the full dictionary
+        (or for ``brightness_temperature``, a dict with {'wavenumber','thermal'}).
     backend : str
         Default plotting library for every method: 'bokeh' (default), 'matplotlib', or
         'plotly' (requires ``pip install plotly``). Every method also takes ``backend``
@@ -2675,6 +2684,153 @@ class Analyzer:
 
         fig = self._contribution_heatmap(1e4/wno, player, CF_bin, 'Transmission Contribution Function', backend)
         return fig, None, 1e4/wno, CF_bin
+
+    def _brightness_temperature_data(self, R=None, dimension='1d'):
+        """
+        Returns wavenumber and brightness temperature. In 1d mode T_B is [nwave] computed from 
+        output['thermal']. In 3d mode T_B is [ng, nt, nwave] computed from full_output['thermal_3d']
+        """
+        if dimension == '1d':
+            #accepts the full dictionary or a dict with only {'wavenumber','thermal'}
+            spec = self.full_output if self.output is None else self.output
+            if 'thermal' not in spec:
+                raise Exception("brightness_temperature in 1d mode needs the dictionary returned by "
+                                "spectrum(opa, full_output=True) or one with keys {'wavenumber','thermal'}")
+            wno = spec['wavenumber']
+            T_B = _brightness_temperature(wno, spec['thermal'])
+            if not isinstance(R, type(None)):
+                wno, T_B = mean_regrid(wno, T_B, R=R)
+
+        elif dimension == '3d':
+            if 'thermal_3d' not in self.full_output:
+                raise Exception("brightness_temperature in 3d mode needs 'thermal_3d' in full_output. "
+                                "Run spectrum(opa, calculation='thermal', full_output=True)")
+            wno = self.full_output['wavenumber']
+            #thermal_3d is the [ng, nt, nwave] intensity of each facet, which carries a factor of 2pi
+            #(see compress_thermal). Dividing by 2 puts it in the same units as the 1d thermal flux
+            T_B = _brightness_temperature(wno, self.full_output['thermal_3d']/2)
+            if not isinstance(R, type(None)):
+                ng, nt, _ = T_B.shape
+                new_wno, _ = mean_regrid(wno, wno, R=R)
+                T_B_bin = np.zeros((ng, nt, len(new_wno)))
+                for ig in range(ng):
+                    for it in range(nt):
+                        _, T_B_bin[ig, it, :] = mean_regrid(wno, T_B[ig, it, :], newx=new_wno)
+                wno, T_B = new_wno, T_B_bin
+        else:
+            raise ValueError(f"dimension='{dimension}' is not supported. Options are '1d' or '3d'")
+
+        return wno, T_B
+
+    def brightness_temperature(self, R=None, with_guide=None, dimension='1d', wavelength=None, backend=None):
+        """
+        Plots brightness temperature. See ``justplotit.brightness_temperature``.
+        In 3d mode a latitude-longitude map of the brightness temperature of each facet is plotted
+        (matplotlib only) at a single wavelength or averaged over a [min, max] wavelength region.
+
+        Returns
+        -------
+        fig, T_B
+            In 1d mode T_B is [nwave], in 3d mode T_B is [ng, nt, nwave]
+        """
+        backend = self._backend(backend)
+        wno, T_B = self._brightness_temperature_data(R=R, dimension=dimension)
+
+        if dimension == '3d':
+            if with_guide:
+                warnings.warn("with_guide is not available for 3d brightness temperature maps. "
+                              "Setting with_guide=False.")
+            if backend != 'matplotlib':
+                warnings.warn(f"backend='{backend}' is not available for 3d brightness temperature maps. "
+                              "Using backend='matplotlib'.")
+            return self._brightness_temperature_map(wno, T_B, wavelength), T_B
+
+        with_guide = True if with_guide is None else with_guide
+        t_eq = None
+        if with_guide:
+            if 'layer' in self.full_output:
+                t_eq = self.full_output['layer']['temperature']
+            else:
+                warnings.warn("with_guide requires the full_output to get the min and max temperature. "
+                              "Plotting without it.")
+
+        wave = 1e4/wno
+        if backend == 'matplotlib':
+            fig = plt.figure(figsize=(15,8))
+            plt.xlabel("Wavelength [microns]",fontsize=20)
+            plt.ylabel("Brightness Temperature [K]",fontsize=20)
+            plt.xlim(min(wave),max(wave))
+            if t_eq is not None: plt.ylim(np.min(t_eq)-0.1*np.min(t_eq),np.max(t_eq)+0.1*np.min(t_eq))
+
+            plt.semilogx(wave,T_B,color='k', label="Brightness Temperature")
+            if t_eq is not None: plt.axhline(np.min(t_eq),linewidth=5,color="blue",label="Minimum Temperature")
+            if t_eq is not None: plt.axhline(np.max(t_eq),linewidth=5,color="red",label="Maximum Temperature")
+
+            plt.legend(fontsize=10)
+
+        elif backend == 'bokeh':
+            kwargs = dict(width=800, height=400, x_axis_type='log',
+                          x_axis_label='Wavelength [μm]', y_axis_label='Brightness Temperature [K]',
+                          x_range=[min(wave), max(wave)])
+            if t_eq is not None:
+                kwargs['y_range'] = [np.min(t_eq)-0.1*np.min(t_eq), np.max(t_eq)+0.1*np.min(t_eq)]
+            fig = figure(**kwargs)
+            fig.line(wave, T_B, color='black', line_width=2, legend_label='Brightness Temperature')
+            if t_eq is not None:
+                for t, c, l in [(np.min(t_eq),'blue','Minimum Temperature'),
+                                (np.max(t_eq),'red','Maximum Temperature')]:
+                    fig.line([min(wave), max(wave)], [t, t], color=c, line_width=5, legend_label=l)
+
+        elif backend == 'plotly':
+            go, _ = _plotly()
+            fig = go.Figure(go.Scatter(x=wave, y=T_B, name='Brightness Temperature', mode='lines',
+                                       line=dict(color='black', width=2)))
+            if t_eq is not None:
+                for t, c, l in [(np.min(t_eq),'blue','Minimum Temperature'),
+                                (np.max(t_eq),'red','Maximum Temperature')]:
+                    fig.add_trace(go.Scatter(x=[min(wave), max(wave)], y=[t, t], name=l, mode='lines',
+                                             line=dict(color=c, width=5)))
+                fig.update_yaxes(range=[np.min(t_eq)-0.1*np.min(t_eq), np.max(t_eq)+0.1*np.min(t_eq)])
+            fig.update_xaxes(type='log', title_text='Wavelength [μm]')
+            fig.update_yaxes(title_text='Brightness Temperature [K]')
+            fig.update_layout(width=800, height=400)
+
+        return fig, T_B
+
+    def _brightness_temperature_map(self, wno, T_B, wavelength=None):
+        """Matplotlib latitude-longitude heatmap of 3d brightness temperature [ng, nt, nwave]
+        at a single wavelength or averaged over [min, max]"""
+        wave = 1e4/wno
+        if wavelength is None:
+            wavelength = [np.min(wave), np.max(wave)]
+        if isinstance(wavelength, (float, int, np.floating, np.integer)):
+            indw = find_nearest_1d(wave, wavelength)
+            to_map = T_B[:, :, indw]
+            title = f'{wave[indw]:.3f} μm'
+        elif len(wavelength) == 2:
+            wmin, wmax = np.min(wavelength), np.max(wavelength)
+            inds = np.where((wave >= wmin) & (wave <= wmax))[0]
+            if len(inds) == 0:
+                raise Exception(f"No wavelengths between {wmin} and {wmax} μm. "
+                                f"The spectrum covers {np.min(wave):.2f}-{np.max(wave):.2f} μm")
+            to_map = np.nanmean(T_B[:, :, inds], axis=2)
+            title = f'Mean over {wmin:.2f}-{wmax:.2f} μm'
+        else:
+            raise Exception("wavelength must be a single value or [min, max] in micron")
+
+        #full_output angles are in radians. maps are [ng, nt] = [nlong, nlat]
+        longitude = np.atleast_1d(self.full_output['longitude'])*180/np.pi
+        latitude = np.atleast_1d(self.full_output['latitude'])*180/np.pi
+
+        fig, ax = plt.subplots(figsize=(6,4))
+        smap = ax.pcolormesh(longitude, latitude, to_map.T, shading='nearest',
+                             cmap=plt.get_cmap('plasma'))
+        fig.colorbar(smap, ax=ax, label='Brightness Temperature [K]')
+        ax.set_xlabel('Longitude [deg]')
+        ax.set_ylabel('Latitude [deg]')
+        ax.set_title(title)
+        fig.tight_layout()
+        return fig
 
     def _contribution_heatmap(self, wave, pressure, CF, title, backend):
         """Log-scaled heatmap of a contribution function for the bokeh and plotly backends"""
