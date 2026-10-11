@@ -8,7 +8,7 @@ import virga.justdoit as vj
 
 from .fluxes import get_reflected_1d,get_thermal_1d
 #from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi,get_reflected_1d_gfluxv #deprecated
-from .atmsetup import ATMSETUP
+from .atmsetup import ATMSETUP, normalize_exclude_mol
 from .optics import compute_opacity
 from .disco import compress_thermal
 from .deq_chem import get_quench_levels
@@ -2078,8 +2078,12 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     #relies on continuum molecules are added into the opacity 
     #database. Rayleigh molecules are all in `rayleigh.py` 
     
+    #opacity-only exclusion (does not change chemistry, mmw, etc)
+    exclude_mol = normalize_exclude_mol(inputs['atmosphere'].get('exclude_mol',None))
+
     atm.get_needed_continuum(opacityclass.rayleigh_molecules,
-                             opacityclass.avail_continuum)
+                             opacityclass.avail_continuum,
+                             exclude_mol=exclude_mol)
 
     #get cloud properties, if there are any and put it on current grid 
     atm.get_clouds(wno)
@@ -2104,7 +2108,7 @@ def calculate_atm(bundle, opacityclass, only_atmosphere=False):
     if only_atmosphere: 
         return Atmosphere
 
-    opacityclass.get_opacities(atm)
+    opacityclass.get_opacities(atm, exclude_mol=exclude_mol)
     
         #check if patchy clouds are requested
     if do_holes == True:

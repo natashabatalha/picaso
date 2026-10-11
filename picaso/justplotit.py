@@ -10,10 +10,12 @@ from bokeh.layouts import row,column,gridplot
 from bokeh.io import output_notebook
 from bokeh.plotting import figure, output_file, show
 Colorblind8 = pals.Colorblind8
-RdGy = pals.RdGy
 
 import os 
 import warnings
+
+import astropy.units as u
+import astropy.constants as const
 import copy
 from numba import jit
 from mpl_toolkits.mplot3d import Axes3D
@@ -744,7 +746,6 @@ def numba_cumsum(mat):
     for i in range(mat.shape[1]):
         new_mat[:,i] = np.cumsum(mat[:,i])
     return new_mat
-
 
 def flux_at_top(full_output, plot_bb = True, R=None, pressures = [1e-1,1e-2,1e-3],ng=None, nt=None,
     backend='bokeh', **kwargs):
@@ -1680,80 +1681,7 @@ def animate_convergence(clima_out, picaso_bundle, opacity, calculation='thermal'
     plt.close()
     return ani
 
-def create_heat_map_deprecate(data,rayleigh=True,extend=False,plot_height=300,plot_width=300,font_size="12px"):
-    reverse = True
-    data.columns.name = 'w0' 
-    data.index.name = 'g0' 
-    data.index=data.index.astype(str)
-    data = data.rename(index={"-1.0":"Ray"})
-    if not rayleigh:
-        data = data.drop(["Ray"])  
-    for w in data.columns[0:]:
-        if pd.isnull(data.loc['0.0'][w]):
-            data = data.drop(columns=[w])
-            reverse = False
 
-    x_range = list(data.index)
-    if reverse:
-        y_range =  list(reversed(data.columns))
-    else:
-        y_range =  list(data.columns)
-
-    df = pd.DataFrame(data.stack(), columns=['albedo']).reset_index()
-
-
-
-    colors = RdGy[11]
-    bd = max(abs(df.albedo.min()), abs(df.albedo.max()))
-#     bd = min(bd,20)
-    mapper = LinearColorMapper(palette=colors, low=-bd, high=bd)
-
-    TOOLS = "hover,save,pan,box_zoom,reset,wheel_zoom"
-
-    color_bar_height = plot_height + 11
-    color_bar_width = int(plot_width * 0.26)
-
-    p = figure(height=plot_height,width=plot_width,
-       y_range=y_range, x_range=x_range,
-       x_axis_location="above"
-       #,toolbar_location=None
-        )
-
-    p.grid.grid_line_color = None
-    p.axis.axis_line_color = None
-    p.axis.major_tick_line_color = None
-    p.axis.major_label_text_font_size = font_size
-    p.axis.major_label_standoff = 20
-    p.xaxis.major_label_orientation = np.pi / 3
-
-    p.rect(x="g0", y="w0", width=1, height=1,
-       source=df,
-       fill_color={'field': 'albedo', 'transform': mapper},
-       line_color='black')
-
-    # cb_width = int(width/11)
-
-    color_bar = ColorBar(color_mapper=mapper,
-                    major_label_text_font_size=font_size,
-                    ticker=BasicTicker(desired_num_ticks=len(colors)),
-                    label_standoff=12, border_line_color=None, location=(0, 10))
-
-    color_bar_plot = figure(#title=r"\[\sin(x)\text{ for }x\text{ between }-2\pi\text{ and }2\pi\]", 
-                        title_location="right", 
-                        height=color_bar_height, width=color_bar_width, 
-                        min_border=0, 
-                        outline_line_color=None
-                        #,toolbar_location=None
-                        )
-
-    color_bar_plot.add_layout(color_bar, 'right')
-    color_bar_plot.title.align="center"
-    color_bar_plot.title.text_font_size = '24px'
-    
-    p.axis.major_label_text_font_size=font_size
-    layout = row(p, color_bar_plot)
-
-    return layout
 
 
 def rt_heatmap(data,figure_kwargs={},cmap_kwargs={}):
@@ -2814,3 +2742,213 @@ class Analyzer:
             fig.update_yaxes(type="log", autorange="reversed", title_text='Pressure (bar)')
             fig.update_layout(title=title, xaxis_title="Wavelength (μm)", width=800, height=500)
             return fig
+
+def flux_analyzer(clima_out, clima_out_compare=None, labels=None, 
+    gravity=None, opacityclass=None, colors=('k','tab:red'), title=None, plot=True):
+    """
+    Analyzes the converged energy budget of a climate model (output of `cl_run.climate()`) 
+    to show where the atmosphere absorbs starlight and where it loses energy to space. 
+
+    If one climate output is given, creates a 3 panel figure: 
+
+    1. Net absorbed stellar flux and net upward thermal (IR) flux at each level 
+    2. Radiative heating (stellar) and cooling (IR) rates (in K/s if `gravity` is supplied, 
+       otherwise the flux divergence per decade of pressure is plotted)
+    3. Outgoing thermal flux spectrum at the top of the atmosphere 
+
+    If a second climate output is given via `clima_out_compare` (e.g. the same model with 
+    `exclude_mol`), both are plotted on the top row and a second row shows the difference 
+    (compare - clima_out) of each quantity. Convective zones are shaded in the pressure panels. 
+
+    Parameters
+    ----------
+    clima_out : dict 
+        Output of `jdi.inputs.climate()`
+    clima_out_compare : dict 
+        (Optional) Output of `jdi.inputs.climate()` for a second model to compare against
+    labels : tuple of str
+        (Optional) Legend labels for (clima_out, clima_out_compare)
+    gravity : float or astropy.units.Quantity
+        (Optional) Planet gravity. If float, it is assumed to be cgs (cm/s/s). 
+        Needed to convert flux divergences into heating rates [K/s]. 
+    opacityclass : class 
+        (Optional) Opacity class from `jdi.opannection` used for the climate runs. 
+        Gives exact wavenumber bin widths for the outgoing flux spectrum. If not supplied 
+        the bin widths are approximated with numpy.gradient and `with_spec=True` must have 
+        been used in the climate runs so that the wavenumber grid can be found. 
+    colors : tuple of str 
+        Colors for (clima_out, clima_out_compare)
+    title : str 
+        (Optional) Figure title 
+    plot : bool 
+        If True, creates and returns the figure
+
+    Returns
+    -------
+    dict (or list of two dicts if clima_out_compare is given), (matplotlib.figure.Figure if plot=True)
+        Computed diagnostics for each model containing: 
+        pressure (levels, bars), pressure_layer (bars), 
+        flux_stellar_absorbed (net downward stellar flux at each level, erg/cm2/s), 
+        flux_ir_net (net upward thermal flux at each level, erg/cm2/s), 
+        heating_stellar, cooling_ir, heating_net (per layer, K/s if gravity supplied 
+        else erg/cm2/s per dex of pressure), wavelength (um), 
+        flux_toa (outgoing thermal flux in erg/cm2/s/cm), olr (bolometric outgoing thermal flux, erg/cm2/s)
+
+    Notes
+    -----
+    Heating rates use dT/dt = (g/cp) dF/dP with net fluxes at the level boundaries. Here cp 
+    is approximated as an ideal diatomic gas, cp = 7/2 R/mmw, with the mean molecular weight 
+    from `spectrum_output` (requires `with_spec=True`), otherwise mmw=2.3 g/mol is assumed. 
+    In radiative zones of a converged model stellar heating and thermal cooling balance 
+    (heating_net ~ 0). In convective zones they do not, since convection carries the remaining energy.
+    """
+    #Ratio of specific heat at constant pressure to the gas constant, cp/R, for an ideal diatomic gas [dimensionless]
+    CP_OVER_R_DIATOMIC = 3.5
+    #Default mean molecular weight used when it is not available from the climate output [g/mol]
+    MMW_DEFAULT = 2.3*u.g/u.mol
+
+    if not isinstance(gravity, type(None)): 
+        if not isinstance(gravity, u.Quantity): 
+            gravity = gravity*u.cm/u.s**2
+    
+    def get_diagnostics(out): 
+        pressure = np.array(out['pressure'])
+        fb = out['flux_balance']
+        #net upward stellar flux is negative, flip it so this is the stellar flux absorbed below each level 
+        f_v = -fb['rfacv']*np.array(fb['flux_net_v'])
+        f_ir = fb['rfaci']*np.array(fb['flux_net_ir'])
+        p_layer = np.sqrt(pressure[1:]*pressure[:-1])
+
+        #energy gained by each layer is the net upward flux entering from below 
+        #minus the net upward flux leaving out the top 
+        d_v = f_v[:-1] - f_v[1:] #stellar 
+        d_ir = f_ir[1:] - f_ir[:-1] #thermal 
+        if isinstance(gravity, type(None)): 
+            dlogp = np.log10(pressure[1:]) - np.log10(pressure[:-1])
+            heat_v = d_v/dlogp
+            cool_ir = d_ir/dlogp
+        else: 
+            mmw = MMW_DEFAULT
+            spec = out.get('spectrum_output', None)
+            if isinstance(spec, dict) and ('full_output' in spec.keys()): 
+                mmw = np.array(spec['full_output']['layer']['mmw'])*u.g/u.mol
+            cp = CP_OVER_R_DIATOMIC*const.R/mmw
+            dp = (pressure[1:] - pressure[:-1])*u.bar
+            flux_unit = u.erg/u.cm**2/u.s
+            heat_v = (gravity/cp*d_v*flux_unit/dp).to(u.K/u.s).value
+            cool_ir = (gravity/cp*d_ir*flux_unit/dp).to(u.K/u.s).value
+
+        flux_toa = np.array(out['flux_ir_attop'])
+        if not isinstance(opacityclass, type(None)): 
+            wno = opacityclass.wno
+            dwno = opacityclass.delta_wno
+        elif isinstance(out.get('spectrum_output', None), dict): 
+            wno = out['spectrum_output']['wavenumber']
+            dwno = np.gradient(wno)
+        else: 
+            raise Exception('Need either opacityclass or climate output with `with_spec=True` to get the wavenumber grid')
+        #erg/cm2/s per bin -> erg/cm2/s/cm to match units of spectrum thermal output 
+        flux_toa_spec = flux_toa/dwno*wno**2
+
+        return dict(pressure=pressure, pressure_layer=p_layer, 
+                    flux_stellar_absorbed=f_v, flux_ir_net=f_ir, 
+                    heating_stellar=heat_v, cooling_ir=cool_ir, heating_net=heat_v+cool_ir,
+                    wavelength=1e4/wno, flux_toa=flux_toa_spec, olr=np.sum(flux_toa),
+                    cvz_locs=out.get('cvz_locs',None))
+
+    compare = not isinstance(clima_out_compare, type(None))
+    diags = [get_diagnostics(clima_out)]
+    if compare: diags += [get_diagnostics(clima_out_compare)]
+    if isinstance(labels, type(None)): 
+        labels = ('Model A','Model B') if compare else ('Model',)
+    returns = diags if compare else diags[0]
+
+    if not plot: 
+        return returns
+
+    nrow = 2 if compare else 1
+    fig, ax = plt.subplots(nrow, 3, figsize=(18,5.5*nrow), squeeze=False)
+    heat_unit = 'K/s' if not isinstance(gravity, type(None)) else 'erg/cm$^2$/s/dex'
+    pmin = np.min([d['pressure'].min() for d in diags])
+    pmax = np.max([d['pressure'].max() for d in diags])
+
+    for d, lab, col in zip(diags, labels, colors): 
+        #net fluxes 
+        ax[0,0].loglog(d['flux_stellar_absorbed'], d['pressure'], color=col, lw=2.5, ls='--')
+        ax[0,0].loglog(d['flux_ir_net'], d['pressure'], color=col, lw=2.5, ls='-')
+        #heating rates 
+        ax[0,1].semilogy(d['heating_stellar'], d['pressure_layer'], color=col, lw=2.5, ls='--')
+        ax[0,1].semilogy(d['cooling_ir'], d['pressure_layer'], color=col, lw=2.5, ls='-')
+        #outgoing thermal spectrum 
+        ax[0,2].loglog(d['wavelength'], d['flux_toa'], color=col, lw=1.5, 
+                     label=f"{lab}: OLR={d['olr']:.3e} erg/cm$^2$/s")
+        #shade convective zones 
+        #nstr format: convective zones are [nstr[1]:nstr[2]] and, if nstr[3]!=0, [nstr[4]:nstr[5]]
+        if not isinstance(d['cvz_locs'], type(None)): 
+            nstr = np.array(d['cvz_locs']).astype(int)
+            zones = [(nstr[1],nstr[2])] + ([(nstr[4],nstr[5])] if nstr[3]!=0 else [])
+            for itop, ibot in zones: 
+                ibot = min(ibot+1, len(d['pressure'])-1)
+                for a in ax[:,:2].ravel(): 
+                    a.axhspan(d['pressure'][itop], d['pressure'][ibot], color=col, alpha=0.08, lw=0)
+
+    #legend entries for line styles 
+    for lab, col in zip(labels, colors[:len(diags)]): 
+        ax[0,0].plot([],[],color=col,lw=2.5,label=lab)
+    ax[0,0].plot([],[],color='grey',ls='--',label='Net absorbed stellar')
+    ax[0,0].plot([],[],color='grey',ls='-',label='Net upward thermal')
+    ax[0,0].fill_between([],[],color='grey',alpha=0.2,label='Convective zone')
+    ax[0,1].plot([],[],color='grey',ls='--',label='Stellar heating')
+    ax[0,1].plot([],[],color='grey',ls='-',label='Thermal cooling')
+
+    #flux axis: stellar flux goes to ~0 at depth so clip to something sensible 
+    fmax = np.max([max(d['flux_stellar_absorbed'].max(), d['flux_ir_net'].max()) for d in diags])
+    ax[0,0].set_xlim(fmax*1e-5, fmax*3)
+    #heating rates span many orders of magnitude so use symlog 
+    hmax = np.max([np.abs(d['heating_stellar']).max() for d in diags])
+    #spectra: only show where there is meaningful emission 
+    toa_max = np.max([d['flux_toa'].max() for d in diags])
+    wv = np.concatenate([d['wavelength'][d['flux_toa']>toa_max*1e-4] for d in diags])
+    ax[0,2].set_ylim(toa_max*1e-4, toa_max*3)
+
+    ax[0,0].set_xlabel('Flux [erg/cm$^2$/s]'); ax[0,0].set_title('Net fluxes', fontsize=13)
+    ax[0,1].set_xlabel(f'Rate [{heat_unit}]'); ax[0,1].set_title('Radiative heating (+) / cooling (-)', fontsize=13)
+    ax[0,2].set_ylabel('Outgoing thermal flux [erg/cm$^2$/s/cm]')
+    ax[0,2].set_title('Top-of-atmosphere thermal emission', fontsize=13)
+
+    if compare: 
+        da, db = diags
+        dlab = f'({labels[1]} - {labels[0]})'
+        ax[1,0].semilogy(db['flux_stellar_absorbed']-da['flux_stellar_absorbed'], da['pressure'], color='k', lw=2.5, ls='--', label='$\\Delta$ Net absorbed stellar')
+        ax[1,0].semilogy(db['flux_ir_net']-da['flux_ir_net'], da['pressure'], color='k', lw=2.5, ls='-', label='$\\Delta$ Net upward thermal')
+        ax[1,1].semilogy(db['heating_stellar']-da['heating_stellar'], da['pressure_layer'], color='k', lw=2.5, ls='--', label='$\\Delta$ Stellar heating')
+        ax[1,1].semilogy(db['cooling_ir']-da['cooling_ir'], da['pressure_layer'], color='k', lw=2.5, ls='-', label='$\\Delta$ Thermal cooling')
+        ax[1,2].semilogx(da['wavelength'], db['flux_toa']-da['flux_toa'], color='k', lw=1.5)
+        ax[1,0].axvline(0, color='grey', lw=1); ax[1,1].axvline(0, color='grey', lw=1)
+        ax[1,2].axhline(0, color='grey', lw=1)
+        ax[1,0].ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+        ax[1,0].set_xlabel('$\\Delta$ Flux [erg/cm$^2$/s]'); ax[1,0].set_title(f'Change in net fluxes\n{dlab}', fontsize=13)
+        ax[1,1].set_xlabel(f'$\\Delta$ Rate [{heat_unit}]'); ax[1,1].set_title(f'Change in heating / cooling rates\n{dlab}', fontsize=13)
+        ax[1,2].set_ylabel('$\\Delta$ Flux [erg/cm$^2$/s/cm]')
+        ax[1,2].set_title(f'Change in thermal emission\n{dlab}', fontsize=13)
+        ax[1,0].legend(fontsize=11); ax[1,1].legend(fontsize=11)
+
+    for irow in range(nrow): 
+        ax[irow,1].set_xscale('symlog', linthresh=hmax*1e-4)
+        ax[irow,1].axvline(0, color='grey', lw=1)
+        ax[irow,2].set_xlim(wv.min(), wv.max())
+        ax[irow,2].set_xlabel('Wavelength [$\\mu$m]')
+        for icol in range(2): 
+            ax[irow,icol].set_ylim(pmax, pmin)
+            ax[irow,icol].set_ylabel('Pressure [bars]')
+    for a in ax[0,:]: 
+        a.legend(fontsize=11)
+    for a in ax.ravel(): 
+        a.minorticks_on()
+        a.tick_params(axis='both',which='both',direction='in',labelsize=12)
+    if not isinstance(title, type(None)): 
+        fig.suptitle(title, fontsize=18)
+    fig.tight_layout()
+
+    return returns, fig
+

@@ -39,6 +39,7 @@ Step-by-step introductions to each part of PICASO, from a first spectrum to 3D m
    Brown Dwarfs w/ Resort-Rebin <notebooks/D_climate/1b_BrownDwarf_ResortRebin_Chemeq.py>
    Planets <notebooks/D_climate/2_Exoplanet_PreW.py>
    Planets w/ Resort-Rebin <notebooks/D_climate/2b_Exoplanet-ResortRebin-Chemeq.py>
+   Intuition Building: Assessing Heating/Cooling Contributions from Individual Molecules </notebooks/D_climate/10_Exoplanet_ExcludeMol.py>
    Planets w/ Photochemistry <notebooks/D_climate/3_Exoplanet-Photochemistry.py>
    Brown Dwarfs w/ Disequilibrium Chemistry (Self-Consistent Kzz) <notebooks/D_climate/4_BrownDwarf_DEQ_SC_kzz.py>
    Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz) <notebooks/D_climate/4b_BrownDwarf_DEQ_const_kzz.py>
@@ -63,6 +64,7 @@ Step-by-step introductions to each part of PICASO, from a first spectrum to 3D m
    Thermal Phase Curve pt 2 (Robbins-Blanch et al. 2022) <notebooks/E_3dmodeling/7_PhaseCurves-wChemEq.py>
    Reflected Light Phase Curve (Hamill et al. 2024) <notebooks/E_3dmodeling/8_ReflectedPhaseCurve.py>
    3D Transmission Spectra: Benchmark with TRIDENT (MacDonald & Lewis 2022) <notebooks/E_3dmodeling/9_3DTransmissionBenchmark.py>
+
 
 Fitting data: cite the papers listed under *Grid fits* and *Retrievals* in :doc:`credit`.
 

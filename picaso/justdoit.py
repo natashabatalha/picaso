@@ -2085,8 +2085,11 @@ class inputs():
             Must contain pressure at least one molecule
         exclude_mol : str, list of str, or dict
             (Optional) Opacity-only exclusion control used for exploratory
-            spectroscopy. This does NOT change chemistry, mean molecular weight,
-            density, or other non-opacity atmospheric properties.
+            spectroscopy and climate calculations (e.g. to see how much a
+            molecule heats or cools the atmosphere). This does NOT change chemistry,
+            mean molecular weight, density, or other non-opacity atmospheric properties.
+            Line exclusion in climate runs requires separable opacities
+            (e.g. method='resortrebin'), not premixed ck tables.
             Supported forms are:
             - ``'H2O'`` or ``['H2O', 'CO2']`` to exclude all opacity types
               associated with each molecule
@@ -5561,7 +5564,8 @@ class inputs():
 
         if with_spec:
             #these inputs here are just to make sure that we know what we ran as we are directly inputting a dataframe
-            self.atmosphere(df=chem_out,quench = self.inputs['approx']['chem_params']['quench'], 
+            self.atmosphere(df=chem_out,exclude_mol=self.inputs['atmosphere']['exclude_mol'],
+                                        quench = self.inputs['approx']['chem_params']['quench'], 
                                         no_ph3 = self.inputs['approx']['chem_params']['no_ph3'],
                                         cold_trap = self.inputs['approx']['chem_params']['cold_trap'], 
                                         vol_rainout= self.inputs['approx']['chem_params']['vol_rainout'])
