@@ -50,6 +50,12 @@ app = [
     "flask",
     "plotly",
 ]
+# running the unit tests (see tests/): pip install -e ".[test]"
+test = [
+    "picaso[driver]",
+    "pytest",
+    "pytest-cov",
+]
 # building the documentation (see docs/README.md): pip install "picaso[docs]"
 docs = [
     "picaso[driver]",
@@ -71,6 +77,12 @@ exclude = ["reference*"]
 
 [tool.setuptools.package-data]
 "picaso.driver_ui" = ["templates/**/*.html", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "needs_full_data: needs the full opacity db and stellar grids, which are not in git; skipped automatically when missing",
+]
 
 [project.urls]
 Homepage = "https://natashabatalha.github.io/picaso"

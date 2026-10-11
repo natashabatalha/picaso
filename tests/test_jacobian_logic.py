@@ -3,6 +3,8 @@ import pytest
 from unittest.mock import MagicMock, patch
 from picaso import information_content as ic
 
+@pytest.mark.xfail(reason='stale: jacobian() no longer takes driver_dict (disabled until the staged '
+                          'retrieval/IC release), and information_content has no run() to patch')
 def test_jacobian_perturbation_logic():
     # Mock driver_dict
     driver_dict = {

@@ -1625,12 +1625,16 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
     A.phase_angle(rad,**phase_kwargs) #input the radian angle of the event/geometry of browndwarf/planet
 
     _validate_object_gravity_config(config['object'])
-    A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None), 
-            gravity_unit= u.Unit(config['object'].get('gravity', {}).get('unit',None)), 
-            radius      = config['object'].get('radius', {}).get('value',None), 
-            radius_unit = u.Unit(config['object'].get('radius', {}).get('unit',None)),
-            mass        = config['object'].get('mass', {}).get('value',None), 
-            mass_unit   = u.Unit(config['object'].get('mass', {}).get('unit',None)) 
+    #only two of gravity, mass, and radius are given so the missing one has no unit
+    def object_unit(key):
+        unit = config['object'].get(key, {}).get('unit',None)
+        return None if unit is None else u.Unit(unit)
+    A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None),
+            gravity_unit= object_unit('gravity'),
+            radius      = config['object'].get('radius', {}).get('value',None),
+            radius_unit = object_unit('radius'),
+            mass        = config['object'].get('mass', {}).get('value',None),
+            mass_unit   = object_unit('mass')
             )
 
     if stage == 'object':

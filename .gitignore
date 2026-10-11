@@ -50,3 +50,8 @@ docs/notebooks/sbi-logs/
 
 # sphinx build output and notebook execution cache
 docs/_build/
+
+# test artifacts
+.coverage
+coverage.md
+reference/base_cases/testing/test_storage_spec.nc

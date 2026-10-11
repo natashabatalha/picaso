@@ -24,3 +24,18 @@ def test_gravity_mass_and_radius_are_rejected_together():
 
     with pytest.raises(ValueError, match='gravity, mass, and radius are all set'):
         _validate_object_gravity_config(object_config)
+
+
+def test_mass_and_radius_alone_set_gravity(retrieval_example_config, mini_opacity):
+    """A config with no gravity entry at all must still run, with gravity from mass and radius."""
+    import copy
+    import astropy.constants as const
+    import astropy.units as u
+    from picaso.driver import setup_spectrum_class
+
+    config = copy.deepcopy(retrieval_example_config)
+    assert 'gravity' not in config['object']
+    picaso_class = setup_spectrum_class(config, opacity=mini_opacity, param_tools=None, stage='object')
+
+    expected = (const.G * 0.28 * u.M_jup / (1.27 * u.R_jup)**2).to(u.cm / u.s**2).value
+    assert picaso_class.inputs['planet']['gravity'] == pytest.approx(expected, rel=1e-6)
