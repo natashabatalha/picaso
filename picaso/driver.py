@@ -1590,6 +1590,16 @@ def check_model_samples(config, N=100, samples=None,full_likelihood=False):
 
         return models, thetas, profiles
 
+def _validate_object_gravity_config(object_config):
+    """Reject an over-specified gravity, mass, and radius combination."""
+    values = [object_config.get(key, {}).get('value') for key in ('gravity', 'mass', 'radius')]
+    if all(value is not None for value in values):
+        raise ValueError(
+            'Object gravity is over-specified: gravity, mass, and radius are all set. '
+            'Provide only two of these quantities.'
+        )
+
+
 def setup_spectrum_class(config, opacity, param_tools, stage=None):
 
     if isinstance(opacity,type(None)):
@@ -1614,6 +1624,7 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
     phase_kwargs = config['geometry'].get('phase_kwargs', {})
     A.phase_angle(rad,**phase_kwargs) #input the radian angle of the event/geometry of browndwarf/planet
 
+    _validate_object_gravity_config(config['object'])
     A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None), 
             gravity_unit= u.Unit(config['object'].get('gravity', {}).get('unit',None)), 
             radius      = config['object'].get('radius', {}).get('value',None), 
@@ -1778,6 +1789,7 @@ def setup_climate_class(config, opacity=None, param_tools=None):
 
     #gravity: if both mass and radius are given gravity is computed from them
     object_config = config['object']
+    _validate_object_gravity_config(object_config)
     kwargs = {}
     for key in ['gravity', 'radius', 'mass']:
         if key in object_config:
