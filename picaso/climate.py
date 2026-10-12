@@ -809,6 +809,518 @@ def lu_backsubs(a, n, ntot, indx, b):
     return b
 
 @jit(nopython=True, cache=True)
+def reconstruct_adiabat(temp, rad_temp, pressure, nstr, nofczns, AdiabatBundle, Atmosphere, moist, grad_from_rad):
+    """
+    Reconstructs the temperature profile zone by zone: radiative levels are copied
+    from rad_temp, then the adiabatic lapse rate is applied in the convective zone below.
+    Zones are processed in order (radiative then convective) so that when zones share
+    a boundary level (e.g. nstr[3]==nstr[2]) the same value wins as in t_start.
+
+    Parameters
+    ----------
+    temp : array
+        Temperature profile (updated in place).
+    rad_temp : array
+        Temperatures to use at the radiative levels.
+    pressure : array
+        Pressure profile.
+    nstr : array
+        Convective zone indices.
+    nofczns : int
+        Number of convective zones.
+    AdiabatBundle : namedtuple
+        Adiabat information.
+    Atmosphere : namedtuple
+        Atmosphere information.
+    moist : bool
+        If True, use moist adiabat.
+    grad_from_rad : bool
+        If True, evaluate the lapse rate at rad_temp[j-1] (as in the t_start jacobian),
+        otherwise at the reconstructed temp[j-1] (as in the t_start line search).
+
+    Returns
+    -------
+    temp : array
+        Updated temperature profile.
+    """
+    for nb in range(0, 3 * nofczns, 3):
+        n_top_b = nstr[nb] + 1 # top of rad zone
+        if nb == 0:
+            n_top_b -= 1
+        n_strt_b = nstr[nb + 1] # top of conv zone
+        n_conv_top_b = n_strt_b + 1
+        n_bot_b = nstr[nb + 2] + 1 # bottom of conv zone
+
+        for j1 in range(n_top_b, n_strt_b + 1):
+            temp[j1] = rad_temp[j1]
+
+        for j1 in range(n_conv_top_b, n_bot_b + 1):
+            press = sqrt(pressure[j1 - 1] * pressure[j1])
+            # update temp before throwing to moist_grad function
+            Atmosphere = replace_temp(Atmosphere, temp)
+            if grad_from_rad == True:
+                t_grad = rad_temp[j1 - 1]
+            else:
+                t_grad = temp[j1 - 1]
+            if moist == True:
+                grad_x, cp_x = moist_grad(t_grad, press, AdiabatBundle, Atmosphere, j1 - 1)
+            else:
+                grad_x, cp_x = did_grad_cp(t_grad, press, AdiabatBundle)
+
+            temp[j1] = exp(log(temp[j1 - 1]) + grad_x * (log(pressure[j1]) - log(pressure[j1 - 1])))
+    return temp
+
+@jit(nopython=True, cache=True)
+def get_f_vec(nstr, nofczns, temp, flux_net, flux_net_midpt):
+    """
+    Maps net fluxes at radiative levels and layers to the residual vector f_vec.
+
+    Parameters
+    ----------
+    nstr : array
+        Convective zone indices.
+    nofczns : int
+        Number of convective zones.
+    temp : array
+        Temperature profile.
+    flux_net : array
+        Net fluxes at levels.
+    flux_net_midpt : array
+        Net fluxes at layer midpoints.
+
+    Returns
+    -------
+    f_vec : array
+        Residual vector.
+    n_total : int
+        Total number of radiative points.
+    sum_f2 : float
+        Sum of squared residuals.
+    sum_temp2 : float
+        Sum of squared temperatures at radiative points.
+    test : float
+        Maximum absolute residual.
+    """
+    n_top_r = nstr[0] - 1
+    nao = n_top_r
+    n_total = 0
+    f_vec = np.zeros(len(flux_net)) # initialize with max possible size
+    
+    sum_f2 = 0.0
+    sum_temp2 = 0.0
+    test = 0.0
+
+    flag_nao = 0
+    if nao < 0:
+        nao_temporary = nao
+        nao = 0
+        flag_nao = 1
+
+    for nca in range(0, 3 * nofczns, 3):
+        n_top_a = nstr[nca]
+        n_strt_a = nstr[nca + 1]
+        n_bot_a = nstr[nca + 2] + 1
+
+        if n_top_a == n_top_r + 1:
+            f_vec[0] = flux_net[n_top_r + 1]
+            sum_f2 += f_vec[0]**2
+            sum_temp2 += temp[0]**2
+            if abs(f_vec[0]) > test:
+                test = abs(f_vec[0])
+            n_total += 1
+
+        for j in range(n_top_a + 1, n_strt_a + 1):
+            f_vec[j - nao] = flux_net_midpt[j - 1]
+            sum_f2 += f_vec[j - nao]**2
+            sum_temp2 += temp[j - nao]**2 # preserved original logic
+            if abs(f_vec[j - nao]) > test:
+                test = abs(f_vec[j - nao])
+            n_total += 1
+
+        if flag_nao == 1:
+            nao = nao_temporary
+            flag_nao = 0
+
+        nao += n_bot_a - n_strt_a
+
+    return f_vec[:n_total], n_total, sum_f2, sum_temp2, test
+
+@jit(nopython=True, cache=True)
+def compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
+                     Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
+                     F0PI, compute_reflected, compute_thermal, do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                     moist, eps, flux_net_old, flux_net_midpt_old):
+    """
+    Computes the Jacobian matrix for the radiative layers.
+
+    Parameters
+    ----------
+    temp_old : array
+        Current temperature profile.
+    nstr : array
+        Convective zone indices.
+    nofczns : int
+        Number of convective zones.
+    n_total : int
+        Total number of radiative points.
+    rfaci, rfacv : float
+        IR and Visible flux addition fractions.
+    tidal : array
+        Tidal flux component.
+    Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle : namedtuples
+        Atmospheric and radiative information.
+    F0PI : array
+        Stellar spectrum.
+    compute_reflected, compute_thermal : bool
+        Flags for radiative transfer components.
+    do_holes : bool
+        Flag for patchy clouds.
+    fhole : float
+        Hole fraction.
+    hole_OpacityWEd, hole_OpacityNoEd : namedtuples
+        Clear sky opacities.
+    moist : bool
+        Flag for moist adiabat.
+    eps : float
+        Perturbation factor.
+    flux_net_old, flux_net_midpt_old : array
+        Current net fluxes.
+
+    Returns
+    -------
+    A : array
+        Jacobian matrix of size (nlevel, nlevel).
+    beta : array
+        temp_old after perturb/un-perturb of each radiative level (carries the same
+        floating point round-off as t_start, which uses it as the line search base).
+    """
+    nlevel = len(temp_old)
+    A = np.zeros(shape=(nlevel, nlevel))
+    beta = temp_old.copy()
+    n_top_r = nstr[0] - 1
+
+    no = n_top_r
+    flag_no = 0
+    if no < 0:
+        no_temporary = no
+        no = 0
+        flag_no = 1
+
+    for nz in range(0, 3 * nofczns, 3):
+        n_top = nstr[nz] + 1
+        if nz == 0: n_top -= 1
+        n_strt = nstr[nz + 1]
+
+        for jm in range(n_top, n_strt + 1):
+            del_t = max(eps * temp_old[jm], 3.0)
+            beta[jm] += del_t
+            
+            # Reconstruct profile
+            # (lapse rate evaluated on the unperturbed-convective beta vector, as in t_start)
+            temp = beta.copy()
+            temp = reconstruct_adiabat(temp, beta, Atmosphere.p_level, nstr, nofczns, AdiabatBundle, Atmosphere, moist, True)
+            
+            # Re-calculate fluxes (only IR is needed for Jacobian in the original code)
+            Atmosphere_perturbed = replace_temp(Atmosphere, temp)
+            if do_holes == True:
+                flux_results = get_fluxes(Atmosphere_perturbed, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                            Disco, Opagrid, F0PI, False, compute_thermal, # False for reflected as in original
+                            do_holes=do_holes, fhole=fhole, hole_OpacityWEd=hole_OpacityWEd, hole_OpacityNoEd=hole_OpacityNoEd)
+            else:
+                flux_results = get_fluxes(Atmosphere_perturbed, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                            Disco, Opagrid, F0PI, False, compute_thermal)
+
+            flux_net_ir_layer = flux_results[4]
+            flux_net_ir = flux_results[5]
+            
+            # Calculate Jacobian terms
+            nco = n_top_r
+            flag_nco = 0
+            if nco < 0:
+                nco_temporary = nco
+                nco = 0
+                flag_nco = 1
+
+            for nc in range(0, 3 * nofczns, 3):
+                n_top_c = nstr[nc] + 1
+                if nc == 0: n_top_c -= 1
+                n_strt_c = nstr[nc+1]
+                n_bot_c = nstr[nc+2] + 1
+
+                if n_top_c == n_top_r + 1:
+                    A[n_top_c - nco, jm - no] = (flux_net_ir[n_top_c] - flux_net_old[n_top_c]) / del_t
+                else:
+                    A[n_top_c - nco, jm - no] = (flux_net_ir_layer[n_top_c - 1] - flux_net_midpt_old[n_top_c - 1]) / del_t
+
+                for im in range(n_top_c, n_strt_c):
+                    A[im + 1 - nco, jm - no] = (flux_net_ir_layer[im] - flux_net_midpt_old[im]) / del_t
+
+                if flag_nco == 1:
+                    nco = nco_temporary
+                    flag_nco = 0
+                nco += n_bot_c - n_strt_c
+
+            # undo beta vector perturbation
+            beta[jm] = beta[jm] - del_t
+
+        if flag_no == 1:
+            no = no_temporary
+            flag_no = 0
+        no += (nstr[nz+2] + 1) - n_strt
+
+    return A, beta
+
+@jit(nopython=True, cache=True)
+def get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
+                           Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, F0PI,
+                           compute_reflected, compute_thermal, do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                           flux_net_v_fixed, flux_net_v_layer_fixed):
+    """
+    Computes flux residuals for a given temperature profile.
+    """
+    Atmosphere = replace_temp(Atmosphere, temp)
+    if do_holes == True:
+        flux_results = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                    Disco, Opagrid, F0PI, compute_reflected, compute_thermal,
+                    do_holes=do_holes, fhole=fhole, hole_OpacityWEd=hole_OpacityWEd, hole_OpacityNoEd=hole_OpacityNoEd)
+    else:
+        flux_results = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                    Disco, Opagrid, F0PI, compute_reflected, compute_thermal)
+
+    if compute_reflected:
+        flux_net_v_layer = flux_results[0][0,0,:]
+        flux_net_v = flux_results[1][0,0,:]
+    else:
+        flux_net_v_layer = flux_net_v_layer_fixed
+        flux_net_v = flux_net_v_fixed
+        #also make sure that flux_results has what is needed so that this 
+        #doesnt get propogated as zero if it shouldnt be zero 
+        flux_results[0][0,0,:] = flux_net_v_layer_fixed
+        flux_results[1][0,0,:] = flux_net_v_fixed
+
+
+    flux_net_ir_layer = flux_results[4]
+    flux_net_ir = flux_results[5]
+
+    flux_net = rfaci * flux_net_ir + rfacv * flux_net_v + tidal
+    flux_net_midpt = rfaci * flux_net_ir_layer + rfacv * flux_net_v_layer + tidal
+
+    f_vec, n_total, sum_f2, sum_temp2, test = get_f_vec(nstr, nofczns, temp, flux_net, flux_net_midpt)
+    return f_vec, n_total, sum_f2, sum_temp2, test, flux_results
+
+@jit(nopython=True, cache=True)
+def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
+                          rfaci, rfacv, tidal,
+                          Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
+                          F0PI, save_profile, all_profiles,
+                          fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                          verbose, do_holes, moist, egp_stepmax,
+                          flux_net_v_fixed, flux_net_v_layer_fixed):
+    """
+    Newton-Raphson solver with line search for radiative-convective equilibrium.
+    """
+    nlevel = len(temp)
+    it_max, conv, x_max_mult = convergence_criteria.max_inner_iterations, convergence_criteria.inner_threshold, convergence_criteria.step_multiplier
+    tmin, tmax = Opagrid.tmin, Opagrid.tmax
+
+    eps = 1e-4
+    alf = 1.e-4
+    tolmin = 1.e-5
+    tolf = 5e-3
+    tolx = 5e-3
+    n_top_r = nstr[0] - 1
+    cldsave_count = 0
+
+    # Flags for radiative transfer components
+    # Reflected is already pre-calculated in t_start and passed in as flux_net_v_fixed
+    compute_reflected = False
+    compute_thermal = True
+
+    # Initial flux residuals
+    f_vec, n_total, sum_f2, sum_temp2, test, flux_results = get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
+                                                                                Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                                                                                Disco, Opagrid, F0PI, compute_reflected, compute_thermal,
+                                                                                do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                                                                                flux_net_v_fixed, flux_net_v_layer_fixed)
+
+    step_max = 0.01
+    for its in range(it_max):
+        f = 0.5 * sum_f2
+        
+        # Test if we are already at a root
+        if abs(tidal[0]) > 0 and (test / abs(tidal[0])) < 0.01 * tolf:
+            if verbose: print(" We are already at a root, tolf , test = ", 0.01 * tolf, ", ", test / abs(tidal[0]))
+            dtdp = np.zeros(shape=(nlevel - 1))
+            for j in range(nlevel - 1):
+                dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
+            flux_net_ir = flux_results[5]
+            flux_net_v = flux_results[1][0,0,:]
+            flux_plus_ir = flux_results[6]
+            return temp, dtdp, all_profiles, flux_net_ir, flux_net_v, flux_plus_ir[0, :]
+
+        # Determine step size limit
+        if egp_stepmax == True:
+            step_max_tolerance = 0.005
+            step_max = step_max_tolerance * max(sqrt(sum_temp2), n_total * 1.0)
+        else:
+            iteration_factor = max(0.01, (it_max - its) / it_max)
+            step_max *= max(sqrt(sum_temp2), n_total * 1.0) * iteration_factor
+
+        # Store old state
+        temp_old = temp.copy()
+        flux_net_ir_old = flux_results[5].copy()
+        flux_net_ir_layer_old = flux_results[4].copy()
+
+        # Compute Jacobian
+        A, beta_jac = compute_jacobian(temp_old, nstr, nofczns, n_total, rfaci, rfacv, tidal,
+                             Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
+                             F0PI, compute_reflected, compute_thermal, do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                             moist, eps, flux_net_ir_old, flux_net_ir_layer_old)
+
+        # Compute gradient and Newton direction
+        g = np.zeros(n_total)
+        p = np.zeros(n_total)
+        for i in range(n_total):
+            sum_g = 0.0
+            for j in range(n_total):
+                sum_g += A[j, i] * f_vec[j]
+            g[i] = sum_g
+            p[i] = -f_vec[i]
+        
+        f_old = f
+        A, p = mat_sol(A, nlevel, n_total, p)
+
+        # Line search routine
+        sum_p2 = 0.0
+        for i in range(2, n_total):
+            sum_p2 += p[i]**2
+        sum_p = sqrt(sum_p2)
+        
+        if sum_p > step_max:
+            for i in range(n_total):
+                p[i] *= step_max / sum_p
+
+        slope = 0.0
+        for i in range(n_total):
+            slope += g[i] * p[i]
+        
+        test_x = 0.0
+        for i in range(n_total):
+            tmp = abs(p[i]) / temp_old[i]
+            if tmp > test_x:
+                test_x = tmp
+        
+        if test_x > 0:
+            alamin = tolx / test_x
+        else:
+            alamin = 1e10 # very large alamin if no step is proposed
+        alam = 1.0
+        f2 = f
+        alam2 = 0.0
+        flag_converge = 0
+        check = False
+
+        while flag_converge == 0:
+            # Update radiative temperatures along direction p
+            beta = beta_jac.copy()
+            rad_temp = temp_old.copy()
+            ndo = n_top_r
+            flag_ndo = 0 
+            if ndo < 0:
+                ndo_temporary = ndo
+                ndo = 0
+                flag_ndo = 1
+            
+            for nd in range(0, 3 * nofczns, 3):
+                n_top_d = nstr[nd] + 1
+                if nd == 0: n_top_d -= 1
+                n_strt_d = nstr[nd + 1]
+                n_bot_d = nstr[nd + 2] + 1
+                
+                for j in range(n_top_d, n_strt_d + 1):
+                    rad_temp[j] = beta[j] + alam * p[j - ndo]
+                
+                if flag_ndo == 1:
+                    ndo = ndo_temporary
+                    flag_ndo = 0
+                ndo += n_bot_d - n_strt_d
+            
+            # Fill radiative levels and reconstruct convective zones, zone by zone
+            temp = reconstruct_adiabat(temp, rad_temp, Atmosphere.p_level, nstr, nofczns, AdiabatBundle, Atmosphere, moist, False)
+            
+            # Artificial damper
+            for j1 in range(n_top_r + 1, nlevel):
+                if temp[j1] < tmin: temp[j1] = tmin + 0.1
+                elif temp[j1] > tmax: temp[j1] = tmax - 0.1
+            
+            # Recalculate residuals
+            f_vec, n_total, sum_f2, sum_temp2, test, flux_results = get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
+                                                                                            Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                                                                                            Disco, Opagrid, F0PI, False, compute_thermal,
+                                                                                            do_holes, fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                                                                                            flux_net_v_fixed, flux_net_v_layer_fixed)
+            f = 0.5 * sum_f2
+
+            if alam < alamin:
+                check = True
+                flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, -p, tolmin, temp, temp_old, g, tolx)
+            elif f <= f_old + alf * alam * slope:
+                flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, -p, tolmin, temp, temp_old, g, tolx)
+            else:
+                if alam == 1.0:
+                    tmplam = -slope / (2 * (f - f_old - slope))
+                else:
+                    rhs_1 = f - f_old - alam * slope
+                    rhs_2 = f2 - f_old - alam2 * slope
+                    anr = ((rhs_1 / alam**2) - (rhs_2 / alam2**2)) / (alam - alam2)
+                    b = (-alam2 * rhs_1 / alam**2 + alam * rhs_2 / alam2**2) / (alam - alam2)
+                    if anr == 0:
+                        tmplam = -slope / (2.0 * b)
+                    else:
+                        disc = b * b - 3.0 * anr * slope
+                        if disc < 0.0: tmplam = 0.5 * alam
+                        elif b <= 0.0: tmplam = (-b + sqrt(disc)) / (3.0 * anr)
+                        else: tmplam = -slope / (b + sqrt(disc))
+                    if tmplam > 0.5 * alam: tmplam = 0.5 * alam
+
+            if flag_converge != 2 and flag_converge != 1:
+                alam2 = alam
+                f2 = f
+                alam = max(tmplam, 0.1 * alam)
+
+            if np.isnan(np.sum(temp)):
+                flag_converge = 1
+                temp = temp_old.copy() + 0.5
+                if verbose: print("Got stuck with temp NaN -- so escaping the while loop in tstart")
+
+        if verbose:
+            _tidal_norm = abs(tidal[0]) if abs(tidal[0]) > 0 else 1.0
+            print("Iteration number ", its, ", min , max temp ", min(temp), max(temp), ", flux balance ", (rfaci*flux_results[5][0] + rfacv*flux_results[1][0,0,0] + tidal[0]) / _tidal_norm)
+
+        if save_profile == 1:
+            all_profiles = np.append(all_profiles, temp_old)
+            cldsave_count += 1
+        
+        if flag_converge == 2:
+            dtdp = np.zeros(shape=(nlevel - 1))
+            for j in range(nlevel - 1):
+                dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
+            if verbose: print("In t_start: Converged Solution in iterations ", its)
+            flux_net_ir = flux_results[5]
+            flux_net_v = flux_net_v_fixed
+            flux_plus_ir = flux_results[6]
+            return temp, dtdp, all_profiles, flux_net_ir, flux_net_v, flux_plus_ir[0, :]
+
+    if verbose: print("Iterations exceeded it_max ! sorry ")
+    dtdp = np.zeros(shape=(nlevel - 1))
+    for j in range(nlevel - 1):
+        dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
+    flux_net_ir_layer = flux_results[4]
+    flux_net_v = flux_net_v_fixed
+    flux_plus_ir = flux_results[6]
+    return temp, dtdp, all_profiles, flux_net_ir_layer, flux_net_v, flux_plus_ir[0, :]
+
+@jit(nopython=True, cache=True)
 def t_start(nofczns,nstr,convergence_criteria,# 
             rfaci, rfacv, tidal,
             Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
@@ -1556,6 +2068,91 @@ def t_start(nofczns,nstr,convergence_criteria,#
         dtdp[j] = (log( temp[j]) - log( temp[j+1]))/(log(pressure[j]) - log(pressure[j+1]))
 
     return temp, dtdp , all_profiles , flux_net_ir_layer,flux_net_v, flux_plus_ir[0,:]
+
+@jit(nopython=True, cache=True)
+def t_start_WIP(nofczns, nstr, convergence_criteria,
+            rfaci, rfacv, tidal,
+            Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
+            F0PI,
+            save_profile, all_profiles,
+            fhole=None, hole_OpacityWEd=None, hole_OpacityNoEd=None,
+            verbose=1, do_holes=None,
+            moist=False, egp_stepmax=False, solver='newton_raphson'):
+    """
+    Module to iterate on the level TP profile to make the Net Flux as close to 0.
+    Opacities/chemistry are not updated while iterating in this module.
+
+    Parameters
+    ----------
+    nofczns : int
+        # of convective zones
+    nstr : array
+        NSTR vector describes state of the atmosphere.
+    convergence_criteria : namedtuple
+        Defines convergence criteria.
+    rfaci : float
+        IR flux addition fraction.
+    rfacv : float
+        Visible flux addition fraction.
+    tidal : ndarray
+        effectively sigmaTeff^4.
+    Atmosphere : namedtuple
+        PT profile, chemistry, etc.
+    OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle : namedtuples
+        Radiative and atmospheric data.
+    F0PI : ndarray
+        Stellar spectrum.
+    save_profile : bool
+        If True, save all intermediate profiles.
+    all_profiles : ndarray
+        All saved profiles.
+    fhole, hole_OpacityWEd, hole_OpacityNoEd : optional
+        Hole fraction and clear sky opacities.
+    verbose : int
+        Verbosity level.
+    do_holes : bool
+        If True, use patchy cloud model.
+    moist : bool
+        If True, use moist adiabat.
+    egp_stepmax : bool
+        If True, use unbounded stepmax.
+    solver : str
+        The non-linear solver to use (default: 'newton_raphson').
+
+    Returns
+    -------
+    temp, dtdp, all_profiles, flux_net_ir, flux_net_v, flux_plus_ir_attop
+    """
+    # Pre-calculate visible fluxes (reuse throughout the solver)
+    if rfacv == 0:
+        compute_reflected = False
+    else:
+        compute_reflected = True
+    compute_thermal = True
+
+    if do_holes == True:
+        flux_results_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                                      Disco, Opagrid, F0PI, compute_reflected, compute_thermal,
+                                      do_holes=do_holes, fhole=fhole, hole_OpacityWEd=hole_OpacityWEd, hole_OpacityNoEd=hole_OpacityNoEd)
+    else:
+        flux_results_full = get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase,
+                                      Disco, Opagrid, F0PI, compute_reflected, compute_thermal)
+
+    # extract visible fluxes
+    flux_net_v_layer_fixed = flux_results_full[0][0,0,:]
+    flux_net_v_fixed = flux_results_full[1][0,0,:]
+
+    if solver == 'newton_raphson':
+        return newton_raphson_solver(Atmosphere.t_level, nstr, nofczns, convergence_criteria,
+                                     rfaci, rfacv, tidal,
+                                     Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
+                                     F0PI, save_profile, all_profiles,
+                                     fhole, hole_OpacityWEd, hole_OpacityNoEd,
+                                     verbose, do_holes, moist, egp_stepmax,
+                                     flux_net_v_fixed, flux_net_v_layer_fixed)
+    else:
+        raise ValueError("Unknown solver specified in t_start")
+
 
 @jit(nopython=True, cache=True)
 def check_convergence(f_vec, n_total, tolf, check, f, dflux, tolmin, temp, temp_old, g , tolx):
