@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
+import pytest
 import astropy.units as u
 import matplotlib
 matplotlib.use('Agg')
@@ -22,6 +23,7 @@ def _setup_climate_bundle(opa, exclude_mol=None):
 	return cl
 
 
+@pytest.mark.needs_ck_tables
 def test_exclude_mol_climate_opacity():
 	"""
 	exclude_mol should remove a molecule's opacity in the climate opacity calculation
