@@ -19,6 +19,10 @@ os.environ.setdefault('PYSYN_CDBS', str(REFDATA / 'stellar_grids'))
 RETRIEVAL_EXAMPLE_DIR = REFDATA / 'base_cases' / 'retrieval_example'
 MINI_OPACITY_DB = RETRIEVAL_EXAMPLE_DIR / 'testing_file_only_H2O_CO2_example_opacities.db'
 
+# Mini correlated-k tables for method='resortrebin' (H2O and CO2, all 20 pressures, 500-1600 K),
+# cut from the full 2 GB set by reference/scripts/make_mini_resortrebin.py.
+MINI_CK_DIR = REFDATA / 'base_cases' / 'testing' / 'resortrebin_mini'
+
 
 def full_data_available():
     """
@@ -56,6 +60,13 @@ def mini_opacity():
     """opannection to the mini opacity db, opened once and shared by every test in the run."""
     from picaso import justdoit as jdi
     return jdi.opannection(filename_db=str(MINI_OPACITY_DB))
+
+
+@pytest.fixture(scope='session')
+def mini_ck_opacity():
+    """resortrebin opannection to the mini H2O/CO2 k-tables and the climate continuum db in git."""
+    from picaso import justdoit as jdi
+    return jdi.opannection(method='resortrebin', ck_db=str(MINI_CK_DIR), preload_gases=['H2O', 'CO2'])
 
 
 @pytest.fixture(scope='session')

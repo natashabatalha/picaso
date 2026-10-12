@@ -83,6 +83,7 @@ testpaths = ["tests"]
 markers = [
     "needs_full_data: needs the full opacity db and stellar grids, which are not in git; skipped automatically when missing",
     "needs_ck_tables: needs the resortrebin correlated-k tables in reference/opacities/resortrebin, which are not in git; skipped automatically when missing",
+    "integration: slow end-to-end model runs (e.g. full climate convergence); run alone with -m integration or skip with -m 'not integration'",
 ]
 
 [project.urls]
