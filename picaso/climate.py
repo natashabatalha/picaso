@@ -1321,7 +1321,7 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
     return temp, dtdp, all_profiles, flux_net_ir_layer, flux_net_v, flux_plus_ir[0, :]
 
 @jit(nopython=True, cache=True)
-def t_start(nofczns,nstr,convergence_criteria,# 
+def t_start_legacy(nofczns,nstr,convergence_criteria,# 
             rfaci, rfacv, tidal,
             Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
             F0PI,
@@ -2070,7 +2070,7 @@ def t_start(nofczns,nstr,convergence_criteria,#
     return temp, dtdp , all_profiles , flux_net_ir_layer,flux_net_v, flux_plus_ir[0,:]
 
 @jit(nopython=True, cache=True)
-def t_start_WIP(nofczns, nstr, convergence_criteria,
+def t_start(nofczns, nstr, convergence_criteria,
             rfaci, rfacv, tidal,
             Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
             F0PI,
