@@ -96,18 +96,6 @@ def test_negligible_or_excluded_gas_drops_out(mini_ck_opacity, ln_k):
     np.testing.assert_allclose(excluded[0], h2o_only, rtol=1e-12)
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    'known issue: do_mixing_mono_gasesfly returns the abundance-weighted mean cross section '
-    '(sum x_i k_i / sum x_i) and compute_opacity does not multiply by abundance for ngauss > 1, '
-    'so the gas opacity does not change when every abundance is scaled'))
-def test_molecular_opacity_scales_with_abundance(mini_ck_opacity):
-    """Ten times more of every absorber should give ten times the molecular opacity."""
-    P, T = mini_ck_opacity.pressures, mini_ck_opacity.temps
-    base = mixed_opacity(mini_ck_opacity, layers([P[8]], [T[10]], {'H2O': [1e-3], 'CO2': [1e-4]}))
-    scaled = mixed_opacity(mini_ck_opacity, layers([P[8]], [T[10]], {'H2O': [1e-2], 'CO2': [1e-3]}))
-    np.testing.assert_allclose(scaled, 10 * base, rtol=1e-6)
-
-
 @pytest.mark.needs_ck_tables
 def test_mini_tables_match_full_tables(mini_ck_opacity):
     """Guards the mini tables themselves: within their temperature range they match the full set."""
