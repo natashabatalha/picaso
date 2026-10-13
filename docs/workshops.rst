@@ -9,6 +9,7 @@ End-to-end lessons, many originally taught at summer schools and workshops. Each
 
    Thermal Emission: Building Intuition from Limiting Cases </notebooks/workshops/RadiativeTransfer101/1_ThermalEmission.py>
    Reflected Light: Building Intuition from Limiting Cases </notebooks/workshops/RadiativeTransfer101/2_ReflectedLight.py>
+   Transmission: Building Intuition from Limiting Cases </notebooks/workshops/RadiativeTransfer101/3_Transmission.py>
 
 .. toctree::
    :caption: Sagan School 2023: Interpreting JWST Transmission Spectra

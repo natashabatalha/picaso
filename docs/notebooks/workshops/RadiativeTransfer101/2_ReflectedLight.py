@@ -15,7 +15,7 @@
 # %% [markdown]
 # # Reflected Light: Building Intuition from Limiting Cases
 #
-# In the [thermal emission lesson](1_ThermalEmission) the planet was the light source. Here the star
+# In the {doc}`thermal emission lesson </notebooks/workshops/RadiativeTransfer101/1_ThermalEmission>` the planet was the light source. Here the star
 # is: starlight enters the atmosphere, gets scattered or absorbed, and some of it comes back out
 # toward us. As before, we test PICASO's solver on simple atmospheres where we know the answer.
 #
@@ -339,3 +339,5 @@ np.testing.assert_allclose(cases['HG g = 0.75 (one-term HG)']['picaso'], dlugach
 #
 # **Try it:** put a bright surface ($r = 0.8$) under a thin Rayleigh atmosphere and increase $\tau$.
 # When does the atmosphere hide the surface?
+#
+# Next in this course: {doc}`transmission </notebooks/workshops/RadiativeTransfer101/3_Transmission>`, where starlight passes through the planet's limb.
