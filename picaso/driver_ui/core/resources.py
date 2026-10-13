@@ -11,6 +11,7 @@ import json
 import os
 import threading
 
+import picaso.driver as go
 from picaso import justdoit as jdi
 from picaso.parameterizations import Parameterize
 
@@ -44,6 +45,23 @@ def param_tools_for(config):
 def param_tools(mieff_dir, model_dir=None):
     condensates = [c for c in jdi.vj.available() if c not in _UNLOADABLE_CONDENSATES]
     return Parameterize(load_cld_optical=condensates, mieff_dir=mieff_dir, model_dir=model_dir)
+
+
+def retrieval_param_tools(config):
+    """
+    Parameterization tools for evaluating a retrieval's model, loading only the condensates the config uses (as
+    driver.check_model_samples does), so cloud free retrievals do not need the virga optical properties.
+    """
+    condensates = tuple(sorted(set(go.find_values_for_key(config, "condensate")))) or None
+    model_dir = config["temperature"].get("xarray_grid", {}).get("model_dir")
+    return _retrieval_param_tools(condensates, config["OpticalProperties"].get("virga_mieff"),
+                                  None if model_dir is None else str(model_dir))
+
+
+@functools.lru_cache(maxsize=4)
+def _retrieval_param_tools(condensates, mieff_dir, model_dir):
+    return Parameterize(load_cld_optical=None if condensates is None else list(condensates), mieff_dir=mieff_dir,
+                        model_dir=model_dir)
 
 
 def grid_parameters(param_tools):

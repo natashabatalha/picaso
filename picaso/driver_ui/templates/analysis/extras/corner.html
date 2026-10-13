@@ -1,8 +1,26 @@
-{% from "_macros.html" import action %}
-{% if a.corner_image %}
-  <img class="figure" src="{{ a.corner_image }}" alt="Corner plot">
-  <div class="button-row">
-    <a class="button" href="{{ url_for('analysis.download_corner') }}">Download high-resolution corner plot</a>
-    {{ action(url_for("analysis.save_corner"), "Save figure locally in retrieval directory", secondary=True) }}
+{% from "_macros.html" import plot, action %}
+{% if a.corner_plot %}
+  <div class="corner" data-evaluate-url="{{ url_for('analysis.corner_point') }}">
+    <p class="hint">Drag a black line (or click a histogram bar) to choose a parameter value. The spectrum is
+      recomputed at the selected values. <span class="corner-status" aria-live="polite"></span></p>
+    {{ plot(a.corner_plot, "corner") }}
+    <table class="corner-values">
+      <thead><tr><th>Parameter</th><th>Selected value</th><th>Median</th></tr></thead>
+      <tbody>
+        {% for param in a.loaded.info.param_names %}
+          <tr>
+            <td>{{ a.corner[param].label }}</td>
+            <td><input type="number" step="any" data-corner-index="{{ loop.index0 }}"
+                       value="{{ '%.6g'|format(a.corner_point[param]) }}" aria-label="Selected {{ a.corner[param].label }}"></td>
+            <td>{{ '%.6g'|format(a.corner_median[param]) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="button-row">
+      <button type="button" class="button secondary" data-corner-reset>Reset to medians</button>
+      <a class="button" href="{{ url_for('analysis.download_corner') }}">Download high-resolution corner plot</a>
+      {{ action(url_for("analysis.save_corner"), "Save figure locally in retrieval directory", secondary=True) }}
+    </div>
   </div>
 {% endif %}
