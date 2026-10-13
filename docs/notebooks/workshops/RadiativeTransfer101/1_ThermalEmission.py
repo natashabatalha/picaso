@@ -308,5 +308,5 @@ print('Scattering lowers emission, and never below the analytic sqrt(1 - w0) bou
 # | Absorption band | lower brightness temperature in the band | band reaches $\tau = 1$ higher, where it is cooler |
 # | Scattering, isothermal | below $B$, above $\sqrt{1-w_0}\,B$ | emission goes with absorption |
 #
-# Next in this course: the same approach for reflected light, where the limits are a black planet,
+# Next in this course: the same approach for [reflected light](2_ReflectedLight), where the limits are a black planet,
 # a perfectly reflecting cloud deck that conserves energy, and a bare Lambertian surface.
