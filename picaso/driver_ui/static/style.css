@@ -217,6 +217,12 @@ details summary { cursor: pointer; }
 /* ---------- figures ---------- */
 .plot { width: 100%; min-height: 420px; margin: 12px 0; }
 .plot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+/* the corner plot and its spectrum need more room than the page's column, so that card spans the window */
+#card-corner { width: min(1400px, calc(100vw - 32px)); margin-left: calc(50% - min(700px, 50vw - 16px)); }
+.corner-values { border-collapse: collapse; margin: 8px 0 12px; font-size: 14px; }
+.corner-values th, .corner-values td { padding: 4px 12px 4px 0; text-align: left; }
+.corner-values th { color: var(--muted); font-weight: 600; }
+.corner-values input { width: 10em; }
 img.figure { display: block; max-width: 100%; height: auto; margin: 12px 0; background: #fff; border-radius: 6px; }
 .environment-status { overflow-x: auto; }
 pre { overflow-x: auto; background: var(--bg); padding: 12px; border-radius: 6px; }
