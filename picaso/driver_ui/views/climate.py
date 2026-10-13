@@ -7,6 +7,7 @@ the session's own `climate` page state, so it never touches the Spectrum
 page's driver config. Field paths are prefixed with ("climate", "config").
 """
 import os
+import threading
 import tomllib
 
 import toml
@@ -18,8 +19,9 @@ from picaso.driver_ui.core import climate
 from picaso.driver_ui.core.config_ops import (
     climate_template_path, export_climate_config, merge_config, new_climate_config, resolve_climate_defaults)
 from picaso.driver_ui.core.config_schema import apply_form, build_fields, find_field
-from picaso.driver_ui.core.plots import plotly_plot
-from picaso.driver_ui.views.cards import Card, card_views, set_messages
+from picaso.climate_log import ConvergenceHistory
+from picaso.driver_ui.core.plots import Plot, plotly_plot
+from picaso.driver_ui.views.cards import Card, bulk_property_fields, bulk_property_notes, card_views, set_messages
 from picaso.driver_ui.views.spectrum import learn_more
 
 bp = Blueprint("climate", __name__, url_prefix="/climate")
@@ -42,6 +44,8 @@ def page_state(sess):
 def reset(sess):
     sess.climate.clear()
     sess.climate.update(config=new_climate_config(current_app.config["PICASO_REFDATA"]), results={})
+    # older reference climate.toml files do not have this UI option yet
+    sess.climate["config"].setdefault("climate", {}).setdefault("watch_convergence", False)
 
 
 def config_of(sess):
@@ -130,14 +134,14 @@ class ObjectCard(ClimatePageCard):
     name, title = "object", "Object Variables"
 
     def fields(self, sess):
-        tree = fields_for(sess, "object")
+        tree = bulk_property_fields(fields_for(sess, "object"), CONFIG + ("object",))
         teff = find_field(tree, ".".join(CONFIG + ("object", "teff")))
         if teff is not None:
             teff.hint = "Effective temperature for brown dwarfs, intrinsic temperature for irradiated planets"
         return tree
 
     def notes(self, sess):
-        return [("info", "If both radius and mass are given, gravity is computed from them.")]
+        return bulk_property_notes(config_of(sess)["object"])
 
 
 class TemperatureCard(ClimatePageCard):
@@ -182,7 +186,11 @@ class ClimateCard(ClimatePageCard):
     clears_previews = False
 
     def fields(self, sess):
-        return fields_for(sess, "climate")
+        tree = fields_for(sess, "climate")
+        watch = find_field(tree, ".".join(CONFIG + ("climate", "watch_convergence")))
+        if watch is not None:
+            watch.hint = "Draw the temperature profile and the solver log live while the model runs"
+        return tree
 
     def notes(self, sess):
         return [("info", "rcb_guess is the level index at the top of the guessed convective zone. rfacv sets the "
@@ -203,6 +211,22 @@ CARDS_BY_NAME = {card.name: card for card in CARDS}
 # =======================================
 # RENDERING
 # =======================================
+def live_view(sess):
+    """What the live panel of a watched climate run needs, or None if no run is being watched."""
+    live = page_state(sess)["results"].get("live")
+    if live is None:
+        return None
+    history = live["history"]
+    n = len(history.dts)
+    stage = history.stages[-1][1] if history.stages else "Setting up"
+    # the figure id only changes when there is something new to draw, so polling does not redraw it
+    figure = climate.live_figure(history)
+    figure.update_layout(width=None, autosize=True)
+    return {"plot": Plot(f"live-{id(history)}-{n}-{len(history.stages)}", figure.to_json()),
+            "status": f"{stage}: {n} outer iterations so far",
+            "log": "\n".join(history.log[-40:])}
+
+
 def render_page(sess, errors=None):
     return render_template(
         "_cards.html",
@@ -211,6 +235,7 @@ def render_page(sess, errors=None):
         errors=errors or {},
         sess=sess,
         climate_state=page_state(sess),
+        live=live_view(sess),
         exported_toml=toml.dumps(model_config(sess)),
     )
 
@@ -265,24 +290,69 @@ def preview():
     return render_page(sess)
 
 
-@bp.post("/run")
-def run():
-    sess = state.current()
+def store_run(sess, run_results=None, error=None):
+    """Puts a finished climate run (or its error) on the page."""
     results = page_state(sess)["results"]
-    try:
-        run_results = climate.run_climate(model_config(sess))
-    except Exception as e:
+    if error is not None:
         results.pop("run", None)
         set_messages(results, "climate", [
             ("warning", "Make sure you have configured the opacities, object, initial guess and chemistry before "
                         "running the climate model."),
-            ("error", str(e))])
+            ("error", str(error))])
+        return
+    run_results["plots"] = [plotly_plot(fig) for fig in climate.result_figures(run_results)]
+    run_results["with_spec"] = model_config(sess).get("climate", {}).get("with_spec", False)
+    results["run"] = run_results
+    converged = run_results["out"].get("converged", 1)
+    set_messages(results, "climate", [("success", "Climate model finished.") if converged else
+                                      ("warning", "Climate model finished but did not converge. "
+                                                  "See the solver log in the server console.")])
+
+
+def watch_run(live, config):
+    """Runs the climate model in a background thread, feeding `live['history']` as it goes."""
+    try:
+        live["run_results"] = climate.run_climate(config, watch=live["history"])
+    except Exception as e:
+        live["error"] = e
+    live["done"] = True
+
+
+@bp.post("/run")
+def run():
+    sess = state.current()
+    results = page_state(sess)["results"]
+    config = model_config(sess)
+    if results.get("live") is not None:
+        set_messages(results, "climate", [("warning", "A climate model is already running.")])
+        return render_page(sess)
+    if config.get("climate", {}).get("watch_convergence", False):
+        live = {"history": ConvergenceHistory(), "done": False, "run_results": None, "error": None}
+        results["live"] = live
+        results.pop("run", None)
+        threading.Thread(target=watch_run, args=(live, config), daemon=True).start()
+        return render_page(sess)
+    try:
+        run_results = climate.run_climate(config)
+    except Exception as e:
+        store_run(sess, error=e)
     else:
-        run_results["plots"] = [plotly_plot(fig) for fig in climate.result_figures(run_results)]
-        run_results["with_spec"] = model_config(sess).get("climate", {}).get("with_spec", False)
-        results["run"] = run_results
-        set_messages(results, "climate", [("success", "Climate model finished.")])
+        store_run(sess, run_results)
     return render_page(sess)
+
+
+@bp.get("/progress")
+def progress():
+    """Polled by the live panel of a watched run. Once the run is done, re-renders the whole page."""
+    sess = state.current()
+    results = page_state(sess)["results"]
+    live = results.get("live")
+    if live is not None and not live["done"]:
+        return render_template("climate/extras/live.html", live=live_view(sess))
+    if live is not None:
+        results.pop("live")
+        store_run(sess, live["run_results"], live["error"])
+    return Response(render_page(sess), headers={"HX-Retarget": "#sections", "HX-Reswap": "morph:outerHTML"})
 
 
 @bp.post("/reset")

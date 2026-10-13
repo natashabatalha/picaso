@@ -1590,13 +1590,32 @@ def check_model_samples(config, N=100, samples=None,full_likelihood=False):
 
         return models, thetas, profiles
 
+def _object_quantity(object_config, key):
+    """
+    (value, astropy unit) of object.gravity, object.mass or object.radius, or (None, None)
+    if it is not given. A missing entry and a blank value ('', as TOML has no null) both
+    count as not given, so a config can leave gravity blank when mass and radius are set.
+    """
+    entry = object_config.get(key) or {}
+    value = entry.get('value')
+    if value is None or (isinstance(value, str) and value.strip() == ''):
+        return None, None
+    unit = entry.get('unit')
+    return value, (None if unit is None else u.Unit(unit))
+
+
 def _validate_object_gravity_config(object_config):
-    """Reject an over-specified gravity, mass, and radius combination."""
-    values = [object_config.get(key, {}).get('value') for key in ('gravity', 'mass', 'radius')]
-    if all(value is not None for value in values):
+    """Gravity must be given either directly or through mass and radius, but not all three at once."""
+    gravity, mass, radius = (_object_quantity(object_config, key)[0] for key in ('gravity', 'mass', 'radius'))
+    if gravity is not None and mass is not None and radius is not None:
         raise ValueError(
             'Object gravity is over-specified: gravity, mass, and radius are all set. '
-            'Provide only two of these quantities.'
+            'Give gravity, or mass and radius, and leave the other blank.'
+        )
+    if gravity is None and (mass is None or radius is None):
+        raise ValueError(
+            'Object gravity is under-specified: give gravity, or both mass and radius '
+            '(leave the others blank).'
         )
 
 
@@ -1625,17 +1644,11 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
     A.phase_angle(rad,**phase_kwargs) #input the radian angle of the event/geometry of browndwarf/planet
 
     _validate_object_gravity_config(config['object'])
-    #only two of gravity, mass, and radius are given so the missing one has no unit
-    def object_unit(key):
-        unit = config['object'].get(key, {}).get('unit',None)
-        return None if unit is None else u.Unit(unit)
-    A.gravity(gravity     = config['object'].get('gravity', {}).get('value',None),
-            gravity_unit= object_unit('gravity'),
-            radius      = config['object'].get('radius', {}).get('value',None),
-            radius_unit = object_unit('radius'),
-            mass        = config['object'].get('mass', {}).get('value',None),
-            mass_unit   = object_unit('mass')
-            )
+    #at most two of gravity, mass, and radius are given; a missing or blank one is passed as None
+    kwargs = {}
+    for key in ['gravity', 'radius', 'mass']:
+        kwargs[key], kwargs[f'{key}_unit'] = _object_quantity(config['object'], key)
+    A.gravity(**kwargs)
 
     if stage == 'object':
         return A
@@ -1796,9 +1809,9 @@ def setup_climate_class(config, opacity=None, param_tools=None):
     _validate_object_gravity_config(object_config)
     kwargs = {}
     for key in ['gravity', 'radius', 'mass']:
-        if key in object_config:
-            kwargs[key] = object_config[key]['value']
-            kwargs[f'{key}_unit'] = u.Unit(object_config[key]['unit'])
+        value, unit = _object_quantity(object_config, key)
+        if value is not None:
+            kwargs[key], kwargs[f'{key}_unit'] = value, unit
     A.gravity(**kwargs)
 
     #effective temperature (brown dwarf) or intrinsic temperature (planet)

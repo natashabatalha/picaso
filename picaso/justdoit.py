@@ -3,6 +3,7 @@ from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_refle
 from .fluxes_noalloc import get_reflected_1d
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
+from .climate_log import ClimateReporter
 
 
 from .wavelength import get_cld_input_grid
@@ -5158,6 +5159,25 @@ class inputs():
         else :
             self.inputs['planet']['T_eff'] = 0
     
+    def _climate_summary(self, diseq_chem, cloudy, moist, rfacv):
+        """Short 'label: value' descriptions of a climate run, for the header of its progress printout."""
+        planet = self.inputs['planet']
+        pressure = self.inputs['climate']['pressure']
+        chem_params = self.inputs['approx']['chem_params']
+        options = [name for name in ('quench', 'cold_trap', 'vol_rainout', 'no_ph3') if chem_params.get(name, False)]
+        chemistry = self.inputs['approx'].get('chem_method') or 'fixed by the preweighted ck table'
+        if diseq_chem:
+            chemistry += ' (disequilibrium)'
+        if options:
+            chemistry += ' + ' + ', '.join(options)
+        return [f"{'irradiated' if rfacv else 'not irradiated'}",
+                f"Teff {planet['T_eff']:g} K",
+                f"gravity {planet['gravity']*0.01:g} m/s2",
+                f"{len(pressure)} levels, {np.min(pressure):.2g}-{np.max(pressure):.3g} bar",
+                f"chemistry: {chemistry}",
+                f"clouds: {'yes' if cloudy else 'no'}",
+                f"moist adiabat: {'yes' if moist else 'no'}"]
+
     def interpret_run(self):
         print('SUMMARY')
         print('-------')
@@ -5274,7 +5294,7 @@ class inputs():
     
     def climate(self, opacityclass, save_all_profiles = False, with_spec=False,
         save_all_kzz = False, diseq_chem = False, self_consistent_kzz =True
-        ,verbose=True, damping=False):#,
+        ,verbose=True, damping=False, watch=None):#,
         #chemeq_first=True
        #deprecate: on_fly=False,gases_fly=None, as_dict=True, kz = None, 
         """
@@ -5300,8 +5320,16 @@ class inputs():
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
             If you want to run MLT in convective zones and Moses in the radiative zones
-        verbose : bool
-            If True, triggers prints throughout code
+        verbose : bool or int
+            Progress printout (see the climate tutorials for how to read it).
+            False/0 = silent, True/1 = one line per outer iteration of each stage,
+            2 = also every Newton step and the chemistry/kzz/cloud update messages.
+        watch : None, str, callable, or list
+            (Optional) Follow the convergence while it runs. None (default) = off, at no cost.
+            'plot' = live figure of the T(P) profile and its convergence (in a notebook it
+            redraws in place); a path ending in '.jsonl' = one JSON event per line, which can be
+            followed from another terminal (`tail -f`) or read with climate_log.read_climate_log;
+            a callable = called with each event dict (see picaso.climate_log).
         damping : bool
             (Optional) Only used when diseq_chem=True. If True, under-relax the
             temperature update in the coupled temperature<->photochem iteration
@@ -5504,34 +5532,42 @@ class inputs():
                                         +[i[1] for i in hole_specific]))
 
 
-        if verbose: self.interpret_run()
-
-        if not diseq_chem:#chemeq_first: 
-            final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd,all_kzz=run_chemeq_climate_workflow(self,
-                    nofczns,nstr, #tracks convective zones 
-                    TEMP1,pressure, #Atmosphere
-                    AdiabatBundle, #t_table, p_table, grad, cp, 
-                    opacityclass, grav, 
-                    rfaci, rfacv,  tidal, #energy balance 
-                    Opagrid, #delta_wno, tmin, tmax, 
-                    CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
-                    save_profile,all_profiles, all_opd,
-                    verbose=verbose, moist = moist,
-                    save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
-
-
-        if diseq_chem: 
-            final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
-                chem_out,cld_out,  all_profiles,  all_opd, all_kzz = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
-                        AdiabatBundle,opacityclass,
-                        grav,
-                        rfaci,rfacv,tidal,
-                        Opagrid,
-                        CloudParameters,
-                        save_profile,all_profiles,all_opd,
+        reporter = ClimateReporter(verbose, watch)
+        if reporter.on:
+            reporter.start(pressure, TEMP1, summary=self._climate_summary(diseq_chem, cloudy, moist, rfacv),
+                           n_stages=3 if diseq_chem else 4)
+        #the climate functions find the reporter here (climate.climate_reporter)
+        self.climate_reporter = reporter
+        try:
+            if not diseq_chem:#chemeq_first: 
+                final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
+                    chem_out,cld_out,  all_profiles,  all_opd,all_kzz=run_chemeq_climate_workflow(self,
+                        nofczns,nstr, #tracks convective zones 
+                        TEMP1,pressure, #Atmosphere
+                        AdiabatBundle, #t_table, p_table, grad, cp, 
+                        opacityclass, grav, 
+                        rfaci, rfacv,  tidal, #energy balance 
+                        Opagrid, #delta_wno, tmin, tmax, 
+                        CloudParameters,#cloudy,cld_species,mh,fsed,beta,param_flag,mieff_dir ,opd_cld_climate,g0_cld_climate,w0_cld_climate, #scattering/cloud properties 
+                        save_profile,all_profiles, all_opd,
                         verbose=verbose, moist = moist,
-                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz, damping=damping)
+                        save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz)
+
+            if diseq_chem: 
+                final_conv_flag, pressure, temp, dtdp, nstr_new, flux_net_ir_final, flux_net_v_final, flux_plus_final,   \
+                    chem_out,cld_out,  all_profiles,  all_opd, all_kzz = run_diseq_climate_workflow(self, nofczns, nstr, TEMP1, pressure,
+                            AdiabatBundle,opacityclass,
+                            grav,
+                            rfaci,rfacv,tidal,
+                            Opagrid,
+                            CloudParameters,
+                            save_profile,all_profiles,all_opd,
+                            verbose=verbose, moist = moist,
+                            save_kzz=save_all_kzz, self_consistent_kzz=self_consistent_kzz, damping=damping)
+            reporter.finish(final_conv_flag, temp)
+        finally:
+            del self.climate_reporter
+
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp

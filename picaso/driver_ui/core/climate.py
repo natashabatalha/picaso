@@ -8,8 +8,10 @@ import json
 import os
 import tempfile
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go_plotly
+from plotly.subplots import make_subplots
 
 import picaso.driver as go
 from picaso import justplotit as jpi
@@ -36,13 +38,17 @@ def climate_class(config):
 
 
 @resources.serialized
-def run_climate(config):
-    """Like driver.run_climate, but reusing the cached opacity connection. Returns a dict of results."""
+def run_climate(config, watch=None):
+    """
+    Like driver.run_climate, but reusing the cached opacity connection. Returns a dict of results.
+    `watch` is passed to picaso's climate() to follow the run (e.g. a climate_log.ConvergenceHistory).
+    """
     opa = opacity(config["OpticalProperties"])
     picaso_class = go.setup_climate_class(config, opa)
     settings = config.get("climate", {})
     out = picaso_class.climate(opa, save_all_profiles=settings.get("save_all_profiles", False),
-                               with_spec=settings.get("with_spec", False), verbose=settings.get("verbose", True))
+                               with_spec=settings.get("with_spec", False), verbose=settings.get("verbose", True),
+                               watch=watch)
     return {"out": out, "picaso_class": picaso_class,
             "guess": (picaso_class.inputs["climate"]["guess_temp"], picaso_class.inputs["climate"]["pressure"])}
 
@@ -80,6 +86,43 @@ def result_figures(results):
         fig.update_yaxes(type="log", title_text="Thermal flux (erg/s/cm²/cm)")
         figures.append(fig)
     return figures
+
+
+def live_figure(history):
+    """
+    Convergence so far of a running climate model (a climate_log.ConvergenceHistory): every outer
+    iteration's T(P) profile, the newest in red, and dT per iteration against each stage's tolerance.
+    """
+    fig = make_subplots(rows=1, cols=2, column_widths=[0.55, 0.45], horizontal_spacing=0.12,
+                        subplot_titles=("Temperature profile", "Change per outer iteration"))
+    pressure = history.pressure
+    if pressure is not None and history.guess is not None:
+        fig.add_trace(go_plotly.Scatter(x=history.guess, y=pressure, name="Initial guess", mode="lines",
+                                        line=dict(color="gray", dash="dash", width=1)), 1, 1)
+    n = len(history.profiles)
+    for i, (k, temperature) in enumerate(history.profiles):
+        newest = i == n - 1
+        fig.add_trace(go_plotly.Scatter(
+            x=temperature, y=pressure, mode="lines", name=f"Iteration {k}", showlegend=newest,
+            line=dict(color="#d62728" if newest else "#1f77b4", width=3 if newest else 1),
+            opacity=1 if newest else 0.1 + 0.4 * (i + 1) / n), 1, 1)
+    if pressure is not None:
+        last = len(pressure) - 1
+        for top, bottom in history.zones:
+            fig.add_hrect(y0=np.log10(pressure[min(top, last)]), y1=np.log10(pressure[min(bottom, last)]),
+                          fillcolor="orange", opacity=0.15, line_width=0, row=1, col=1)
+    if history.dts:
+        k, dt, tol, _ = map(list, zip(*history.dts))
+        fig.add_trace(go_plotly.Scatter(x=k, y=np.maximum(dt, 1e-3), mode="lines+markers", name="dT",
+                                        line=dict(color="#1f77b4")), 1, 2)
+        fig.add_trace(go_plotly.Scatter(x=k, y=tol, mode="lines", name="Stage tolerance",
+                                        line=dict(color="#2ca02c", dash="dash", shape="hvh")), 1, 2)
+    fig.update_xaxes(title_text="Temperature (K)", row=1, col=1)
+    fig.update_yaxes(type="log", title_text="Pressure (bars)", autorange="reversed", row=1, col=1)
+    fig.update_xaxes(title_text="Outer iteration", row=1, col=2)
+    fig.update_yaxes(type="log", title_text="mean |dT| / 1.5 (K)", row=1, col=2)
+    fig.update_layout(height=450, legend=dict(orientation="h", y=-0.2), uirevision="climate-live")
+    return fig
 
 
 # =======================================

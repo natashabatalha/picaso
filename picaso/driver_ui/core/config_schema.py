@@ -10,6 +10,8 @@ Conventions read from the TOML:
 
     foo = 'a'   with  foo_options = ['a', 'b']   -> Choice
     foo = {value = 1.2, unit = 'Rjup'}           -> Quantity (value editable, unit fixed)
+    foo = {value = '', unit = 'Rjup'}            -> optional Quantity, blank until filled in
+                                                    (TOML has no null, so '' means "not given")
     foo_kwargs = {...}                           -> Section, shown only while a sibling
                                                     Choice is set to 'foo' (e.g.
                                                     distribution = 'lognorm' shows
@@ -72,9 +74,12 @@ class Number(Field):
     value: float
     minimum: float = field(default=None, kw_only=True)
     maximum: float = field(default=None, kw_only=True)
+    optional: bool = field(default=False, kw_only=True)  # may be left blank, which stores ''
     kind = "number"
 
     def parse(self, raw):
+        if self.optional and raw.strip() == "":
+            return ""
         number = _parse_number(raw, keep_int=isinstance(self.value, int))
         if self.minimum is not None and number < self.minimum:
             raise ValueError(f"must be at least {self.minimum:g}")
@@ -252,7 +257,7 @@ def _field_for(value, path, options, selectors, custom, choices):
         return TextList(path, value)
     if isinstance(value, dict):
         if "value" in value and "unit" in value:
-            return Quantity(path, value["value"], value["unit"])
+            return Quantity(path, value["value"], value["unit"], optional=value["value"] == "")
         return build_fields(value, path, selectors, custom, choices)
     raise TypeError(f"Unsupported value at {'.'.join(path)}: {value!r}")
 

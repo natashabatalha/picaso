@@ -7,6 +7,34 @@ Any change to a card's form posts it; the card applies the values and the
 whole page is re-rendered (and morphed in place by htmx).
 """
 
+import picaso.driver as go
+from picaso.driver_ui.core.config_schema import find_field
+
+BULK_PROPERTIES = ("gravity", "mass", "radius")
+
+
+def bulk_property_fields(tree, path):
+    """
+    Lets the object's gravity, mass and radius (under config `path`) be left blank: gravity is
+    given either directly or through mass and radius, so the user fills in only what they have.
+    """
+    for key in BULK_PROPERTIES:
+        f = find_field(tree, ".".join(path + (key,)))
+        if f is not None:
+            f.optional = True
+    return tree
+
+
+def bulk_property_notes(object_config):
+    """An explanation of how gravity is set, and an error if the current combination will not run."""
+    notes = [("info", "Give either gravity, or mass and radius (gravity is then computed from them). "
+                      "Leave the others blank.")]
+    try:
+        go._validate_object_gravity_config(object_config)
+    except ValueError as e:
+        notes.append(("error", str(e)))
+    return notes
+
 
 class Card:
     name = ""

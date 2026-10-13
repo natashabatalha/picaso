@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.19.6
 #   kernelspec:
-#     display_name: base
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -163,8 +163,27 @@ cl_run.inputs_climate(temp_guess= temp_guess, pressure= pressure,
 #
 #
 
+# %% [markdown]
+# ### Watching the climate converge
+#
+# In the [brown dwarf tutorial](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html) we went through the text printout of the solver. Here we instead turn the printout off with `verbose=False` and *watch* the calculation with `watch='plot'`. The figure below redraws after every outer iteration of the solver:
+#
+# - **left:** every T(P) profile so far (older ones fade, the newest is red), the initial guess (dashed) and the convective zone(s) (orange band)
+# - **right:** how much the profile changed in each outer iteration (`dT`, in K) against the tolerance of the current stage (dashed green). Each stage ends when `dT` drops below its tolerance; vertical lines mark the start of a new stage.
+#
+# A healthy run shows `dT` falling by orders of magnitude within each stage. If `dT` bounces up and down, or the profile keeps jumping between two shapes, the solver is struggling (see the brown dwarf tutorial for what to try).
+#
+# Other options for `watch`:
+#
+# - `watch=None` (the default): nothing is recorded, so watching costs nothing when it is off
+# - `watch='my_run.jsonl'`: writes one line of JSON per event to a file, so a long run can be followed from another terminal (`tail -f my_run.jsonl`) or read back with `picaso.climate_log.read_climate_log('my_run.jsonl')`
+# - `watch=my_function`: calls `my_function(event)` with a dictionary for every event (start, stage, iteration, convection, finish), for custom monitoring
+#
+# The printout and the watching are independent: `verbose=True` and `watch='plot'` together give both.
+
 # %%
-out = cl_run.climate(opacity_ck, save_all_profiles=True,with_spec=True)
+out = cl_run.climate(opacity_ck, save_all_profiles=True, with_spec=True,
+                     verbose=False, watch='plot')
 
 # %%
 base_case = jdi.pd.read_csv(jdi.HJ_pt(), sep=r'\s+')

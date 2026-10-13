@@ -1,6 +1,7 @@
 {% from "_macros.html" import plot, action %}
 {% set run = climate_state.results.get("run") %}
 <div class="actions">{{ action(url_for("climate.run"), "Run climate model") }}</div>
+{% if live %}{% include "climate/extras/live.html" %}{% endif %}
 {% if run %}
   {% for p in run.plots %}{{ plot(p, "climate-" ~ loop.index) }}{% endfor %}
   <div class="button-row">

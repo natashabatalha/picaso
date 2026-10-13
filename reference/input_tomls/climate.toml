@@ -20,9 +20,10 @@ opacity_method_options = ['preweighted', 'resortrebin']
 opacity_kwargs = {} # any other inputs you want to give to justdoit.opannection() e.g., {preload_gases=['H2O','CH4']} for resortrebin
 
 [object]
-radius    = {value=1.0, unit='Rjup'} # if both radius and mass are given, gravity is computed from them
+# give either gravity, or mass and radius (gravity is then computed from them); value='' leaves one blank
+radius    = {value=1.0, unit='Rjup'}
 mass      = {value=1.0, unit='Mjup'}
-gravity   = {value=1000.0, unit='m/s**2'}
+gravity   = {value='', unit='m/s**2'}
 teff      = {value=1000.0, unit='K'} # effective temperature (brown dwarf) or intrinsic temperature (irradiated planet)
 
 [star]
@@ -50,7 +51,8 @@ rfaci = 1.0 # fraction of thermal flux in the energy balance (usually kept at 1)
 moistgrad = false # use the moist adiabatic gradient
 save_all_profiles = true # save and return every iteration of the temperature profile
 with_spec = true # compute a spectrum of the converged profile (required to save climate_output)
-verbose = true
+verbose = true # progress printout: true = one line per outer iteration, 2 = also every Newton step, false = silent
+watch_convergence = false # PICASO UI only: draw the profile and solver log live while the model runs
 
 # the temperature section sets the initial guess of the climate calculation
 [temperature]

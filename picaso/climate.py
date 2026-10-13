@@ -12,6 +12,8 @@ from .atmsetup import ATMSETUP, normalize_exclude_mol
 from .optics import compute_opacity
 from .disco import compress_thermal
 from .deq_chem import get_quench_levels
+from .climate_log import (ClimateReporter, new_newton_diagnostics, N_NEWTON_COLUMNS, NEWTON_CONTINUE,
+                          NEWTON_CONVERGED, NEWTON_STALLED, NEWTON_AT_ROOT, NEWTON_NAN)
 
 import os
 
@@ -19,6 +21,15 @@ from collections import namedtuple
 
 
 convergence_criteriaT = namedtuple('Conv',['max_inner_iterations','max_outer_iterations','inner_threshold','outer_threshold','step_multiplier'])
+
+def climate_reporter(bundle, verbose):
+    """
+    The progress reporter of the climate run in progress (set up by justdoit.inputs.climate),
+    or a new one built from `verbose` if these functions are called on their own.
+    See climate_log.ClimateReporter.
+    """
+    reporter = getattr(bundle, 'climate_reporter', None)
+    return reporter if reporter is not None else ClimateReporter(verbose)
 
 def update_quench_levels(bundle, Atmosphere, kz, grav,verbose=False): 
     """
@@ -187,6 +198,9 @@ def run_diseq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     convergence_criteria = convergence_criteriaT(max_inner_iterations=10, max_outer_iterations=max_outer_iterations, inner_threshold=5.0, outer_threshold=4.0, step_multiplier=7.0) 
 
     final=False
+    climate_reporter(bundle, verbose).stage("Relax the initial guess with disequilibrium chemistry",
+        "Convective zone held at the guess (rcb_guess); kzz and quenched (or photochemical) abundances are "
+        "recomputed every iteration.")
     profile_flag, pressure, temperature, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer,flux_plus_ir_attop,all_profiles,all_opd,all_kzz =profile(
             bundle, nofczns, nstr, temp, pressure, 
             AdiabatBundle,opacityclass,
@@ -278,6 +292,9 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     final = False
     
     convergence_criteria = convergence_criteriaT(max_inner_iterations=10, max_outer_iterations=7, inner_threshold=10.0, outer_threshold=5.0, step_multiplier=7.0)       
+    reporter = climate_reporter(bundle, verbose)
+    reporter.stage("Relax the initial guess",
+                   "Convective zone held at the guess (rcb_guess); loose tolerance to get T(P) roughly right.")
     
     profile_flag,pressure, temperature, dtdp,  CloudParameters,cld_out,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,all_profiles, all_opd,all_kzz = profile(bundle,
             nofczns,nstr, #tracks convective zones 
@@ -301,6 +318,7 @@ def run_chemeq_climate_workflow(bundle, nofczns, nstr, temp, pressure,
     convergence_criteria = convergence_criteriaT(max_inner_iterations, max_outer_iterations, inner_threshold, outer_threshold, step_multiplier)
 
     final = False
+    reporter.stage("Refine", "Same convective zone, stricter tolerance.")
     
     profile_flag,pressure, temperature, dtdp,CloudParameters,cld_out,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,  all_profiles, all_opd,all_kzz = profile(bundle,
             nofczns,nstr, #tracks convective zones 
@@ -1109,15 +1127,31 @@ def get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
     return f_vec, n_total, sum_f2, sum_temp2, test, flux_results
 
 @jit(nopython=True, cache=True)
+def record_newton_step(diagnostics, its, temp, flux_err, alam, dt_rel, n_clipped, capped, status):
+    """Writes row `its` of the Newton diagnostics table (columns in climate_log.NEWTON_COLUMNS)."""
+    diagnostics[its, 0] = its + 1
+    diagnostics[its, 1] = temp.min()
+    diagnostics[its, 2] = temp.max()
+    diagnostics[its, 3] = flux_err
+    diagnostics[its, 4] = alam
+    diagnostics[its, 5] = dt_rel
+    diagnostics[its, 6] = n_clipped
+    diagnostics[its, 7] = 1.0 if capped else 0.0
+    diagnostics[its, 8] = status
+
+@jit(nopython=True, cache=True)
 def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
                           rfaci, rfacv, tidal,
                           Atmosphere, OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Opagrid, AdiabatBundle,
                           F0PI, save_profile, all_profiles,
                           fhole, hole_OpacityWEd, hole_OpacityNoEd,
                           verbose, do_holes, moist, egp_stepmax,
-                          flux_net_v_fixed, flux_net_v_layer_fixed):
+                          flux_net_v_fixed, flux_net_v_layer_fixed, diagnostics):
     """
     Newton-Raphson solver with line search for radiative-convective equilibrium.
+
+    Progress is not printed here (`verbose` is unused); instead one row per Newton step
+    is written to `diagnostics` (see climate_log.NEWTON_COLUMNS), which the caller reports.
     """
     nlevel = len(temp)
     it_max, conv, x_max_mult = convergence_criteria.max_inner_iterations, convergence_criteria.inner_threshold, convergence_criteria.step_multiplier
@@ -1130,6 +1164,8 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
     tolx = 5e-3
     n_top_r = nstr[0] - 1
     cldsave_count = 0
+    tidal_norm = abs(tidal[0]) if abs(tidal[0]) > 0 else 1.0
+    n_diag = diagnostics.shape[0]
 
     # Flags for radiative transfer components
     # Reflected is already pre-calculated in t_start and passed in as flux_net_v_fixed
@@ -1149,7 +1185,8 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
         
         # Test if we are already at a root
         if abs(tidal[0]) > 0 and (test / abs(tidal[0])) < 0.01 * tolf:
-            if verbose: print(" We are already at a root, tolf , test = ", 0.01 * tolf, ", ", test / abs(tidal[0]))
+            if its < n_diag:
+                record_newton_step(diagnostics, its, temp, test / tidal_norm, 0.0, 0.0, 0, False, NEWTON_AT_ROOT)
             dtdp = np.zeros(shape=(nlevel - 1))
             for j in range(nlevel - 1):
                 dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
@@ -1196,7 +1233,8 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
             sum_p2 += p[i]**2
         sum_p = sqrt(sum_p2)
         
-        if sum_p > step_max:
+        capped = sum_p > step_max
+        if capped:
             for i in range(n_total):
                 p[i] *= step_max / sum_p
 
@@ -1219,6 +1257,9 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
         alam2 = 0.0
         flag_converge = 0
         check = False
+        stalled = False
+        got_nan = False
+        n_clipped = 0
 
         while flag_converge == 0:
             # Update radiative temperatures along direction p
@@ -1249,9 +1290,14 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
             temp = reconstruct_adiabat(temp, rad_temp, Atmosphere.p_level, nstr, nofczns, AdiabatBundle, Atmosphere, moist, False)
             
             # Artificial damper
+            n_clipped = 0
             for j1 in range(n_top_r + 1, nlevel):
-                if temp[j1] < tmin: temp[j1] = tmin + 0.1
-                elif temp[j1] > tmax: temp[j1] = tmax - 0.1
+                if temp[j1] < tmin:
+                    temp[j1] = tmin + 0.1
+                    n_clipped += 1
+                elif temp[j1] > tmax:
+                    temp[j1] = tmax - 0.1
+                    n_clipped += 1
             
             # Recalculate residuals
             f_vec, n_total, sum_f2, sum_temp2, test, flux_results = get_residuals_at_temp(temp, nstr, nofczns, rfaci, rfacv, tidal,
@@ -1263,6 +1309,7 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
 
             if alam < alamin:
                 check = True
+                stalled = True
                 flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, -p, tolmin, temp, temp_old, g, tolx)
             elif f <= f_old + alf * alam * slope:
                 flag_converge, check = check_convergence(f_vec, n_total, tolf, check, f, -p, tolmin, temp, temp_old, g, tolx)
@@ -1291,11 +1338,23 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
             if np.isnan(np.sum(temp)):
                 flag_converge = 1
                 temp = temp_old.copy() + 0.5
-                if verbose: print("Got stuck with temp NaN -- so escaping the while loop in tstart")
+                got_nan = True
 
-        if verbose:
-            _tidal_norm = abs(tidal[0]) if abs(tidal[0]) > 0 else 1.0
-            print("Iteration number ", its, ", min , max temp ", min(temp), max(temp), ", flux balance ", (rfaci*flux_results[5][0] + rfacv*flux_results[1][0,0,0] + tidal[0]) / _tidal_norm)
+        if its < n_diag:
+            dt_rel = 0.0
+            for j in range(nlevel):
+                tmp = abs(temp[j] - temp_old[j]) / temp_old[j]
+                if tmp > dt_rel:
+                    dt_rel = tmp
+            if got_nan:
+                status = NEWTON_NAN
+            elif flag_converge == 2 and stalled:
+                status = NEWTON_STALLED
+            elif flag_converge == 2:
+                status = NEWTON_CONVERGED
+            else:
+                status = NEWTON_CONTINUE
+            record_newton_step(diagnostics, its, temp, test / tidal_norm, alam, dt_rel, n_clipped, capped, status)
 
         if save_profile == 1:
             all_profiles = np.append(all_profiles, temp_old)
@@ -1305,13 +1364,11 @@ def newton_raphson_solver(temp, nstr, nofczns, convergence_criteria,
             dtdp = np.zeros(shape=(nlevel - 1))
             for j in range(nlevel - 1):
                 dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
-            if verbose: print("In t_start: Converged Solution in iterations ", its)
             flux_net_ir = flux_results[5]
             flux_net_v = flux_net_v_fixed
             flux_plus_ir = flux_results[6]
             return temp, dtdp, all_profiles, flux_net_ir, flux_net_v, flux_plus_ir[0, :]
 
-    if verbose: print("Iterations exceeded it_max ! sorry ")
     dtdp = np.zeros(shape=(nlevel - 1))
     for j in range(nlevel - 1):
         dtdp[j] = (log(temp[j]) - log(temp[j + 1])) / (log(Atmosphere.p_level[j]) - log(Atmosphere.p_level[j + 1]))
@@ -2077,7 +2134,7 @@ def t_start(nofczns, nstr, convergence_criteria,
             save_profile, all_profiles,
             fhole=None, hole_OpacityWEd=None, hole_OpacityNoEd=None,
             verbose=1, do_holes=None,
-            moist=False, egp_stepmax=False, solver='newton_raphson'):
+            moist=False, egp_stepmax=False, solver='newton_raphson', diagnostics=None):
     """
     Module to iterate on the level TP profile to make the Net Flux as close to 0.
     Opacities/chemistry are not updated while iterating in this module.
@@ -2118,6 +2175,10 @@ def t_start(nofczns, nstr, convergence_criteria,
         If True, use unbounded stepmax.
     solver : str
         The non-linear solver to use (default: 'newton_raphson').
+    diagnostics : ndarray, optional
+        Table of shape (max_inner_iterations, climate_log.N_NEWTON_COLUMNS), made with
+        climate_log.new_newton_diagnostics, that the solver fills with one row per Newton
+        step (see climate_log.NEWTON_COLUMNS). Used to report progress.
 
     Returns
     -------
@@ -2142,6 +2203,11 @@ def t_start(nofczns, nstr, convergence_criteria,
     flux_net_v_layer_fixed = flux_results_full[0][0,0,:]
     flux_net_v_fixed = flux_results_full[1][0,0,:]
 
+    if diagnostics is None:
+        diag = np.full((max(convergence_criteria.max_inner_iterations, 1), N_NEWTON_COLUMNS), np.nan)
+    else:
+        diag = diagnostics
+
     if solver == 'newton_raphson':
         return newton_raphson_solver(Atmosphere.t_level, nstr, nofczns, convergence_criteria,
                                      rfaci, rfacv, tidal,
@@ -2149,7 +2215,7 @@ def t_start(nofczns, nstr, convergence_criteria,
                                      F0PI, save_profile, all_profiles,
                                      fhole, hole_OpacityWEd, hole_OpacityNoEd,
                                      verbose, do_holes, moist, egp_stepmax,
-                                     flux_net_v_fixed, flux_net_v_layer_fixed)
+                                     flux_net_v_fixed, flux_net_v_layer_fixed, diag)
     else:
         raise ValueError("Unknown solver specified in t_start")
 
@@ -3247,9 +3313,14 @@ def find_strat(bundle, nofczns,nstr,
     iend = 0 #?
     final = False
 
+    reporter = climate_reporter(bundle, verbose)
+    reporter.stage("Find the radiative-convective boundary",
+                   "Each zone is grown or shrunk one level at a time until the radiative layers next to it "
+                   "are stable (dlnT/dlnP < 0.98 x adiabat); the profile is relaxed after every move.")
+
     #call bundle for moist adiabat option (moved out of if statement for numba issue)
     bundle.add_pt( temp, pressure)
-    bundle.premix_atmosphere(opacityclass,verbose=verbose)
+    bundle.premix_atmosphere(opacityclass,verbose=reporter.debug)
     Atmosphere = calculate_atm(bundle,opacityclass,only_atmosphere=True)
     dtdp = Atmosphere.dtdp
 
@@ -3259,12 +3330,13 @@ def find_strat(bundle, nofczns,nstr,
         ratio = dtdp[nstr[1]-1]/grad_x[nstr[1]-1]
 
         if ratio > 1.8 :
-            if verbose: print("Move up two levels")
             ngrow = 2
             nstr = growup( 1, nstr , ngrow)
         else :
             ngrow = 1
             nstr = growup( 1, nstr , ngrow)
+        reporter.convection(f"zone top moved up {ngrow} level(s): the layer above it was {ratio:.2f} x adiabatic",
+                            nstr, nofczns)
         
         if nstr[1] < 5 :
             raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
@@ -3301,17 +3373,14 @@ def find_strat(bundle, nofczns,nstr,
         flag_final_convergence = 1
 
     if flag_final_convergence  == 0:
-        if verbose: print(" convection zone status")
-        if verbose: print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
-        if verbose: print(nofczns)
-
         nofczns = 2 #keeping this hardcoded here to easily transition to future 3 zone calculation
         nstr[4]= nstr[1]
         nstr[5]= nstr[2]
         nstr[1]= i_max
         nstr[2] = i_max
         nstr[3] = i_max #+ 1 #JM: Should be i_max + 1 according to EGP, but runs into ValueError when used
-        if verbose: print(nstr)
+        reporter.convection(f"superadiabatic layer at level {i_max} ({dt_max/grad_x[i_max]+1:.2f} x adiabatic) "
+                            "above the deep zone: adding a second convective zone there", nstr, nofczns)
         if nstr[3] >= nstr[4] :
             #print(nstr[0],nstr[1],nstr[2],nstr[3],nstr[4],nstr[5])
             #print(nofczns)
@@ -3332,7 +3401,6 @@ def find_strat(bundle, nofczns,nstr,
 
         i_change = 1
         while i_change == 1 :
-            if verbose: print("Grow Phase : Upper Zone")
             i_change = 0
 
             d1 = dtdp[nstr[1]-1]
@@ -3345,19 +3413,22 @@ def find_strat(bundle, nofczns,nstr,
                 if (((d1-c1)>= (d2-c2)) or (nofczns == 1)) :
                     ngrow = 1
                     nstr = growup( 1, nstr , ngrow)
+                    message = "upper zone top moved up 1 level"
 
                     if nstr[1] < 3 :
                         raise ValueError( "Convection zone grew to Top of atmosphere, Need to Stop")
                 else :
                     ngrow = 1
                     nstr = growdown( 1, nstr , ngrow)
+                    message = "upper zone bottom moved down 1 level"
 
                     if nstr[2] == nstr[4]: # one conv zone
                         nofczns =1
                         nstr[2] = nstr[5]
                         nstr[3] = 0
                         i_change = 1
-                if verbose: print(nstr)
+                        message += ", merging the two zones"
+                reporter.convection(message, nstr, nofczns)
 
                 profile_flag, pressure, temp, dtdp,CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd ,all_kzz= profile(bundle,
                                 nofczns, nstr, temp, pressure, 
@@ -3382,12 +3453,14 @@ def find_strat(bundle, nofczns,nstr,
                 ngrow = 1
                 nstr = growup( 2, nstr , ngrow)
                 #Now check to see if two zones have merged and stop further searching if so.
+                message = "lower zone top moved up 1 level"
                 if nstr[2] == nstr[4] :
                     nofczns = 1
                     nstr[2] = nstr[5]
                     nstr[3] = 0
                     i_change =1
-                if verbose: print(nstr)
+                    message += ", merging the two zones"
+                reporter.convection(message, nstr, nofczns)
                   
                 profile_flag,pressure, temp, dtdp, CloudParameters,cld_out,flux_net_ir_layer, flux_net_v_layer, flux_plus_ir_attop,all_profiles, all_opd,all_kzz = profile(bundle,
                                 nofczns, nstr, temp, pressure, 
@@ -3413,7 +3486,8 @@ def find_strat(bundle, nofczns,nstr,
     ip2 = -10
     convergence_criteria=convergence_criteriaT(max_inner_iterations_strat,max_outer_iterations_strat,inner_threshold_strat,outer_threshold_strat,step_multiplier)
     final = True
-    if verbose: print("final",nstr)
+    reporter.stage("Final relaxation with tight tolerance",
+                   "Convective zones are now fixed; the profile, chemistry and opacities are iterated to a strict tolerance.")
 
     profile_flag,pressure, temp, dtdp, CloudParameters,cld_out,flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop,  all_profiles,all_opd,all_kzz = profile(bundle,
                 nofczns, nstr, temp, pressure, 
@@ -3438,11 +3512,6 @@ def find_strat(bundle, nofczns,nstr,
     #    else :
     #        raise ValueError("Some problem here with goto 125")
         
-    if profile_flag == 0:
-        if verbose: print("ENDING WITHOUT CONVERGING")
-    elif profile_flag == 1:
-        if verbose: print("YAY ! ENDING WITH CONVERGENCE")
-
     chem = bundle.inputs['atmosphere']['profile']
     #right now this bundle does not have the up to date chemistry
     # TO DO : add chemistry and also condense last three "all" variables into one tuple
@@ -3602,6 +3671,10 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     all_kzz : array, optional
         Array of all kzz profiles. Default is an empty array.
     """
+    reporter = climate_reporter(bundle, verbose)
+    # the chemistry, kzz and cloud updates only print their own messages in debug mode (verbose=2)
+    verbose = reporter.debug
+
     #under what circumstances to we compute quench levels 
     full_kinetis ='photochem' in str(bundle.inputs['approx']['chem_method'])
     do_quench_appox = diseq and (not full_kinetis)
@@ -3697,7 +3770,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                OpacityWEd=OpacityWEd, OpacityNoEd=OpacityNoEd,ScatteringPhase=ScatteringPhase,Disco=Disco,Opagrid=Opagrid, F0PI=F0PI,
                OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                #kwargs for get_kzz function
-               moist=moist, do_holes=do_holes, fhole=fhole)
+               moist=moist, do_holes=do_holes, fhole=fhole, verbose=verbose)
         bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookeeping current kz 
 
         if save_kzz: all_kzz = np.append(all_kzz,kz)
@@ -3742,7 +3815,10 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     #            verbose, moist , egp_stepmax ],file)
 
     ## begin bigger loop which gets opacities
+    reporter.profile_start(convergence_criteria, nstr, nofczns)
     for iii in range(max_outer_iterations):
+        # one row per Newton step, for the progress report (a few floats; filled even when nobody is reporting)
+        newton_diagnostics = new_newton_diagnostics(convergence_criteria.max_inner_iterations)
 
         if do_holes == True:
             temp, dtdp, all_profiles,  flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop = t_start(
@@ -3751,14 +3827,16 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 F0PI,
                 save_profile, all_profiles, 
                 verbose=verbose, moist = moist, egp_stepmax = egp_stepmax, 
-                do_holes=do_holes, fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear)
+                do_holes=do_holes, fhole=fhole, hole_OpacityWEd=OpacityWEd_clear,hole_OpacityNoEd=OpacityNoEd_clear,
+                diagnostics=newton_diagnostics)
         else:
             temp, dtdp, all_profiles,  flux_net_ir_layer,flux_net_v_layer, flux_plus_ir_attop = t_start(
                     nofczns,nstr,convergence_criteria, rfaci, rfacv, tidal,
                     Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase, Disco,Opagrid, AdiabatBundle,
                     F0PI,
                     save_profile, all_profiles, 
-                    verbose=verbose, moist = moist, egp_stepmax = egp_stepmax)
+                    verbose=verbose, moist = moist, egp_stepmax = egp_stepmax,
+                    diagnostics=newton_diagnostics)
 
         # Optional under-relaxation of the temperature update. The coupled
         # temperature <-> photochem fixed-point iteration in a diseq climate
@@ -3788,7 +3866,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 #OpacityWEd_clear=OpacityWEd_clear,OpacityNoEd_clear=OpacityNoEd_clear,
                 flux_net_ir_layer=flux_net_ir_layer,flux_plus_ir_attop=flux_plus_ir_attop,
                 #kwargs for get_kzz function
-                moist=moist, do_holes=do_holes,fhole=fhole)
+                moist=moist, do_holes=do_holes,fhole=fhole, verbose=verbose)
             if save_kzz: all_kzz = np.append(all_kzz,kz)
             #are clouds turned on such that we need the sc kzz for virga? 
             if sc_kzz_and_clouds: 
@@ -3842,9 +3920,13 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         temp_old= np.copy(temp)
         
         ert = ert/(float(len(temp))*scalt)
-        
-        if ((iii > 0) & (ert < outer_threshold) & (taudif < taudif_tol)) :
-            if verbose: print("Profile converged before max_outer_iterations")
+
+        converged = (iii > 0) and (ert < outer_threshold) and (taudif < taudif_tol)
+        reporter.iteration(iii, temp, ert, newton_diagnostics, nstr, nofczns, converged=converged,
+                           taudif=taudif if cloudy else None, taudif_tol=taudif_tol)
+
+        if converged:
+            reporter.profile_end(True, iii + 1)
             conv_flag = 1
             #update convergence flag!! 
             RETURNS[0] = conv_flag
@@ -3856,13 +3938,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 convergence_criteria=convergence_criteria._replace(max_outer_iterations=3)     
             
             return RETURNS
-        
-        if verbose: print("Big iteration is ",min(temp), iii)
-    
-    if conv_flag == 0:
-        if verbose: print("Not converged")
-    else :
-        if verbose: print("Profile converged after max_outer_iterations hit")
-    
+
+    reporter.profile_end(False, max_outer_iterations)
     return RETURNS
 

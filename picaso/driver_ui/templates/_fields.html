@@ -49,7 +49,8 @@
           <input type="text" id="{{ id }}" name="{{ f.name }}" value="{{ f.value|join(', ') }}" placeholder="comma separated">
         {% else %}
           <input type="text" id="{{ id }}" name="{{ f.name }}" value="{{ f.value }}"
-                 {% if f.kind in ("number", "quantity") %}inputmode="decimal"{% endif %}>
+                 {% if f.kind in ("number", "quantity") %}inputmode="decimal"{% endif %}
+                 {% if f.optional %}placeholder="optional"{% endif %}>
         {% endif %}
 
         {% if f.hint %}<p class="hint">{{ f.hint }}</p>{% endif %}

@@ -1,0 +1,9 @@
+{% from "_macros.html" import plot %}
+{# Live view of a watched climate run (views/climate.py:live_view). It polls /climate/progress,
+   which returns this panel again until the run is done, then the whole page. #}
+<div id="climate-live" class="climate-live" hx-get="{{ url_for('climate.progress') }}" hx-trigger="every 2s"
+     hx-target="this" hx-swap="morph:outerHTML">
+  <p class="note note-info">Climate model running. {{ live.status }}</p>
+  {{ plot(live.plot, "climate-live") }}
+  {% if live.log %}<pre class="climate-log">{{ live.log }}</pre>{% endif %}
+</div>

@@ -23,9 +23,10 @@ opacity_kwargs = {} # any other inputs you want to give to justodit.opannection(
 virga_mieff = '_default_/virga/' # any other inputs you want to give to justodit.opannection()
 
 [object]
+# give either gravity, or mass and radius (gravity is then computed from them); value='' leaves one blank
 radius    = {value=1.2, unit='Rjup'}
 mass      = {value=1.2, unit='Mjup'}
-gravity   = {value=1e5, unit='cm/s**2'}
+gravity   = {value='', unit='cm/s**2'}
 distance  = {value=8.3,  unit='parsec'}
 RV       =  {value=0.0, unit='km/s'}
 vrot     =  {value=0.0, unit='km/s'}

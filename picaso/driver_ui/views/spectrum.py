@@ -23,7 +23,7 @@ from picaso.driver_ui.core.config_schema import (
     Bool, MultiChoice, Number, Section, Text, build_fields, find_field, replace_field)
 from picaso.driver_ui.core.plots import plotly_plot
 from picaso.driver_ui.views import retrieval
-from picaso.driver_ui.views.cards import Card, card_views, set_messages
+from picaso.driver_ui.views.cards import Card, bulk_property_fields, bulk_property_notes, card_views, set_messages
 from picaso.driver_ui.views.spectrum_session import (
     apply_upload, current, exported_config, is_reflected, model_config, opacity, reset, wave_bounds, wave_range)
 
@@ -100,7 +100,10 @@ class ObjectCard(Card):
     name, title = "object", "Object Variables"
 
     def fields(self, sess):
-        return build_fields(sess.config["object"], ("object",))
+        return bulk_property_fields(build_fields(sess.config["object"], ("object",)), ("object",))
+
+    def notes(self, sess):
+        return bulk_property_notes(sess.config["object"])
 
 
 class GeometryCard(Card):

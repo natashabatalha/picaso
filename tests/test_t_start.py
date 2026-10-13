@@ -51,9 +51,11 @@ def solver_inputs(mini_ck_opacity):
 @pytest.fixture(scope='module')
 def solutions(solver_inputs):
     args, kwargs = solver_inputs
+    # the legacy solver predates the progress diagnostics table
+    legacy_kwargs = {k: v for k, v in kwargs.items() if k != 'diagnostics'}
     # deep copies so neither solver can see changes the other makes to its inputs
-    return {name: getattr(climate, name)(*copy.deepcopy(args), **kwargs)
-            for name in ['t_start_legacy', 't_start']}
+    return {'t_start_legacy': climate.t_start_legacy(*copy.deepcopy(args), **legacy_kwargs),
+            't_start': climate.t_start(*copy.deepcopy(args), **copy.deepcopy(kwargs))}
 
 
 def test_case_has_a_convective_zone_and_the_solver_moves_the_profile(solver_inputs, solutions):

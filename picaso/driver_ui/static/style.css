@@ -303,3 +303,16 @@ main.wide { max-width: 1500px; }
   .field { grid-template-columns: 1fr; }
   .field > label { padding-top: 0; }
 }
+
+/* solver log of a watched climate run (climate/extras/live.html) */
+.climate-log {
+  max-height: 22rem;
+  overflow: auto;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  white-space: pre;
+}

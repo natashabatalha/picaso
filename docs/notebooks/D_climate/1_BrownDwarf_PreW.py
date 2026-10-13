@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.19.1
+#       jupytext_version: 1.19.6
 #   kernelspec:
-#     display_name: base
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -165,6 +165,92 @@ cl_run.inputs_climate(temp_guess=temp_guess, pressure=pressure,
 
 # %%
 out = cl_run.climate(opacity_ck, save_all_profiles=True, with_spec=True)
+
+# %% [markdown]
+# ## Reading the Climate Printout
+#
+# While it runs, the climate code prints a log of what the solver is doing. Understanding it is the best way to tell a healthy run from one that is struggling. Below is an annotated excerpt from the run above.
+#
+# ### How the solver is organized
+#
+# The climate code is a set of nested loops:
+#
+# 1. **Stages** (`STAGE 1/4`, `STAGE 2/4`, ...). Each stage has one purpose and its own tolerance. For a chemical-equilibrium run there are four:
+#     - *Relax the initial guess*: the convective zone stays where you put it with `rcb_guess`, and the profile is relaxed with a loose tolerance.
+#     - *Refine*: same convective zone, stricter tolerance.
+#     - *Find the radiative-convective boundary*: the convective zone is moved one or two levels at a time until the layers next to it are stable. A second, detached convective zone can be added here, or two zones can merge. Each move is printed as a line starting with `*`.
+#     - *Final relaxation with tight tolerance*: the zones are fixed and the profile is converged to the strictest tolerance.
+#
+#    Disequilibrium-chemistry runs (`diseq_chem=True`) have three stages: a relaxation with the disequilibrium chemistry, then the last two above.
+# 2. **Outer iterations** (one row of the table). With the opacities frozen, a Newton solver adjusts T(P) until the net flux balances in every radiative layer. Then the chemistry, opacities (and kzz and clouds, if requested) are recomputed for the new profile.
+# 3. **Newton steps** (inside each outer iteration; printed one by one with `verbose=2`).
+#
+# ### The columns
+#
+# ```
+#     iter  newton      T range [K]   flux err    dT [K]   time  notes
+#        1   5/8  ok        356 - 5200    2.29e-01    194.97  2m10s  10 lvl clipped to T grid
+# ```
+#
+# - `iter`: outer iteration number within the current set of zones.
+# - `newton`: Newton steps used / allowed, and how the Newton solve ended. `ok` = converged; `stall` = the line search could not lower the flux error any further, so the solver accepted the step (common and usually harmless near the solution); `root` = the profile was already balanced, so no step was needed; `max` = it used every step without converging; `nan` = the temperature became NaN and was reset.
+# - `T range`: the coldest and hottest temperatures in the current profile.
+# - `flux err`: the largest net-flux imbalance in any radiative layer, in units of $\sigma T_{\rm eff}^4$. Small is good (1e-3 or less).
+# - `dT`: how much the profile changed in this outer iteration (the mean of $|T_{\rm new}-T_{\rm old}|$ divided by 1.5, in K). **This is the quantity that decides convergence**: a set of zones is converged when `dT` falls below the tolerance printed on the `zones:` line, starting from the second iteration. That is why converged sets almost always show a second, quick iteration with `dT` ≈ 0.
+# - `time`: time since the start of the run.
+# - `notes`: warning signs, empty when all is well:
+#     - `N lvl clipped to T grid`: N levels went outside the temperature range of the opacity tables and were pinned to its edge. A few clipped levels early on is normal (the guess is far from the answer). If this persists to the end, your opacity tables do not cover your object.
+#     - `line search x0.10`: the full Newton step made things worse, so the solver had to cut it to 10% of its size. Occasional is fine; persistent small steps mean the problem is stiff.
+#     - `dT grew`: the profile changed more than in the previous iteration.
+#     - `NaN T reset`: the temperature became NaN and was reset.
+#     - `cloud dtau`: for cloudy runs, how much the cloud optical depth changed; it must also settle for convergence.
+#
+# ### An annotated run
+#
+# Here is the start of the convective-zone search from the run above:
+#
+# ```
+# STAGE 3/4  Find the radiative-convective boundary
+#    Each zone is grown or shrunk one level at a time until the radiative layers next to it are ...
+#    * zone top moved up 1 level(s): the layer above it was 1.69 x adiabatic -> zones: levels 82-90 (127-500 bar)
+#    zones: levels 82-90 (127-500 bar)   (tol dT < 3 K, up to 5 iterations x 8 Newton steps)
+#     iter  newton      T range [K]   flux err    dT [K]   time  notes
+#        1   5/8  ok        356 - 5200    2.29e-01    194.97  2m10s  10 lvl clipped to T grid
+#        2   1/8  stall     356 - 5200    2.29e-01      0.00  2m14s  9 lvl clipped to T grid, line search x0.21  <- converged
+#    -> converged after 2 iterations
+#    * zone top moved up 2 level(s): the layer above it was 3.34 x adiabatic -> zones: levels 80-90 (90.1-500 bar)
+#    zones: levels 80-90 (90.1-500 bar)   (tol dT < 3 K, up to 5 iterations x 8 Newton steps)
+#        1   4/8  stall     360 - 5200    7.20e-06     57.04  2m29s  4 lvl clipped to T grid
+#        2   1/8  root      360 - 5200    7.20e-06      0.00  2m29s    <- converged
+#    -> converged after 2 iterations
+#    * zone top moved up 2 level(s): the layer above it was 4.31 x adiabatic -> zones: levels 78-90 (63.9-500 bar)
+#    zones: levels 78-90 (63.9-500 bar)   (tol dT < 3 K, up to 5 iterations x 8 Newton steps)
+#        1   3/8  stall     360 - 4474    1.27e-05     14.01  2m40s
+#        2   1/8  root      360 - 4474    1.27e-05      0.00  2m40s    <- converged
+#    -> converged after 2 iterations
+#    * zone top moved up 2 level(s): the layer above it was 3.87 x adiabatic -> zones: levels 76-90 (45.4-500 bar)
+# ```
+#
+# What this tells us:
+#
+# - The first row shows **10 levels clipped** at 5200 K, the hottest temperature allowed by these opacity tables. That happens because the zone was still too shallow. With each move of the boundary (the `*` lines), the deep atmosphere cools and the clipping goes away.
+# - The `*` lines show the boundary moving up. The layer above the zone was "3.34 x adiabatic", meaning its temperature gradient was steeper than the adiabat, so it should be convective. The search stops when every layer next to a zone is below 0.98 x adiabatic.
+# - `dT` in the first row of each new set of zones falls (195 → 57 → 14 → 4.5 → 2 K) as the boundary approaches its final position.
+#
+# ### What a struggling run looks like
+#
+# - **`NOT CONVERGED` at the end.** The printout then lists hints. The final stage hit its iteration limit; try a closer initial guess (e.g. a Sonora profile), a different `rcb_guess`, or a finer pressure grid.
+# - **`dT` alternating up and down** (`dT grew` every other row). The solver is bouncing between two states. For disequilibrium chemistry, `damping=True` usually fixes this.
+# - **`T range` hitting the same value every row**, together with `clipped` notes. The profile wants to go beyond the opacity tables.
+# - **`newton` ending in `max` every row**, with `flux err` not falling. The Newton solver cannot find a balanced profile from where it is. This often means a poor guess for the convective zone.
+#
+# ### Controlling the printout
+#
+# - `verbose=True` (default): the log described above.
+# - `verbose=2`: also prints every Newton step, plus the messages from the chemistry, kzz and cloud updates. Useful for debugging.
+# - `verbose=False`: silent.
+#
+# You can also **watch** the run as a live figure with `watch='plot'`. See the [exoplanet tutorial](https://natashabatalha.github.io/picaso/notebooks/D_climate/2_Exoplanet_PreW.html) for an example.
 
 # %% [markdown]
 # ## `xarray` model storage
