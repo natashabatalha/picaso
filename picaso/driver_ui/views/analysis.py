@@ -24,6 +24,7 @@ def page_state(sess):
     if not a:
         a.update(config=None, retrieval_dir="", loaded=None, corner={}, corner_export={"dpi": 300, "format": "png"},
                  corner_plot=None, corner_point={}, corner_median={}, corner_model=None, corner_model_error=None,
+                 corner_median_model=None,
                  bands_n=10, bands_selected=[], bands=None, export=dict(EXPORT_DETAILS),
                  attributes=[{"key": "", "value": ""}], zip=None, contributions_on=False, contribution_options=[],
                  contributions_selected=[], contributions_plot=None)
@@ -81,30 +82,22 @@ class CornerCard(Card):
     def visible(self, sess):
         return is_loaded(sess)
 
-    def fields(self, sess):
-        a = page_state(sess)
-        params = [Section(("analysis", "corner", param), [
-            Text(("analysis", "corner", param, "label"), s["label"], label="Pretty label"),
-            Number(("analysis", "corner", param, "min"), s["min"], label="Min range"),
-            Number(("analysis", "corner", param, "max"), s["max"], label="Max range"),
-        ], label=param) for param, s in a["corner"].items()]
-        export = a["corner_export"]
-        return Section(("corner_card",), [
-            Section(("corner_labels",), params, label="Customize corner plot labels and ranges"),
-            Section(("corner_export",), [
-                Number(("analysis", "corner_export", "dpi"), export["dpi"], minimum=100, maximum=1200,
-                       label="Resolution (DPI)"),
-                Choice(("analysis", "corner_export", "format"), export["format"], list(IMAGE_FORMATS),
-                       label="Image format"),
-            ], label="Export high resolution corner plot"),
-        ])
+    def export_fields(self, sess):
+        """Rendered by the extra template below the plot (labels are edited on the plot itself, see corner.js)."""
+        export = page_state(sess)["corner_export"]
+        return Section(("corner_export",), [
+            Number(("analysis", "corner_export", "dpi"), export["dpi"], minimum=100, maximum=1200,
+                   label="Resolution (DPI)"),
+            Choice(("analysis", "corner_export", "format"), export["format"], list(IMAGE_FORMATS),
+                   label="Image format"),
+        ], label="Export high resolution corner plot")
+
+    def update(self, sess, form):
+        return sess.apply(self.export_fields(sess), form)
 
     def notes(self, sess):
         a = page_state(sess)
         return [("error", error) for error in (a.get("corner_error"), a.get("corner_model_error")) if error]
-
-    def after_update(self, sess):
-        render_corner(sess)
 
 
 class MaxLoglCard(Card):
@@ -180,9 +173,10 @@ def render_corner(sess):
     a = page_state(sess)
     try:
         fig = analysis.interactive_corner_figure(a["loaded"]["info"], a["corner"], a["corner_point"],
-                                                 a["loaded"]["out"], a["corner_model"], a["config"]["observation_type"])
+                                                 a["loaded"]["out"], a["corner_model"], a["config"]["observation_type"],
+                                                 a["corner_median_model"])
         a["corner_plot"] = plotly_plot(fig, config=analysis.CORNER_PLOT_CONFIG)
-        a["corner_error"] = None
+        a["corner_error"], a["corner_stale"] = None, False
     except Exception as e:
         a["corner_plot"], a["corner_error"] = None, f"Could not draw the corner plot: {e}"
 
@@ -210,7 +204,11 @@ def render_page(sess, errors=None):
 # =======================================
 @bp.get("/")
 def index():
-    return render_template("analysis/index.html", page=render_page(state.current()))
+    sess = state.current()
+    # the page moves the lines and renames parameters on its copy of the figure; a fresh page needs them drawn in
+    if page_state(sess).get("corner_stale") and is_loaded(sess):
+        render_corner(sess)
+    return render_template("analysis/index.html", page=render_page(sess))
 
 
 @bp.post("/card/<name>")
@@ -276,6 +274,7 @@ def load_retrieval(sess):
     a["corner"] = analysis.default_corner_settings(loaded["info"])
     a["corner_median"] = analysis.median_point(loaded["info"])
     select_corner_point(sess, dict(a["corner_median"]))
+    a["corner_median_model"] = a["corner_model"]
     a["bands_selected"] = analysis.band_options(loaded["out"])[:2]
     a["bands"] = a["zip"] = None
     a["contribution_options"], a["contributions_selected"] = analysis.contribution_options(a["config"], loaded["out"])
@@ -321,11 +320,28 @@ def corner_point():
     except (KeyError, TypeError, ValueError) as e:
         return {"error": f"Invalid point: {e}"}, 400
     select_corner_point(sess, point)
+    a["corner_stale"] = True
     if a["corner_model"] is None:
         return {"error": a["corner_model_error"]}, 500
     wavelength, model = analysis.model_spectrum(a["corner_model"])
     return {"point": point, "wavelength": wavelength.tolist(), "model": model.tolist(),
             "title": analysis.corner_spectrum_title(a["corner_model"])}
+
+
+@bp.post("/corner/label")
+def corner_label():
+    """Called by static/corner.js when the user renames a parameter: JSON {param, label}."""
+    sess = state.current()
+    a = page_state(sess)
+    if not is_loaded(sess):
+        abort(404)
+    body = request.get_json(silent=True) or {}
+    param, label = body.get("param"), str(body.get("label", "")).strip()
+    if param not in a["corner"] or not label:
+        return {"error": "Invalid parameter label"}, 400
+    a["corner"][param]["label"] = label
+    a["corner_stale"] = True
+    return {"param": param, "label": label}
 
 
 @bp.post("/contributions")

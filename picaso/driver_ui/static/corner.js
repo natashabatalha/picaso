@@ -1,6 +1,7 @@
 // Interactive corner plot (core.analysis.interactive_corner_figure). Shape i of the figure is the black
 // line on parameter i's 1D posterior. Dragging it, clicking a histogram bar or typing a value moves the
-// selected point, and the server recomputes the spectrum next to the corner plot there.
+// selected point, and the server recomputes the spectrum next to the corner plot there. Parameters are
+// renamed by editing an axis title on the plot or a label in the table below it.
 
 function cornerPoint(el) {
   return el.layout.shapes.slice(0, el.layout.meta.params.length).map((shape) => shape.x0);
@@ -60,17 +61,43 @@ function moveCornerLines(el, values) {
     Object.assign(update, { [`shapes[${i}].x0`]: x, [`shapes[${i}].x1`]: x, [`shapes[${i}].y0`]: 0,
                             [`shapes[${i}].y1`]: 1 });
   }
-  el._cornerMoving = true;  // our own relayout fires plotly_relayout too
+  el._cornerUpdating = true;  // our own relayout fires plotly_relayout too
   return Plotly.relayout(el, update).then(() => {
-    el._cornerMoving = false;
+    el._cornerUpdating = false;
     syncCornerInputs(el);
     return moveCrosshairs(el);
   }).then(() => evaluateCorner(el));
 }
 
+// Shows `label` everywhere parameter i is named (axis titles, 1D posterior title, table) and saves it.
+function setCornerLabel(el, i, label) {
+  const meta = el.layout.meta;
+  label = String(label ?? "").trim() || meta.labels[i];  // an emptied label goes back to what it was
+  meta.labels[i] = label;
+  const update = { [`annotations[${meta.label_annotations[i]}].text`]: `${label}<br>${meta.intervals[i]}` };
+  for (const [axis, index] of Object.entries(meta.label_axes)) {
+    if (index === i) update[`${axis}.title.text`] = label;
+  }
+  el._cornerUpdating = true;
+  Plotly.relayout(el, update).then(() => { el._cornerUpdating = false; });
+  const input = el.closest(".corner").querySelector(`[data-corner-label="${i}"]`);
+  if (input) input.value = label;
+  fetch(el.closest(".corner").dataset.labelUrl, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ param: meta.params[i], label }),
+  }).then((response) => { if (!response.ok) showError(`Could not save the label (${response.status}).`); })
+    .catch(() => showError("Could not reach the server. Is it still running?"));
+}
+
 function onCornerRelayout(el, update) {
-  if (el._cornerMoving) return;
-  const { params, ranges } = el.layout.meta;
+  if (el._cornerUpdating) return;
+  const { params, ranges, label_axes: labelAxes } = el.layout.meta;
+  for (const [key, value] of Object.entries(update)) {
+    const match = key.match(/^([xy]axis\d*)\.title(\.text)?$/);
+    if (match && match[1] in labelAxes) {
+      setCornerLabel(el, labelAxes[match[1]], value && value.text !== undefined ? value.text : value);
+    }
+  }
   const values = {};
   for (let i = 0; i < params.length; i++) {
     const keys = ["x0", "x1", "y0", "y1"].filter((key) => `shapes[${i}].${key}` in update);
@@ -93,6 +120,12 @@ document.addEventListener("plot:rendered", (event) => {
     const point = data.points[0];
     if (point && point.data.type === "bar") moveCornerLines(el, { [point.data.meta]: point.x });
   });
+});
+
+document.addEventListener("change", (event) => {
+  const label = event.target.closest && event.target.closest("[data-corner-label]");
+  const plot = document.getElementById("plot-corner");
+  if (label && plot && plot.layout) setCornerLabel(plot, Number(label.dataset.cornerLabel), label.value);
 });
 
 document.addEventListener("change", (event) => {

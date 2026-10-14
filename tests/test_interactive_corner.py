@@ -35,7 +35,7 @@ def test_figure_lines_start_at_the_medians(example_info, retrieval_example_confi
     point = analysis.median_point(info)
     out = analysis.evaluate_point(retrieval_example_config, info, point)
     fig = analysis.interactive_corner_figure(info, analysis.default_corner_settings(info), point, out, out,
-                                             retrieval_example_config['observation_type'])
+                                             retrieval_example_config['observation_type'], median_model=out)
     params = info['param_names']
     n = len(params)
     meta = fig.layout.meta
@@ -57,6 +57,31 @@ def test_figure_lines_start_at_the_medians(example_info, retrieval_example_confi
     wavelength, model = analysis.model_spectrum(out)
     assert np.allclose(fig.data[meta['model_trace']].y, model)
     assert 'Chi-sq' in fig.layout.annotations[meta['title_annotation']].text
+
+    # the medians stay drawn faintly behind the selected values: a line per 1D posterior, a dot per 2D panel
+    # and the spectrum
+    faint = [trace for trace in fig.data if trace.opacity == 0.5 and trace.hoverinfo == 'skip']
+    assert sorted(trace.x[0] for trace in faint if trace.mode == 'lines') == pytest.approx(sorted(point.values()))
+    assert len([trace for trace in faint if trace.mode == 'markers' and len(trace.x) == 1]) == n * (n - 1) // 2
+    median_spectrum = [trace for trace in fig.data if trace.name == 'Model at medians']
+    assert len(median_spectrum) == 1 and median_spectrum[0].opacity == 0.5
+    assert np.allclose(median_spectrum[0].y, model)
+
+    # sigma regions: plotly fills where a constraint fails, so ">" fills inside each level, lightest (3 sigma)
+    # first so the darkest (1 sigma) is drawn on top
+    contours = [trace for trace in fig.data if trace.type == 'contour']
+    assert {trace.contours.operation for trace in contours} == {'>'}
+    assert [trace.contours.value for trace in contours[:3]] == [3, 2, 1]
+    assert [trace.fillcolor for trace in contours[:3]] == analysis.SIGMA_COLORS[::-1]
+
+    # every parameter is named by exactly one editable x axis title (bottom row), and all other x titles are blank
+    labels = analysis.default_corner_settings(info)
+    x_titles = {axis: index for axis, index in meta['label_axes'].items() if axis.startswith('x')}
+    assert sorted(x_titles.values()) == list(range(n))
+    for axis, index in meta['label_axes'].items():
+        assert fig.layout[axis].title.text == labels[params[index]]['label']
+    for i, annotation in enumerate(meta['label_annotations']):
+        assert fig.layout.annotations[annotation].text.startswith(labels[params[i]]['label'] + '<br>')
 
 
 def test_evaluate_point_matches_check_model_samples(example_info, retrieval_example_config):
@@ -98,3 +123,23 @@ def test_corner_point_route():
     # the selected point is kept, so a re-rendered page shows it
     html = client.post('/analysis/card/corner', data={}).get_data(as_text=True)
     assert 'value="1000"' in html
+
+    # labels are renamed on the plot or in the table, and there are no label/range fields above the plot
+    assert 'Pretty label' not in html and 'Min range' not in html
+    assert client.post('/analysis/corner/label', json={'param': 'nope', 'label': 'T'}).status_code == 400
+    assert client.post('/analysis/corner/label', json={'param': 'temperature.isothermal.T', 'label': ' '}
+                       ).status_code == 400
+    response = client.post('/analysis/corner/label', json={'param': 'temperature.isothermal.T', 'label': 'T_iso [K]'})
+    assert response.status_code == 200
+
+    # a fresh page load redraws the figure with the new label and the selected point
+    import html as html_lib
+    import json
+    import re
+    page = client.get('/analysis/').get_data(as_text=True)
+    figure = json.loads(html_lib.unescape(re.search(r'id="plot-corner" data-figure-id="\w+" data-figure="([^"]+)"',
+                                                    page).group(1)))
+    meta = figure['layout']['meta']
+    assert meta['labels'][0] == 'T_iso [K]'
+    assert figure['layout']['shapes'][0]['x0'] == pytest.approx(1000.0)
+    assert 'value="T_iso [K]"' in page

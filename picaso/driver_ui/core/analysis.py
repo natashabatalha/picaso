@@ -159,8 +159,9 @@ def corner_figure(info, settings):
 # =======================================
 # 1, 2 and 3 sigma regions, darkest inside (from the GnBu colormap ret.plot_pair uses)
 SIGMA_COLORS = ["#0868ac", "#43a2ca", "#a8ddb5"]
-# lets the page drag the black lines (layout shapes) of the 1D posteriors
-CORNER_PLOT_CONFIG = {"edits": {"shapePosition": True}, "displaylogo": False}
+# lets the page drag the black lines (layout shapes) of the 1D posteriors and rename parameters on their axis titles
+CORNER_PLOT_CONFIG = {"edits": {"shapePosition": True, "axisTitleText": True}, "displaylogo": False}
+MEDIAN_STYLE = dict(color="black", width=3)  # drawn at opacity 0.5 behind the selected values, as a reference
 
 
 def median_point(info):
@@ -229,7 +230,7 @@ def _sigma_field(x, y, xx, yy):
     return np.sqrt(-2 * np.log(np.clip(1 - enclosed, 1e-12, 1))).reshape(xx.shape)
 
 
-def interactive_corner_figure(info, settings, point, data, model, observation_type):
+def interactive_corner_figure(info, settings, point, data, model, observation_type, median_model=None):
     """
     Plotly corner plot of the equally weighted samples with the spectrum at `point` to its right. Like ret.plot_pair,
     but the black line on each 1D posterior marks `point`, and the page (static/corner.js) lets the user drag it to
@@ -247,10 +248,12 @@ def interactive_corner_figure(info, settings, point, data, model, observation_ty
         check_model_samples(full_likelihood=True) style output at `point`, or None if it could not be computed
     observation_type : str
         config["observation_type"], which sets the spectrum's y axis units
+    median_model : dict
+        check_model_samples(full_likelihood=True) style output at the medians, drawn faintly as a reference
 
     Returns
     -------
-    plotly figure. layout.meta tells corner.js which shapes and traces to move.
+    plotly figure. layout.meta tells corner.js which shapes, traces, titles and annotations to update.
     """
     params = info["param_names"]
     n = len(params)
@@ -260,6 +263,8 @@ def interactive_corner_figure(info, settings, point, data, model, observation_ty
     values = [point[param] for param in params]
     ranges = [[settings[param]["min"], settings[param]["max"]] for param in params]
     labels = [settings[param]["label"] for param in params]
+    medians = list(median_point(info).values())
+    intervals = [_interval_text(samples[:, i]) for i in range(n)]
 
     corner_width, gap = 0.6, 0.012
     size = (1 - gap * (n - 1)) / n
@@ -277,19 +282,28 @@ def interactive_corner_figure(info, settings, point, data, model, observation_ty
     fig = pgo.Figure()
     layout = {}
     crosshairs = []
+    label_axes = {}  # {axis: parameter index} of the axis titles that name a parameter, which the page can edit
+    label_annotations = []  # parameter i's 1D posterior title
     for (i, j), k in number.items():
         xaxis, yaxis = name("x", k), name("y", k)
+        # other axes get an empty title: an unset one would show plotly's "Click to enter" placeholder
         layout[name("xaxis", k)] = dict(
             domain=domain(j, corner_width), anchor=yaxis, range=ranges[j], showticklabels=(i == n - 1),
-            title_text=labels[j] if i == n - 1 else None, matches=None if i == n - 1 else name("x", number[(n - 1, j)]))
+            title_text=labels[j] if i == n - 1 else "", matches=None if i == n - 1 else name("x", number[(n - 1, j)]))
+        if i == n - 1:
+            label_axes[name("xaxis", k)] = j
         if i == j:
             counts, edges = np.histogram(samples[:, i], bins=20)
             fig.add_trace(pgo.Bar(x=(edges[1:] + edges[:-1]) / 2, y=counts, width=np.diff(edges), xaxis=xaxis,
                                   yaxis=yaxis, marker_color="grey", opacity=0.7, meta=i, showlegend=False,
                                   hovertemplate=f"{labels[i]}: %{{x:.4g}}<br>%{{y}} samples<extra></extra>"))
+            fig.add_trace(pgo.Scatter(x=[medians[i]] * 2, y=[0, counts.max()], xaxis=xaxis, yaxis=yaxis,
+                                      mode="lines", line=MEDIAN_STYLE, opacity=0.5, hoverinfo="skip",
+                                      showlegend=False))
             layout[name("yaxis", k)] = dict(domain=domain(n - 1 - i), anchor=xaxis, showticklabels=False,
-                                            showgrid=False, rangemode="tozero", fixedrange=True)
-            fig.add_annotation(text=f"{labels[i]}<br>{_interval_text(samples[:, i])}", showarrow=False,
+                                            showgrid=False, rangemode="tozero", fixedrange=True, title_text="")
+            label_annotations.append(len(fig.layout.annotations))
+            fig.add_annotation(text=f"{labels[i]}<br>{intervals[i]}", showarrow=False,
                                xref=f"{xaxis} domain", yref=f"{yaxis} domain", x=0.5, y=1, yanchor="bottom",
                                font_size=11)
             # shape i is parameter i's black line, which corner.js drags
@@ -298,7 +312,9 @@ def interactive_corner_figure(info, settings, point, data, model, observation_ty
             continue
         layout[name("yaxis", k)] = dict(
             domain=domain(n - 1 - i), anchor=xaxis, range=ranges[i], showticklabels=(j == 0),
-            title_text=labels[i] if j == 0 else None, matches=None if j == 0 else name("y", number[(i, 0)]))
+            title_text=labels[i] if j == 0 else "", matches=None if j == 0 else name("y", number[(i, 0)]))
+        if j == 0:
+            label_axes[name("yaxis", k)] = i
         fig.add_trace(pgo.Scatter(x=thin[:, j], y=thin[:, i], xaxis=xaxis, yaxis=yaxis, mode="markers",
                                   marker=dict(color="grey", size=2), opacity=0.5, hoverinfo="skip", showlegend=False))
         try:
@@ -308,12 +324,15 @@ def interactive_corner_figure(info, settings, point, data, model, observation_ty
         except (np.linalg.LinAlgError, ValueError):
             pass  # parameter has no spread yet (e.g. very early in a run), so just show the scatter
         else:
-            # filled 3, 2 then 1 sigma regions, each drawn over the last
+            # filled 3, 2 then 1 sigma regions, each drawn over the last. plotly fills the region that fails a
+            # constraint, so operation ">" fills inside the level (sigma < level)
             for level, color in zip((3, 2, 1), SIGMA_COLORS[::-1]):
                 fig.add_trace(pgo.Contour(x=xx[0], y=yy[:, 0], z=sigma, xaxis=xaxis, yaxis=yaxis,
-                                          contours=dict(type="constraint", operation="<", value=level),
+                                          contours=dict(type="constraint", operation=">", value=level),
                                           fillcolor=color, opacity=0.8, line=dict(color="rgba(0,0,0,0.5)", width=0.8),
                                           hoverinfo="skip", showlegend=False, showscale=False))
+        fig.add_trace(pgo.Scatter(x=[medians[j]], y=[medians[i]], xaxis=xaxis, yaxis=yaxis, mode="markers",
+                                  marker=dict(color="black", size=7), opacity=0.5, hoverinfo="skip", showlegend=False))
         crosshairs.append([len(fig.data), i, j])
         fig.add_trace(pgo.Scatter(x=[values[j]], y=[values[i]], xaxis=xaxis, yaxis=yaxis, mode="markers",
                                   marker=dict(color="black", size=7), hoverinfo="skip", showlegend=False))
@@ -329,6 +348,10 @@ def interactive_corner_figure(info, settings, point, data, model, observation_ty
     fig.add_trace(pgo.Scatter(x=wavelength[order], y=np.asarray(data["ydata"][0])[order], xaxis=xaxis, yaxis=yaxis,
                               mode="markers", name="Data", marker=dict(color="black", size=5), opacity=0.5,
                               error_y=dict(array=np.asarray(data["edata"][0])[order], color="black", thickness=1)))
+    if median_model is not None:
+        median_wavelength, median_spectrum = model_spectrum(median_model)
+        fig.add_trace(pgo.Scatter(x=median_wavelength, y=median_spectrum, xaxis=xaxis, yaxis=yaxis, mode="lines",
+                                  name="Model at medians", line=MEDIAN_STYLE, opacity=0.5))
     model_wavelength, model_spectrum_values = model_spectrum(model) if model is not None else ([], [])
     model_trace = len(fig.data)
     fig.add_trace(pgo.Scatter(x=model_wavelength, y=model_spectrum_values, xaxis=xaxis, yaxis=yaxis, mode="lines",
@@ -341,8 +364,9 @@ def interactive_corner_figure(info, settings, point, data, model, observation_ty
         **layout, height=max(560, min(1100, 150 * n + 160)), bargap=0, plot_bgcolor="white",
         margin=dict(l=80, r=20, t=70, b=90),
         legend=dict(x=corner_width + 0.08, y=0.3, xanchor="left", yanchor="top"),
-        meta=dict(params=params, ranges=ranges, medians=list(median_point(info).values()), crosshairs=crosshairs,
-                  model_trace=model_trace, title_annotation=title_annotation))
+        meta=dict(params=params, ranges=ranges, medians=medians, crosshairs=crosshairs, model_trace=model_trace,
+                  title_annotation=title_annotation, label_axes=label_axes, label_annotations=label_annotations,
+                  intervals=intervals, labels=labels))
     fig.update_xaxes(showline=True, linecolor="black", mirror=True, ticks="outside", showgrid=False, zeroline=False)
     fig.update_yaxes(showline=True, linecolor="black", mirror=True, zeroline=False)
     return fig

@@ -223,6 +223,13 @@ details summary { cursor: pointer; }
 .corner-values th, .corner-values td { padding: 4px 12px 4px 0; text-align: left; }
 .corner-values th { color: var(--muted); font-weight: 600; }
 .corner-values input { width: 10em; }
+/* dashed outline: reads as a label that can be edited in place */
+.corner-values input.corner-label {
+  width: 16em; border: 1px dashed var(--muted); border-radius: 4px; background: transparent; color: var(--text);
+  font: inherit; padding: 2px 4px; cursor: text;
+}
+.corner-values input.corner-label:hover { border-color: var(--accent); }
+.corner-values input.corner-label:focus { border: 1px solid var(--accent); background: var(--surface); outline: none; }
 img.figure { display: block; max-width: 100%; height: auto; margin: 12px 0; background: #fff; border-radius: 6px; }
 .environment-status { overflow-x: auto; }
 pre { overflow-x: auto; background: var(--bg); padding: 12px; border-radius: 6px; }
