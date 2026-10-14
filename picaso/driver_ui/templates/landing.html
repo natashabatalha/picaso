@@ -10,7 +10,7 @@
 
 {% if not refdata_ready %}
   {{ notes([("warning", "PICASO's reference data was not found, so the modeling and analysis pages are unavailable. "
-                        "Start with Setup → Set up reference data.")]) }}
+                        "Start with Setup → Check environment.")]) }}
 {% endif %}
 
 {% for group in nav_groups %}

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block main_class %}form-page{% endblock %}
-{% block title %}Compare observations{% endblock %}
+{% block title %}Spectral diagnostics and information theory{% endblock %}
 {% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
 {% block content %}
-<h1>Compare observations</h1>
+<h1>Spectral diagnostics and information theory</h1>
 <p>This dashboard showcases information content statistics for your model. You can explore how different
   observation cases affect the Degrees of Freedom (DOF) and Shannon Information Content.</p>
 <div hx-target="#sections" hx-swap="morph:outerHTML">

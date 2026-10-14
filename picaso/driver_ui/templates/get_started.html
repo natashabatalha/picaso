@@ -10,7 +10,7 @@
   {% endif %}
   <div class="card-sections">
     {% for group in groups %}
-      <h2 class="card-group-title">{{ group.label }}</h2>
+      <h2 class="card-group-title" id="{{ group.anchor }}">{{ group.label }}</h2>
       <div class="card-grid">
         {% for page in group.pages %}
           <a class="m3-card page-card" href="{{ page.path }}">

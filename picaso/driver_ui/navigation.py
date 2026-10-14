@@ -20,15 +20,21 @@ class Group:
     summary: str
     pages: tuple
 
+    @property
+    def anchor(self):
+        """Id of this group's section on the Get started page; the top-bar button links there."""
+        return self.label.lower()
+
     def contains(self, request_path):
         return any(is_active(page.path, request_path) for page in self.pages)
 
 
 GROUPS = (
     Group("Setup", "Get PICASO's data in place.", (
-        Page("/refdata/", "Set up reference data",
-             "Point the app at your reference data, check your environment, and download opacities, "
-             "stellar grids and other data products."),
+        Page("/refdata/", "Check environment",
+             "Point the app at your reference data and check which data products PICASO can find."),
+        Page("/refdata/#download", "Download reference data",
+             "Download opacities, stellar grids and other data products into your reference data."),
     )),
     Group("Model", "Configure and run PICASO.", (
         Page("/spectrum/", "Run a spectrum",
@@ -43,7 +49,7 @@ GROUPS = (
         Page("/analysis/", "Analyze a retrieval",
              "Load a finished retrieval to make corner plots, compare the maximum likelihood model to the data, "
              "generate banded profiles and spectra, and export the results."),
-        Page("/info-content/", "Compare observations",
+        Page("/info-content/", "Spectral diagnostics and information theory",
              "Compare observation cases by their degrees of freedom and Shannon information content.", wip=True),
     )),
     Group("Explore", "Look inside PICASO's inputs.", (

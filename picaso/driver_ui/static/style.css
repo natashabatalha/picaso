@@ -53,18 +53,18 @@ code, pre { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
 
 /* ---------- layout ---------- */
 .topbar {
-  display: flex; align-items: center; gap: 46px; flex-wrap: wrap; /* logo-to-tab text is twice tab-to-tab */
-  padding: 12px 29px;
+  display: flex; align-items: center; gap: 36px; flex-wrap: wrap; /* logo-to-tab text is twice tab-to-tab */
+  padding: 10px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
-.logo img { height: 43px; display: block; }
-nav { display: flex; gap: 5px; font-size: 18px; flex-wrap: wrap; flex: 1; align-items: center; }
+.logo img { height: 38px; display: block; }
+nav { display: flex; gap: 4px; font-size: 16px; flex-wrap: wrap; flex: 1; align-items: center; }
 .nav-group { position: relative; }
 .nav-end { margin-left: auto; }
 .nav-button {
-  padding: 7px 12px; border: 0; border-radius: 7px;
-  background: none; color: var(--muted); font: inherit; cursor: pointer;
+  display: inline-block; padding: 7px 12px; border: 0; border-radius: 7px;
+  background: none; color: var(--muted); font: inherit; cursor: pointer; text-decoration: none;
 }
 .nav-button::after {
   content: ""; display: inline-block; margin-left: 7px;
@@ -94,33 +94,56 @@ nav { display: flex; gap: 5px; font-size: 18px; flex-wrap: wrap; flex: 1; align-
 }
 
 main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
-/* page titles: 1.35x the browser's default h1 (30px) */
-main > h1 { margin: 8px 0 24px; font-size: 40px; line-height: 48px; font-weight: 600; letter-spacing: -0.25px; }
+main > h1 { margin: 8px 0 20px; font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -0.25px; }
 /* the form pages (spectrum, climate, analysis, info content) use 60% of the screen; never narrower than 640px */
 main.form-page { max-width: none; width: 60%; min-width: min(100%, 640px); }
 .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
 
 /* ---------- home (Material 3 style) ---------- */
 main.home { max-width: none; padding: 16px 16px 64px; }
-.home-hero {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  min-height: calc(100svh - 100px); /* fill the screen below the top bar */
+.home-block { width: 88%; margin: 0 auto; }
+/* home page: a welcome banner, then one card per top-bar group linking straight to its pages */
+.welcome-banner {
+  display: flex; align-items: center; gap: 32px;
+  margin: 8px 0 16px; padding: 32px 40px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 18%, var(--surface-container)),
+                              var(--surface-container) 70%);
 }
-.home-panel { border-radius: var(--radius-xl); background: var(--surface-container); }
-.home-media { display: grid; place-items: center; min-height: 320px; color: var(--muted); }
-.home-intro { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 56px; }
-.home-intro h1 { margin: 0 0 32px; font-size: 90px; line-height: 100px; font-weight: 600; letter-spacing: -0.25px; }
-.home-intro p { margin: 0 0 48px; max-width: 640px; color: var(--muted); font-size: 22px; line-height: 34px; }
-.pill-button {
-  display: inline-flex; align-items: center; height: 84px; padding: 0 48px;
-  border-radius: 999px; background: var(--accent); color: var(--accent-text);
-  font-size: 24px; font-weight: 500; letter-spacing: 0.1px; text-decoration: none;
-  transition: box-shadow 0.15s, filter 0.15s;
+.welcome-logo {
+  flex: none; display: grid; place-items: center; width: 112px; height: 112px;
+  border: 2px dashed var(--outline); border-radius: 24px;
+  color: var(--muted); font-size: 14px;
 }
-.pill-button:hover { filter: brightness(1.08); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
-.home-block { width: 80%; margin: 0 auto; }
-.home-learn { padding-top: 96px; }
-.home-learn h2 { margin: 0 0 32px; font-size: 49px; line-height: 59px; font-weight: 500; }
+.welcome-kicker { margin: 0; color: var(--accent); font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.welcome-text h1 { margin: 0 0 8px; font-size: 40px; line-height: 48px; font-weight: 700; letter-spacing: -0.5px; }
+.welcome-text p:last-child { margin: 0; max-width: 720px; color: var(--muted); font-size: 16px; line-height: 24px; }
+.launch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 16px; }
+.launch-card { padding: 8px 8px 16px; border: 2px solid transparent; }
+.launch-card:hover { background: var(--surface-container); }
+.launch-card.highlight { border-color: var(--accent); }
+.launch-visual {
+  height: 140px; padding: 12px;
+  border-radius: calc(var(--radius-xl) - 8px); background: var(--card-visual);
+}
+.launch-visual img { display: block; width: 100%; height: 100%; object-fit: contain; }
+@media (max-width: 1200px) { .launch-grid { grid-template-columns: repeat(2, 1fr); } }
+.launch-card h2 { margin: 16px 16px 4px; font-size: 20px; line-height: 28px; font-weight: 600; }
+.launch-card h2 a { color: var(--text); text-decoration: none; }
+.launch-card h2 a::after { content: " ›"; color: var(--accent); }
+.launch-card h2 a:hover, .launch-card h2 a:focus-visible { color: var(--accent); text-decoration: underline; }
+.launch-card > p { margin: 0 16px 12px; color: var(--muted); font-size: 14px; line-height: 20px; }
+.launch-links { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: auto 8px 0; padding: 0; }
+.launch-links a {
+  display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface);
+  font-weight: 500; text-decoration: none;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.launch-links a:hover, .launch-links a:focus-visible { border-color: var(--accent); background: var(--info-bg); }
+.launch-links a > span[aria-hidden] { margin-left: auto; }
+.launch-resources { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 24px; color: var(--muted); font-size: 14px; }
+.launch-resources a { text-decoration: none; }
 .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .m3-card {
   display: flex; flex-direction: column;
@@ -129,19 +152,17 @@ main.home { max-width: none; padding: 16px 16px 64px; }
   transition: background-color 0.15s;
 }
 .m3-card:hover, .m3-card:focus-visible { background: var(--info-bg); }
-.learn-card { justify-content: space-between; min-height: 140px; padding: 20px 24px; }
-.learn-arrow { align-self: flex-end; font-size: 20px; color: var(--accent); }
-.learn-label { font-size: 22px; line-height: 28px; font-weight: 500; }
-.page-title { margin: 0; padding: 96px 0; text-align: center; font-size: 86px; line-height: 96px; font-weight: 600; letter-spacing: -0.25px; }
+.page-title { margin: 0; padding: 48px 0; text-align: center; font-size: 48px; line-height: 56px; font-weight: 600; letter-spacing: -0.25px; }
 /* Get started: section headings over cards, 66% of the screen width (82.5% of .home-block) */
 .card-sections { width: 82.5%; margin: 0 auto; }
-.card-group-title { margin: 80px 0 24px; font-size: 75px; line-height: 84px; font-weight: 500; letter-spacing: -0.25px; }
+.card-group-title { margin: 48px 0 16px; font-size: 36px; line-height: 44px; font-weight: 500; letter-spacing: -0.25px; }
 .card-group-title:first-child { margin-top: 0; }
+.card-group-title:target { color: var(--accent); }
 /* 30% text, 70% image on its own panel; slightly wider than tall */
 .page-card { display: grid; grid-template-rows: 3fr 7fr; aspect-ratio: 5 / 4; }
 .page-card-text { display: flex; flex-direction: column; gap: 4px; padding: 22px 28px 8px; }
-.page-card h3 { margin: 0; font-size: 24px; line-height: 30px; font-weight: 600; }
-.page-card p { margin: 0; color: var(--muted); font-size: 16px; line-height: 24px; }
+.page-card h3 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; }
+.page-card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 22px; }
 .page-card-visual {
   display: grid; place-items: center; min-height: 0;
   margin: 0 8px 8px; padding: 12px;
@@ -154,17 +175,20 @@ main.home { max-width: none; padding: 16px 16px 64px; }
   color: var(--muted); font-size: 14px;
 }
 @media (max-width: 900px) {
-  .home-hero, .card-grid { grid-template-columns: 1fr; }
-  .home-intro { padding: 32px; }
-  .home-intro h1, .page-title { font-size: 57px; line-height: 64px; }
-  main > h1 { font-size: 36px; line-height: 44px; }
-  .page-title { padding: 48px 0; }
-  .home-intro p { font-size: 18px; line-height: 28px; }
-  .pill-button { height: 64px; padding: 0 36px; font-size: 20px; }
+  .card-grid { grid-template-columns: 1fr; }
+  .welcome-banner { gap: 20px; padding: 24px; }
+  .welcome-logo { width: 72px; height: 72px; }
+  .welcome-text h1 { font-size: 32px; line-height: 40px; }
+  .page-title { padding: 32px 0; font-size: 36px; line-height: 44px; }
+  main > h1 { font-size: 28px; line-height: 36px; }
   .home-block { width: auto; padding-left: 8px; padding-right: 8px; }
-  .home-learn { padding-top: 64px; }
   .card-sections { width: auto; }
-  .card-group-title { margin-top: 48px; font-size: 57px; line-height: 64px; }
+  .card-group-title { margin-top: 32px; font-size: 28px; line-height: 36px; }
+}
+
+@media (max-width: 640px) {
+  .launch-grid { grid-template-columns: 1fr; }
+  .welcome-banner { flex-direction: column; align-items: flex-start; }
 }
 
 /* ---------- landing page ---------- */
@@ -197,6 +221,10 @@ main.home { max-width: none; padding: 16px 16px 64px; }
   margin-bottom: 16px;
 }
 .card h2 { margin-top: 0; font-size: 18px; }
+.page-lead { margin: -8px 0 0; max-width: 720px; color: var(--muted); }
+.page-actions { margin: 16px 0 0; }
+/* sections reached by an in-page link (#download, Get started groups) clear the top of the window */
+[id] { scroll-margin-top: 16px; }
 
 /* ---------- buttons ---------- */
 .button-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }

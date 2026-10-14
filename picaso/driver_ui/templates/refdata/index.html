@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% from "_macros.html" import notes %}
-{% block title %}Set up reference data{% endblock %}
+{% block title %}Reference data{% endblock %}
 {% block content %}
-<h1>Set up reference data</h1>
+<h1>Reference data</h1>
+<p class="page-lead">This page checks your current environment for the reference data PICASO needs and shows what
+  it found. To get anything that is missing, use the download data helper.</p>
 <div id="refdata" hx-target="#refdata" hx-select="#refdata" hx-swap="morph:outerHTML">
   {% if message %}{{ notes([message]) }}{% endif %}
 
@@ -13,6 +15,7 @@
       {% else %}
         {{ notes([("warning", "The picaso_refdata environment variable is not set.")]) }}
       {% endif %}
+      <p class="hint">Set a valid directory first; the download data helper appears once it is set.</p>
       <form hx-post="{{ url_for('refdata.set_refdata') }}">
         <div class="field">
           <label for="refdata-path">Path to your picaso reference data directory</label>
@@ -26,8 +29,12 @@
       </form>
     </section>
   {% else %}
+    <div class="button-row page-actions">
+      <a class="button" href="#download">Go to download data helper ↓</a>
+    </div>
+
     <section class="card">
-      <h2>Current environment status</h2>
+      <h2>Check environment</h2>
       {# data.check_environ messages, drawn with the app's own (theme aware) note styles #}
       <div class="environment-status">
         {% for level, message in status %}
@@ -40,8 +47,9 @@
       </div>
     </section>
 
-    <section class="card">
-      <h2>Available data downloads</h2>
+    <section class="card" id="download">
+      <h2>Download data helper</h2>
+      <p class="hint">Open a category, pick a data product and choose where to save it.</p>
       {% if downloads_error %}{{ notes([("error", downloads_error)]) }}{% endif %}
       {% for category, targets in downloads.items() %}
         <details class="download-category">

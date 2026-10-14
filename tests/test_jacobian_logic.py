@@ -115,6 +115,35 @@ def test_missing_opacity_or_calculation_raises():
         ic.jacobian(picaso_class=StubPicaso(), params=['planet.a'], opacityclass=object())
 
 
+def fake_run(driver_dict):
+    """Stands in for driver.run: the "spectrum" is a function of two config values."""
+    a, mh = driver_dict['object']['teq']['value'], driver_dict['chemistry']['visscher']['log_mh']
+    return {'thermal': np.array([a, a**2, mh])}
+
+
+DRIVER_CONFIG = {'observation_type': 'thermal', 'object': {'teq': {'value': 3.0}},
+                 'chemistry': {'visscher': {'log_mh': 2.0}}}
+
+
+def test_driver_dict_derivative(monkeypatch):
+    """driver_dict runs the config through driver.run, and shortcut names resolve to config paths."""
+    monkeypatch.setattr(ic, 'run', fake_run)
+    config = copy.deepcopy(DRIVER_CONFIG)
+    jac = ic.jacobian(driver_dict=config, params=['teq', 'mh'], method='center')
+    np.testing.assert_allclose(jac[:, 0], [1, 6, 0])
+    np.testing.assert_allclose(jac[:, 1], [0, 0, 1])
+    assert config == DRIVER_CONFIG
+
+
+def test_driver_file_derivative(monkeypatch, tmp_path):
+    toml = pytest.importorskip('toml')
+    monkeypatch.setattr(ic, 'run', fake_run)
+    path = tmp_path / 'driver.toml'
+    path.write_text(toml.dumps(DRIVER_CONFIG))
+    jac = ic.jacobian(driver_file=str(path), params=['object.teq.value'], method='center')
+    np.testing.assert_allclose(jac[:, 0], [1, 6, 0])
+
+
 @pytest.fixture(scope='module')
 def transit_case(retrieval_example_config, mini_opacity):
     """The retrieval example at its true parameters, as a picaso inputs class, with its spectrum."""

@@ -9,8 +9,9 @@ bp = Blueprint("home", __name__)
 
 GET_STARTED = (
     Group("Setup", "", (
-        Page("/refdata/", "Set up reference data", "Locate reference data and download opacities.",
+        Page("/refdata/", "Check environment", "Locate reference data and see what PICASO can find.",
              visual="card_refdata.svg"),
+        Page("/refdata/#download", "Download reference data", "Get opacities, stellar grids and other data."),
     )),
     Group("Model", "", (
         Page("/spectrum/", "Run a spectrum", "Compute spectra and set up retrievals.",
@@ -21,7 +22,8 @@ GET_STARTED = (
     Group("Analyze", "", (
         Page("/analysis/", "Analyze a retrieval", "Corner plots, best-fit models, banded spectra.",
              visual="card_fit.svg"),
-        Page("/info-content/", "Compare observations", "Rank observations by information content.",
+        Page("/info-content/", "Spectral diagnostics and information theory",
+             "Rank observations by information content.",
              wip=True, visual="card_info_content.svg"),
     )),
     Group("Explore", "", (
@@ -31,13 +33,22 @@ GET_STARTED = (
 )
 
 
+# Home page card illustration for each top-bar group (navigation.GROUPS); the cards list the group's pages.
+HOME_VISUALS = {
+    "Setup": "card_refdata.svg",
+    "Model": "card_transmission.svg",
+    "Analyze": "card_fit.svg",  # a model spectrum against data: analysis of models and observations
+    "Explore": "card_opacities.svg",
+}
+
+
 def refdata_ready():
     return os.path.isfile(driver_template_path(current_app.config["PICASO_REFDATA"]))
 
 
 @bp.get("/")
 def index():
-    return render_template("home.html")
+    return render_template("home.html", visuals=HOME_VISUALS, refdata_ready=refdata_ready())
 
 
 @bp.get("/get-started")

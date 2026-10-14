@@ -17,11 +17,12 @@
     <a href="/" class="logo">
       <img src="https://natashabatalha.github.io/picaso/_images/logo.png" alt="PICASO home">
     </a>
-    {# One menu per group (see navigation.py); menus open on hover or keyboard focus. #}
+    {# One menu per group (see navigation.py); menus open on hover or keyboard focus, and the group's own
+       button links to its section on the Get started page. #}
     <nav>
       {% for group in nav_groups %}
         <div class="nav-group">
-          <button type="button" class="nav-button{% if group.contains(request.path) %} active{% endif %}" aria-haspopup="true">{{ group.label }}</button>
+          <a href="/get-started#{{ group.anchor }}" class="nav-button{% if group.contains(request.path) %} active{% endif %}" aria-haspopup="true">{{ group.label }}</a>
           <div class="nav-menu">
             {% for page in group.pages %}
               <a href="{{ page.path }}"{% if nav_active(page.path, request.path) %} class="active" aria-current="page"{% endif %}>

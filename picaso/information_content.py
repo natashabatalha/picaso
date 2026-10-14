@@ -1,10 +1,11 @@
 import numpy as np
 import copy 
+import tomllib
 from spectres import spectres 
 import pandas as pd
 
 #picaso imports 
-from .driver import set_dict_value,OBSERVATION_CALC_MAP
+from .driver import set_dict_value,OBSERVATION_CALC_MAP,run
 from .opacity_factory import create_grid
 from .justplotit import mean_regrid 
 
@@ -83,7 +84,7 @@ def _resolve_param_path(config, param_path):
     return param_path
 
 def jacobian(picaso_class = None, params=None, method='forward', d_param=1e-2, is_log=False, 
-             opacityclass=None, calculation=None,def_kwargs=None):
+             opacityclass=None, calculation=None,def_kwargs=None, driver_file=None, driver_dict=None):
     """
     Computes a Jacobian matrix for a set of model parameters.
 
@@ -118,20 +119,19 @@ def jacobian(picaso_class = None, params=None, method='forward', d_param=1e-2, i
         results of justdoit.opannection
     calculation : str 
         Regular calculation params for picaso.justdoit.spectrum call. reflected, thermal, or transmission or a combination thereof e.g. reflected+thermal
+    def_kwargs : dict, optional
+        Only needed for 'def.' parameter paths. Keyed by path, with the keyword arguments for the picaso_class
+        function that should be rerun when that parameter is perturbed.
+    driver_file : str, optional
+        Path to a driver.toml configuration file. Use this instead of picaso_class.
+    driver_dict : dict, optional
+        Driver configuration dictionary (same structure as driver.toml). Use this instead of picaso_class.
 
     Returns
     -------
     numpy.ndarray
         A matrix of shape (N_wavelengths, N_parameters) containing the Jacobian.
-    
-    To Do 
-    -----
-    driver_file : str, optional
-        Path to the driver.toml configuration file.
-    driver_dict : dict, optional
-        Configuration dictionary.
     """
-    driver_file=None; driver_dict=None#hard coding for now because of staged release of retrieval and IC stuff
     if isinstance(driver_file, str):
         with open(driver_file, "rb") as f:
             config = tomllib.load(f)
