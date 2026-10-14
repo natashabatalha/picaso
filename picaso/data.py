@@ -293,7 +293,7 @@ def _is_notebook():
         return False      # Another exception, assume not a notebook.
 
 
-def check_environ(return_html=False):
+def check_environ(return_html=False, return_messages=False):
     """
     Checks user environment variables and provides feedback.
     This function will display its output as formatted HTML if run in a Jupyter notebook.
@@ -302,6 +302,9 @@ def check_environ(return_html=False):
     ----------
     return_html : bool
         If True, return the HTML output as a string.
+    return_messages : bool
+        If True, return the raw [(type, message)] list instead of displaying it. Type is one of
+        info, success, warning, error (message is an HTML string) or list (message is a list of names).
     """
     messages = []
     picaso_refdata = os.environ.get('picaso_refdata')
@@ -370,6 +373,9 @@ def check_environ(return_html=False):
                 messages.append(('list',grids_inside))
             else: 
                 messages.append(('warning', f'{icheck} folder found but they are empty. This data product is used for {info}. You might have this data product outside the default path. That is okay.'))
+
+    if return_messages:
+        return messages
 
     # --- Display Messages ---
     if _is_notebook() or return_html:

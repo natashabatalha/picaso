@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Run PICASO{% endblock %}
+{% block main_class %}form-page{% endblock %}
+{% block title %}Run a spectrum{% endblock %}
 {% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
 {% block content %}
-<h1>Run PICASO</h1>
+<h1>Run a spectrum</h1>
 <div hx-target="#sections" hx-swap="morph:outerHTML">
   {{ page|safe }}
 </div>

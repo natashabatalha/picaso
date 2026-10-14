@@ -36,7 +36,7 @@ def case_path(i, *keys):
 # CARDS
 # =======================================
 class CasesCard(Card):
-    name, title = "cases", "Observation Cases"
+    name, title = "cases", "Observation cases"
     extra = "info_content/extras/cases.html"
 
     def visible(self, sess):
@@ -79,7 +79,7 @@ class CasesCard(Card):
 
 
 class DataCard(Card):
-    name, title = "data", "Jacobian Initialization"
+    name, title = "data", "Jacobian initialization"
     extra = "info_content/extras/data.html"
 
     def fields(self, sess):
@@ -103,7 +103,7 @@ class DataCard(Card):
         s = page_state(sess)
         data, notes = s["data"], []
         if s["source"] is not None:
-            notes.append(("info", "Using the model from the Spectrum & Retrieval Setup page "
+            notes.append(("info", "Using the model from the Run a spectrum page "
                                   f"({s['source']['config']['observation_type']})."))
             if data is None:
                 return notes + [("warning", "Select parameters and click 'Compute Jacobian' to begin.")]
@@ -112,7 +112,7 @@ class DataCard(Card):
         elif data is None:
             return [("warning", Markup(
                 "Please initialize the example or provide Jacobian data to begin. Or, set up a starting case on the "
-                '<a href="{}">Spectrum &amp; Retrieval Setup</a> page, run the spectrum, and click '
+                '<a href="{}">Run a spectrum</a> page, run the spectrum, and click '
                 "'Compute Jacobian &gt;&gt;'.").format(url_for("spectrum.index")))]
         zeros = ic.zero_columns(data)
         if zeros:
@@ -135,7 +135,7 @@ class DataCard(Card):
 
 
 class PriorsCard(Card):
-    name, title = "priors", "Input Priors for your Parameter Set"
+    name, title = "priors", "Input priors for your parameter set"
 
     def visible(self, sess):
         return page_state(sess)["data"] is not None

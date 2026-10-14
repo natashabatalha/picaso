@@ -5,7 +5,7 @@
 <div id="sections">
   {% for view in cards %}
     {% set card = view.card %}
-    <section class="card" id="card-{{ card.name }}">
+    <section class="form-section" id="card-{{ card.name }}">
       <h2>{{ card.title }}</h2>
       {{ notes(view.notes) }}
       {% if view.fields %}

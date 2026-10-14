@@ -43,7 +43,7 @@ class RetrievalToggleCard(RetrievalCard):
 
 
 class ObservationDataCard(RetrievalCard):
-    name, title = "observation_data", "Observational Data Configuration"
+    name, title = "observation_data", "Observational data configuration"
     extra = "spectrum/extras/data_check.html"
     clears_previews = True
 
@@ -83,7 +83,7 @@ class ObservationDataCard(RetrievalCard):
 
 
 class FreeParametersCard(RetrievalCard):
-    name, title = "free_parameters", "Free Parameters"
+    name, title = "free_parameters", "Free parameters"
 
     def fields(self, sess):
         groups = {}
@@ -119,7 +119,7 @@ class PriorsCard(RetrievalCard):
 
 
 class SamplerCard(RetrievalCard):
-    name, title = "sampler", "Sampler Options"
+    name, title = "sampler", "Sampler options"
 
     def fields(self, sess):
         sampler = sess.ui["sampler"]
@@ -144,7 +144,7 @@ class SamplerCard(RetrievalCard):
 
 
 class PriorTestCard(RetrievalCard):
-    name, title = "prior_test", "Set and Test Your Prior Bounds"
+    name, title = "prior_test", "Set and test your prior bounds"
     extra = "spectrum/extras/prior_test.html"
 
     def visible(self, sess):

@@ -100,7 +100,7 @@ class AdminCard(ClimatePageCard):
 
 
 class UploadCard(ClimatePageCard):
-    name, title = "upload", "Default Values from a TOML File"
+    name, title = "upload", "Pre-fill from a TOML file"
     extra = "climate/extras/upload.html"
 
 
@@ -121,7 +121,7 @@ class SetupCard(ClimatePageCard):
 
 
 class StarCard(ClimatePageCard):
-    name, title = "star", "Star Variables"
+    name, title = "star", "Star variables"
 
     def visible(self, sess):
         return config_of(sess).get("irradiated", False)
@@ -131,7 +131,7 @@ class StarCard(ClimatePageCard):
 
 
 class ObjectCard(ClimatePageCard):
-    name, title = "object", "Object Variables"
+    name, title = "object", "Object variables"
 
     def fields(self, sess):
         tree = bulk_property_fields(fields_for(sess, "object"), CONFIG + ("object",))
@@ -145,7 +145,7 @@ class ObjectCard(ClimatePageCard):
 
 
 class TemperatureCard(ClimatePageCard):
-    name, title = "temperature", "Initial Pressure & Temperature Guess"
+    name, title = "temperature", "Initial pressure & temperature guess"
     extra = "climate/extras/preview_pt.html"
 
     def fields(self, sess):
@@ -181,7 +181,7 @@ class ChemistryCard(ClimatePageCard):
 
 
 class ClimateCard(ClimatePageCard):
-    name, title = "climate", "Climate Model"
+    name, title = "climate", "Climate model"
     extra = "climate/extras/run.html"
     clears_previews = False
 
@@ -203,7 +203,7 @@ class ConfigurationCard(ClimatePageCard):
     extra = "climate/extras/configuration.html"
 
 
-CARDS = [AdminCard(), UploadCard(), SetupCard(), StarCard(), ObjectCard(), TemperatureCard(),
+CARDS = [UploadCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(), TemperatureCard(),
          ChemistryCard(), ClimateCard(), ConfigurationCard()]
 CARDS_BY_NAME = {card.name: card for card in CARDS}
 

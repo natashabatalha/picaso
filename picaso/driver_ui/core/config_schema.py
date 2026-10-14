@@ -81,10 +81,14 @@ class Number(Field):
         if self.optional and raw.strip() == "":
             return ""
         number = _parse_number(raw, keep_int=isinstance(self.value, int))
-        if self.minimum is not None and number < self.minimum:
-            raise ValueError(f"must be at least {self.minimum:g}")
-        if self.maximum is not None and number > self.maximum:
-            raise ValueError(f"must be at most {self.maximum:g}")
+        low = self.minimum is not None and number < self.minimum
+        high = self.maximum is not None and number > self.maximum
+        if (low or high) and self.minimum is not None and self.maximum is not None:
+            raise ValueError(f"Must be between {self.minimum:g} and {self.maximum:g}")
+        if low:
+            raise ValueError(f"Must be at least {self.minimum:g}")
+        if high:
+            raise ValueError(f"Must be at most {self.maximum:g}")
         return number
 
 
