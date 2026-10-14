@@ -185,6 +185,8 @@ def evaluate_point(config, info, point):
     """
     log_params = info.get("log_params", [])
     theta = [10**point[param] if param in log_params else point[param] for param in info["param_names"]]
+    # log_likelihood writes theta into the config it is given, so work on a copy
+    config = copy.deepcopy(config)
     OPA, param_tools = resources.opacity(config["OpticalProperties"]), resources.retrieval_param_tools(config)
     data, conv = go.get_data(config)
     return go.log_likelihood(np.atleast_2d(theta), go.prior_finder(config["retrieval"]), config, OPA, data,

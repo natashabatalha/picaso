@@ -2423,9 +2423,7 @@ class RetrieveOpacities():
 
     def convert_array(clas, text):
         """needed to interpret bytes to array"""
-        out = io.BytesIO(text)
-        out.seek(0)
-        return np.load(out)
+        return _npy_frombuffer(text)
 
     def get_available_data(self, wave_range, resample):
         """Get the pressures and temperatures that are available for the continuum and molecules"""
@@ -2456,13 +2454,18 @@ class RetrieveOpacities():
         self.temps = df['temperature'].unique() #used for interpolation
         self.t_inv_grid = 1/self.temps
         self._pt_ids, _ = _build_ptid_lookup(self.pt_pairs)
+        #log pressure and temperature of each pt pair, used for the nearest neighbor search
+        self._pt_log_p = np.log(np.array([i[1] for i in self.pt_pairs], dtype=np.float64))
+        self._pt_temps = np.array([i[2] for i in self.pt_pairs], dtype=np.float64)
 
         #Get the wave grid info
         cur.execute('SELECT wavenumber_grid FROM header')
-        self.wno =  cur.fetchone()[0][::self.resample]
-        self.wave = 1e4/self.wno 
-        if wave_range == None: 
-            self.loc = [True]*len(self.wno )
+        #copy because blobs are decoded as read-only views
+        self.wno =  np.array(cur.fetchone()[0][::self.resample])
+        self.wave = 1e4/self.wno
+        if wave_range == None:
+            #a slice keeps every point without the cost of a boolean list index on every blob
+            self.loc = slice(None)
         else:
             self.loc = np.where(((self.wave>min(wave_range)) & (self.wave<max(wave_range))))
         self.wave = self.wave[self.loc]
@@ -2734,17 +2737,14 @@ class RetrieveOpacities():
 
         #CONTINUUM
         #find nearest temp for cia grid
-        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+        tcia, tcia_layer = self._nearest_cia_temps(tlayer)
         cia_mol = list(self.continuum_opa.keys())
 
         data = self._get_query_continuum(tcia, cia_mol, cur)
 
+        self._fill_continuum(data, tcia, tcia_layer)
 
-        for i in self.continuum_opa.keys():
-            for j,ind in zip(tcia,range(nlayer)):
-                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
-  
-        conn.close() 
+        conn.close()
 
     def get_opacities_nearest(self, atmosphere, exclude_mol=1):
         """
@@ -2764,11 +2764,11 @@ class RetrieveOpacities():
         self.molecular_opa = {key:np.zeros((nlayer, self.nwno)) for key in molecules}
         self.continuum_opa = {key[0]+key[1]:np.zeros((nlayer, self.nwno)) for key in cia_molecules}
 
-        #this will make getting opacities faster 
         #this is getting the ptid corresponding to the pairs
-        ind_pt=[min(self.pt_pairs, 
-            key=lambda c: math.hypot(np.log(c[1])- np.log(coordinate[0]), c[2]-coordinate[1]))[0] 
-                for coordinate in  zip(player,tlayer)]
+        #nearest neighbor in (ln P, T); argmin keeps the first pair on ties, as min() did
+        dist = np.hypot(self._pt_log_p[np.newaxis,:] - np.log(np.asarray(player))[:,np.newaxis],
+                        self._pt_temps[np.newaxis,:] - np.asarray(tlayer)[:,np.newaxis])
+        ind_pt = self._pt_ids[dist.argmin(axis=1)].tolist()
         atmosphere.layer['pt_opa_index'] = ind_pt
 
         if self.preload:
@@ -2788,7 +2788,7 @@ class RetrieveOpacities():
 
         #continuum
         #find nearest temp for cia grid
-        tcia = [np.unique(self.cia_temps)[find_nearest(np.unique(self.cia_temps),i)] for i in tlayer]
+        tcia, tcia_layer = self._nearest_cia_temps(tlayer)
         cia_mol = list(self.continuum_opa.keys())
 
         if self.preload:
@@ -2796,12 +2796,28 @@ class RetrieveOpacities():
         else:
             data = self._get_query_continuum(tcia, cia_mol, cur)
 
+        self._fill_continuum(data, tcia, tcia_layer)
 
+        conn.close()
+
+    def _nearest_cia_temps(self, tlayer):
+        """
+        Nearest continuum grid temperature for each layer.
+        Returns the unique temperatures needed and, per layer, its index into them.
+        """
+        cia_temps = np.unique(self.cia_temps)
+        #argmin keeps the first temperature on ties, as find_nearest does
+        nearest = cia_temps[np.abs(np.asarray(tlayer)[:,np.newaxis] - cia_temps[np.newaxis,:]).argmin(axis=1)]
+        return np.unique(nearest, return_inverse=True)
+
+    def _fill_continuum(self, data, tcia, tcia_layer):
+        """
+        Fill continuum_opa from queried data, slicing each needed temperature
+        once and then copying it to every layer that uses it.
+        """
         for i in self.continuum_opa.keys():
-            for j,ind in zip(tcia,range(nlayer)):
-                self.continuum_opa[i][ind,:] = data[i+'_'+str(j)][::self.resample][self.loc]
-
-        conn.close() 
+            block = np.array([data[i+'_'+str(j)][::self.resample][self.loc] for j in tcia])
+            self.continuum_opa[i][:] = block[tcia_layer]
 
     def compute_stellar_shits(self, wno_star, flux_star):
         """
@@ -3325,6 +3341,37 @@ def convert_array(clas, text):
     out = io.BytesIO(text)
     out.seek(0)
     return np.load(out).copy()
+
+#parsed .npy headers, keyed by the raw header bytes
+_NPY_HEADER_CACHE = {}
+
+def _npy_frombuffer(blob):
+    """
+    Interpret bytes written by `adapt_array` (np.save) as a read-only array view, without copying.
+    Every blob in an opacity db shares the same header, so it is parsed once and cached
+    (parsing it is most of the cost of np.load). Falls back to np.load for anything unusual.
+    """
+    if blob[:6] != b'\x93NUMPY' or blob[6] not in (1, 2):
+        return np.load(io.BytesIO(blob))
+    if blob[6] == 1:
+        offset = 10 + int.from_bytes(blob[8:10], 'little')
+    else:
+        offset = 12 + int.from_bytes(blob[8:12], 'little')
+    header = bytes(blob[:offset])
+    parsed = _NPY_HEADER_CACHE.get(header)
+    if parsed is None:
+        f = io.BytesIO(header)
+        major, _ = np.lib.format.read_magic(f)
+        if major == 1:
+            parsed = np.lib.format.read_array_header_1_0(f)
+        else:
+            parsed = np.lib.format.read_array_header_2_0(f)
+        _NPY_HEADER_CACHE[header] = parsed
+    shape, fortran_order, dtype = parsed
+    if dtype.hasobject:
+        return np.load(io.BytesIO(blob))
+    arr = np.frombuffer(blob, dtype=dtype, count=int(np.prod(shape)), offset=offset)
+    return arr.reshape(shape, order='F' if fortran_order else 'C')
 
 @jit(nopython=True, cache=True)
 def find_nearest(array,value):
