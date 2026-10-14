@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import multiselect, notes, plot %}
-{% block title %}Opacity Viewer{% endblock %}
+{% block title %}View opacities{% endblock %}
 {% block main_class %}wide{% endblock %}
 {% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
 
@@ -14,7 +14,7 @@
 {% endmacro %}
 
 {% block content %}
-<h1>Opacity Viewer</h1>
+<h1>View opacities</h1>
 <div id="opacity-viewer" class="sidebar-layout" hx-target="#opacity-viewer" hx-select="#opacity-viewer" hx-swap="morph:outerHTML">
   <form class="card sidebar" hx-post="{{ url_for('opacities.plot') }}" hx-sync="this:replace" hx-disabled-elt="find button[type=submit]">
     <input type="hidden" name="loaded_db" value="{{ db }}">

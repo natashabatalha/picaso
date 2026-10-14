@@ -37,12 +37,12 @@ def is_loaded(sess):
 # CARDS
 # =======================================
 class UploadCard(Card):
-    name, title = "upload", "Driver Configuration"
+    name, title = "upload", "Driver configuration"
     extra = "analysis/extras/upload.html"
 
 
 class DirectoryCard(Card):
-    name, title = "directory", "Retrieval Output"
+    name, title = "directory", "Retrieval output"
     extra = "analysis/extras/load.html"
 
     def visible(self, sess):
@@ -73,7 +73,7 @@ def ready_to_load(sess):
 
 
 class CornerCard(Card):
-    name, title = "corner", "Corner Plot"
+    name, title = "corner", "Corner plot"
     extra = "analysis/extras/corner.html"
 
     def visible(self, sess):
@@ -106,7 +106,7 @@ class CornerCard(Card):
 
 
 class MaxLoglCard(Card):
-    name, title = "max_logl", "Max Log Likelihood Model vs Data"
+    name, title = "max_logl", "Max log likelihood model vs data"
     extra = "analysis/extras/max_logl.html"
 
     def visible(self, sess):
@@ -129,7 +129,7 @@ class MaxLoglCard(Card):
 
 
 class BandsCard(Card):
-    name, title = "bands", "Generate Banded Profiles and Spectra"
+    name, title = "bands", "Generate banded profiles and spectra"
     extra = "analysis/extras/bands.html"
 
     def visible(self, sess):
@@ -145,7 +145,7 @@ class BandsCard(Card):
 
 
 class ExportCard(Card):
-    name, title = "export", "Export & Download Retrieval Results"
+    name, title = "export", "Export & download retrieval results"
     extra = "analysis/extras/export.html"
 
     def visible(self, sess):

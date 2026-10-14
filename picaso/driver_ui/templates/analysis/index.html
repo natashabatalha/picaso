@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Retrieval Analysis{% endblock %}
+{% block main_class %}form-page{% endblock %}
+{% block title %}Analyze a retrieval{% endblock %}
 {% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
 {% block content %}
-<h1>Retrieval Analysis</h1>
+<h1>Analyze a retrieval</h1>
 <div hx-target="#sections" hx-swap="morph:outerHTML">
   {{ page|safe }}
 </div>

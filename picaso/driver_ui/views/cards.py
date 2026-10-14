@@ -27,8 +27,7 @@ def bulk_property_fields(tree, path):
 
 def bulk_property_notes(object_config):
     """An explanation of how gravity is set, and an error if the current combination will not run."""
-    notes = [("info", "Give either gravity, or mass and radius (gravity is then computed from them). "
-                      "Leave the others blank.")]
+    notes = [("info", "Give either gravity, or mass and radius (gravity is then computed from them)")]
     try:
         go._validate_object_gravity_config(object_config)
     except ValueError as e:

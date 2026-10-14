@@ -1,5 +1,5 @@
 <form hx-post="{{ url_for('climate.upload') }}" hx-encoding="multipart/form-data" hx-trigger="change">
-  <label class="file-input">Choose a climate TOML file with default values
-    <input type="file" name="toml" accept=".toml">
+  <label class="file-input">
+    <input type="file" name="toml" accept=".toml" aria-label="Climate TOML file with default values">
   </label>
 </form>

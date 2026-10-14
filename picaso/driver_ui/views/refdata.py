@@ -34,7 +34,7 @@ def render_page(message=None):
         "refdata/index.html",
         refdata=current_app.config["PICASO_REFDATA"],
         valid=refdata_is_valid(),
-        status_html=data.check_environ(return_html=True) if refdata_is_valid() else None,
+        status=data.check_environ(return_messages=True) if refdata_is_valid() else None,
         downloads=downloads,
         downloads_error=error,
         cwd=os.getcwd(),

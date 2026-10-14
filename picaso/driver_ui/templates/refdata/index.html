@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% from "_macros.html" import notes %}
-{% block title %}Setup Reference Data{% endblock %}
+{% block title %}Set up reference data{% endblock %}
 {% block content %}
-<h1>Setup Data for PICASO</h1>
+<h1>Set up reference data</h1>
 <div id="refdata" hx-target="#refdata" hx-select="#refdata" hx-swap="morph:outerHTML">
   {% if message %}{{ notes([message]) }}{% endif %}
 
@@ -27,12 +27,21 @@
     </section>
   {% else %}
     <section class="card">
-      <h2>Current Environment Status</h2>
-      <div class="environment-status">{{ status_html|safe }}</div>
+      <h2>Current environment status</h2>
+      {# data.check_environ messages, drawn with the app's own (theme aware) note styles #}
+      <div class="environment-status">
+        {% for level, message in status %}
+          {% if level == "list" %}
+            <ul class="env-list">{% for item in message %}<li><code>{{ item }}</code></li>{% endfor %}</ul>
+          {% else %}
+            <p class="note note-{{ level }}">{{ message|safe }}</p>
+          {% endif %}
+        {% endfor %}
+      </div>
     </section>
 
     <section class="card">
-      <h2>Available Data Downloads</h2>
+      <h2>Available data downloads</h2>
       {% if downloads_error %}{{ notes([("error", downloads_error)]) }}{% endif %}
       {% for category, targets in downloads.items() %}
         <details class="download-category">

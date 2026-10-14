@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}PICASO UI{% endblock %}</title>
   <link rel="icon" href="https://natashabatalha.github.io/picaso/_images/logo.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
   <script src="{{ url_for('static', filename='idiomorph-ext.min.js') }}"></script>
@@ -31,7 +32,7 @@
         </div>
       {% endfor %}
       <div class="nav-group nav-end">
-        <button type="button" class="nav-button" aria-haspopup="true">Help</button>
+        <button type="button" class="nav-button" aria-haspopup="true">Learn more</button>
         <div class="nav-menu">
           {% for label, url in nav_resources %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }} ↗</a>{% endfor %}
         </div>

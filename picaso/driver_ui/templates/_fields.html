@@ -1,5 +1,18 @@
 {% from "_macros.html" import multiselect %}
-{# Renders a field tree from core.config_schema. Input names are dotted config paths. #}
+{# Renders a field tree from core.config_schema. Input names are dotted config paths.
+   Text inputs and selects are Material 3 outlined text fields (.tf): the label sits inside the box
+   as a placeholder and floats into the top border once the field has focus or a value. Every input
+   has a placeholder (a blank one if nothing else) so CSS can tell empty from filled with
+   :placeholder-shown. #}
+{% macro support(f, errors) %}
+  {#- min/max limits are validated by Number.parse and shown as an error, not as helper text -#}
+  {% if f.hint %}<p class="tf-support">{{ f.hint }}</p>{% endif %}
+  {% if f.links %}
+    <p class="tf-support">{% for label, url in f.links %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+  {% endif %}
+  {% if f.name in errors %}<p class="tf-support tf-error-text">{{ errors[f.name] }}</p>{% endif %}
+{% endmacro %}
+
 {% macro render(f, errors, root=False) %}
   {% if f.kind == "section" %}
     {% if root or not f.path %}
@@ -16,57 +29,72 @@
 
   {% else %}
     {% set id = "f-" ~ f.name|replace(".", "-")|replace(" ", "_") %}
-    <div class="field field-{{ f.kind }}{% if f.name in errors %} has-error{% endif %}">
-      <label for="{{ id }}">
-        {{ f.label or f.key }}{% if f.kind == "quantity" %} <span class="unit">({{ f.unit }})</span>{% endif %}
-      </label>
+    {% set label = f.label or f.key %}
+    {% set error = " has-error" if f.name in errors else "" %}
 
-      <div class="control">
-        {% if f.kind == "bool" %}
-          <input type="checkbox" id="{{ id }}" name="{{ f.name }}" {% if f.value %}checked{% endif %}>
-        {% elif f.kind in ("choice", "selector") %}
-          <select id="{{ id }}" name="{{ f.name }}">
-            {% for option in f.options %}
-              <option value="{{ option }}" {% if option == f.value %}selected{% endif %}>{{ option }}</option>
-            {% endfor %}
-          </select>
-        {% elif f.kind == "multi_choice" and f.dropdown %}
-          {{ multiselect(f.name, f.options, f.value, single_column=True) }}
-        {% elif f.kind == "multi_choice" %}
-          <div class="checkbox-grid" id="{{ id }}">
-            {% for option in f.options %}
-              <label><input type="checkbox" name="{{ f.name }}" value="{{ option }}"
-                            id="{{ id }}-{{ loop.index }}" {% if option in f.value %}checked{% endif %}> {{ option }}</label>
-            {% endfor %}
-          </div>
-        {% elif f.kind == "text_list" and f.multiline %}
-          <textarea id="{{ id }}" name="{{ f.name }}" rows="{{ [f.value|length + 1, 3]|max }}">{{ f.value|join("\n") }}</textarea>
-        {% elif f.kind == "text" and f.multiline %}
-          <textarea id="{{ id }}" name="{{ f.name }}" rows="4">{{ f.value }}</textarea>
-        {% elif f.kind == "file" %}
-          <input type="file" id="{{ id }}" name="{{ f.name }}" accept="{{ f.accept }}">
-        {% elif f.kind in ("number_list", "text_list") %}
-          <input type="text" id="{{ id }}" name="{{ f.name }}" value="{{ f.value|join(', ') }}" placeholder="comma separated">
-        {% else %}
-          <input type="text" id="{{ id }}" name="{{ f.name }}" value="{{ f.value }}"
-                 {% if f.kind in ("number", "quantity") %}inputmode="decimal"{% endif %}
-                 {% if f.optional %}placeholder="optional"{% endif %}>
-        {% endif %}
-
-        {% if f.hint %}<p class="hint">{{ f.hint }}</p>{% endif %}
-        {% if f.minimum is defined and f.minimum is not none and f.maximum is not none %}
-          <p class="hint">range {{ "%g"|format(f.minimum) }} to {{ "%g"|format(f.maximum) }}</p>
-        {% elif f.minimum is defined and f.minimum is not none %}
-          <p class="hint">at least {{ "%g"|format(f.minimum) }}</p>
-        {% elif f.maximum is defined and f.maximum is not none %}
-          <p class="hint">at most {{ "%g"|format(f.maximum) }}</p>
-        {% endif %}
-        {% if f.links %}
-          <p class="hint">{% for label, url in f.links %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
-        {% endif %}
-        {% if f.name in errors %}<p class="error">{{ errors[f.name] }}</p>{% endif %}
+    {% if f.kind == "bool" %}
+      <div class="tf-check{{ error }}">
+        <label for="{{ id }}"><input type="checkbox" id="{{ id }}" name="{{ f.name }}" {% if f.value %}checked{% endif %}> {{ label }}</label>
+        {{ support(f, errors) }}
       </div>
-    </div>
+
+    {% elif f.kind == "file" %}
+      <div class="tf-file{{ error }}">
+        <label class="file-input">{{ label }}
+          <input type="file" id="{{ id }}" name="{{ f.name }}" accept="{{ f.accept }}">
+        </label>
+        {{ support(f, errors) }}
+      </div>
+
+    {% elif f.kind == "multi_choice" %}
+      {# a dropdown or a box of checkboxes, framed like a text field with its label in the border #}
+      <div class="tf tf-wide tf-floated{{ error }}">
+        <div class="tf-box{% if f.dropdown %} tf-multiselect{% else %} tf-checkbox-box{% endif %}">
+          {% if f.dropdown %}
+            {{ multiselect(f.name, f.options, f.value, single_column=True) }}
+          {% else %}
+            <div class="checkbox-grid" id="{{ id }}">
+              {% for option in f.options %}
+                <label><input type="checkbox" name="{{ f.name }}" value="{{ option }}"
+                              id="{{ id }}-{{ loop.index }}" {% if option in f.value %}checked{% endif %}> {{ option }}</label>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <span class="tf-label">{{ label }}</span>
+        </div>
+        {{ support(f, errors) }}
+      </div>
+
+    {% else %}
+      {# long values (paths, lists) get the wide field; numbers and short words the compact one #}
+      {% set wide = f.kind in ("text_list", "number_list") or (f.kind == "text" and (f.multiline or f.value|string|length > 16)) %}
+      <div class="tf{% if wide %} tf-wide{% endif %}{% if f.kind in ('choice', 'selector') %} tf-floated{% endif %}{{ error }}">
+        <div class="tf-box">
+          {% if f.kind in ("choice", "selector") %}
+            <select id="{{ id }}" name="{{ f.name }}">
+              {% for option in f.options %}
+                <option value="{{ option }}" {% if option == f.value %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          {% elif f.kind == "text_list" and f.multiline %}
+            <textarea id="{{ id }}" name="{{ f.name }}" rows="{{ [f.value|length + 1, 3]|max }}" placeholder=" ">{{ f.value|join("\n") }}</textarea>
+          {% elif f.kind == "text" and f.multiline %}
+            <textarea id="{{ id }}" name="{{ f.name }}" rows="4" placeholder=" ">{{ f.value }}</textarea>
+          {% elif f.kind in ("number_list", "text_list") %}
+            <input type="text" id="{{ id }}" name="{{ f.name }}"
+                   value="{{ request.form.get(f.name, '') if error else f.value|join(', ') }}" placeholder="Comma separated">
+          {% else %}
+            {#- a rejected value stays in the box (errors render in the response to the submit that caused them) -#}
+            <input type="text" id="{{ id }}" name="{{ f.name }}" value="{{ request.form.get(f.name, '') if error else f.value }}"
+                   {% if f.kind in ("number", "quantity") %}inputmode="decimal"{% endif %}
+                   placeholder="{{ 'Optional' if f.optional else ' ' }}">
+          {% endif %}
+          <label class="tf-label" for="{{ id }}">{{ label }}</label>
+          {% if f.kind == "quantity" %}<span class="tf-suffix">{{ f.unit }}</span>{% endif %}
+        </div>
+        {{ support(f, errors) }}
+      </div>
+    {% endif %}
 
     {% if f.kind == "selector" and f.branch %}{{ render(f.branch, errors) }}{% endif %}
   {% endif %}

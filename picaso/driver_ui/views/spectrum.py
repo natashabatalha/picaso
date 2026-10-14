@@ -61,12 +61,12 @@ class AdminCard(Card):
 
 
 class UploadCard(Card):
-    name, title = "upload", "Default Values from a TOML File"
+    name, title = "upload", "Pre-fill from a TOML file"
     extra = "spectrum/extras/upload.html"
 
 
 class SetupCard(Card):
-    name, title = "setup", "Calculation"
+    name, title = "setup", "Observation type"
 
     def fields(self, sess):
         config = sess.config
@@ -87,7 +87,7 @@ class SetupCard(Card):
 
 
 class StarCard(Card):
-    name, title = "star", "Star Variables"
+    name, title = "star", "Star variables"
 
     def visible(self, sess):
         return is_irradiated(sess.config)
@@ -97,7 +97,7 @@ class StarCard(Card):
 
 
 class ObjectCard(Card):
-    name, title = "object", "Object Variables"
+    name, title = "object", "Object variables"
 
     def fields(self, sess):
         return bulk_property_fields(build_fields(sess.config["object"], ("object",)), ("object",))
@@ -107,7 +107,7 @@ class ObjectCard(Card):
 
 
 class GeometryCard(Card):
-    name, title = "geometry", "Phase Angle"
+    name, title = "geometry", "Phase angle"
 
     def visible(self, sess):
         return is_reflected(sess.config)
@@ -121,7 +121,7 @@ class GeometryCard(Card):
 
 
 class TemperatureCard(Card):
-    name, title = "temperature", "Pressure & Temperature"
+    name, title = "temperature", "Pressure & temperature"
     extra = "spectrum/extras/preview_pt.html"
 
     def fields(self, sess):
@@ -248,9 +248,9 @@ class SpectrumCard(Card):
         low, high = wave_bounds(opa)
         current_low, current_high = wave_range(sess)
         return Section(("spectrum_card",), [
-            Number(("ui", "wave_min"), current_low, minimum=low, maximum=high, hint="Wavelength range minimum (μm)"),
-            Number(("ui", "wave_max"), current_high, minimum=low, maximum=high, hint="Wavelength range maximum (μm)"),
-            Number(("ui", "resolution"), sess.ui["resolution"], minimum=10, hint="Spectral resolution"),
+            Number(("ui", "wave_min"), current_low, minimum=low, maximum=high, label="Minimum wavelength (μm)"),
+            Number(("ui", "wave_max"), current_high, minimum=low, maximum=high, label="Maximum wavelength (μm)"),
+            Number(("ui", "resolution"), sess.ui["resolution"], minimum=10, label="Spectral resolution"),
         ])
 
     def notes(self, sess):
@@ -266,7 +266,7 @@ class ConfigurationCard(Card):
     extra = "spectrum/extras/configuration.html"
 
 
-CARDS = [AdminCard(), UploadCard(), SetupCard(), StarCard(), ObjectCard(), GeometryCard(),
+CARDS = [UploadCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(), GeometryCard(),
          TemperatureCard(), ChemistryCard(), CloudsCard(), SpectrumCard(),
          *retrieval.CARDS, ConfigurationCard()]
 CARDS_BY_NAME = {card.name: card for card in CARDS}
