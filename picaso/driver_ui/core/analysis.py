@@ -7,12 +7,14 @@ import zipfile
 
 import numpy as np
 import toml
+from plotly import graph_objects as pgo
+from scipy.stats import gaussian_kde
 
 import picaso.driver as go
 from picaso import justplotit as jpi
 from picaso import retrieval as ret
 from picaso.driver_ui.core import resources
-from picaso.driver_ui.core.plots import label_spectrum_yaxis
+from picaso.driver_ui.core.plots import SPECTRUM_YAXIS_TITLES, label_spectrum_yaxis
 
 
 def example_path(refdata):
@@ -122,26 +124,227 @@ def leave_one_out(config, info, molecules):
     return results
 
 
+def plotted_samples(info):
+    """Equally weighted samples as the corner plot shows them: log10 for log sampled parameters."""
+    samples = np.array(info["samples_equal"], dtype=float)
+    for i, param in enumerate(info["param_names"]):
+        if param in info.get("log_params", []):
+            samples[:, i] = np.log10(samples[:, i])
+    return samples
+
+
 def default_corner_settings(info):
     """{parameter: {label, min, max}} with ranges spanning the samples, in log10 for log sampled parameters."""
+    samples = plotted_samples(info)
     settings = {}
     for i, param in enumerate(info["param_names"]):
-        values = info["samples_equal"][:, i]
-        label = param
-        if param in info.get("log_params", []):
-            values, label = np.log10(values), f"log10({param})"
-        settings[param] = {"label": label, "min": float(np.min(values)), "max": float(np.max(values))}
+        label = f"log10({param})" if param in info.get("log_params", []) else param
+        settings[param] = {"label": label, "min": float(np.min(samples[:, i])), "max": float(np.max(samples[:, i]))}
     return settings
 
 
 def corner_figure(info, settings):
-    """Matplotlib corner plot of the equally weighted samples."""
+    """Matplotlib corner plot of the equally weighted samples (the high resolution export of the interactive one)."""
     fig, _ = ret.plot_pair(
         info["samples_equal"], info["param_names"],
         pretty_labels={param: s["label"] for param, s in settings.items()},
         ranges={param: [s["min"], s["max"]] for param, s in settings.items()},
         log_params=info.get("log_params"),
     )
+    return fig
+
+
+# =======================================
+# INTERACTIVE CORNER PLOT
+# =======================================
+# 1, 2 and 3 sigma regions, darkest inside (from the GnBu colormap ret.plot_pair uses)
+SIGMA_COLORS = ["#0868ac", "#43a2ca", "#a8ddb5"]
+# lets the page drag the black lines (layout shapes) of the 1D posteriors
+CORNER_PLOT_CONFIG = {"edits": {"shapePosition": True}, "displaylogo": False}
+
+
+def median_point(info):
+    """{parameter: median} of the samples, in the corner plot's space (log10 for log sampled parameters)."""
+    return dict(zip(info["param_names"], np.median(plotted_samples(info), axis=0).tolist()))
+
+
+@resources.serialized
+def evaluate_point(config, info, point):
+    """
+    Model and its fit to the data at a point of the corner plot.
+
+    Parameters
+    ----------
+    point : dict
+        {parameter: value}, in log10 for log sampled parameters (as the corner plot shows them)
+
+    Returns
+    -------
+    check_model_samples(full_likelihood=True) style output
+    """
+    log_params = info.get("log_params", [])
+    theta = [10**point[param] if param in log_params else point[param] for param in info["param_names"]]
+    OPA, param_tools = resources.opacity(config["OpticalProperties"]), resources.retrieval_param_tools(config)
+    data, conv = go.get_data(config)
+    return go.log_likelihood(np.atleast_2d(theta), go.prior_finder(config["retrieval"]), config, OPA, data,
+                             param_tools, CONV_DICT=conv, retrieval=False)
+
+
+def model_spectrum(out):
+    """(wavelength [um], model) of a check_model_samples(full_likelihood=True) output, ordered by wavelength."""
+    wavelength = 1e4 / np.asarray(out["xdata"], dtype=float)
+    order = np.argsort(wavelength)
+    return wavelength[order], np.asarray(out["ymodel"][0], dtype=float)[order]
+
+
+def corner_spectrum_title(out):
+    if out is None:
+        return "Model could not be computed at the selected values"
+    return f"Model at selected values (Chi-sq = {out['chi_sq_per_pt'][0]:.2f})"
+
+
+def _interval_text(values):
+    """median_{-lo}^{+hi} to the precision of the error, as ret.plot_pair titles its 1D posteriors."""
+    lo, mid, hi = np.percentile(values, [15.8655, 50.0, 84.1345])
+    errlo, errhi = mid - lo, hi - mid
+    err = min(errlo, errhi) if min(errlo, errhi) > 0 else max(errlo, errhi)
+    if err <= 0:
+        dec = 2
+    else:
+        log_err = np.log10(err)
+        dec = max(0, 2 - int(np.floor(log_err))) if log_err >= 0 else int(np.ceil(-log_err)) + 1
+        dec = min(max(dec, 1), 6)
+    return f"{mid:.{dec}f}<sub>-{errlo:.{dec}f}</sub><sup>+{errhi:.{dec}f}</sup>"
+
+
+def _sigma_field(x, y, xx, yy):
+    """
+    Number of sigma (as for a 2D gaussian) of the highest density region whose edge passes through each grid point,
+    so the 1, 2 and 3 sigma contours (the 39.3, 86.5 and 98.9% regions ret.plot_pair draws) are evenly spaced levels.
+    """
+    density = gaussian_kde(np.vstack([x, y]))(np.vstack([xx.ravel(), yy.ravel()]))
+    order = np.argsort(density)[::-1]
+    enclosed = np.empty_like(density)
+    enclosed[order] = np.cumsum(density[order]) / np.sum(density)
+    return np.sqrt(-2 * np.log(np.clip(1 - enclosed, 1e-12, 1))).reshape(xx.shape)
+
+
+def interactive_corner_figure(info, settings, point, data, model, observation_type):
+    """
+    Plotly corner plot of the equally weighted samples with the spectrum at `point` to its right. Like ret.plot_pair,
+    but the black line on each 1D posterior marks `point`, and the page (static/corner.js) lets the user drag it to
+    recompute the spectrum there.
+
+    Parameters
+    ----------
+    settings : dict
+        default_corner_settings style {parameter: {label, min, max}}
+    point : dict
+        {parameter: value} the black lines are drawn at, in the corner plot's space (see median_point)
+    data : dict
+        check_model_samples(full_likelihood=True) style output holding the data
+    model : dict
+        check_model_samples(full_likelihood=True) style output at `point`, or None if it could not be computed
+    observation_type : str
+        config["observation_type"], which sets the spectrum's y axis units
+
+    Returns
+    -------
+    plotly figure. layout.meta tells corner.js which shapes and traces to move.
+    """
+    params = info["param_names"]
+    n = len(params)
+    samples = plotted_samples(info)
+    # kde and drawing cost scale with the number of samples, so thin the ones used for the contours and scatter
+    thin = samples[np.random.RandomState(0).permutation(len(samples))[:1000]]
+    values = [point[param] for param in params]
+    ranges = [[settings[param]["min"], settings[param]["max"]] for param in params]
+    labels = [settings[param]["label"] for param in params]
+
+    corner_width, gap = 0.6, 0.012
+    size = (1 - gap * (n - 1)) / n
+
+    def domain(k, scale=1.0):
+        return [k * (size + gap) * scale, (k * (size + gap) + size) * scale]
+
+    cells = [(i, j) for i in range(n) for j in range(i + 1)]
+    number = {cell: k + 1 for k, cell in enumerate(cells)}
+    spectrum_number = len(cells) + 1
+
+    def name(axis, k):
+        return axis if k == 1 else f"{axis}{k}"
+
+    fig = pgo.Figure()
+    layout = {}
+    crosshairs = []
+    for (i, j), k in number.items():
+        xaxis, yaxis = name("x", k), name("y", k)
+        layout[name("xaxis", k)] = dict(
+            domain=domain(j, corner_width), anchor=yaxis, range=ranges[j], showticklabels=(i == n - 1),
+            title_text=labels[j] if i == n - 1 else None, matches=None if i == n - 1 else name("x", number[(n - 1, j)]))
+        if i == j:
+            counts, edges = np.histogram(samples[:, i], bins=20)
+            fig.add_trace(pgo.Bar(x=(edges[1:] + edges[:-1]) / 2, y=counts, width=np.diff(edges), xaxis=xaxis,
+                                  yaxis=yaxis, marker_color="grey", opacity=0.7, meta=i, showlegend=False,
+                                  hovertemplate=f"{labels[i]}: %{{x:.4g}}<br>%{{y}} samples<extra></extra>"))
+            layout[name("yaxis", k)] = dict(domain=domain(n - 1 - i), anchor=xaxis, showticklabels=False,
+                                            showgrid=False, rangemode="tozero", fixedrange=True)
+            fig.add_annotation(text=f"{labels[i]}<br>{_interval_text(samples[:, i])}", showarrow=False,
+                               xref=f"{xaxis} domain", yref=f"{yaxis} domain", x=0.5, y=1, yanchor="bottom",
+                               font_size=11)
+            # shape i is parameter i's black line, which corner.js drags
+            fig.add_shape(type="line", xref=xaxis, yref=f"{yaxis} domain", x0=values[i], x1=values[i], y0=0, y1=1,
+                          line=dict(color="black", width=3))
+            continue
+        layout[name("yaxis", k)] = dict(
+            domain=domain(n - 1 - i), anchor=xaxis, range=ranges[i], showticklabels=(j == 0),
+            title_text=labels[i] if j == 0 else None, matches=None if j == 0 else name("y", number[(i, 0)]))
+        fig.add_trace(pgo.Scatter(x=thin[:, j], y=thin[:, i], xaxis=xaxis, yaxis=yaxis, mode="markers",
+                                  marker=dict(color="grey", size=2), opacity=0.5, hoverinfo="skip", showlegend=False))
+        try:
+            xx, yy = np.meshgrid(np.linspace(samples[:, j].min(), samples[:, j].max(), 60),
+                                 np.linspace(samples[:, i].min(), samples[:, i].max(), 60))
+            sigma = _sigma_field(thin[:, j], thin[:, i], xx, yy)
+        except (np.linalg.LinAlgError, ValueError):
+            pass  # parameter has no spread yet (e.g. very early in a run), so just show the scatter
+        else:
+            # filled 3, 2 then 1 sigma regions, each drawn over the last
+            for level, color in zip((3, 2, 1), SIGMA_COLORS[::-1]):
+                fig.add_trace(pgo.Contour(x=xx[0], y=yy[:, 0], z=sigma, xaxis=xaxis, yaxis=yaxis,
+                                          contours=dict(type="constraint", operation="<", value=level),
+                                          fillcolor=color, opacity=0.8, line=dict(color="rgba(0,0,0,0.5)", width=0.8),
+                                          hoverinfo="skip", showlegend=False, showscale=False))
+        crosshairs.append([len(fig.data), i, j])
+        fig.add_trace(pgo.Scatter(x=[values[j]], y=[values[i]], xaxis=xaxis, yaxis=yaxis, mode="markers",
+                                  marker=dict(color="black", size=7), hoverinfo="skip", showlegend=False))
+
+    xaxis, yaxis = name("x", spectrum_number), name("y", spectrum_number)
+    layout[name("xaxis", spectrum_number)] = dict(domain=[corner_width + 0.08, 1], anchor=yaxis,
+                                                  title_text="Wavelength [μm]")
+    layout[name("yaxis", spectrum_number)] = dict(
+        domain=[0.4, 1], anchor=xaxis, automargin=True, title_standoff=10,
+        title_text=SPECTRUM_YAXIS_TITLES.get(observation_type, observation_type))
+    wavelength = 1e4 / np.asarray(data["xdata"], dtype=float)
+    order = np.argsort(wavelength)
+    fig.add_trace(pgo.Scatter(x=wavelength[order], y=np.asarray(data["ydata"][0])[order], xaxis=xaxis, yaxis=yaxis,
+                              mode="markers", name="Data", marker=dict(color="black", size=5), opacity=0.5,
+                              error_y=dict(array=np.asarray(data["edata"][0])[order], color="black", thickness=1)))
+    model_wavelength, model_spectrum_values = model_spectrum(model) if model is not None else ([], [])
+    model_trace = len(fig.data)
+    fig.add_trace(pgo.Scatter(x=model_wavelength, y=model_spectrum_values, xaxis=xaxis, yaxis=yaxis, mode="lines",
+                              name="Model at selected values", line=dict(color="black", width=3)))
+    title_annotation = len(fig.layout.annotations)
+    fig.add_annotation(text=corner_spectrum_title(model), showarrow=False, xref=f"{xaxis} domain",
+                       yref=f"{yaxis} domain", x=0.5, y=1, yanchor="bottom", yshift=6, font_size=14)
+
+    fig.update_layout(
+        **layout, height=max(560, min(1100, 150 * n + 160)), bargap=0, plot_bgcolor="white",
+        margin=dict(l=80, r=20, t=70, b=90),
+        legend=dict(x=corner_width + 0.08, y=0.3, xanchor="left", yanchor="top"),
+        meta=dict(params=params, ranges=ranges, medians=list(median_point(info).values()), crosshairs=crosshairs,
+                  model_trace=model_trace, title_annotation=title_annotation))
+    fig.update_xaxes(showline=True, linecolor="black", mirror=True, ticks="outside", showgrid=False, zeroline=False)
+    fig.update_yaxes(showline=True, linecolor="black", mirror=True, zeroline=False)
     return fig
 
 

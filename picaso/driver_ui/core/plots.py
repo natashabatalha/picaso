@@ -1,6 +1,7 @@
 """Turning figures into something a web page can show, plus the prior-sample plots."""
 import base64
 import io
+import json
 import uuid
 from dataclasses import dataclass
 
@@ -36,9 +37,13 @@ def label_spectrum_yaxis(fig, observation_type):
                             automargin=True, title_standoff=10)
 
 
-def plotly_plot(fig):
+def plotly_plot(fig, config=None):
+    """`config` is passed on to Plotly.newPlot (e.g. {"edits": {"shapePosition": True}})."""
     fig.update_layout(width=None, autosize=True)  # fill the card instead of a fixed pixel width
-    return Plot(uuid.uuid4().hex, fig.to_json())
+    figure = fig.to_json()
+    if config:
+        figure = json.dumps({**json.loads(figure), "config": config})
+    return Plot(uuid.uuid4().hex, figure)
 
 
 def matplotlib_bytes(fig, fmt="png", dpi=100):

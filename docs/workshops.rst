@@ -1,7 +1,15 @@
 Courses
 =======
 
-End-to-end lessons originally taught at summer schools and workshops. Each course builds a scientific question from the ground up, so they are a good way to learn the physics alongside the code. These are kept up to date with PICASO current functionality. 
+End-to-end lessons, many originally taught at summer schools and workshops. Each course builds a scientific question from the ground up, so they are a good way to learn the physics alongside the code. These are kept up to date with PICASO current functionality.
+
+.. toctree::
+   :caption: Radiative Transfer 101 with PICASO
+   :maxdepth: 1
+
+   Thermal Emission: Building Intuition from Limiting Cases </notebooks/workshops/RadiativeTransfer101/1_ThermalEmission.py>
+   Reflected Light: Building Intuition from Limiting Cases </notebooks/workshops/RadiativeTransfer101/2_ReflectedLight.py>
+   Transmission: Building Intuition from Limiting Cases </notebooks/workshops/RadiativeTransfer101/3_Transmission.py>
 
 .. toctree::
    :caption: Sagan School 2023: Interpreting JWST Transmission Spectra

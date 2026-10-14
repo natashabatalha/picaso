@@ -6,7 +6,8 @@ function renderPlots() {
   document.querySelectorAll(".plot[data-figure]").forEach((el) => {
     if (el.dataset.renderedId === el.dataset.figureId) return;
     const figure = JSON.parse(el.dataset.figure);
-    Plotly.newPlot(el, figure.data, figure.layout, { responsive: true });
+    Plotly.newPlot(el, figure.data, figure.layout, { responsive: true, ...figure.config })
+      .then(() => el.dispatchEvent(new CustomEvent("plot:rendered", { bubbles: true })));
     el.dataset.renderedId = el.dataset.figureId;
   });
 }

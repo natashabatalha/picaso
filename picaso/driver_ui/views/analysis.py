@@ -2,6 +2,7 @@
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 import toml
 from flask import Blueprint, Response, abort, current_app, render_template, request
 
@@ -22,6 +23,7 @@ def page_state(sess):
     a = sess.analysis
     if not a:
         a.update(config=None, retrieval_dir="", loaded=None, corner={}, corner_export={"dpi": 300, "format": "png"},
+                 corner_plot=None, corner_point={}, corner_median={}, corner_model=None, corner_model_error=None,
                  bands_n=10, bands_selected=[], bands=None, export=dict(EXPORT_DETAILS),
                  attributes=[{"key": "", "value": ""}], zip=None, contributions_on=False, contribution_options=[],
                  contributions_selected=[], contributions_plot=None)
@@ -94,12 +96,12 @@ class CornerCard(Card):
                        label="Resolution (DPI)"),
                 Choice(("analysis", "corner_export", "format"), export["format"], list(IMAGE_FORMATS),
                        label="Image format"),
-            ], label="Export corner plot"),
+            ], label="Export high resolution corner plot"),
         ])
 
     def notes(self, sess):
-        error = page_state(sess).get("corner_error")
-        return [("error", error)] if error else []
+        a = page_state(sess)
+        return [("error", error) for error in (a.get("corner_error"), a.get("corner_model_error")) if error]
 
     def after_update(self, sess):
         render_corner(sess)
@@ -177,10 +179,23 @@ CARDS_BY_NAME = {card.name: card for card in CARDS}
 def render_corner(sess):
     a = page_state(sess)
     try:
-        a["corner_image"] = matplotlib_image(analysis.corner_figure(a["loaded"]["info"], a["corner"]))
+        fig = analysis.interactive_corner_figure(a["loaded"]["info"], a["corner"], a["corner_point"],
+                                                 a["loaded"]["out"], a["corner_model"], a["config"]["observation_type"])
+        a["corner_plot"] = plotly_plot(fig, config=analysis.CORNER_PLOT_CONFIG)
         a["corner_error"] = None
     except Exception as e:
-        a["corner_image"], a["corner_error"] = None, f"Could not draw the corner plot: {e}"
+        a["corner_plot"], a["corner_error"] = None, f"Could not draw the corner plot: {e}"
+
+
+def select_corner_point(sess, point):
+    """Moves the corner plot's black lines to `point` (see analysis.median_point) and computes the model there."""
+    a = page_state(sess)
+    a["corner_point"] = point
+    try:
+        a["corner_model"] = analysis.evaluate_point(a["config"], a["loaded"]["info"], point)
+        a["corner_model_error"] = None
+    except Exception as e:
+        a["corner_model"], a["corner_model_error"] = None, f"Could not compute the model at the selected values: {e}"
 
 
 def render_page(sess, errors=None):
@@ -259,6 +274,8 @@ def load_retrieval(sess):
     a["loaded"] = {"dir": a["retrieval_dir"], "info": loaded["info"], "out": loaded["out"],
                    "plot": plotly_plot(loaded["figure"])}
     a["corner"] = analysis.default_corner_settings(loaded["info"])
+    a["corner_median"] = analysis.median_point(loaded["info"])
+    select_corner_point(sess, dict(a["corner_median"]))
     a["bands_selected"] = analysis.band_options(loaded["out"])[:2]
     a["bands"] = a["zip"] = None
     a["contribution_options"], a["contributions_selected"] = analysis.contribution_options(a["config"], loaded["out"])
@@ -278,7 +295,7 @@ def load_retrieval(sess):
 def save_corner():
     sess = state.current()
     a = page_state(sess)
-    if a["loaded"] is None or a.get("corner_image") is None:
+    if a["loaded"] is None or a.get("corner_plot") is None:
         abort(404)
     export = a["corner_export"]
     path = os.path.join(a["retrieval_dir"], f"corner_plot_manuscript.{export['format']}")
@@ -287,6 +304,28 @@ def save_corner():
     plt.close(fig)
     set_messages(a, "corner", [("success", f"Successfully saved figure locally at: {path}")])
     return render_page(sess)
+
+
+@bp.post("/corner/point")
+def corner_point():
+    """Called by static/corner.js when the user moves a black line: JSON {point: {parameter: value}}."""
+    sess = state.current()
+    a = page_state(sess)
+    if not is_loaded(sess):
+        abort(404)
+    try:
+        requested = (request.get_json(silent=True) or {})["point"]
+        point = {param: float(requested[param]) for param in a["loaded"]["info"]["param_names"]}
+        if not np.all(np.isfinite(list(point.values()))):
+            raise ValueError("values must be finite")
+    except (KeyError, TypeError, ValueError) as e:
+        return {"error": f"Invalid point: {e}"}, 400
+    select_corner_point(sess, point)
+    if a["corner_model"] is None:
+        return {"error": a["corner_model_error"]}, 500
+    wavelength, model = analysis.model_spectrum(a["corner_model"])
+    return {"point": point, "wavelength": wavelength.tolist(), "model": model.tolist(),
+            "title": analysis.corner_spectrum_title(a["corner_model"])}
 
 
 @bp.post("/contributions")
@@ -345,7 +384,7 @@ def export():
 @bp.get("/download/corner")
 def download_corner():
     a = page_state(state.current())
-    if a["loaded"] is None or a.get("corner_image") is None:
+    if a["loaded"] is None or a.get("corner_plot") is None:
         abort(404)
     export = a["corner_export"]
     fig = analysis.corner_figure(a["loaded"]["info"], a["corner"])
