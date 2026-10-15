@@ -1,0 +1,117 @@
+{# The model-builder strip (views/builder.py): a step per model component and a planet badge that gains
+   a layer as each one is done. static/app.js marks the step in view and fills in the caption. #}
+{% set icons = {
+  "setup": '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  "star": '<circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>',
+  "object": '<circle cx="12" cy="12" r="8.5"/><path d="M12 12l6-4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  "pt": '<path d="M4 3v17h17"/><path d="M8 5c1 4 2 6 5 8s5 3 6 4.5"/>',
+  "chemistry": '<circle cx="7" cy="16" r="2.5"/><circle cx="12" cy="7" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M8.3 13.8l2.4-4.6M13.3 9.2l2.4 4.6M9.5 16h5"/>',
+  "clouds": '<path d="M7 18.5h10.5a3.5 3.5 0 0 0 .4-7A5.5 5.5 0 0 0 7.3 10 4.3 4.3 0 0 0 7 18.5z"/>',
+  "spectrum": '<path d="M2.5 13h3l1.5-4 1.5 7 2-4h2l1.5-7 1.5 10 2-5h4"/>',
+  "retrieval": '<ellipse cx="12" cy="12" rx="9" ry="4.6" transform="rotate(-35 12 12)"/><ellipse cx="12" cy="12" rx="4.4" ry="2.2" transform="rotate(-35 12 12)"/><circle cx="12" cy="12" r="0.9" fill="currentColor"/>',
+  "export": '<path d="M12 4v10M8 10l4 4 4-4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/>',
+} %}
+{% set layers = builder.layers %}
+<nav class="builder" id="builder" aria-label="Model steps">
+  <div class="builder-row">
+    <div class="builder-steps">
+      {% for s in builder.steps %}
+        {% set step = s.step %}
+        {% if not loop.first %}
+          {% set prev = builder.steps[loop.index0 - 1] %}
+          {% if step.bookend or prev.step.bookend %}
+            <span class="builder-divider"></span>
+          {% else %}
+            <span class="builder-link{% if prev.state == 'done' %} filled{% endif %}{% if prev.state == 'off' or s.state == 'off' %} dashed{% endif %}"
+                  style="--fill: var(--step-{{ prev.step.key }})"></span>
+          {% endif %}
+        {% endif %}
+        <button type="button" class="builder-step{% if step.bookend %} bookend{% endif %}" id="step-{{ step.key }}"
+                data-step="{{ step.key }}" data-state="{{ s.state }}" data-error="{{ 'true' if s.error else 'false' }}"
+                data-label="{{ step.label }}" data-summary="{{ step.summary }}"
+                {% if s.toggle %}data-toggle="{{ s.toggle }}"{% endif %}
+                aria-label="{{ step.label }}: {{ {'off': 'optional, switched off', 'done': 'done', 'todo': 'not done yet'}[s.state] }}{% if s.error %}, has an error{% endif %}">
+          <span class="builder-dot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ icons[step.key]|safe }}</svg>
+            <span class="builder-check" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></span>
+            <span class="builder-err" aria-hidden="true"></span>
+          </span>
+          <span class="builder-label">{{ step.label }}</span>
+          {% if s.optional and s.state == "off" %}<span class="builder-opt">optional</span>{% endif %}
+          {% if step.key == "retrieval" and builder.subs %}
+            <span class="builder-subs" aria-hidden="true">{% for name, ok in builder.subs.items() %}<i{% if ok %} class="on"{% endif %}></i>{% endfor %}</span>
+          {% endif %}
+        </button>
+      {% endfor %}
+    </div>
+
+    <div class="builder-badge" aria-hidden="true">
+      <svg viewBox="0 0 132 72">
+        <defs>
+          <clipPath id="badge-disk"><circle cx="82" cy="36" r="20"/></clipPath>
+          <radialGradient id="badge-pt" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" style="stop-color: var(--step-pt); stop-opacity: .95"/>
+            <stop offset="0.6" style="stop-color: var(--step-pt); stop-opacity: .45"/>
+            <stop offset="1" style="stop-color: var(--step-pt); stop-opacity: 0"/>
+          </radialGradient>
+          <radialGradient id="badge-star" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" style="stop-color: var(--step-star); stop-opacity: 1"/>
+            <stop offset="0.75" style="stop-color: var(--step-star); stop-opacity: .85"/>
+            <stop offset="1" style="stop-color: var(--step-star); stop-opacity: .35"/>
+          </radialGradient>
+          <linearGradient id="badge-lit" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" style="stop-color: var(--badge-cloud); stop-opacity: .75"/>
+            <stop offset="0.55" style="stop-color: var(--badge-cloud); stop-opacity: 0"/>
+          </linearGradient>
+        </defs>
+        {# the star sits behind the planet in transit, and off to the side otherwise #}
+        <g class="badge-layer {{ layers['star-transit'] }}" id="badge-star-transit">
+          <circle class="solid" cx="74" cy="36" r="33" fill="url(#badge-star)"/>
+          <circle class="ghostline" cx="74" cy="36" r="33" fill="none" stroke="var(--step-star)" stroke-width="1.2" stroke-dasharray="3 3"/>
+        </g>
+        <g class="badge-layer {{ layers['star-side'] }}" id="badge-star-side">
+          <g class="solid">
+            <circle cx="22" cy="36" r="10" fill="url(#badge-star)"/>
+            <path d="M22 20v-3M22 52v3M6 36H3M38 36h3M10.7 24.7l-2-2M33.3 47.3l2 2M10.7 47.3l-2 2M33.3 24.7l2-2"
+                  stroke="var(--step-star)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+          <circle class="ghostline" cx="22" cy="36" r="10" fill="none" stroke="var(--step-star)" stroke-width="1.2" stroke-dasharray="3 3"/>
+        </g>
+        {# the planet and its layers, from the bulk body outward #}
+        <circle cx="82" cy="36" r="20" fill="none" stroke="var(--badge-ghost)" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <g class="badge-layer {{ layers['object'] }}" id="badge-object"><circle cx="82" cy="36" r="20" fill="var(--step-object)"/></g>
+        <g clip-path="url(#badge-disk)">
+          <g class="badge-layer {{ layers['pt'] }}" id="badge-pt-layer"><circle cx="82" cy="40" r="26" fill="url(#badge-pt)"/></g>
+          <g class="badge-layer {{ layers['chemistry'] }}" id="badge-chemistry" fill="var(--step-chemistry)" opacity=".55">
+            <rect x="60" y="23" width="46" height="4"/><rect x="60" y="33" width="46" height="5"/><rect x="60" y="45" width="46" height="4"/>
+          </g>
+          <g class="badge-layer {{ layers['clouds'] }}" id="badge-clouds" fill="var(--badge-cloud)" opacity=".92">
+            <rect x="64" y="26" width="26" height="6" rx="3"/><rect x="78" y="38" width="30" height="6" rx="3"/><rect x="58" y="47" width="18" height="5" rx="2.5"/>
+          </g>
+          <g class="badge-layer {{ layers['lit'] }}" id="badge-lit"><rect x="62" y="16" width="40" height="40" fill="url(#badge-lit)"/></g>
+        </g>
+        {# the spectrum: how light leaves the planet in this geometry #}
+        <g class="badge-layer {{ layers['spec-transit'] }}" id="badge-spec-transit">
+          <circle cx="82" cy="36" r="21.5" fill="none" stroke="var(--step-spectrum)" stroke-width="2.5" opacity=".9"/>
+        </g>
+        <g class="badge-layer {{ layers['spec-emit'] }}" id="badge-spec-emit" fill="none" stroke="var(--step-spectrum)" stroke-width="1.6" stroke-linecap="round">
+          <path d="M105 26c2-2 4 2 6 0s4 2 6 0M106 36c2-2 4 2 6 0s4 2 6 0M105 46c2-2 4 2 6 0s4 2 6 0M115 23l3 3-3 3M116 33l3 3-3 3M115 43l3 3-3 3"/>
+        </g>
+        <g class="badge-layer {{ layers['spec-reflect'] }}" id="badge-spec-reflect" fill="none" stroke="var(--step-spectrum)" stroke-width="1.6" stroke-linecap="round">
+          <path d="M35 33L62 30M64 22L74 6" stroke-dasharray="3 2.5"/><path d="M70 4l4 2 0 4"/>
+        </g>
+        {# a retrieval locks onto the planet #}
+        <g class="badge-layer {{ layers['retrieval'] }}" id="badge-retrieval" fill="none" stroke="var(--step-retrieval)" stroke-width="1.8" stroke-linecap="round">
+          <path d="M56 17v-7h7M101 10h7v7M108 55v7h-7M63 62h-7v-7"/>
+        </g>
+      </svg>
+      <span class="builder-badge-cap">{{ builder.geometry_label }}</span>
+    </div>
+  </div>
+  <div class="builder-caption">
+    <span class="builder-now" id="builder-now"></span>
+    <span class="builder-chips">
+      {% for text, on in builder.chips %}<span class="builder-chip{% if not on %} off{% endif %}">{{ text }}</span>{% endfor %}
+    </span>
+  </div>
+</nav>
