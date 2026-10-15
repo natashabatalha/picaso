@@ -35,7 +35,6 @@
 # %%
 import picaso.driver as go
 import os
-
 # Under normal usage, you would specify the path to your toml file:
 # output = go.run(driver_file="my_driver.toml")
 
@@ -380,4 +379,16 @@ config = go.load_template_config()
 config['temperature']['profile']='zj23'
 go.references(driver_dict=config)
 
+# %% [markdown]
+# ## Load Planet Properties from NASA Exoplanet Archive
+#
+# Load actual planet and star data to prefill your configs!
+# Then you can experiment with adding clouds or adjusting properties slightly
+# %%
+config = go.load_template_config()
+prefilled = go.prefill_from_exoplanet_archive("55 Cnc c", config)
+
+# %%
+for section in ['object', 'star', 'temperature']:
+    print(section, prefilled[section])
 # %%

@@ -30,6 +30,7 @@ dynesty.utils.pickle_module = dill
 from astropy.io import fits
 import spectres
 import contextlib
+import urllib.parse
 
 #all these come from justdoit
 #import os
@@ -56,6 +57,22 @@ climate_chem_options = ['preweighted', 'visscher', 'chemeq_on_the_fly']
 CLIMATE_CHEM_MAP = {
     'visscher': 'visscher',
     'chemeq_on_the_fly': 'on-the-fly'
+}
+
+# config path -> NASA Exoplanet Archive PSCompPars column, used by prefill_from_exoplanet_archive.
+# Archive units already match the template's (Rjup, Mjup, parsec, km/s, Rsun, AU, K, cgs logg, dex)
+ARCHIVE_TO_CONFIG = {
+    ('object', 'radius'):               'pl_radj',
+    ('object', 'mass'):                 'pl_bmassj',
+    ('object', 'distance'):             'sy_dist',
+    ('object', 'RV'):                   'st_radv',
+    ('star', 'radius'):                 'st_rad',
+    ('star', 'semi_major'):             'pl_orbsmax',
+    ('star', 'grid', 'teff'):           'st_teff',
+    ('star', 'grid', 'logg'):           'st_logg',
+    ('star', 'grid', 'feh'):            'st_met',
+    ('temperature', 'isothermal', 'T'): 'pl_eqt',
+    ('temperature', 'guillot', 'Teq'):  'pl_eqt',
 }
 
 # Mappings for observation types to picaso calculation types
@@ -2188,8 +2205,14 @@ def prune_dict_by_key(obj, sequence):
     for v in obj.values():
         if isinstance(v, dict):
             prune_dict_by_key(v, sequence)
-            
+
     return obj
+
+def wipe_config(config):
+    """Return a copy of config with every value blanked, keeping all keys (and units)."""
+    if isinstance(config, dict):
+        return {k: v if k == 'unit' else wipe_config(v) for k, v in config.items()}
+    return [] if isinstance(config, list) else ''
 
 def load_template_config():
     master_driver = os.path.join(os.getenv('picaso_refdata'), 'input_tomls', 'driver.toml')
@@ -2228,3 +2251,28 @@ def load_config(driver_file):
     with open(driver_file, "rb") as f:
         config = tomllib.load(f)
     return config
+
+def prefill_from_exoplanet_archive(planet_name, config):
+    """Return a wiped copy of config filled only with PSCompPars values for planet_name."""
+    columns = ','.join(sorted(set(ARCHIVE_TO_CONFIG.values())))
+    query = f"select pl_name,{columns} from PSCompPars where pl_name='{planet_name}'"
+    url = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?format=csv&query=' + urllib.parse.quote(query)
+    df = pd.read_csv(url)
+    if df.empty:
+        raise ValueError(f"No planet found for '{planet_name}' in the Planetary Systems "
+                         "Composite Parameters catalog. Please try again.")
+    row = df.iloc[0]
+
+    filled = wipe_config(config)
+    for (*parents, key), column in ARCHIVE_TO_CONFIG.items():
+        section = filled
+        for p in parents:
+            section = section.get(p, {})
+        if key not in section or pd.isna(row[column]):
+            continue  # not in this config, or no archive value
+        value = float(row[column])
+        if isinstance(section[key], dict):
+            section[key]['value'] = value
+        else:
+            section[key] = value
+    return filled
