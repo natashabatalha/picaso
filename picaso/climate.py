@@ -2553,7 +2553,7 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
             _,out_therm_fluxes = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
                                             DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                             pressure,ubar1,
-                                            surf_reflect, hard_surface, dwni, calc_type=1)
+                                            surf_reflect, hard_surface, dwni, integrated_energy=True, get_lvl_flux=True)
 
             flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = out_therm_fluxes
 
@@ -2562,7 +2562,7 @@ def get_fluxes(Atmosphere, OpacityWEd, OpacityNoEd,ScatteringPhase,
                 _,out_therm_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,temperature,
                                             DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
                                             pressure,ubar1,
-                                            surf_reflect, hard_surface, dwni, calc_type=1)
+                                            surf_reflect, hard_surface, dwni, integrated_energy=True, get_lvl_flux=True)
                 
                 flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= out_therm_fluxes_clear
                 

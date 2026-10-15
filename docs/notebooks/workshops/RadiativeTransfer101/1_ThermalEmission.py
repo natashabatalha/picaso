@@ -68,7 +68,8 @@ UBAR1 = np.array([[0.1], [0.5], [0.95]])  # three viewing angles: near the limb,
 ANGLE_LABELS = ['limb ($\\mu$=0.1)', 'middle ($\\mu$=0.5)', 'center ($\\mu$=0.95)']
 
 
-def thermal(temperature, dtau, w0=1e-6, cosb=0.0, hard_surface=0, surf_reflect=0.0, calc_type=0):
+def thermal(temperature, dtau, w0=1e-6, cosb=0.0, hard_surface=0, surf_reflect=0.0, integrated_energy=False,
+            get_lvl_flux=0):
     """
     Runs get_thermal_1d. dtau can be a number (same for every layer and wavenumber), a per-layer
     array, or a full (nlayer, nwno) array. w0 defaults to almost zero: PICASO always has a little
@@ -86,7 +87,8 @@ def thermal(temperature, dtau, w0=1e-6, cosb=0.0, hard_surface=0, surf_reflect=0
         nlevel, WNO, nwno, numg, numt, temperature, dtau,
         np.full((nlayer, nwno), w0), np.full((nlayer, nwno), cosb),
         np.logspace(1, 6, nlevel),  # level pressures (dyne/cm2)
-        UBAR1, np.full(nwno, surf_reflect), hard_surface, DWNO, calc_type)
+        UBAR1, np.full(nwno, surf_reflect), hard_surface, DWNO, integrated_energy,
+        get_lvl_flux=get_lvl_flux)  # level fluxes are only computed when asked for
     return flux_at_top, level_fluxes
 
 
@@ -139,11 +141,11 @@ print('Isothermal atmospheres emit 2 pi B(T) at every optical depth and angle')
 
 # %% [markdown]
 # The climate solver uses a slightly different Planck function, averaged over each wavenumber bin
-# (`calc_type=1`), because it needs the energy in each bin rather than the value at its center.
+# (`integrated_energy=True`), because it needs the energy in each bin rather than the value at its center.
 # The physics is the same:
 
 # %%
-flux, _ = thermal(np.full(11, 1000.), 1.0, calc_type=1)
+flux, _ = thermal(np.full(11, 1000.), 1.0, integrated_energy=True)
 expected = 2 * np.pi * blackbody_integrated(np.array([1000.]), WNO, DWNO)[0]
 np.testing.assert_allclose(flux, np.broadcast_to(expected, flux.shape), rtol=1e-6)
 print('...and so does the bin-integrated version used by the climate code')
@@ -152,11 +154,12 @@ print('...and so does the bin-integrated version used by the climate code')
 # ### Energy balance deep down
 #
 # If the atmosphere is the same temperature everywhere, nothing should heat or cool. Deep inside a
-# thick isothermal atmosphere the upward and downward fluxes should cancel exactly. The second output
-# of `get_thermal_1d` holds the downward and upward fluxes at each level:
+# thick isothermal atmosphere the upward and downward fluxes should cancel exactly. With
+# `get_lvl_flux=1`, the second output of `get_thermal_1d` holds the downward and upward fluxes at
+# each level (spectra skip them by default, because only the flux at the top is needed):
 
 # %%
-_, (flux_minus, flux_plus, _, _) = thermal(np.full(11, 1000.), 20.0)
+_, (flux_minus, flux_plus, _, _) = thermal(np.full(11, 1000.), 20.0, get_lvl_flux=1)
 net_deep = flux_plus[:, :, -3, :] - flux_minus[:, :, -3, :]
 np.testing.assert_allclose(net_deep / two_pi_planck(1000), 0, atol=1e-10)
 print(f'largest net flux deep in the atmosphere: {np.abs(net_deep).max():.1e} (zero)')
