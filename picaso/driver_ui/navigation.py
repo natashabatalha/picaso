@@ -11,7 +11,6 @@ class Page:
     label: str
     summary: str
     wip: bool = False
-    visual: str = ""  # image in static/ shown on the Get started card; empty shows a placeholder
 
 
 @dataclass(frozen=True)
@@ -19,11 +18,6 @@ class Group:
     label: str
     summary: str
     pages: tuple
-
-    @property
-    def anchor(self):
-        """Id of this group's section on the Get started page; the top-bar button links there."""
-        return self.label.lower()
 
     def contains(self, request_path):
         return any(is_active(page.path, request_path) for page in self.pages)

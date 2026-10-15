@@ -4,8 +4,8 @@
 {% block content %}
 <section class="home-block">
   <div class="welcome-banner">
-    {# Placeholder: swap this div for the PICASO logo <img>. #}
-    <div class="welcome-logo" role="img" aria-label="PICASO logo placeholder">Logo</div>
+    {# Temporary logo: swap for the PICASO logo when it is ready. #}
+    <img class="welcome-logo" src="{{ url_for('static', filename='logo_placeholder.svg') }}" alt="PICASO logo">
     <div class="welcome-text">
       <p class="welcome-kicker">Welcome to</p>
       <h1>PICASO</h1>
@@ -20,7 +20,7 @@
   {# One card per top-bar group (navigation.GROUPS), linking to each of its pages. #}
   <div class="launch-grid">
     {% for group in nav_groups %}
-      <section class="m3-card launch-card{% if group.anchor == 'setup' and not refdata_ready %} highlight{% endif %}">
+      <section class="m3-card launch-card{% if group.label == 'Setup' and not refdata_ready %} highlight{% endif %}">
         <div class="launch-visual">
           {% if visuals[group.label] %}
             <img src="{{ url_for('static', filename=visuals[group.label]) }}" alt="">
@@ -28,7 +28,7 @@
             <span class="visual-placeholder">Image placeholder</span>
           {% endif %}
         </div>
-        <h2><a href="/get-started#{{ group.anchor }}">{{ group.label }}</a></h2>
+        <h2>{{ group.label }}</h2>
         <p>{{ group.summary }}</p>
         <ul class="launch-links">
           {% for page in group.pages %}
@@ -39,7 +39,6 @@
     {% endfor %}
   </div>
   <div class="launch-resources">
-    <span>Learn more:</span>
     {% for label, url in nav_resources %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }} ↗</a>{% endfor %}
   </div>
 </section>

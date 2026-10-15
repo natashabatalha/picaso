@@ -93,9 +93,6 @@ document.addEventListener("toggle", (event) => {
 }, true);
 
 // ---------- top-bar menus: hover/focus opens them in CSS; clicks toggle them for touch screens ----------
-// A group's button is also a link to its Get started section. With a mouse, clicking it follows the link.
-// On a touch screen (no hover), the first tap opens the menu and a second tap follows the link.
-const canHover = window.matchMedia("(hover: hover)");
 document.addEventListener("click", (event) => {
   const button = event.target.closest(".nav-button");
   document.querySelectorAll(".nav-group.open").forEach((group) => {
@@ -103,7 +100,5 @@ document.addEventListener("click", (event) => {
   });
   if (!button) return;
   const group = button.parentElement;
-  if (button.tagName === "A" && (canHover.matches || group.classList.contains("open"))) return;
-  event.preventDefault();
   group.classList.toggle("open");
 });
