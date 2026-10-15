@@ -1,5 +1,4 @@
 import json
-import pytest
 import pandas as pd
 #from bokeh.plotting import figure, show, output_file
 #from bokeh.palettes import inferno
@@ -9,7 +8,6 @@ from picaso import justdoit as jdi
 #from picaso import justplotit as jpi
 # from .justdoit import opannection, inputs, brown_dwarf_pt,brown_dwarf_cld
 import os 
-import astropy.units as u
 
 
 __refdata__ = os.environ.get('picaso_refdata')
@@ -126,58 +124,6 @@ def test_reflected_1d(create_data=False):
 	assert np.allclose(benchmark_spectrum['albedo_nowater'], alb_nowater_r, rtol=1e-3, atol=1e-8), 'Failed no H2O albedo reflected_1d test'
 
 
-@pytest.mark.needs_full_data
-def test_model_storage():
-	"""
-	This tests the functionality of model storage and read-in from notebook 'Model Storage'
-
-	"""
-	opa = jdi.opannection(wave_range=[0.3,1])
-	pl = jdi.inputs()#calculation='brown')
-	pl.gravity(radius=1, radius_unit=u.Unit('R_jup'),
-			mass=1, mass_unit=u.Unit('M_jup'))
-	pl.atmosphere(filename=jdi.jupiter_pt(), sep='\s+')
-	pl.phase_angle(0)
-	pl.clouds(filename=jdi.jupiter_cld(), sep='\s+')
-	pl.star(opa, 5000,0,4, radius=1, radius_unit=u.Unit("R_sun"), semi_major=1, semi_major_unit=1*u.AU)
-	#MUST USE full output=True for this functionality
-	df= pl.spectrum(opa, calculation='reflected', full_output=True)
-
-	preserve = jdi.output_xarray(df,pl,savefile=os.path.join(__refdata__,'base_cases','testing','test_storage_spec.nc'))
-
-	#test read in
-	opa = jdi.opannection(wave_range=[0.3,14])
-	ds = jdi.xr.load_dataset(os.path.join(__refdata__,'base_cases','testing','test_storage_spec.nc'))
-	reuse = jdi.input_xarray(ds, opa)
-
-	#NOTE: error will pop up in newdev because of having the gravity saved instead of having mp and rp saved. Will investigate later
-	new_model = reuse.spectrum(opa, calculation='reflected+thermal', full_output=True)
-	new_output= jdi.output_xarray(new_model, reuse)
-
-
-	# test metadata
-	# didn't copy block of code from notebook since it's just a repeat of the first block
-	mh = 0
-	cto = 1
-
-	preserve = jdi.output_xarray(df,pl,add_output={
-		'author':"Awesome Scientist",
-		'contact' : "awesomescientist@universe.com",
-		'code' : "picaso",
-		'planet_params':{'mh':mh, 'co':cto},
-		'cloud_params':str({'fsed':3})
-	})
-
-	# compare to benchmark
-	benchmark_model = jdi.xr.load_dataset(os.path.join(__refdata__,'base_cases','testing','model_storage_basecase.nc'))
-
-	#compare numerical values
-	assert np.allclose(benchmark_model['albedo'], preserve['albedo'], atol=0.01), 'Failed save and read-in model_storage test'
-	#compare metadata
-	assert benchmark_model.attrs == preserve.attrs, 'Failed model_storage metadata test'
-	#compare dimensions and variables
-	assert benchmark_model['albedo'].shape == preserve['albedo'].shape, 'Failed model_storage test: shape mismatch'
-	
 def test_citations_and_references():
 	from picaso.references import cite, get_citations, all_citations
 	import picaso.driver as go

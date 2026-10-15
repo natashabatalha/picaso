@@ -13,13 +13,17 @@ function renderPlots() {
 }
 
 // Morphing would strip the DOM plotly built inside a plot; leave unchanged figures alone.
+// The builder caption is written here, not by the server (see updateBuilder), so keep it too.
 Idiomorph.defaults.callbacks.beforeNodeMorphed = (oldNode, newNode) =>
   !(oldNode.classList && oldNode.classList.contains("plot") &&
-    oldNode.dataset.figureId === newNode.dataset.figureId);
+    oldNode.dataset.figureId === newNode.dataset.figureId) &&
+  oldNode.id !== "builder-now";
 
 // A re-rendered page would close an open dropdown (the server never renders `open`); keep it open.
+// Likewise the builder strip's current step, which only the browser knows (see the builder section below).
 Idiomorph.defaults.callbacks.beforeAttributeUpdated = (attribute, node) =>
-  !(attribute === "open" && node.classList && node.classList.contains("multiselect"));
+  !(attribute === "open" && node.classList && node.classList.contains("multiselect")) &&
+  !((attribute === "data-current" || attribute === "aria-current") && node.classList && node.classList.contains("builder-step"));
 
 function showError(message) {
   const toast = document.getElementById("error-toast");
@@ -102,3 +106,84 @@ document.addEventListener("click", (event) => {
   const group = button.parentElement;
   group.classList.toggle("open");
 });
+
+// ---------- model-builder strip (spectrum page, templates/spectrum/_builder.html) ----------
+// The server renders each step's state; here the step whose cards are in view is marked current,
+// the caption names it (or the hovered step), and clicking a step scrolls to its cards. Clicking an
+// optional step that is switched off jumps to the switch that turns it on.
+let hoveredStep = null;
+
+function builderCurrentStep(builder) {
+  const sections = [...document.querySelectorAll("#sections > section[data-step]")];
+  if (sections.length === 0) return null;
+  const line = builder.getBoundingClientRect().bottom + 60;
+  let current = sections[0];
+  for (const section of sections) if (section.getBoundingClientRect().top <= line) current = section;
+  if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) current = sections[sections.length - 1];
+  return current.dataset.step;
+}
+
+function updateBuilder() {
+  const builder = document.getElementById("builder");
+  if (!builder) return;
+  document.documentElement.style.setProperty("--builder-height", `${builder.offsetHeight}px`);
+  const current = builderCurrentStep(builder);
+  builder.querySelectorAll(".builder-step").forEach((step) => {
+    const isCurrent = step.dataset.step === current;
+    step.dataset.current = String(isCurrent);
+    if (isCurrent) step.setAttribute("aria-current", "step"); else step.removeAttribute("aria-current");
+  });
+  const shown = builder.querySelector(`.builder-step[data-step="${hoveredStep || current}"]`);
+  const caption = document.getElementById("builder-now");
+  if (!shown || !caption) return;
+  caption.replaceChildren(hoveredStep ? "" : "Now: ", Object.assign(document.createElement("b"), { textContent: shown.dataset.label }),
+    `: ${shown.dataset.summary}${shown.dataset.state === "off" ? " Optional, currently off." : ""}`);
+}
+
+let builderTicking = false;
+function scheduleBuilderUpdate() {
+  if (builderTicking) return;
+  builderTicking = true;
+  requestAnimationFrame(() => { builderTicking = false; updateBuilder(); });
+}
+window.addEventListener("scroll", scheduleBuilderUpdate, { passive: true });
+window.addEventListener("resize", scheduleBuilderUpdate);
+document.addEventListener("DOMContentLoaded", updateBuilder);
+document.addEventListener("htmx:afterSettle", updateBuilder);
+
+const smoothScroll = () => (window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+
+document.addEventListener("click", (event) => {
+  const step = event.target.closest(".builder-step");
+  if (step) {
+    if (step.dataset.state === "off" && step.dataset.toggle) {
+      const toggle = document.getElementById(step.dataset.toggle);
+      if (!toggle) return;
+      toggle.closest("section").scrollIntoView({ behavior: smoothScroll(), block: "start" });
+      toggle.focus({ preventScroll: true });
+      const field = toggle.closest(".tf-check") || toggle.parentElement;
+      field.classList.remove("builder-flash");
+      void field.offsetWidth;  // restart the animation
+      field.classList.add("builder-flash");
+      return;
+    }
+    const target = document.querySelector(`#sections > section[data-step="${step.dataset.step}"]`);
+    if (target) target.scrollIntoView({ behavior: smoothScroll(), block: "start" });
+    return;
+  }
+  // a download is a plain link, so the page isn't re-rendered: mark its step here (the server records it too)
+  const download = event.target.closest("[data-marks-step]");
+  if (download) {
+    const marked = document.getElementById(`step-${download.dataset.marksStep}`);
+    if (marked) marked.dataset.state = "done";
+  }
+});
+
+function setHoveredStep(step) {
+  const key = step ? step.dataset.step : null;
+  if (key === hoveredStep) return;
+  hoveredStep = key;
+  updateBuilder();
+}
+document.addEventListener("mouseover", (event) => setHoveredStep(event.target.closest && event.target.closest(".builder-step")));
+document.addEventListener("focusin", (event) => setHoveredStep(event.target.closest(".builder-step")));
