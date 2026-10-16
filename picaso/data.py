@@ -1,12 +1,15 @@
 import pooch
 import os
+import sys
 import shutil
 import glob
 import json
+import argparse
 import requests
 
 
 from .opacity_factory import get_all_metadata
+from . import paths
 
 try:
     from IPython.display import display, HTML
@@ -105,12 +108,12 @@ def get_data_config():
         'R60000,0.6-6um':{
             'url':{'all_opacities_0.6_6_R60000.db.tar.gz':'https://zenodo.org/records/6928501/files/all_opacities_0.6_6_R60000.db.tar.gz'},
             'description':'38.3 GB file resampled at R=60,000 from 0.6-6um. This is sufficient for doing moderate resolution JWST calculations.',
-            'default_destination':inputs['opacities']['files']['resampled']
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['resampled'])
             },
         'R20000,4.8-15um':{
             'url':{'all_opacities_4.8_15_R20000.db.tar.gz':'https://zenodo.org/records/6928501/files/all_opacities_4.8_15_R20000.db.tar.gz'},
             'description':'7.0 GB file resampled at R=20,000 from 4.8-15um. This is sufficient for doing low resolution JWST calculations.',
-            'default_destination':inputs['opacities']['files']['resampled']
+            'default_destination':os.path.join(__refdata__, inputs['opacities']['files']['resampled'])
             },
         'photochem-R15000,0.1-250um':{
             'url':{'opacities_photochem_0.1_250.0_R15000.db.zip':'https://zenodo.org/records/17381172/files/opacities_photochem_0.1_250.0_R15000.db.zip'},
@@ -307,13 +310,14 @@ def check_environ(return_html=False, return_messages=False):
         info, success, warning, error (message is an HTML string) or list (message is a list of names).
     """
     messages = []
-    picaso_refdata = os.environ.get('picaso_refdata')
+    found = paths.resolve()
+    picaso_refdata = found['picaso_refdata'][0]
 
-    PYSYN_CDBS = os.environ.get('PYSYN_CDBS')
+    PYSYN_CDBS = found['PYSYN_CDBS'][0]
 
     # --- Check for picaso_refdata ---
     if picaso_refdata:
-        messages.append(('info', f'Found <code>picaso_refdata</code> environment variable: <code>{picaso_refdata}</code>'))
+        messages.append(('info', f'Found <code>picaso_refdata</code> ({found["picaso_refdata"][1]}): <code>{picaso_refdata}</code>'))
         if not os.path.isdir(picaso_refdata):
             messages.append(('error', 'This path does not appear to be a valid directory. You may need to download the reference data folder from <a href="https://github.com/natashabatalha/picaso/tree/master/reference" target="_blank">GitHub</a>.'))
         else:
@@ -337,11 +341,11 @@ def check_environ(return_html=False, return_messages=False):
             else:
                 messages.append(('error', 'The "opacities" folder was not found in your reference directory. Please ensure you have all the folders from <a href="https://github.com/natashabatalha/picaso/tree/master/reference" target="_blank">GitHub</a>.'))
     else:
-        messages.append(('error', 'The <code>picaso_refdata</code> environment variable is not set. Please see the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+        messages.append(('error', 'The PICASO reference data was not found (no <code>picaso_refdata</code> environment variable, config file entry or data in the default folder). Download it with <code>picaso-data setup --bundle default-planet</code> (or <code>default-browndwarf</code>), or see the <a href="https://natashabatalha.github.io/picaso/installation.html" target="_blank">Installation Guide</a>.'))
 
     # --- Check for PYSYN_CDBS ---
     if PYSYN_CDBS:
-        messages.append(('info', f'Found <code>PYSYN_CDBS</code> environment variable for <code>stsynphot</code> was found: <code>{PYSYN_CDBS}</code>'))
+        messages.append(('info', f'Found <code>PYSYN_CDBS</code> for <code>stsynphot</code> ({found["PYSYN_CDBS"][1]}): <code>{PYSYN_CDBS}</code>'))
         inside = [os.path.basename(i) for i in glob.glob(os.path.join(PYSYN_CDBS, '*'))]
         if 'grid' in inside:
             messages.append(('success', 'Found stellar "grid" subfolder.'))
@@ -354,7 +358,7 @@ def check_environ(return_html=False, return_messages=False):
         else:
             messages.append(('error', '<code>PYSYN_CDBS</code> does not contain the required "grid" subfolder. See the <a href="https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data" target="_blank">Installation Guide</a>.'))
     else:
-        messages.append(('warning', 'The <code>PYSYN_CDBS</code> environment variable is not set. This will hinder any modeling that sets stellar parameters with the star function. See the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
+        messages.append(('warning', 'The stellar grids (<code>PYSYN_CDBS</code>) were not found. Brown dwarf models do not need them, but exoplanet models that set stellar parameters with the star function do. Download them with <code>picaso-data setup --bundle default-planet</code>, or see the <a href="https://natashabatalha.github.io/picaso/installation.html#create-environment-variable" target="_blank">Installation Guide</a>.'))
 
     
     #Other files 
@@ -365,6 +369,7 @@ def check_environ(return_html=False, return_messages=False):
                     'opacities/resortrebin':'climate modeling with disequilibrium or flex chemistry',
                     'opacities/resampled':'other wavelength solutions for resampled forward models'}
     for icheck, info in other_checks.items():
+        if not picaso_refdata: break
         fullname = os.path.join(picaso_refdata,icheck)
         if os.path.exists(fullname):
             grids_inside = [os.path.basename(i) for i in glob.glob(os.path.join(fullname, '*')) if os.path.basename(i) != 'readme']
@@ -489,10 +494,50 @@ def get_reference(path_to_picaso_refdata):
         get_data(category_download='reference',target_download='default', final_destination_dir=path_to_picaso_refdata)
 
 
-def get_data(category_download=None,target_download=None, final_destination_dir=None):
+def _interactive():
+    """True if someone can answer input() prompts (a notebook or a terminal)."""
+    return _is_notebook() or bool(sys.stdin and sys.stdin.isatty())
+
+
+def get_data(category_download=None,target_download=None, final_destination_dir=None, keep_archive=True):
+    """
+    Download optional PICASO data (opacities, stellar grids, Sonora grids, ck tables, ...).
+
+    In a notebook or terminal, any argument left as None is asked for. Anywhere else
+    (scripts, pipelines, agents) nothing is asked: category_download and target_download
+    are required, and the data goes to its default destination unless final_destination_dir
+    is given. To get everything needed to compute spectra in one call, use setup().
+
+    Parameters
+    ----------
+    category_download : str
+        e.g. 'resampled_opacity', 'stellar_grids', 'sonora_grids', 'ck_tables', 'virga_mieff'
+    target_download : str
+        Which product in the category, e.g. 'default' or 'phoenix'
+    final_destination_dir : str
+        Where to put the data. Default is the product's usual place in the reference data
+        (or $PYSYN_CDBS/grid for stellar grids).
+    keep_archive : bool
+        Keep the downloaded .tar.gz/.zip after unpacking it. Default True.
+    """
     input_config, data_config=get_data_config()
     __refdata__=os.environ.get('picaso_refdata')
     PYSYN_CDBS = os.environ.get('PYSYN_CDBS', '')
+
+    if (category_download is not None) and (category_download not in data_config):
+        raise ValueError(f"Unknown category_download '{category_download}'. Options: {list(data_config)}")
+    if (target_download is not None) and (category_download is not None) and (target_download not in data_config[category_download]):
+        raise ValueError(f"Unknown target_download '{target_download}' for '{category_download}'. Options: {list(data_config[category_download])}")
+
+    if not _interactive():
+        if category_download is None:
+            raise ValueError(f"get_data is not running in a notebook or terminal, so it cannot ask which data to download. Pass category_download, one of {list(data_config)}. For everything needed to compute spectra, use picaso.data.setup().")
+        if target_download is None:
+            raise ValueError(f"get_data is not running in a notebook or terminal, so pass target_download, one of {list(data_config[category_download])}")
+        if (final_destination_dir is None) and ('stellar' not in category_download):
+            final_destination_dir = data_config[category_download][target_download]['default_destination']
+            if final_destination_dir == 'cwd': final_destination_dir = os.getcwd()
+            os.makedirs(final_destination_dir, exist_ok=True)
 
     if ((category_download==None) and (target_download==None)):
         print('What data can I help you download? Options include:')
@@ -628,11 +673,158 @@ def get_data(category_download=None,target_download=None, final_destination_dir=
                 print(f"Error downloading or processing {iurl}: {e}")
                 continue
 
+            if (not keep_archive) and (processor is not None):
+                archive = os.path.join(final_destination_dir, iname)
+                if os.path.exists(archive): os.remove(archive)
 
-            if 'stellar_grid' in category_download: 
+            if 'stellar_grid' in category_download:
                 og = os.path.join(final_destination_dir, 'grp','redcat','trds','grid',target_download)
                 new = os.path.join(PYSYN_CDBS,'grid')
                 try:
                     shutil.move(og ,new)
-                except: 
+                    if not keep_archive: shutil.rmtree(os.path.join(final_destination_dir, 'grp'), ignore_errors=True)
+                except:
                     print(f'I tried to move stellar grids from here {og} to here {new} but it failed. Likely because the file already exists. Find your file here {og} and manually move it if you want to overwrite. ')
+
+
+BUNDLES = {
+    'default-browndwarf': {
+        'description': 'Reference data (~190 MB) and the default opacity database (R=15,000, 0.3-15 um; '
+                       '4.8 GB download, 7.3 GB on disk). Everything needed for brown dwarf spectra.',
+        'stellar': [],
+    },
+    'default-planet': {
+        'description': 'Everything in default-browndwarf plus the PHOENIX stellar grids (2.3 GB download), '
+                       'which exoplanet models use for the host star.',
+        'stellar': ['phoenix'],
+    },
+}
+
+
+def setup(bundle, destination=None):
+    """
+    Download everything PICASO needs to compute spectra, without asking any questions.
+
+    Parts that are already in place are skipped, so it is safe to run again (for example
+    to go from default-browndwarf to default-planet). The locations are saved to the
+    PICASO config file, so later sessions find the data without environment variables.
+
+    Parameters
+    ----------
+    bundle : str
+        'default-planet' (exoplanets: reference data, default opacities and PHOENIX
+        stellar grids) or 'default-browndwarf' (the same without stellar grids)
+    destination : str
+        Folder for the reference data. Default is $picaso_refdata if it is set, else
+        the PICASO data folder (picaso.paths.default_refdata()).
+
+    Returns
+    -------
+    dict
+        {'picaso_refdata': path, 'PYSYN_CDBS': path or None}
+    """
+    if bundle not in BUNDLES:
+        raise ValueError(f"Unknown bundle '{bundle}'. Options: " +
+                         '; '.join(f'{k}: {v["description"]}' for k, v in BUNDLES.items()))
+
+    refdata = destination or os.environ.get('picaso_refdata') or paths.default_refdata()
+    refdata = os.path.abspath(os.path.expanduser(refdata))
+    #get_data_config and the rest of picaso read these from the environment
+    os.environ['picaso_refdata'] = refdata
+
+    print(f'[1/3] Reference data -> {refdata}')
+    if paths.refdata_ok(refdata):
+        print('      already there, skipping')
+    else:
+        download_github_folder_api(refdata)
+        if not paths.refdata_ok(refdata):
+            raise RuntimeError(f'The reference data did not download completely to {refdata}. GitHub limits '
+                               'unauthenticated downloads, so try again later, or clone '
+                               'https://github.com/natashabatalha/picaso and pass destination=<clone>/reference.')
+
+    print('[2/3] Default opacity database')
+    if default_opacity_file(refdata)[0]:
+        print(f'      already there ({default_opacity_file(refdata)[0]}), skipping')
+    else:
+        get_data('resampled_opacity', 'default', final_destination_dir=os.path.join(refdata, 'opacities'), keep_archive=False)
+        if not default_opacity_file(refdata)[0]:
+            raise RuntimeError('The default opacity database did not download. See the messages above, '
+                               'then run setup again to retry.')
+
+    stellar = None
+    if BUNDLES[bundle]['stellar']:
+        stellar = os.path.abspath(os.path.expanduser(os.environ.get('PYSYN_CDBS') or os.path.join(refdata, 'stellar_grids')))
+        os.environ['PYSYN_CDBS'] = stellar
+        grid = os.path.join(stellar, 'grid')
+        os.makedirs(grid, exist_ok=True)
+        for database in BUNDLES[bundle]['stellar']:
+            print(f'[3/3] {database} stellar grids -> {grid}')
+            if os.path.isdir(os.path.join(grid, database)):
+                print('      already there, skipping')
+                continue
+            get_data('stellar_grids', database, final_destination_dir=grid, keep_archive=False)
+            if not os.path.isdir(os.path.join(grid, database)):
+                raise RuntimeError(f'The {database} stellar grids did not download. See the messages above, '
+                                   'then run setup again to retry.')
+    else:
+        print('[3/3] Stellar grids: not part of this bundle (brown dwarfs do not need them)')
+
+    saved = {'picaso_refdata': refdata}
+    if stellar: saved['PYSYN_CDBS'] = stellar
+    paths.write_config(**saved)
+
+    print(f'\nDone. Saved these locations to {paths.config_file()}, so picaso finds them from now on:')
+    for name, path in saved.items():
+        print(f'    {name} = {path}')
+    print('Prefer environment variables? Add these to your shell profile instead:')
+    for name, path in saved.items():
+        print(f'    export {name}="{path}"')
+    shadowed = [n for n, p in saved.items() if os.environ.get(n) and os.path.abspath(os.environ[n]) != p]
+    if shadowed:
+        print(f'Note: {", ".join(shadowed)} is also set as an environment variable to a different folder, '
+              'and environment variables win over the config file.')
+    if 'picaso.justdoit' in sys.modules:
+        print('picaso.justdoit was imported before setup ran: restart Python (or the notebook kernel) to use the new data.')
+    return {'picaso_refdata': refdata, 'PYSYN_CDBS': stellar}
+
+
+def main(argv=None):
+    """The picaso-data command."""
+    parser = argparse.ArgumentParser(prog='picaso-data', description='Download PICASO data and show where PICASO finds it.')
+    sub = parser.add_subparsers(dest='command', required=True)
+
+    p = sub.add_parser('setup', help='download everything needed to compute spectra (no questions asked)',
+                       formatter_class=argparse.RawDescriptionHelpFormatter,
+                       description='bundles:\n' + '\n'.join(f'  {k}: {v["description"]}' for k, v in BUNDLES.items()))
+    p.add_argument('--bundle', required=True, choices=list(BUNDLES))
+    p.add_argument('--destination', default=None,
+                   help=f'folder for the reference data (default: $picaso_refdata, else {paths.default_refdata()})')
+
+    p = sub.add_parser('get', help='download one optional data product (see "picaso-data list")')
+    p.add_argument('category')
+    p.add_argument('target')
+    p.add_argument('--destination', default=None, help="folder to put it in (default: the product's usual place)")
+
+    sub.add_parser('list', help='list the data products that "get" can download')
+    sub.add_parser('where', help='show where PICASO looks for its data, and where each path came from')
+    sub.add_parser('check', help='check that the reference data, opacities and stellar grids are in place')
+
+    args = parser.parse_args(argv)
+    if args.command == 'setup':
+        setup(args.bundle, destination=args.destination)
+    elif args.command == 'get':
+        get_data(args.category, args.target, final_destination_dir=args.destination)
+    elif args.command == 'list':
+        for category, targets in get_data_config()[1].items():
+            print(category)
+            for target, info in targets.items():
+                print(f'    {target}: {info["description"]}')
+    elif args.command == 'where':
+        print(f'config file: {paths.config_file()}' + ('' if os.path.exists(paths.config_file()) else ' (not created yet)'))
+        for name, (path, source) in paths.resolve().items():
+            print(f'{name}: {path or "-"} ({source})')
+    elif args.command == 'check':
+        messages = check_environ(return_messages=True)
+        check_environ()
+        return 1 if any(kind == 'error' for kind, _ in messages) else 0
+    return 0

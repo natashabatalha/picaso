@@ -1723,7 +1723,7 @@ def setup_star(config, picaso_class, opacity):
 
     #defaults for the userfile option
     temp, metal, logg = None, None, None
-    database = 'ck04models'
+    database = 'phoenix'
 
     #check if userfile is requested
     if typestar=='userfile':

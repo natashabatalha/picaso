@@ -47,6 +47,7 @@ import h5py
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
 from ._version import __version__
+from . import paths as _paths
 
 LODDERS2020_C_TO_O = 0.54939759398
 
@@ -90,9 +91,11 @@ def _warn_for_exclude_requests(atm, exclude_mol, opacityclass):
                     f"You requested Rayleigh-opacity exclusion for {molecule}, but the available Rayleigh molecules are {opacityclass.rayleigh_molecules}."
                 )
 
-if not os.path.exists(__refdata__): 
-    raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
-else: 
+#importing works without the reference data, so that picaso.data can download it;
+#opannection and inputs raise a clear error if it is still missing when they are called
+if not _paths.refdata_ok(__refdata__):
+    warnings.warn(_paths.missing_refdata_message())
+else:
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
     if (__version__ != str(ref_v)) and (str(ref_v) not in __version__): 
@@ -101,8 +104,8 @@ else:
         warnings.warn(msg)
 
 
-if not os.path.exists(os.environ.get('PYSYN_CDBS', '')):
-    warnings.warn("You have not downloaded the Stellar reference data. If you only plan on working on substellar objects that is okay but for exoplanets it will be required. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
+if _paths.refdata_ok(__refdata__) and not os.path.exists(os.environ.get('PYSYN_CDBS', '')):
+    warnings.warn("The stellar grids (PYSYN_CDBS) were not found. Brown dwarf models do not need them; exoplanet models that use star(temp=..., metal=..., logg=...) do. To add them: picaso-data setup --bundle default-planet. If you already have them, set PYSYN_CDBS to the folder that contains grid/ before importing picaso.")
 
 #hello peter
 
@@ -1430,6 +1433,7 @@ def opannection(
         Error message to warn users about resampling. Can be turned off by supplying 
         verbose=False
     """
+    _paths.require_refdata()
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
     if ((method == 'resampled') & isinstance(ck_db,type(None))):
@@ -1550,6 +1554,7 @@ class inputs():
     """
     def __init__(self, calculation='planet', climate=False):
 
+        _paths.require_refdata()
         self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
         
         if 'brown' in calculation:
@@ -1952,7 +1957,7 @@ class inputs():
 
     def star(self,opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None, #deq = False, 
-        database='ck04models',filename=None, w_unit=None, f_unit=None):
+        database='phoenix',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using stsynphot and interpolate onto a much finer grid than the 
         planet grid. 
@@ -1979,8 +1984,9 @@ class inputs():
         semi_major_unit : astropy.unit 
             (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("au")`)
         database : str 
-            (Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
-            Most popular are 'ck04models', phoenix' and 
+            (Optional) The stsynphot grid to pull the stellar spectrum from, which must be in
+            $PYSYN_CDBS/grid. Default is 'phoenix' (downloaded by picaso-data setup --bundle default-planet).
+            Another common choice is 'ck04models' (Castelli & Kurucz 2004). None also means 'phoenix'.
         filename : str 
             (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux). 
             Must specify w_unit and f_unit 
@@ -2013,7 +2019,10 @@ class inputs():
             wave = star['w']
             ST_SS = SourceSpectrum(Empirical1D, points=wave*u.Unit(w_unit), lookup_table=flux*u.Unit(f_unit))
         elif ((not isinstance(temp, type(None))) & (not isinstance(metal, type(None))) & (not isinstance(logg, type(None)))):
-            ST_SS = sts.grid_to_spec(database, temp, metal, logg) 
+            if database is None: database = 'phoenix'
+            if not os.path.isdir(os.path.join(os.environ.get('PYSYN_CDBS', ''), 'grid', database)):
+                raise FileNotFoundError(_paths.missing_stellar_message(database))
+            ST_SS = sts.grid_to_spec(database, temp, metal, logg)
         else: 
             raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
@@ -5694,7 +5703,7 @@ def get_targets():
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
-def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=False,  **planet_kwargs):
+def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
     """
     Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created 
     specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then 
@@ -5709,8 +5718,8 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
     phase_angle : float 
         Observing phase angle (radians)
     stellar_db : str 
-        Stellar database to pull from. Default is ck04models but you can also 
-        use phoenix if you have those downloaded.
+        Stellar database to pull from. Default is phoenix but you can also 
+        use ck04models if you have those downloaded.
     verbose : bool , options
         Print out warnings 
     planet_kwargs : dict 
@@ -5829,7 +5838,7 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')):
+def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = None):
     """Function to get Jupiter's PT profile
     
     Parameters
@@ -5842,7 +5851,7 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
         point to input file in the same format as mitgcm example 
         file in base_cases/HJ_3d.pt
     """
-    #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    if input_file is None: input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
     threed_grid = pd.read_csv(input_file,sep=r'\s+',names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values
