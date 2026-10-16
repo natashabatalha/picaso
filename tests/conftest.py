@@ -27,12 +27,14 @@ MINI_CK_DIR = REFDATA / 'base_cases' / 'testing' / 'resortrebin_mini'
 def full_data_available():
     """
     True if the data that is too big for git has been downloaded: the default (multi-GB)
-    resampled opacity db in reference/opacities/ and the ck04models stellar grids in PYSYN_CDBS.
+    resampled opacity db in reference/opacities/ and the phoenix (the default) and ck04models
+    stellar grids in PYSYN_CDBS.
     """
     with open(REFDATA / 'config.json') as f:
         pattern = json.load(f)['opacities']['files']['opacity']
     has_opacities = len(glob.glob(str(REFDATA / pattern))) > 0
-    has_stars = os.path.isdir(os.path.join(os.environ['PYSYN_CDBS'], 'grid', 'ck04models'))
+    has_stars = all(os.path.isdir(os.path.join(os.environ['PYSYN_CDBS'], 'grid', db))
+                    for db in ('phoenix', 'ck04models'))
     return has_opacities and has_stars
 
 

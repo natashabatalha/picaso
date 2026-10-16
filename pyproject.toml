@@ -1,17 +1,52 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "picaso"
-version = "4.1"
-description = "planetary intesity code for atmospheric scattering observations"
+dynamic = ["version"]
+description = "Exoplanet and brown dwarf spectra (transmission, thermal emission, reflected light), 1D radiative-convective climate models, and spectral fitting"
 readme = {file = "README.md", content-type = "text/markdown"}
 authors = [
     {name = "Natasha E. Batalha", email = "natasha.e.batalha@gmail.com"},
 ]
 license = "GPL-3.0"
-requires-python = ">=3.7"
+license-files = ["LICENSE"]
+# set by virga-exo 2.0.2 and astropy, which both need 3.11+
+requires-python = ">=3.11"
+keywords = [
+    "exoplanets",
+    "brown dwarfs",
+    "substellar objects",
+    "planetary atmospheres",
+    "radiative transfer",
+    "spectroscopy",
+    "transit spectroscopy",
+    "transmission spectroscopy",
+    "emission spectroscopy",
+    "thermal emission",
+    "reflected light spectroscopy",
+    "phase curves",
+    "direct imaging",
+    "climate models",
+    "radiative-convective equilibrium",
+    "retrievals",
+    "JWST",
+    "HWO",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "bokeh>=2.3.0,<3.9.3",
     "numpy>=2.0",
@@ -27,6 +62,7 @@ dependencies = [
     "virga-exo==2.0.2",
     "xarray",
     "pooch",
+    "platformdirs",
     "tqdm",
     "bibtexparser==1.4.4",
     "netcdf4",
@@ -34,6 +70,15 @@ dependencies = [
     "jupytext",
     "toml",
 ]
+
+[project.urls]
+Homepage = "https://natashabatalha.github.io/picaso"
+Documentation = "https://natashabatalha.github.io/picaso"
+Tutorials = "https://natashabatalha.github.io/picaso/tutorials.html"
+Source = "https://github.com/natashabatalha/picaso"
+Issues = "https://github.com/natashabatalha/picaso/issues"
+Changelog = "https://natashabatalha.github.io/picaso/changelog.html"
+Citation = "https://natashabatalha.github.io/picaso/credit.html"
 
 [project.optional-dependencies]
 # picaso.driver (toml-driven runs and retrievals): pip install "picaso[driver]"
@@ -75,6 +120,9 @@ docs = [
 include = ["picaso*"]
 exclude = ["reference*"]
 
+[tool.setuptools.dynamic]
+version = {attr = "picaso._version.__version__"}
+
 [tool.setuptools.package-data]
 "picaso.driver_ui" = ["templates/**/*.html", "static/*"]
 
@@ -86,10 +134,7 @@ markers = [
     "integration: slow end-to-end model runs (e.g. full climate convergence); run alone with -m integration or skip with -m 'not integration'",
 ]
 
-[project.urls]
-Homepage = "https://natashabatalha.github.io/picaso"
-Download = "https://github.com/natashabatalha/picaso"
-
 [project.scripts]
 picaso-notebooks = "picaso.integration_testing:main"
 picaso-app = "picaso.driver_ui:main"
+picaso-data = "picaso.data:main"

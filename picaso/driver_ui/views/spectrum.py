@@ -22,7 +22,7 @@ from picaso.driver_ui.core.config_ops import format_references, is_irradiated
 from picaso.driver_ui.core.config_schema import (
     Bool, MultiChoice, Number, Section, Text, build_fields, find_field, replace_field)
 from picaso.driver_ui.core.plots import plotly_plot
-from picaso.driver_ui.views import retrieval
+from picaso.driver_ui.views import builder, retrieval
 from picaso.driver_ui.views.cards import Card, bulk_property_fields, bulk_property_notes, card_views, set_messages
 from picaso.driver_ui.views.spectrum_session import (
     apply_upload, current, exported_config, is_reflected, model_config, opacity, reset, wave_bounds, wave_range)
@@ -266,8 +266,9 @@ class ConfigurationCard(Card):
     extra = "spectrum/extras/configuration.html"
 
 
-CARDS = [UploadCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(), GeometryCard(),
-         TemperatureCard(), ChemistryCard(), CloudsCard(), SpectrumCard(),
+# phase angle sits just before the spectrum: both belong to the builder's Spectrum step (views/builder.py)
+CARDS = [UploadCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(),
+         TemperatureCard(), ChemistryCard(), CloudsCard(), GeometryCard(), SpectrumCard(),
          *retrieval.CARDS, ConfigurationCard()]
 CARDS_BY_NAME = {card.name: card for card in CARDS}
 
@@ -275,11 +276,14 @@ CARDS_BY_NAME = {card.name: card for card in CARDS}
 # =======================================
 # RENDERING
 # =======================================
-def render_page(sess, errors=None):
+def render_page(sess, errors=None, card_name=None):
+    """`card_name` is the card whose form was just submitted, so its `errors` mark its builder step."""
+    cards = card_views(CARDS, sess, sess.results)
     return render_template(
         "_cards.html",
         endpoint="spectrum.update_card",
-        cards=card_views(CARDS, sess, sess.results),
+        cards=cards,
+        builder=builder.state(sess, cards, error_card=card_name if errors else None),
         errors=errors or {},
         sess=sess,
         exported_toml=toml.dumps(exported_config(sess)),
@@ -308,10 +312,13 @@ def update_card(name):
     card = CARDS_BY_NAME.get(name)
     if card is None or not card.visible(sess):
         abort(404)
+    clouds_were_on = sess.ui["include_clouds"]
     errors = card.update(sess, request.form)
     if card.clears_previews:
         sess.results.pop("previews", None)
-    return render_page(sess, errors)
+    if card.name != "clouds" or clouds_were_on:  # switching clouds on is not yet configuring them
+        builder.touch(sess, name)
+    return render_page(sess, errors, name)
 
 
 @bp.post("/upload")
@@ -320,6 +327,7 @@ def upload():
     file = request.files.get("toml")
     try:
         apply_upload(sess, tomllib.load(file.stream))
+        builder.touch(sess, "upload")
         set_messages(sess.results, "upload", [("success", "Successfully loaded user-provided default values.")])
     except (tomllib.TOMLDecodeError, UnicodeDecodeError, AttributeError) as e:
         set_messages(sess.results, "upload", [("error", f"Could not read the TOML file: {e}")])
@@ -331,6 +339,7 @@ PREVIEWS = {
     "chemistry": runs.mixing_ratio_figure,
     "clouds": runs.cloud_figure,
 }
+PREVIEW_CARDS = {"pt": "temperature", "chemistry": "chemistry", "clouds": "clouds"}
 
 
 @bp.post("/preview/<kind>")
@@ -345,6 +354,7 @@ def preview(kind):
     except Exception as e:
         result = {"warning": "Make sure you have configured temperature and chemistry.", "error": str(e)}
     sess.results.setdefault("previews", {})[kind] = result
+    builder.touch(sess, PREVIEW_CARDS[kind])
     return render_page(sess)
 
 
@@ -370,6 +380,8 @@ def retrieval_action(action):
     if action not in retrieval.ACTIONS:
         abort(404)
     retrieval.ACTIONS[action](sess)
+    if action.startswith("data-check"):
+        builder.touch(sess, "observation_data")
     return render_page(sess)
 
 
@@ -389,7 +401,9 @@ def attachment(data, filename, mimetype):
 
 @bp.get("/download/configured_toml.toml")
 def download_config():
-    return attachment(toml.dumps(exported_config(current())), "configured_toml.toml", "application/toml")
+    sess = current()
+    builder.touch(sess, "configuration")
+    return attachment(toml.dumps(exported_config(sess)), "configured_toml.toml", "application/toml")
 
 
 @bp.get("/download/references.txt")

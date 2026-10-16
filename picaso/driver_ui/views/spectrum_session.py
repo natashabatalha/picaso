@@ -37,6 +37,7 @@ def reset(sess):
         "priors": {},  # parameter path -> prior settings
         "nsamples": 5,
         "sampler": sampler_defaults(sess.config),
+        "touched": set(),  # cards the student has edited or run something on (views/builder.py)
     }
     sess.results = {}
 

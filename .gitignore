@@ -55,4 +55,3 @@ docs/_build/
 # test artifacts
 .coverage
 coverage.md
-reference/base_cases/testing/test_storage_spec.nc

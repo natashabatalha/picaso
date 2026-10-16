@@ -13,12 +13,13 @@ import pytest
 from picaso.fluxes import blackbody, blackbody_integrated, get_thermal_1d
 
 WNO = np.array([500., 1000., 2000., 4000.])  # cm-1
-DWNO = np.full(len(WNO), 50.)  # bin widths, used only by the climate (calc_type=1) Planck function
+DWNO = np.full(len(WNO), 50.)  # bin widths, used only by the bin-integrated (integrated_energy=True) Planck function
 UBAR1 = np.array([[0.1], [0.5], [0.95]])  # outgoing cos(angle): near limb, middle, near disk center
 W0_ABSORBING = 1e-6  # picaso never passes exactly 0 (Rayleigh is always present) and 0 divides by zero
 
 
-def thermal(temperature, dtau, w0=W0_ABSORBING, cosb=0.0, hard_surface=0, surf_reflect=0.0, calc_type=0):
+def thermal(temperature, dtau, w0=W0_ABSORBING, cosb=0.0, hard_surface=0, surf_reflect=0.0, integrated_energy=False,
+            get_lvl_flux=0):
     """Runs get_thermal_1d on a uniform-in-wavenumber atmosphere; dtau is a scalar or a per-layer array."""
     temperature = np.asarray(temperature, dtype=float)
     nlevel = len(temperature)
@@ -28,7 +29,8 @@ def thermal(temperature, dtau, w0=W0_ABSORBING, cosb=0.0, hard_surface=0, surf_r
     return get_thermal_1d(nlevel, WNO, nwno, numg, numt, temperature, dtau,
                           np.full((nlayer, nwno), w0), np.full((nlayer, nwno), cosb),
                           np.logspace(1, 6, nlevel),  # level pressures in dyne/cm2
-                          UBAR1, np.full(nwno, surf_reflect), hard_surface, DWNO, calc_type)
+                          UBAR1, np.full(nwno, surf_reflect), hard_surface, DWNO, integrated_energy,
+                          get_lvl_flux=get_lvl_flux)
 
 
 def two_pi_planck(temperature):
@@ -48,15 +50,15 @@ def test_isothermal_absorbing_atmosphere_emits_a_blackbody(dtau):
 
 
 def test_isothermal_blackbody_with_climate_planck_function():
-    """calc_type=1 (climate) uses the bin-integrated Planck function instead of the monochromatic one."""
-    flux_at_top, _ = thermal(np.full(11, 1000.), 1.0, calc_type=1)
+    """integrated_energy=True (climate) uses the bin-integrated Planck function instead of the monochromatic one."""
+    flux_at_top, _ = thermal(np.full(11, 1000.), 1.0, integrated_energy=True)
     expected = 2 * np.pi * blackbody_integrated(np.array([1000.]), WNO, DWNO)[0]
     np.testing.assert_allclose(flux_at_top, np.broadcast_to(expected, flux_at_top.shape), rtol=1e-6)
 
 
 def test_no_net_flux_deep_in_an_isothermal_atmosphere():
     """Radiative equilibrium: deep in a thick isothermal atmosphere upward and downward fluxes cancel."""
-    _, (flux_minus, flux_plus, _, _) = thermal(np.full(11, 1000.), 20.0)
+    _, (flux_minus, flux_plus, _, _) = thermal(np.full(11, 1000.), 20.0, get_lvl_flux=1)
     net = flux_plus[:, :, -3, :] - flux_minus[:, :, -3, :]
     np.testing.assert_allclose(net / two_pi_planck(1000.), 0, atol=1e-10)
 

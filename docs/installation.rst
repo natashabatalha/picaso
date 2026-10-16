@@ -121,6 +121,42 @@ PICASO has the ability to ingest lots of different kinds of data. But not all ar
 | Virga Mieff files                | No   | Virga cloud modeling          | Your choice (default=$picaso_refdata/virga)                 |
 +----------------------------------+------+-------------------------------+-------------------------------------------------------------+
 
+Quick Setup: One Command
+------------------------
+
+``picaso-data setup`` downloads everything needed to compute spectra without asking any questions, skips anything that is already in place, and remembers where it put the data, so you do not need to set any environment variables. Pick the bundle for what you are modeling:
+
+.. code-block:: bash
+
+	picaso-data setup --bundle default-planet       # exoplanets: reference data, default opacities and PHOENIX stellar grids (~7.3 GB download)
+	picaso-data setup --bundle default-browndwarf   # brown dwarfs: the same without stellar grids (~5 GB download)
+
+or from Python:
+
+.. code-block:: python
+
+	import picaso.data as data
+	data.setup(bundle='default-planet')   # or 'default-browndwarf'
+
+By default the data goes to ``$picaso_refdata`` if it is set, and otherwise to the PICASO data folder (``~/Library/Application Support/picaso`` on macOS, ``~/.local/share/picaso`` on Linux); pass ``--destination <folder>`` (or ``destination=``) to choose another place. You can start with ``default-browndwarf`` and run ``default-planet`` later to add the stellar grids. If ``picaso.justdoit`` is already imported, restart Python (or the notebook kernel) afterwards.
+
+PICASO looks for its data in this order:
+
+1. the ``picaso_refdata`` and ``PYSYN_CDBS`` environment variables
+2. the PICASO config file written by ``picaso-data setup``
+3. the default PICASO data folder
+
+Other useful commands:
+
+.. code-block:: bash
+
+	picaso-data where    # where PICASO looks for its data, and where each path came from
+	picaso-data check    # check that the reference data, opacities and stellar grids are in place
+	picaso-data list     # list optional data (Sonora grids, ck tables, other opacities, ...)
+	picaso-data get stellar_grids ck04models   # download one optional product
+
+The rest of this page explains how to do each step by hand.
+
 How to get Required Data 
 ------------------------
 
@@ -275,7 +311,7 @@ Getting ``stsynphot`` Optional Stellar Data
 
 In order to get stellar spectra needed for many exoplanet PICASO has already installed for you the `stsynphot package <https://stsynphot.readthedocs.io/en/latest/>`_ which has several download options for stellar spectra. This package also requires setting an environment variable called ``$PYSYN_CDBS``. Below are instructions for getting the stellar data manually and setting the environment variable (note you can also use picaso auto download to get these data). 
 
-The Default for ``PICASO`` is Castelli-Kurucz Atlas: `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_ but we recommend ``phoenix`` models for climate modeling. 
+The default for ``PICASO`` (since v5) is the ``phoenix`` grid, which ``picaso-data setup --bundle default-planet`` downloads. The Castelli-Kurucz Atlas `ck04models <https://archive.stsci.edu/hlsps/reference-atlases/cdbs/grid/ck04models/>`_ is a much smaller (20 MB) alternative: download it with ``picaso-data get stellar_grids ck04models`` and use it with ``star(..., database='ck04models')``. 
 
 Here is how you would do it with PICASO:
 

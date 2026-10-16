@@ -46,7 +46,8 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '4.1'
+from ._version import __version__
+from . import paths as _paths
 
 LODDERS2020_C_TO_O = 0.54939759398
 
@@ -90,9 +91,11 @@ def _warn_for_exclude_requests(atm, exclude_mol, opacityclass):
                     f"You requested Rayleigh-opacity exclusion for {molecule}, but the available Rayleigh molecules are {opacityclass.rayleigh_molecules}."
                 )
 
-if not os.path.exists(__refdata__): 
-    raise Exception("You have not downloaded the PICASO reference data. You can find it on github here: https://github.com/natashabatalha/picaso/tree/master/reference . If you think you have already downloaded it then you likely just need to set your environment variable. See instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-reference-documentation . You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
-else: 
+#importing works without the reference data, so that picaso.data can download it;
+#opannection and inputs raise a clear error if it is still missing when they are called
+if not _paths.refdata_ok(__refdata__):
+    warnings.warn(_paths.missing_refdata_message())
+else:
     ref_v = json.load(open(os.path.join(__refdata__,'config.json'))).get('version',2.3)
     
     if (__version__ != str(ref_v)) and (str(ref_v) not in __version__): 
@@ -101,8 +104,8 @@ else:
         warnings.warn(msg)
 
 
-if not os.path.exists(os.environ.get('PYSYN_CDBS', '')):
-    warnings.warn("You have not downloaded the Stellar reference data. If you only plan on working on substellar objects that is okay but for exoplanets it will be required. Follow the installation instructions here: https://natashabatalha.github.io/picaso/installation.html#download-and-link-pysynphot-stellar-data. If you think you have already downloaded it then you likely just need to set your environment variable. You can use `os.environ['PYSYN_CDBS']=<yourpath>` directly in python if you run the line of code before you import PICASO.")
+if _paths.refdata_ok(__refdata__) and not os.path.exists(os.environ.get('PYSYN_CDBS', '')):
+    warnings.warn("The stellar grids (PYSYN_CDBS) were not found. Brown dwarf models do not need them; exoplanet models that use star(temp=..., metal=..., logg=...) do. To add them: picaso-data setup --bundle default-planet. If you already have them, set PYSYN_CDBS to the folder that contains grid/ before importing picaso.")
 
 #hello peter
 
@@ -188,6 +191,8 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #save level fluxes in addition to the top of atmosphere fluxes?
     #default is false
     get_lvl_flux = inputs['approx'].get('get_lvl_flux',False)
+    #level fluxes as energies integrated over each wavenumber bin (climate convention)?
+    integrated_energy = inputs['approx'].get('integrated_energy',False)
 
 
     #pressure assumption
@@ -201,6 +206,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     phase_angle = inputs['phase_angle']
     #get geometry
     geom = inputs['disco']
+
+    #options that only the 1d calculation supports
+    if dimension == '3d':
+        if get_lvl_flux:
+            raise Exception('Level fluxes (approx(get_lvl_flux=True)) are only computed for 1d calculations.')
+        if geom.get('num_gangle') == 1:
+            raise Exception('phase_angle(num_gangle=1) is a single 1d column (for reflected-light energy budgets). '
+                'It cannot be used for 3d calculations.')
+        if do_holes:
+            warnings.warn('Patchy clouds (do_holes) are only computed for 1d calculations; '
+                'this 3d calculation uses the full cloud profile.')
 
     ng, nt = geom['num_gangle'], geom['num_tangle']
     gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
@@ -297,6 +313,9 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         
         if  'reflected' in calculation:
             xint_at_top = 0 
+            #level fluxes are summed over the correlated-k gauss points, so start them once here
+            if get_lvl_flux: 
+                atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
             for ig in range(ngauss): # correlated - loop (which is different from gauss-tchevychev angle)
                 nlevel = atm.c.nlevel
 
@@ -313,9 +332,6 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     single_form=single_form) 
                 #only other rt scheme is toon right now 
                 else:
-                    if get_lvl_flux: 
-                        atm.lvl_output_reflected = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-                    
                     xint,lvl_fluxes = get_reflected_1d(nlevel, wno,nwno,ng,nt,
                                     DTAU[:,:,ig], TAU[:,:,ig], W0[:,:,ig], COSB[:,:,ig],
                                     GCOS2[:,:,ig],ftau_cld[:,:,ig],ftau_ray[:,:,ig],
@@ -323,7 +339,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                     atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                     single_phase,multi_phase,
                                     frac_a,frac_b,frac_c,constant_back,constant_forward,
-                                    get_toa_intensity=1,get_lvl_flux=int(atm.get_lvl_flux),
+                                    get_toa_intensity=1,get_lvl_flux=int(get_lvl_flux),
                                     toon_coefficients=toon_coefficients,b_top=b_top)
                     
                     flux_minus_all_v, flux_plus_all_v, flux_minus_midpt_all_v, flux_plus_midpt_all_v = lvl_fluxes
@@ -336,7 +352,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                                 atm.surf_reflect, ubar0,ubar1,cos_theta, F0PI,
                                 single_phase,multi_phase,
                                 frac_a,frac_b,frac_c,constant_back,constant_forward, 
-                                get_toa_intensity=1, get_lvl_flux=int(atm.get_lvl_flux),
+                                get_toa_intensity=1, get_lvl_flux=int(get_lvl_flux),
                                 toon_coefficients=toon_coefficients,b_top=b_top)
                     
                         flux_minus_all_v_clear, flux_plus_all_v_clear, flux_minus_midpt_all_v_clear, flux_plus_midpt_all_v_clear = out_ref_fluxes_clear
@@ -360,49 +376,65 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
         
         if 'thermal' in calculation:
+            if geom['num_gangle'] == 1:
+                raise Exception("phase_angle(num_gangle=1) is a single column at mu = 0.5, which is only for "
+                    "reflected light: the thermal source function is singular at mu = 0.5. Use phase_angle(0) "
+                    "for thermal emission (see the Level_Fluxes tutorial).")
             #use toon method (and tridiagonal matrix solver) to get net cumulative fluxes 
             flux_at_top = 0 
 
+            #the spectrum always uses the monochromatic blackbody. requested level fluxes come from the 
+            #same call, unless integrated_energy=True: then they need a second call with the blackbody 
+            #integrated over each wavenumber bin (the climate convention). the spectrum never changes
+            lvl_in_spectrum_call = get_lvl_flux and (not integrated_energy)
+            lvl_in_separate_call = get_lvl_flux and integrated_energy
             if get_lvl_flux: 
-                calc_type=1
                 atm.lvl_output_thermal = dict(flux_minus=0, flux_plus=0, flux_minus_mdpt=0, flux_plus_mdpt=0)
-            else: 
-                calc_type=0
+            #bin widths, only used by the integrated blackbody
+            delta_wno = getattr(opacityclass,'delta_wno', np.concatenate((np.diff(wno),[np.diff(wno)[-1]])))
 
             for ig in range(ngauss): # correlated-k - loop (which is different from gauss-tchevychev angle)
                 
                 #remember all OG values (e.g. no delta eddington correction) go into thermal as well as 
                 #the uncorrected raman single scattering 
                 if rt_method == 'toon':
-                    #flux  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
-                    #                                    DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
-                    #                                    atm.level['pressure'],ubar1,
-                    #                                    atm.surf_reflect, atm.hard_surface, tridiagonal)
                     flux,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                         DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
                                                         atm.level['pressure'],ubar1,
                                                         atm.surf_reflect, atm.hard_surface,
-                                                        #setting wno to zero since only used for climate, calctype only gets TOA flx 
-                                                        wno*0, calc_type=calc_type)
-                    
-                    flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = lvl_fluxes
-                    
+                                                        delta_wno, integrated_energy=False, get_lvl_flux=lvl_in_spectrum_call)
                     if do_holes == True:
                         #clearsky case
-                        flux_clear,out_therm_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                        flux_clear,lvl_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
                                                     DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
                                                     atm.level['pressure'],ubar1,
                                                     atm.surf_reflect, atm.hard_surface,
-                                                    wno*0, calc_type=calc_type)
-                        
-                        flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= out_therm_fluxes_clear
-                        
-                        #weighted average of cloudy and clearsky
-                        flux_plus_midpt_all_i = (1.0 - fhole)* flux_plus_midpt_all_i + fhole * flux_plus_midpt_all_i_clear
-                        flux_minus_midpt_all_i = (1.0 - fhole)* flux_minus_midpt_all_i + fhole * flux_minus_midpt_all_i_clear
-                        flux_plus_all_i = (1.0 - fhole)* flux_plus_all_i + fhole * flux_plus_all_i_clear
-                        flux_minus_all_i = (1.0 - fhole)* flux_minus_all_i + fhole * flux_minus_all_i_clear
+                                                    delta_wno, integrated_energy=False, get_lvl_flux=lvl_in_spectrum_call)
                         flux = (1.0 - fhole)*flux + fhole * flux_clear
+
+                    if lvl_in_separate_call:
+                        _,lvl_fluxes  = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                                                        DTAU_OG[:,:,ig], W0_no_raman[:,:,ig], COSB_OG[:,:,ig], 
+                                                        atm.level['pressure'],ubar1,
+                                                        atm.surf_reflect, atm.hard_surface,
+                                                        delta_wno, integrated_energy=True, get_lvl_flux=True)
+                        if do_holes == True:
+                            _,lvl_fluxes_clear = get_thermal_1d(nlevel, wno,nwno,ng,nt,atm.level['temperature'],
+                                                    DTAU_OG_clear[:,:,ig], W0_no_raman_clear[:,:,ig], COSB_OG_clear[:,:,ig], 
+                                                    atm.level['pressure'],ubar1,
+                                                    atm.surf_reflect, atm.hard_surface,
+                                                    delta_wno, integrated_energy=True, get_lvl_flux=True)
+
+                    if get_lvl_flux:
+                        flux_minus_all_i, flux_plus_all_i, flux_minus_midpt_all_i, flux_plus_midpt_all_i = lvl_fluxes
+                        if do_holes == True:
+                            flux_minus_all_i_clear, flux_plus_all_i_clear, flux_minus_midpt_all_i_clear, flux_plus_midpt_all_i_clear= lvl_fluxes_clear
+
+                            #weighted average of cloudy and clearsky
+                            flux_plus_midpt_all_i = (1.0 - fhole)* flux_plus_midpt_all_i + fhole * flux_plus_midpt_all_i_clear
+                            flux_minus_midpt_all_i = (1.0 - fhole)* flux_minus_midpt_all_i + fhole * flux_minus_midpt_all_i_clear
+                            flux_plus_all_i = (1.0 - fhole)* flux_plus_all_i + fhole * flux_plus_all_i_clear
+                            flux_minus_all_i = (1.0 - fhole)* flux_minus_all_i + fhole * flux_minus_all_i_clear
 
 
                 elif rt_method == 'SH':
@@ -494,7 +526,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 #diesct just a subsection to get the opacity 
                 atm_1d.disect(g,t)
 
-                get_opacities(atm_1d)
+                get_opacities(atm_1d,exclude_mol=exclude_mol)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman, f_deltaM = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
@@ -587,22 +619,15 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         albedo = compress_disco(nwno, cos_theta, xint_at_top, gweight, tweight,F0PI)
         returns['albedo'] = albedo 
 
-        # This is attempt to get the compress_disco to return the integrated fluxes
-        # However, its mixing an albedo calc and an itegration calc I think
-
         if ((rt_method == 'toon') & get_lvl_flux): 
-            #for i in atm.lvl_output_reflected.keys():
+            #each facet's reflected level fluxes are fluxes for that facet, lit at its own mu0. average 
+            #them per unit area over the visible hemisphere: a facet's area on the sphere is its disk 
+            #weight divided by mu1. for a single column (phase_angle(0, num_gangle=1), the geometry an 
+            #energy budget needs, see the Level_Fluxes tutorial) this is just that column. units follow 
+            #F0PI: energy per bin if integrated_energy=True (see star())
+            facet_area = (np.asarray(gweight)[:,None]*np.asarray(tweight)[None,:]) / ubar1
             for key, data in atm.lvl_output_reflected.items():
-                #atm.lvl_output_reflected[i] = compress_disco(nwno,cos_theta,atm.lvl_output_reflected[i], gweight, tweight,F0PI)   
-
-                # Get the number of layers to do the layer slicing
-                _, _, nlayer, nwno_data = data.shape
-
-                # Integrate each layer
-                atm.lvl_output_reflected[key] = np.array([compress_disco(nwno_data,
-                                                                         cos_theta,
-                                                                         data[:, :, layer_idx, :],
-                                                                         gweight, tweight, np.zeros(nwno) + 1.) for layer_idx in range(nlayer)])
+                atm.lvl_output_reflected[key] = np.sum(facet_area[:,:,None,None]*data, axis=(0,1)) / np.sum(facet_area)
 
 
         #see equation 18 Batalha+2019 PICASO 
@@ -633,8 +658,13 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
             for i in atm.lvl_output_thermal.keys():
                 delta_wno = getattr(opacityclass,'delta_wno', np.concatenate((np.diff(opacityclass.wno),[np.diff(opacityclass.wno)[-1]])))
                 disk_integrated_lvl_flux = compress_thermal(nwno,atm.lvl_output_thermal[i], gweight, tweight)  
-                energy_per_wave_bin = disk_integrated_lvl_flux*delta_wno 
-                atm.lvl_output_thermal[i] = energy_per_wave_bin
+                if integrated_energy:
+                    #the blackbody was integrated over each wavenumber bin (per cm-1), so multiplying 
+                    #by the bin width gives the energy in each bin (erg/cm2/s)
+                    atm.lvl_output_thermal[i] = disk_integrated_lvl_flux*delta_wno 
+                else:
+                    #monochromatic, in the same units as the thermal spectrum
+                    atm.lvl_output_thermal[i] = disk_integrated_lvl_flux
 
         #only need to return relative flux if not a browndwarf calculation
         if radius_star == 'nostar': 
@@ -1403,6 +1433,7 @@ def opannection(
         Error message to warn users about resampling. Can be turned off by supplying 
         verbose=False
     """
+    _paths.require_refdata()
     inputs = json.load(open(os.path.join(__refdata__,'config.json')))
 
     if ((method == 'resampled') & isinstance(ck_db,type(None))):
@@ -1523,6 +1554,7 @@ class inputs():
     """
     def __init__(self, calculation='planet', climate=False):
 
+        _paths.require_refdata()
         self.inputs = json.load(open(os.path.join(__refdata__,'config.json')))
         
         if 'brown' in calculation:
@@ -1555,6 +1587,10 @@ class inputs():
             is defined as angles over the full sphere. So 10 as the default compute the RT 
             with 5 points on the west hemisphere and 5 points on the west. 
             Higher numbers will slow down code. 
+            num_gangle=1 (with num_tangle=1 and phase=0) is a special case: a single plane-parallel 
+            column lit and viewed at mu = 0.5, the dayside average. The climate code uses it for 
+            starlight, so use it for reflected-light level fluxes in an energy budget (see the 
+            Level_Fluxes tutorial). It is not a disk integration and cannot be used for thermal emission. 
         num_tangle : int 
             Number of Tchebyshev angles to integrate over facets (Default is 1, which automatically 
             assumes symmetry). 
@@ -1588,8 +1624,18 @@ class inputs():
                 However, it looks like you would like to compute non-zero phase functions. 
                 In this case, we can no longer utilize symmetry in our disk integration. Therefore, 
                 please resubmit phase_angle with num_tange>10 and num_gangle>10.""")
-            if num_gangle==1:  raise Exception("""num_gangle cannot be 1. 
-                Please resubmit your run with num_tangle=1, and increase number of Gauss points""")
+            if num_gangle==1:
+                if num_tangle!=1: raise Exception("num_gangle=1 is a single plane-parallel column and needs num_tangle=1")
+                #a single plane-parallel column, lit and viewed at mu = 0.5 (the dayside average). this is 
+                #the geometry the climate code uses for starlight, so it is the one to use for reflected 
+                #level fluxes in an energy budget. it is not a disk integration, and it cannot be used for 
+                #thermal emission (the Toon source function terms are singular at mu = 0.5)
+                self.inputs['phase_angle'] = phase
+                self.inputs['disco'] = dict(num_gangle=1, num_tangle=1,
+                    gangle=np.array([0.5]), gweight=np.array([0.5]), tangle=np.array([0.]), tweight=np.array([1.]),
+                    latitude=np.array([0.]), longitude=np.array([0.]), cos_theta=1.0,
+                    ubar0=np.array([[0.5]]), ubar1=np.array([[0.5]]))
+                return
 
             num_gangle = int(num_gangle/2) #utilizing symmetry
 
@@ -1860,6 +1906,9 @@ class inputs():
         Turns off planet specific things, so program can run as usual
         """
         self.inputs['calculation'] ='climate'
+        #climate needs the level fluxes, as energies integrated over each wavenumber bin
+        self.inputs['approx']['get_lvl_flux'] = True
+        self.inputs['approx']['integrated_energy'] = True
 
         self.inputs['approx']['rt_params']['common']['raman'] = 2 #turning off raman scattering
         #auto turn on zero phase for now there is no use giving users a choice in disk gauss angle 
@@ -1908,7 +1957,7 @@ class inputs():
 
     def star(self,opannection,temp=None, metal=None, logg=None ,radius = None, radius_unit=None,
         semi_major=None, semi_major_unit = None, #deq = False, 
-        database='ck04models',filename=None, w_unit=None, f_unit=None):
+        database='phoenix',filename=None, w_unit=None, f_unit=None):
         """
         Get the stellar spectrum using stsynphot and interpolate onto a much finer grid than the 
         planet grid. 
@@ -1935,8 +1984,9 @@ class inputs():
         semi_major_unit : astropy.unit 
             (Optional) Any astropy unit (e.g. `radius_unit=astropy.unit.Unit("au")`)
         database : str 
-            (Optional)The database to pull stellar spectrum from. See documentation for pysynphot. 
-            Most popular are 'ck04models', phoenix' and 
+            (Optional) The stsynphot grid to pull the stellar spectrum from, which must be in
+            $PYSYN_CDBS/grid. Default is 'phoenix' (downloaded by picaso-data setup --bundle default-planet).
+            Another common choice is 'ck04models' (Castelli & Kurucz 2004). None also means 'phoenix'.
         filename : str 
             (Optional) Upload your own stellar spectrum. File format = two column white space (wave, flux). 
             Must specify w_unit and f_unit 
@@ -1969,15 +2019,18 @@ class inputs():
             wave = star['w']
             ST_SS = SourceSpectrum(Empirical1D, points=wave*u.Unit(w_unit), lookup_table=flux*u.Unit(f_unit))
         elif ((not isinstance(temp, type(None))) & (not isinstance(metal, type(None))) & (not isinstance(logg, type(None)))):
-            ST_SS = sts.grid_to_spec(database, temp, metal, logg) 
+            if database is None: database = 'phoenix'
+            if not os.path.isdir(os.path.join(os.environ.get('PYSYN_CDBS', ''), 'grid', database)):
+                raise FileNotFoundError(_paths.missing_stellar_message(database))
+            ST_SS = sts.grid_to_spec(database, temp, metal, logg)
         else: 
             raise Exception("Must enter 1) filename,w_unit & f_unit OR 2)temp, metal & logg ")
 
         wno_star = 1e4/(ST_SS.waveset).to(u.um).value[::-1]
         flux_star = ST_SS(ST_SS.waveset,flux_unit=u.Unit('erg*cm^(-3)*s^(-1)')).value[::-1]
         
-        # Get a bool for whether we want level fluxes
-        get_lvl_flux = self.inputs['approx'].get('get_lvl_flux', False)
+        # energies integrated over each wavenumber bin? (always True for climate, see approx)
+        integrated_energy = self.inputs['approx'].get('integrated_energy', False)
 
         wno_planet = opannection.wno
 
@@ -1993,9 +2046,12 @@ class inputs():
             opannection.compute_stellar_shits(fine_wno_star, fine_flux_star)
             bin_flux_star = opannection.unshifted_stellar_spec
             unit_flux =  'ergs cm^{-2} s^{-1} cm^{-1}'
-        elif ('climate' in self.inputs['calculation'] or (get_lvl_flux)):
+
+        #integrated energies need the stellar flux integrated over each bin (energy per bin), 
+        #whatever the raman setting is. the raman shifts above are ratios, so they are unaffected
+        if integrated_energy:
             if not ((not np.isnan(semi_major)) & (not np.isnan(r))): 
-                raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculation or when get_lvl_flux are being requested')
+                raise Exception ('semi_major and r parameters are not provided but are needed to compute relative fluxes for climate calculations or when integrated_energy is requested')
 
             # Ensure valid values for interpolation
             mask_valid = flux_star > 1e-30  
@@ -2030,7 +2086,7 @@ class inputs():
             opannection.unshifted_stellar_spec = fine_flux_star  
             bin_flux_star = fine_flux_star          
             unit_flux =  'ergs cm^{-2} s^{-1}'
-        else :
+        elif self.inputs['approx']['rt_params']['common']['raman'] != 0:
             flux_star_interp = np.interp(wno_planet, wno_star, flux_star)
             _x,bin_flux_star = mean_regrid(wno_star, flux_star,newx=wno_planet)
             #where the star wasn't high enough resolution  
@@ -4932,7 +4988,7 @@ class inputs():
         single_form='explicit', calculate_fluxes='off', 
         w_single_form='TTHG', w_multi_form='TTHG', psingle_form='TTHG', 
         w_single_rayleigh = 'on', w_multi_rayleigh='on', psingle_rayleigh='on', 
-        get_lvl_flux = False):
+        get_lvl_flux = False, integrated_energy = False):
         """
         This function REsets all the default approximations in the code from what is in config file.
         This means that it will rewrite what is specified via config file defaults.
@@ -4985,12 +5041,29 @@ class inputs():
             Toggle rayleigh scattering on/off for multi scattering in SH
         psingle_rayleigh : str 
             Toggle rayleigh scattering on/off for psingle in SH
-        get_lvl_flux : bool 
-            This parameter returns the level by level and layer by layer 
-            fluxes in the full output
-            Default is False
+        get_lvl_flux : bool
+            Default is False. If True, spectrum() also returns the upward and downward fluxes at
+            every level (flux_plus, flux_minus) and layer midpoint (flux_plus_mdpt, flux_minus_mdpt)
+            in the full output under full_output['level']['thermal_fluxes'] and
+            full_output['level']['reflected_fluxes'], each with one row per level and one column
+            per wavenumber. This only adds outputs; the spectrum itself is unchanged. It costs
+            extra time and memory, which is why it is off by default.
+        integrated_energy : bool
+            Default is False. Controls the units of the level fluxes and the stellar flux. If False,
+            level fluxes are monochromatic, in the same units as the spectrum. If True, every
+            level-flux value is the energy in its wavenumber bin (erg/cm^2/s), so summing over
+            wavenumber gives the total flux at each level, as needed for an energy budget: thermal
+            level fluxes use the blackbody integrated over each bin, and star() integrates the
+            stellar flux over each bin. To reproduce the climate code's energy balance, also use
+            the same opacities and raman='none' (the climate code turns Raman scattering off).
+            For climate calculations (inputs(climate=True)) get_lvl_flux and integrated_energy
+            are always True.
         """
+        #climate always needs level fluxes as energies integrated over each wavenumber bin
+        if 'climate' in self.inputs['calculation']:
+            get_lvl_flux, integrated_energy = True, True
         self.inputs['approx']['get_lvl_flux'] = get_lvl_flux
+        self.inputs['approx']['integrated_energy'] = integrated_energy
 
         self.inputs['approx']['rt_method'] = rt_method
 
@@ -5630,7 +5703,7 @@ def get_targets():
         planets_df[i] = planets_df[i].astype(float,errors='ignore')
 
     return planets_df
-def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=False,  **planet_kwargs):
+def load_planet(df, opacity, phase_angle = 0, stellar_db='phoenix', verbose=False,  **planet_kwargs):
     """
     Wrapper to simplify PICASO run. This really turns picaso into a black box. This was created 
     specifically Sagan School tutorial. It grabs planet parameters from the user supplied df, then 
@@ -5645,8 +5718,8 @@ def load_planet(df, opacity, phase_angle = 0, stellar_db='ck04models', verbose=F
     phase_angle : float 
         Observing phase angle (radians)
     stellar_db : str 
-        Stellar database to pull from. Default is ck04models but you can also 
-        use phoenix if you have those downloaded.
+        Stellar database to pull from. Default is phoenix but you can also 
+        use ck04models if you have those downloaded.
     verbose : bool , options
         Print out warnings 
     planet_kwargs : dict 
@@ -5765,7 +5838,7 @@ def jupiter_cld():
 def HJ_pt():
     """Function to get Jupiter's PT profile"""
     return os.path.join(__refdata__, 'base_cases','HJ.pt')
-def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')):
+def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = None):
     """Function to get Jupiter's PT profile
     
     Parameters
@@ -5778,7 +5851,7 @@ def HJ_pt_3d(as_xarray=False,add_kz=False, input_file = os.path.join(__refdata__
         point to input file in the same format as mitgcm example 
         file in base_cases/HJ_3d.pt
     """
-    #input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
+    if input_file is None: input_file = os.path.join(__refdata__, 'base_cases','HJ_3d.pt')
     threed_grid = pd.read_csv(input_file,sep=r'\s+',names=['p','t','k'])
     all_lon= threed_grid.loc[np.isnan(threed_grid['k'])]['p'].values
     all_lat=  threed_grid.loc[np.isnan(threed_grid['k'])]['t'].values

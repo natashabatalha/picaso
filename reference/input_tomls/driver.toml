@@ -45,8 +45,8 @@ type_options=['grid', 'userfile']
 logg  = 4.0
 teff  = 5400.0
 feh   = 0.0
-database  ='ck04models'# options: phoenix, ck04models, or other pysynphot databases
-database_options=['ck04models', 'phoenix']
+database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
+database_options=['phoenix', 'ck04models']
 
 [star.userfile]
 filename = '' # simple two column format no header column1=wavelength, column2=flux

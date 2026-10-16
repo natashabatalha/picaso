@@ -37,7 +37,7 @@ logg  = 4.38933
 teff  = 5326.6
 feh   = -0.03
 database  ='phoenix'# options: phoenix, ck04models, or other pysynphot databases
-database_options=['ck04models', 'phoenix']
+database_options=['phoenix', 'ck04models']
 
 [star.userfile]
 filename = '' # simple two column format no header column1=wavelength, column2=flux

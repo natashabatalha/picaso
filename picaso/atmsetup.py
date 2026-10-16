@@ -575,14 +575,16 @@ class ATMSETUP():
         self.level['z'] = z
         self.level['dz'] = dz
 
-        #for get_column_density calculation below we want gravity at layers
-        self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
+        #the loops above skip the top and bottom levels, so fill them in before averaging
         if constant_gravity:
             gravity[-1] = self.planet.gravity
             gravity[0] = self.planet.gravity
         else:
             gravity[-1] = self.c.G * self.planet.mass / ( z[-1] )**2
             gravity[0] = self.c.G * self.planet.mass / ( z[0] )**2
+
+        #for get_column_density calculation below we want gravity at layers
+        self.layer['gravity'] = 0.5*(gravity[0:-1] + gravity[1:])
 
         self.level['scale_height'] = self.c.k_b * tlevel / (mmw * gravity)
 
