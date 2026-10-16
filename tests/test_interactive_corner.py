@@ -143,3 +143,5 @@ def test_corner_point_route():
     assert meta['labels'][0] == 'T_iso [K]'
     assert figure['layout']['shapes'][0]['x0'] == pytest.approx(1000.0)
     assert 'value="T_iso [K]"' in page
+    # without corner.js the lines can still be dragged (plotly's shapePosition edit) but nothing recomputes the spectrum
+    assert 'corner.js' in page
