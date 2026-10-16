@@ -204,6 +204,17 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
     #get geometry
     geom = inputs['disco']
 
+    #options that only the 1d calculation supports
+    if dimension == '3d':
+        if get_lvl_flux:
+            raise Exception('Level fluxes (approx(get_lvl_flux=True)) are only computed for 1d calculations.')
+        if geom.get('num_gangle') == 1:
+            raise Exception('phase_angle(num_gangle=1) is a single 1d column (for reflected-light energy budgets). '
+                'It cannot be used for 3d calculations.')
+        if do_holes:
+            warnings.warn('Patchy clouds (do_holes) are only computed for 1d calculations; '
+                'this 3d calculation uses the full cloud profile.')
+
     ng, nt = geom['num_gangle'], geom['num_tangle']
     gangle,gweight,tangle,tweight = geom['gangle'], geom['gweight'],geom['tangle'], geom['tweight']
     lat, lon = geom['latitude'], geom['longitude']
@@ -512,7 +523,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
                 #diesct just a subsection to get the opacity 
                 atm_1d.disect(g,t)
 
-                get_opacities(atm_1d)
+                get_opacities(atm_1d,exclude_mol=exclude_mol)
 
                 dtau, tau, w0, cosb,ftau_cld, ftau_ray, gcos2, DTAU_OG, TAU_OG, W0_OG, COSB_OG, WO_no_raman, f_deltaM = compute_opacity(
                     atm_1d, opacityclass, ngauss=ngauss, stream=stream,delta_eddington=delta_eddington,
