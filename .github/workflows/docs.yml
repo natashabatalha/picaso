@@ -39,6 +39,14 @@ jobs:
         working-directory: docs
         run: make html
 
+      # AI assistants read these files to learn how to install and use PICASO
+      - name: Check llms.txt was built
+        working-directory: docs/_build/html
+        run: |
+          grep -q "quickstart:start" llms-full.txt   # README Quickstart examples are appended
+          grep -q "picaso-data setup --bundle default-planet" llms.txt
+          grep -q "_sources/migration_v5.md.txt" llms.txt
+
       - name: Upload HTML for preview
         uses: actions/upload-artifact@v4
         with:

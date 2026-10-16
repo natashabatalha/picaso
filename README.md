@@ -13,6 +13,8 @@
 - Bug reports: https://github.com/natashabatalha/picaso/issues
 - Physics help: https://natashabatalha.github.io/picaso_dev 
 - What to cite: https://natashabatalha.github.io/picaso/credit.html 
+- Upgrading from v4: https://natashabatalha.github.io/picaso/migration_v5.html
+- For AI assistants and LLM tools: https://natashabatalha.github.io/picaso/llms.txt (page index with install and usage notes) and https://natashabatalha.github.io/picaso/llms-full.txt (all docs in one file)
 
 ## Major Features
 

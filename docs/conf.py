@@ -124,13 +124,34 @@ html_theme_options = {
 # -- llms.txt ----------------------------------------------------------------
 
 llms_txt_title = 'PICASO'
+# every line goes into the blockquote under the title; keep it short and current,
+# since AI assistants read this before (or instead of) the pages listed below it
 llms_txt_summary = (
     'PICASO is a Python code for computing exoplanet and brown dwarf spectra '
-    '(reflected light, thermal emission, transmission), 1D climate models, '
-    'and fitting models to data. Requires the PICASO reference data '
-    '(environment variable picaso_refdata) and an opacity database. '
+    '(reflected light, thermal emission, transmission), 1D radiative-convective climate models, '
+    'and fitting models to data with grids and retrievals.\n'
+    '\n'
+    'Install: `pip install picaso`, then download the data with one command: '
+    '`picaso-data setup --bundle default-planet` (exoplanets: reference data, default opacities '
+    'and PHOENIX stellar grids) or `picaso-data setup --bundle default-browndwarf` (no stellar grids). '
+    'PICASO then finds the data without environment variables; `picaso-data check` verifies it '
+    'and `picaso-data list` shows optional data (climate correlated-k tables, Sonora grids, other opacities).\n'
+    '\n'
+    'Usage (`import picaso.justdoit as jdi`): `opa = jdi.opannection(wave_range=[...])` loads opacities; '
+    '`jdi.inputs()` (or `jdi.inputs(calculation="browndwarf")`) sets up a case with `.gravity()`, '
+    '`.star()`, an atmosphere (`.atmosphere(df=...)`, or `.guillot_pt()` plus `.chemeq_visscher_2121()`), '
+    'and `.approx()`; then `.spectrum(opa, calculation="transmission" | "thermal" | "reflected")`. '
+    'Copy-and-run examples for a transmission spectrum, brown dwarf emission and a terrestrial planet '
+    'in reflected light: https://natashabatalha.github.io/picaso/getting_started.html\n'
+    '\n'
+    'Upgrading from v4 (e.g. the default stellar grid is now PHOENIX): '
+    'https://natashabatalha.github.io/picaso/migration_v5.html\n'
+    '\n'
     f'These docs were built with picaso {release} and reference data {refdata_version}.'
 )
+# getting_started.md pulls the Quickstart from the README with a MyST {include}, which
+# sphinx-llms-txt does not expand, so append the README itself to llms-full.txt
+llms_txt_code_files = ['+:../README.md']
 
 # -- Setup -------------------------------------------------------------------
 
