@@ -28,6 +28,13 @@ Learn PICASO's basic inputs and outputs, then continue through the rest of the t
 
 ::::
 
+## Quickstart in code
+
+```{include} ../README.md
+:start-after: <!-- quickstart:start -->
+:end-before: <!-- quickstart:end -->
+```
+
 :::{tip}
 Prefer to set things up by hand, or need optional data such as stellar grids, correlated-k tables or Sonora models? See {ref}`reference_data` on the Installation page, which also explains how to set environment variables permanently.
 :::
