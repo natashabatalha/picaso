@@ -46,7 +46,7 @@ import h5py
 # #testing error tracker
 # from loguru import logger 
 __refdata__ = os.environ.get('picaso_refdata')
-__version__ = '4.1'
+from ._version import __version__
 
 LODDERS2020_C_TO_O = 0.54939759398
 

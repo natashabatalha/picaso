@@ -1,0 +1,205 @@
+# This file tells GitHub, Zenodo and citation tools how to cite PICASO.
+# Feature-specific papers (clouds, chemistry, retrievals, ...) are listed at
+# https://natashabatalha.github.io/picaso/credit.html
+cff-version: 1.2.0
+message: "If you use PICASO, please cite the software and the paper below. See the credit page for papers describing specific features."
+title: "PICASO: Planetary Intensity Code for Atmospheric Scattering Observations"
+type: software
+authors:
+  - family-names: "Batalha"
+    given-names: "Natasha E."
+    orcid: "https://orcid.org/0000-0003-1240-6844"
+  - family-names: "Mang"
+    given-names: "James"
+    orcid: "https://orcid.org/0000-0001-5864-9599"
+  - family-names: "Wogan"
+    given-names: "Nicholas"
+    orcid: "https://orcid.org/0000-0002-0413-3308"
+  - family-names: "Rooney"
+    given-names: "Caoimhe"
+  - family-names: "Mukherjee"
+    given-names: "Sagnick"
+    orcid: "https://orcid.org/0000-0003-1622-1302"
+  - family-names: "Ardevol Martinez"
+    given-names: "Francisco"
+  - family-names: "Malsky"
+    given-names: "Isaac"
+    orcid: "https://orcid.org/0000-0003-0217-3880"
+  - family-names: "Hamill"
+    given-names: "Colin"
+    orcid: "https://orcid.org/0000-0002-9464-8494"
+  - family-names: "Robbins-Blanch"
+    given-names: "Nina"
+    orcid: "https://orcid.org/0000-0002-8356-8712"
+  - family-names: "Nag"
+    given-names: "Rowan"
+    orcid: "https://orcid.org/0009-0003-0371-296X"
+  - family-names: "Lucarellie"
+    given-names: "Niko"
+  - family-names: "Doud"
+    given-names: "Dominic"
+  - family-names: "Bush"
+    given-names: "Rewa"
+  - family-names: "Cruz"
+    given-names: "Kelle"
+  - family-names: "Sengupta"
+    given-names: "Aditya"
+  - alias: "Kappibw"
+  - family-names: "Liberles"
+    given-names: "Benjamin"
+  - family-names: "Visscher"
+    given-names: "Channon"
+    orcid: "https://orcid.org/0000-0001-6627-6067"
+  - family-names: "St. Gerard"
+    given-names: "Roman"
+  - alias: "nainas2024"
+  - family-names: "Lin"
+    given-names: "Yu-Chia"
+  - family-names: "Pearce"
+    given-names: "Logan"
+  - alias: "zshakespear"
+  - alias: "ayanaman271"
+  - family-names: "Mullens"
+    given-names: "Elijah"
+  - family-names: "Nixon"
+    given-names: "C."
+abstract: "PICASO computes exoplanet and brown dwarf spectra in transmission, thermal emission and reflected light, runs 1D radiative-convective climate models with clouds and photochemistry, and fits models to spectroscopic data with grids and retrievals."
+doi: "10.5281/zenodo.2647592"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.2647592"
+    description: "Concept DOI: always resolves to the latest PICASO release"
+repository-code: "https://github.com/natashabatalha/picaso"
+url: "https://natashabatalha.github.io/picaso"
+license: GPL-3.0
+keywords:
+  - exoplanets
+  - brown dwarfs
+  - substellar objects
+  - planetary atmospheres
+  - radiative transfer
+  - spectroscopy
+  - transit spectroscopy
+  - transmission spectroscopy
+  - emission spectroscopy
+  - thermal emission
+  - reflected light spectroscopy
+  - phase curves
+  - direct imaging
+  - climate models
+  - radiative-convective equilibrium
+  - retrievals
+  - JWST
+  - HWO
+preferred-citation:
+  type: article
+  title: "Exoplanet Reflected-light Spectroscopy with PICASO"
+  authors:
+    - family-names: "Batalha"
+      given-names: "Natasha E."
+      orcid: "https://orcid.org/0000-0003-1240-6844"
+    - family-names: "Marley"
+      given-names: "Mark S."
+      orcid: "https://orcid.org/0000-0002-5251-2943"
+    - family-names: "Lewis"
+      given-names: "Nikole K."
+      orcid: "https://orcid.org/0000-0002-8507-1304"
+    - family-names: "Fortney"
+      given-names: "Jonathan J."
+      orcid: "https://orcid.org/0000-0002-9843-4354"
+  journal: "The Astrophysical Journal"
+  volume: 878
+  start: 70
+  year: 2019
+  doi: "10.3847/1538-4357/ab1b51"
+references:
+  - type: article
+    title: "PICASO 3.0: A One-dimensional Climate Model for Giant Planets and Brown Dwarfs"
+    authors:
+      - family-names: "Mukherjee"
+        given-names: "Sagnick"
+        orcid: "https://orcid.org/0000-0003-1622-1302"
+      - family-names: "Batalha"
+        given-names: "Natasha E."
+        orcid: "https://orcid.org/0000-0003-1240-6844"
+      - family-names: "Fortney"
+        given-names: "Jonathan J."
+        orcid: "https://orcid.org/0000-0002-9843-4354"
+      - family-names: "Marley"
+        given-names: "Mark S."
+        orcid: "https://orcid.org/0000-0002-5251-2943"
+    journal: "The Astrophysical Journal"
+    volume: 942
+    start: 71
+    year: 2023
+    doi: "10.3847/1538-4357/ac9f48"
+  - type: article
+    title: "Reflected-light Phase Curves with PICASO: A Kepler-7b Case Study"
+    authors:
+      - family-names: "Hamill"
+        given-names: "Colin D."
+        orcid: "https://orcid.org/0000-0002-9464-8494"
+      - family-names: "Johnson"
+        given-names: "Alexandria V."
+        orcid: "https://orcid.org/0000-0002-6227-3835"
+      - family-names: "Batalha"
+        given-names: "Natasha"
+        orcid: "https://orcid.org/0000-0003-1240-6844"
+      - family-names: "Nag"
+        given-names: "Rowan"
+        orcid: "https://orcid.org/0009-0003-0371-296X"
+      - family-names: "Gao"
+        given-names: "Peter"
+        orcid: "https://orcid.org/0000-0002-8518-9601"
+      - family-names: "Adams"
+        given-names: "Danica"
+        orcid: "https://orcid.org/0000-0001-9897-9680"
+      - family-names: "Kataria"
+        given-names: "Tiffany"
+        orcid: "https://orcid.org/0000-0003-3759-9080"
+    journal: "The Astrophysical Journal"
+    volume: 976
+    start: 181
+    year: 2024
+    doi: "10.3847/1538-4357/ad7de6"
+  - type: article
+    title: "PICASO 4.0: Clouds and Photochemistry in Climate Models of Brown Dwarfs and Exoplanets"
+    authors:
+      - family-names: "Mang"
+        given-names: "James"
+        orcid: "https://orcid.org/0000-0001-5864-9599"
+      - family-names: "Batalha"
+        given-names: "Natasha E."
+        orcid: "https://orcid.org/0000-0003-1240-6844"
+      - family-names: "Morley"
+        given-names: "Caroline V."
+        orcid: "https://orcid.org/0000-0002-4404-0456"
+      - family-names: "Wogan"
+        given-names: "Nicholas F."
+        orcid: "https://orcid.org/0000-0002-0413-3308"
+      - family-names: "Mukherjee"
+        given-names: "Sagnick"
+        orcid: "https://orcid.org/0000-0003-1622-1302"
+      - family-names: "Visscher"
+        given-names: "Channon"
+        orcid: "https://orcid.org/0000-0001-6627-6067"
+      - family-names: "Marley"
+        given-names: "Mark S."
+        orcid: "https://orcid.org/0000-0002-5251-2943"
+      - family-names: "Fortney"
+        given-names: "Jonathan J."
+        orcid: "https://orcid.org/0000-0002-9843-4354"
+      - family-names: "Chubb"
+        given-names: "Katy L."
+        orcid: "https://orcid.org/0000-0002-4552-4559"
+      - family-names: "Gao"
+        given-names: "Peter"
+        orcid: "https://orcid.org/0000-0002-8518-9601"
+      - family-names: "Malsky"
+        given-names: "Isaac"
+        orcid: "https://orcid.org/0000-0003-0217-3880"
+    journal: "The Astrophysical Journal"
+    volume: 1000
+    start: 98
+    year: 2026
+    doi: "10.3847/1538-4357/ae47ff"
