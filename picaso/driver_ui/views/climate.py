@@ -21,6 +21,7 @@ from picaso.driver_ui.core.config_ops import (
 from picaso.driver_ui.core.config_schema import apply_form, build_fields, find_field
 from picaso.climate_log import ConvergenceHistory
 from picaso.driver_ui.core.plots import Plot, plotly_plot
+from picaso.driver_ui.views.builder import Builder, Step
 from picaso.driver_ui.views.cards import Card, bulk_property_fields, bulk_property_notes, card_views, set_messages
 from picaso.driver_ui.views.spectrum import learn_more
 
@@ -208,6 +209,39 @@ CARDS = [UploadCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(), Tempe
 CARDS_BY_NAME = {card.name: card for card in CARDS}
 
 
+class ClimateBuilder(Builder):
+    """The model-builder sidebar (views/builder.py) for the climate page."""
+    steps = (
+        Step("setup", "Setup", "correlated-k opacities and whether the object is irradiated.",
+             ("upload", "optical", "setup"), bookend=True),
+        Step("star", "Star", "the host star that heats the planet. Skip it for brown dwarfs.", ("star",),
+             toggle="f-climate-config-irradiated"),
+        Step("object", "Object", "bulk properties of the object: mass, radius and internal temperature.", ("object",)),
+        Step("pt", "P–T", "the initial guess the climate model iterates from.", ("temperature",)),
+        Step("chemistry", "Chemistry", "which molecules are in the atmosphere, and how much of each.", ("chemistry",)),
+        Step("climate", "Climate", "solve for the temperature profile in radiative-convective equilibrium.",
+             ("climate",)),
+        Step("export", "Export", "download the climate TOML and run this model from Python.",
+             ("configuration",), bookend=True),
+    )
+    run_step = "climate"
+
+    def store(self, sess):
+        return page_state(sess)
+
+    def enabled(self, sess, key):
+        return config_of(sess).get("irradiated", False) if key == "star" else True
+
+    def ran(self, sess):
+        return "run" in page_state(sess)["results"]
+
+    def badge_label(self, sess):
+        return "Climate"
+
+
+BUILDER = ClimateBuilder()
+
+
 # =======================================
 # RENDERING
 # =======================================
@@ -227,11 +261,14 @@ def live_view(sess):
             "log": "\n".join(history.log[-40:])}
 
 
-def render_page(sess, errors=None):
+def render_page(sess, errors=None, card_name=None):
+    """`card_name` is the card whose form was just submitted, so its `errors` mark its builder step."""
+    cards = card_views(CARDS, sess, page_state(sess)["results"])
     return render_template(
         "_cards.html",
         endpoint="climate.update_card",
-        cards=card_views(CARDS, sess, page_state(sess)["results"]),
+        cards=cards,
+        builder=BUILDER.state(sess, cards, error_card=card_name if errors else None),
         errors=errors or {},
         sess=sess,
         climate_state=page_state(sess),
@@ -260,7 +297,8 @@ def update_card(name):
     errors = card.update(sess, request.form)
     if card.clears_previews:
         page_state(sess)["results"].pop("preview", None)
-    return render_page(sess, errors)
+    BUILDER.touch(sess, name)
+    return render_page(sess, errors, name)
 
 
 @bp.post("/upload")
@@ -273,6 +311,7 @@ def upload():
         c["config"] = resolve_climate_defaults(c["config"], current_app.config["PICASO_REFDATA"])
         c["results"].pop("preview", None)
         set_messages(c["results"], "upload", [("success", "Successfully loaded user-provided default values.")])
+        BUILDER.touch(sess, "upload")
     except (tomllib.TOMLDecodeError, UnicodeDecodeError, AttributeError) as e:
         set_messages(c["results"], "upload", [("error", f"Could not read the TOML file: {e}")])
     return render_page(sess)
@@ -287,6 +326,7 @@ def preview():
         result = {"warning": "Make sure you have configured the opacities, object, initial guess and chemistry.",
                   "error": str(e)}
     page_state(sess)["results"]["preview"] = result
+    BUILDER.touch(sess, "temperature")
     return render_page(sess)
 
 
@@ -371,7 +411,9 @@ def attachment(data, filename, mimetype):
 
 @bp.get("/download/climate.toml")
 def download_config():
-    return attachment(toml.dumps(model_config(state.current())), "climate.toml", "application/toml")
+    sess = state.current()
+    BUILDER.touch(sess, "configuration")
+    return attachment(toml.dumps(model_config(sess)), "climate.toml", "application/toml")
 
 
 @bp.get("/download/picaso_climate.nc")
