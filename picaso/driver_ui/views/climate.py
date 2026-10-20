@@ -11,14 +11,14 @@ import threading
 import tomllib
 
 import toml
-from flask import Blueprint, Response, abort, current_app, render_template, request
+from flask import Blueprint, Response, abort, current_app, redirect, render_template, request, url_for
 
 import picaso.driver as go
 from picaso.driver_ui import state
-from picaso.driver_ui.core import climate
+from picaso.driver_ui.core import archive, climate
 from picaso.driver_ui.core.config_ops import (
     climate_template_path, export_climate_config, merge_config, new_climate_config, resolve_climate_defaults)
-from picaso.driver_ui.core.config_schema import apply_form, build_fields, find_field
+from picaso.driver_ui.core.config_schema import Bool, Section, apply_form, build_fields, find_field
 from picaso.climate_log import ConvergenceHistory
 from picaso.driver_ui.core.plots import Plot, plotly_plot
 from picaso.driver_ui.views.builder import Builder, Step
@@ -45,8 +45,9 @@ def page_state(sess):
 def reset(sess):
     sess.climate.clear()
     sess.climate.update(config=new_climate_config(current_app.config["PICASO_REFDATA"]), results={})
-    # older reference climate.toml files do not have this UI option yet
+    # older reference climate.toml files do not have these options yet
     sess.climate["config"].setdefault("climate", {}).setdefault("watch_convergence", False)
+    sess.climate["config"].setdefault("cloudy", False)
 
 
 def config_of(sess):
@@ -103,6 +104,15 @@ class AdminCard(ClimatePageCard):
 class UploadCard(ClimatePageCard):
     name, title = "upload", "Pre-fill from a TOML file"
     extra = "climate/extras/upload.html"
+
+
+class ArchiveCard(ClimatePageCard):
+    name, title = "archive", "Pre-fill from the NASA Exoplanet Archive"
+    extra = "_archive_lookup.html"
+    endpoint = "climate.load_planet"
+
+    def notes(self, sess):
+        return archive.notes(config_of(sess), page_state(sess).get("archive"))
 
 
 class SetupCard(ClimatePageCard):
@@ -181,6 +191,35 @@ class ChemistryCard(ClimatePageCard):
         return []
 
 
+class CloudsCard(ClimatePageCard):
+    name, title = "clouds", "Clouds"
+
+    def visible(self, sess):
+        return "clouds" in config_of(sess)  # older reference climate.toml files have no [clouds]
+
+    def fields(self, sess):
+        config = config_of(sess)
+        children = [Bool(CONFIG + ("cloudy",), config["cloudy"], label="Do you want clouds?")]
+        if config["cloudy"]:
+            children += fields_for(sess, "clouds").children
+        return Section(("clouds_card",), children)
+
+    def notes(self, sess):
+        config = config_of(sess)
+        if not config["cloudy"]:
+            return []
+        notes = [("info", "Virga clouds are recomputed every iteration, with kzz computed by the climate model "
+                          "(cite Mang et al. 2026). Cloudy models converge more reliably from a deeper rcb_guess, "
+                          "though it takes longer.")]
+        virga = config["clouds"]["virga"]
+        directory = virga.get("directory", "")
+        missing = [gas for gas in virga.get("condensates", [])
+                   if not os.path.isfile(os.path.join(directory, f"{gas}.mieff"))]
+        if missing:
+            notes.append(("error", f"No .mieff files in {directory} for: {', '.join(missing)}"))
+        return notes
+
+
 class ClimateCard(ClimatePageCard):
     name, title = "climate", "Climate model"
     extra = "climate/extras/run.html"
@@ -204,8 +243,8 @@ class ConfigurationCard(ClimatePageCard):
     extra = "climate/extras/configuration.html"
 
 
-CARDS = [UploadCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(), TemperatureCard(),
-         ChemistryCard(), ClimateCard(), ConfigurationCard()]
+CARDS = [UploadCard(), ArchiveCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(), TemperatureCard(),
+         ChemistryCard(), CloudsCard(), ClimateCard(), ConfigurationCard()]
 CARDS_BY_NAME = {card.name: card for card in CARDS}
 
 
@@ -213,12 +252,14 @@ class ClimateBuilder(Builder):
     """The model-builder sidebar (views/builder.py) for the climate page."""
     steps = (
         Step("setup", "Setup", "correlated-k opacities and whether the object is irradiated.",
-             ("upload", "optical", "setup"), bookend=True),
+             ("upload", "archive", "optical", "setup"), bookend=True),
         Step("star", "Star", "the host star that heats the planet. Skip it for brown dwarfs.", ("star",),
              toggle="f-climate-config-irradiated"),
         Step("object", "Object", "bulk properties of the object: mass, radius and internal temperature.", ("object",)),
         Step("pt", "P–T", "the initial guess the climate model iterates from.", ("temperature",)),
         Step("chemistry", "Chemistry", "which molecules are in the atmosphere, and how much of each.", ("chemistry",)),
+        Step("clouds", "Clouds", "virga condensate clouds, computed along with the temperature profile.", ("clouds",),
+             toggle="f-climate-config-cloudy"),
         Step("climate", "Climate", "solve for the temperature profile in radiative-convective equilibrium.",
              ("climate",)),
         Step("export", "Export", "download the climate TOML and run this model from Python.",
@@ -230,7 +271,11 @@ class ClimateBuilder(Builder):
         return page_state(sess)
 
     def enabled(self, sess, key):
-        return config_of(sess).get("irradiated", False) if key == "star" else True
+        if key == "star":
+            return config_of(sess).get("irradiated", False)
+        if key == "clouds":
+            return config_of(sess).get("cloudy", False)
+        return True
 
     def ran(self, sess):
         return "run" in page_state(sess)["results"]
@@ -294,10 +339,12 @@ def update_card(name):
     card = CARDS_BY_NAME.get(name)
     if card is None or not card.visible(sess):
         abort(404)
+    clouds_were_on = config_of(sess).get("cloudy", False)
     errors = card.update(sess, request.form)
     if card.clears_previews:
         page_state(sess)["results"].pop("preview", None)
-    BUILDER.touch(sess, name)
+    if card.name != "clouds" or clouds_were_on:  # switching clouds on is not yet configuring them
+        BUILDER.touch(sess, name)
     return render_page(sess, errors, name)
 
 
@@ -314,6 +361,22 @@ def upload():
         BUILDER.touch(sess, "upload")
     except (tomllib.TOMLDecodeError, UnicodeDecodeError, AttributeError) as e:
         set_messages(c["results"], "upload", [("error", f"Could not read the TOML file: {e}")])
+    return render_page(sess)
+
+
+@bp.post("/archive")
+def load_planet():
+    """Loads a planet by name, from the box on this page or a "Use in climate" button on the planets page."""
+    sess = state.current()
+    c = page_state(sess)
+    try:
+        c["archive"] = archive.load_planet(c["config"], request.form.get("planet", ""))
+        c["results"].pop("preview", None)
+        BUILDER.touch(sess, "archive")
+    except Exception as e:
+        set_messages(c["results"], "archive", [("error", f"Could not load the planet: {e}")])
+    if not request.headers.get("HX-Request"):
+        return redirect(url_for("climate.index"))
     return render_page(sess)
 
 

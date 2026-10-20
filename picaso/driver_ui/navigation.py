@@ -47,6 +47,9 @@ GROUPS = (
              "Compare observation cases by their degrees of freedom and Shannon information content.", wip=True),
     )),
     Group("Explore", "Look inside PICASO's inputs.", (
+        Page("/planets/", "Load a planet",
+             "Search the NASA Exoplanet Archive by planet and star properties, then load a planet into a "
+             "spectrum or climate model."),
         Page("/opacities/", "View opacities",
              "Plot molecular and continuum cross sections from an opacity database at chosen temperatures, "
              "pressures and resolution."),

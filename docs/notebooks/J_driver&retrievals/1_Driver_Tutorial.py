@@ -391,4 +391,27 @@ prefilled = go.prefill_from_exoplanet_archive("55 Cnc c", config)
 # %%
 for section in ['object', 'star', 'temperature']:
     print(section, prefilled[section])
+
+# %% [markdown]
+# ### Search for planets by their properties
+#
+# Don't have a planet in mind? `query_exoplanet_archive` searches the archive by planet and star properties and
+# returns up to 50 matches (change this with `limit`). Give each property a `(min, max)` range, using `None` for
+# an open end. The columns you can search on are listed in `go.ARCHIVE_COLUMNS`:
+# %%
+for column, (description, unit) in go.ARCHIVE_COLUMNS.items():
+    print(f'{column:10s} {description} [{unit}]')
+
+# %% [markdown]
+# For example, planets with radii between 0.5 and 0.6 Jupiter radii and masses between 1.1 and 1.2 Jupiter masses:
+# %%
+planets = go.query_exoplanet_archive(pl_radj=(0.5, 0.6), pl_bmassj=(1.1, 1.2))
+planets
+
+# %% [markdown]
+# Any row of the result can be passed straight to `prefill_from_exoplanet_archive`:
+# %%
+if not planets.empty:
+    prefilled = go.prefill_from_exoplanet_archive(planets.iloc[0], config)
+    print(planets.iloc[0]['pl_name'], prefilled['object'])
 # %%

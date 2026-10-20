@@ -1,12 +1,36 @@
 // Draws the plotly figures the server embeds as <div class="plot" data-figure=...>,
 // and reports failed requests (htmx otherwise ignores error responses).
 
+// The server's figures use plotly's light template; in dark mode, recolour them from the page's CSS variables.
+const darkMode = window.matchMedia("(prefers-color-scheme: dark)");
+
+function themed(layout) {
+  if (!darkMode.matches) return layout;
+  const css = getComputedStyle(document.documentElement);
+  const color = (name) => css.getPropertyValue(name).trim();
+  const axis = { gridcolor: color("--border"), zerolinecolor: color("--border-strong"), linecolor: color("--border-strong") };
+  const themedLayout = {
+    ...layout,
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: color("--card-visual"),
+    font: { ...layout.font, color: color("--text") },
+    legend: { bgcolor: "rgba(0,0,0,0)", ...layout.legend },
+  };
+  for (const key of Object.keys(layout)) {
+    if (/^[xy]axis\d*$/.test(key)) themedLayout[key] = { ...axis, ...layout[key] };
+  }
+  // subplots without their own axis entry still read the template's
+  themedLayout.xaxis = { ...axis, ...layout.xaxis };
+  themedLayout.yaxis = { ...axis, ...layout.yaxis };
+  return themedLayout;
+}
+
 function renderPlots() {
   if (typeof Plotly === "undefined") return;
   document.querySelectorAll(".plot[data-figure]").forEach((el) => {
     if (el.dataset.renderedId === el.dataset.figureId) return;
     const figure = JSON.parse(el.dataset.figure);
-    Plotly.newPlot(el, figure.data, figure.layout, { responsive: true, ...figure.config })
+    Plotly.newPlot(el, figure.data, themed(figure.layout), { responsive: true, ...figure.config })
       .then(() => el.dispatchEvent(new CustomEvent("plot:rendered", { bubbles: true })));
     el.dataset.renderedId = el.dataset.figureId;
   });

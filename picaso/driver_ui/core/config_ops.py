@@ -121,10 +121,15 @@ def export_config(config, include_clouds=True, retrieval=None, prune=False):
 
 
 def export_climate_config(config):
-    """The climate config as driver.run_climate should receive it: options stripped, star removed unless irradiated."""
+    """
+    The climate config as driver.run_climate should receive it: options stripped, star removed unless
+    irradiated, clouds removed unless cloudy.
+    """
     config = clean_dictionary(config)
     if not config.get("irradiated", False):
         config.pop("star", None)
+    if not config.get("cloudy", False):
+        config.pop("clouds", None)
     return config
 
 

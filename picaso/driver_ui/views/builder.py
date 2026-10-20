@@ -152,7 +152,7 @@ RETRIEVAL_CARDS = ("observation_data", "free_parameters", "priors", "sampler", "
 class SpectrumBuilder(Builder):
     steps = (
         Step("setup", "Setup", "opacities and the kind of observation you are modeling.",
-             ("upload", "optical", "setup"), bookend=True),
+             ("upload", "archive", "optical", "setup"), bookend=True),
         Step("star", "Star", "the host star that lights the planet. Skip it for brown dwarfs and free-floating planets.",
              ("star",), toggle="f-irradiated"),
         Step("object", "Object", "bulk properties of the planet: mass, radius and gravity.", ("object",)),

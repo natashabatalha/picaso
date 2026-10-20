@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}PICASO UI{% endblock %}</title>
   <link rel="icon" href="https://natashabatalha.github.io/picaso/_images/logo.png">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
   <script src="{{ url_for('static', filename='idiomorph-ext.min.js') }}"></script>
@@ -15,7 +15,10 @@
 <body hx-ext="morph">
   <header class="topbar">
     <a href="/" class="logo">
-      <img src="https://natashabatalha.github.io/picaso/_images/logo.png" alt="PICASO home">
+      <picture>
+        <source srcset="{{ url_for('static', filename='logo_dark.png') }}" media="(prefers-color-scheme: dark)">
+        <img src="{{ url_for('static', filename='logo_light.png') }}" alt="PICASO home" width="1187" height="456">
+      </picture>
     </a>
     {# One menu per group (see navigation.py); menus open on hover or keyboard focus. #}
     <nav>

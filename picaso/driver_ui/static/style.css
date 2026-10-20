@@ -1,20 +1,23 @@
 :root {
-  --bg: #f7f7f9;
+  /* warm neutrals after the PICASO logo, with an earth-blue accent kept for actions and focus */
+  --bg: #f8f7f4;
   --surface: #ffffff;
-  --text: #1d1d24;
-  --muted: #6b6b78;
-  --border: #dcdce3;
-  --accent: #5b3fd1;
-  --accent-text: #ffffff;
+  --text: #1c1a17;
+  --muted: #6b665c;
+  --border: #e3dfd6;
+  --accent: #1d5aa6; /* text, links and outlines: dark enough to read on the light surfaces */
+  --accent-fill: #1d5aa6; /* buttons and highlights */
+  --accent-text: #ffffff; /* text on --accent-fill */
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   --error: #c62828;
-  --warning: #9a6700;
+  --warning: #b54708;
   --success: #1a7f37;
-  --info-bg: #eef0ff;
-  --warning-bg: #fff8e5;
+  --info-bg: #e8f0fa;
+  --warning-bg: #fff1e6;
   --error-bg: #ffecec;
   --success-bg: #eaf7ee;
-  --surface-container: #eeecf4;
-  --outline: #79747e;
+  --surface-container: #f0ede6;
+  --outline: #7c766a;
   --card-visual: #ffffff;
   --radius: 8px;
   --radius-xl: 28px;
@@ -31,42 +34,44 @@
   --step-export: var(--outline);
   --on-step: #ffffff;
   --on-step-star: #2b1d00;
-  --border-strong: #b9b9c6;
+  --border-strong: #c5bfb1;
   --badge-cloud: #ffffff;
-  --badge-ghost: #b9b9c6;
+  --badge-ghost: #c5bfb1;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #15151a;
-    --surface: #1e1e25;
-    --text: #e9e9ef;
-    --muted: #9a9aa8;
-    --border: #34343f;
-    --accent: #9d86ff;
-    --accent-text: #15151a;
-    --error: #ff7b7b;
-    --warning: #e3b341;
-    --success: #56d364;
-    --info-bg: #23233a;
-    --warning-bg: #2e2716;
-    --error-bg: #351d1d;
-    --success-bg: #17291c;
-    --surface-container: #25242d;
-    --outline: #938f99;
-    --card-visual: #18181e;
-    --step-star: #f2c14e;
-    --step-object: #8f8ee0;
-    --step-pt: #f08a57;
-    --step-chemistry: #45c2bb;
-    --step-clouds: #9fadc9;
-    --step-spectrum: #9d86ff;
-    --step-retrieval: #e374ac;
-    --step-climate: #6ea8f2;
-    --on-step: #15151a;
+    /* near-black, faintly warm surfaces so the accent and step colours carry the page */
+    --bg: #090908;
+    --surface: #10100e;
+    --text: #f5f3ee;
+    --muted: #9b968b;
+    --border: #24221e;
+    --accent: #6aa8ec;
+    --accent-fill: #2f74c9;
+    --accent-text: #ffffff;
+    --error: #ff5c63;
+    --warning: #ff8a3d;
+    --success: #2fe07b;
+    --info-bg: #0b1626;
+    --warning-bg: #2a1407;
+    --error-bg: #2b0d10;
+    --success-bg: #07230f;
+    --surface-container: #171613;
+    --outline: #878174;
+    --card-visual: #0c0c0a;
+    --step-star: #ffc53d;
+    --step-object: #8682ff;
+    --step-pt: #ff7438;
+    --step-chemistry: #14d8c4;
+    --step-clouds: #a5b6dc;
+    --step-spectrum: #8b6dff;
+    --step-retrieval: #ff4fa0;
+    --step-climate: #3d9bff;
+    --on-step: #07080c;
     --on-step-star: #231800;
-    --border-strong: #4a4a58;
-    --badge-cloud: #e6e8f0;
-    --badge-ghost: #4a4a58;
+    --border-strong: #3b3830;
+    --badge-cloud: #f2efe8;
+    --badge-ghost: #3b3830;
   }
 }
 
@@ -78,16 +83,23 @@ body {
   font: 15px/1.5 "Public Sans Web", "Public Sans", sans-serif;
 }
 a { color: var(--accent); }
-code, pre { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+code, pre { font-family: var(--font-mono); font-size: 13px; }
 
 /* ---------- layout ---------- */
 .topbar {
   display: flex; align-items: center; gap: 36px; flex-wrap: wrap; /* logo-to-tab text is twice tab-to-tab */
   padding: 10px 24px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
 }
-.logo img { height: 38px; display: block; }
+/*
+ * The logo images keep their transparent margins so the corona's glow is not clipped: the 456px-tall
+ * image has the letters in its middle 130px and the word starts 93px in. Size it by the letters, and
+ * let the empty margins overhang the bar's padding instead of making the bar taller.
+ */
+.logo { --h: 44px; display: block; }
+.logo img {
+  display: block; height: var(--h); width: auto;
+  margin: calc(var(--h) * -100 / 456) 0 calc(var(--h) * -100 / 456) calc(var(--h) * -93 / 456);
+}
 nav { display: flex; gap: 4px; font-size: 16px; flex-wrap: wrap; flex: 1; align-items: center; }
 .nav-group { position: relative; }
 .nav-end { margin-left: auto; }
@@ -115,7 +127,7 @@ nav { display: flex; gap: 4px; font-size: 16px; flex-wrap: wrap; flex: 1; align-
 .nav-group:hover .nav-menu, .nav-group:focus-within .nav-menu, .nav-group.open .nav-menu { display: block; }
 .nav-menu a { display: block; padding: 7px 12px; border-radius: 5px; color: var(--text); text-decoration: none; white-space: nowrap; }
 .nav-menu a:hover, .nav-menu a:focus-visible { background: var(--info-bg); }
-.nav-menu a.active { color: var(--accent); font-weight: 600; }
+.nav-menu a.active { font-weight: 600; }
 .badge {
   display: inline-block; padding: 0 6px; border-radius: 999px;
   background: var(--warning-bg); color: var(--warning);
@@ -131,25 +143,28 @@ main.form-page { max-width: none; width: 60%; min-width: min(100%, 640px); }
 /* ---------- home (Material 3 style) ---------- */
 main.home { max-width: none; padding: 16px 16px 64px; }
 .home-block { width: 88%; margin: 0 auto; }
-/* home page: a welcome banner, then one card per top-bar group linking straight to its pages */
-.welcome-banner {
-  display: flex; align-items: center; gap: 32px;
-  margin: 8px 0 16px; padding: 32px 40px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 18%, var(--surface-container)),
-                              var(--surface-container) 70%);
+/* home page: the acronym, the large PICASO logo and a one-line pitch, then one card per top-bar group linking straight to its pages */
+.hero { --logo: 58%; margin: 32px 0 40px; }
+/*
+ * The logo image keeps its transparent margins so the corona's glow is not clipped. In the 1187px-wide
+ * image the word starts 93px in and is 1019px wide, the glow starts 82px from the top and ends 72px
+ * above the bottom. Shift the image left so the P lines up with the cards, and tuck the eyebrow and
+ * the pitch into the empty strips above and below the glow (percentages resolve against the width).
+ */
+.hero h1 { margin: 0; }
+.hero h1 img { display: block; width: var(--logo); height: auto; margin-left: calc(var(--logo) * -93 / 1187); }
+.hero-eyebrow {
+  margin: 0 0 calc(var(--logo) * -40 / 1187); /* clear of the glow, which starts 82px down */
+  color: color-mix(in srgb, var(--text) 70%, transparent); font: 500 11px/16px var(--font-mono); letter-spacing: 0.2em; text-transform: uppercase;
 }
-.welcome-logo {
-  flex: none; display: block; width: 112px; height: 112px; padding: 10px;
-  border-radius: 24px; background: var(--card-visual);
+.hero-lede {
+  margin: calc(var(--logo) * -72 / 1187) 0 0; max-width: calc(var(--logo) * 1019 / 1187);
+  font-size: 21px; line-height: 30px;
 }
-.welcome-kicker { margin: 0; color: var(--accent); font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-.welcome-text h1 { margin: 0 0 8px; font-size: 40px; line-height: 48px; font-weight: 700; letter-spacing: -0.5px; }
-.welcome-text p:last-child { margin: 0; max-width: 720px; color: var(--muted); font-size: 16px; line-height: 24px; }
 .launch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 16px; }
 .launch-card { padding: 8px 8px 16px; border: 2px solid transparent; }
 .launch-card:hover { background: var(--surface-container); }
-.launch-card.highlight { border-color: var(--accent); }
+.launch-card.highlight { border-color: var(--accent-fill); }
 .launch-visual {
   height: 140px; padding: 12px;
   border-radius: calc(var(--radius-xl) - 8px); background: var(--card-visual);
@@ -162,13 +177,14 @@ main.home { max-width: none; padding: 16px 16px 64px; }
 .launch-links a {
   display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 12px;
   border: 1px solid var(--border); background: var(--surface);
-  font-weight: 500; text-decoration: none;
+  color: var(--text); font-weight: 500; text-decoration: none;
   transition: border-color 0.15s, background-color 0.15s;
 }
 .launch-links a:hover, .launch-links a:focus-visible { border-color: var(--accent); background: var(--info-bg); }
 .launch-links a > span[aria-hidden] { margin-left: auto; }
 .launch-resources { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 24px; color: var(--muted); font-size: 14px; }
-.launch-resources a { text-decoration: none; }
+.launch-resources a { color: var(--text); text-decoration: none; }
+.launch-resources a:hover, .launch-resources a:focus-visible { color: var(--accent); }
 .m3-card {
   display: flex; flex-direction: column;
   border-radius: var(--radius-xl); background: var(--surface-container);
@@ -181,16 +197,18 @@ main.home { max-width: none; padding: 16px 16px 64px; }
   color: var(--muted); font-size: 14px;
 }
 @media (max-width: 900px) {
-  .welcome-banner { gap: 20px; padding: 24px; }
-  .welcome-logo { width: 72px; height: 72px; }
-  .welcome-text h1 { font-size: 32px; line-height: 40px; }
   main > h1 { font-size: 28px; line-height: 36px; }
   .home-block { width: auto; padding-left: 8px; padding-right: 8px; }
 }
 
 @media (max-width: 640px) {
   .launch-grid { grid-template-columns: 1fr; }
-  .welcome-banner { flex-direction: column; align-items: flex-start; }
+  /* the menus get their own row under the logo, their labels lined up with it */
+  .topbar { gap: 4px 16px; }
+  .topbar nav { flex-basis: 100%; margin-left: -12px; }
+  .hero { --logo: 100%; margin-top: 16px; }
+  .hero-eyebrow { font-size: 10px; letter-spacing: 0.14em; }
+  .hero-lede { font-size: 18px; line-height: 26px; }
 }
 
 .card {
@@ -212,9 +230,9 @@ main.home { max-width: none; padding: 16px 16px 64px; }
 .button {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   height: 40px; padding: 0 24px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-fill);
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-text);
   font: inherit; font-size: 14px; font-weight: 500; letter-spacing: 0.1px;
   text-decoration: none;
@@ -241,7 +259,8 @@ main.home { max-width: none; padding: 16px 16px 64px; }
 .field-bool > label { padding-top: 0; }
 .control { min-width: 0; }
 .unit { font-size: 12px; }
-.field input[type="text"], .field input[type="number"], .field select, .field textarea, .card input[type="text"] {
+.field input[type="text"], .field input[type="number"], .field select, .field textarea, .card input[type="text"],
+.inline-inputs input[type="text"] {
   width: 100%;
   padding: 5px 8px;
   border: 1px solid var(--border);
@@ -438,6 +457,20 @@ main.wide { max-width: 1500px; }
 .sidebar .field > label { padding-top: 0; }
 .sidebar .checkbox-grid { max-height: 160px; }
 .inline-inputs { display: flex; gap: 8px; align-items: center; }
+.inline-inputs input { min-width: 0; }
+.inline-inputs input[type="text"] { width: auto; flex: 0 1 280px; }
+.inline-inputs .button { flex: none; white-space: nowrap; }
+
+/* ---------- load a planet ---------- */
+.planets-layout { margin-top: 24px; }
+.table-scroll { overflow-x: auto; }
+.planet-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.planet-table th, .planet-table td { padding: 6px 12px 6px 0; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border); }
+.planet-table thead th { color: var(--muted); font-weight: 600; vertical-align: bottom; }
+.planet-table tbody th { white-space: nowrap; font-weight: 600; }
+.planet-table td { font-variant-numeric: tabular-nums; }
+.planet-actions { display: flex; gap: 6px; }
+.planet-actions .button { height: 32px; padding: 0 14px; }
 .radio-row { display: flex; gap: 4px 16px; flex-wrap: wrap; }
 .radio-row label { white-space: nowrap; }
 
