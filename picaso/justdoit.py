@@ -1,5 +1,5 @@
 from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
-from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, get_transit_3d, tidal_flux
+from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, get_transit_3d, tidal_flux, SIGMA_SB
 from .fluxes_noalloc import get_reflected_1d
 
 from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_workflow
@@ -649,7 +649,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         thermal = compress_thermal(nwno,flux_at_top, gweight, tweight)
         returns['thermal'] = thermal
         returns['thermal_unit'] = 'erg/s/(cm^2)/(cm)'#'erg/s/(cm^2)/(cm^(-1))'
-        returns['effective_temperature'] = (_trapz(x=1/wno[::-1], y=thermal[::-1])/5.67e-5)**0.25
+        returns['effective_temperature'] = (_trapz(x=1/wno[::-1], y=thermal[::-1])/SIGMA_SB)**0.25
 
         if full_output: 
             atm.thermal_flux_planet = thermal
@@ -5527,8 +5527,7 @@ class inputs():
         #logmh = self.inputs['atmosphere'].get('mh',None)
         #logmh = float(logmh) if logmh is not None else 0
         #mh = 10**logmh
-        sigma_sb = 0.56687e-4 # stefan-boltzmann constant
-        
+
         col_den = 1e6*(pressure[1:] -pressure[:-1] ) / (grav/0.01) # cgs g/cm^2
         nlevel = len(pressure)
         tidal = tidal_flux(Teff, nlevel, pressure, col_den, InjectionBundle)
@@ -5538,7 +5537,7 @@ class inputs():
                 for i in range(nlevel):
                     print(pressure[i],tidal[i])
         # old tidal flux calculation without energy injection function
-        # tidal = np.zeros_like(pressure) - sigma_sb *(Teff**4)
+        # tidal = np.zeros_like(pressure) - SIGMA_SB *(Teff**4)
 
         # cloud inputs
         cloudy = self.inputs['climate'].get('cloudy',False)

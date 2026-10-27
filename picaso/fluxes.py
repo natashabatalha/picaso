@@ -5,6 +5,8 @@ import time
 import pickle as pk
 from scipy.linalg import solve_banded
 
+SIGMA_SB = 5.670374419e-5 # stefan-boltzmann constant, erg/(cm2 s K4) (CODATA 2018)
+
 @jit(nopython=True, cache=True)
 def slice_eq(array, lim, value):
     """Funciton to replace values with upper or lower limit
@@ -3824,9 +3826,7 @@ def tidal_flux(T_e, nlevel, pressure, col_den, InjectionBundle):
     
     """
 
-    sigma_sb = 0.56687e-4 # stefan-boltzmann constant
-
-    tide = -sigma_sb* (T_e**4)
+    tide = -SIGMA_SB* (T_e**4)
 
     T_tot= 0.0 #TTOT
 
