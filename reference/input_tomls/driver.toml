@@ -320,9 +320,13 @@ log=false
 unit="um"
 
 [retrieval.sampler]
-code='dynesty'#options: ultranest, emcee, pymultinest, dynesty
-code_options=['dynesty','ultranest']#should eventually be ultranest, emcee, pymultinest, dynesty
+code='dynesty'#options currently registered: dynesty, ultranest, nautilus
+code_options=['dynesty','ultranest','nautilus']
 sampler_kwargs={live_points = 700}#currently for NestedSampler in dynesty
 resume=false
 run_kwargs={}#currently for run_nested in dynesty
+
+# Nautilus example (replace sampler_kwargs and run_kwargs above):
+# sampler_kwargs={n_live=2000, n_networks=4, seed=1234}
+# run_kwargs={f_live=0.01, n_eff=10000, verbose=true}
 

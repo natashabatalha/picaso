@@ -88,6 +88,7 @@ driver = [
     "schwimmbad",
     "spectres",
     "ultranest",
+    "nautilus-sampler>=1.0.6",
 ]
 # the picaso-app web UI, which is built on picaso.driver: pip install "picaso[app]"
 app = [

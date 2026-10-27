@@ -25,7 +25,7 @@ import dynesty
 import dynesty.utils
 from functools import partial
 import sys
-from schwimmbad import MPIPool,choose_pool
+from schwimmbad import MPIPool, MultiPool, choose_pool
 dynesty.utils.pickle_module = dill
 from astropy.io import fits
 import spectres
@@ -847,7 +847,9 @@ def MODEL(cube, fitpars, config, OPA, param_tools, DATA_DICT, retrieval=True,CON
             raise Exception (rf'Not a recognized observation_type. Options are: thermal fpfs_thermal albedo fpfs_reflected transit_depth reflected transmission. Input was {calculation}')
         
         picaso_class = setup_spectrum_class(config, opacity=OPA, param_tools=param_tools)
-        out = picaso_class.spectrum(OPA, full_output=True, 
+        # Retrieval likelihoods only need the spectrum. Avoid constructing
+        # PICASO's large diagnostic atmosphere payload for every evaluation.
+        out = picaso_class.spectrum(OPA, full_output=not retrieval,
                                     calculation=calculation)
 
         resultx = out['wavenumber']
@@ -1337,6 +1339,7 @@ def _resume_check_config(config):
     allowed_resume_differences = [
         ('retrieval', 'mpi'),
         ('retrieval', 'processes'),
+        ('retrieval', 'maxtasksperchild'),
         ('retrieval', 'sampler', 'resume'),
         ('retrieval', 'sampler', 'run_kwargs', 'dlogz'),
     ]
@@ -1416,12 +1419,56 @@ def run_ultranest(config, loglike_fn, hypercube_fn, ndims, pool, prior_config):
     sampler.run(**run_args)
     return sampler
 
+@register_sampler('nautilus')
+def run_nautilus(config, loglike_fn, hypercube_fn, ndims, pool, prior_config):
+    """Run a retrieval with the Nautilus importance nested sampler."""
+    try:
+        from nautilus import Sampler
+    except ImportError as exc:
+        raise ImportError(
+            "The Nautilus sampler requires the optional 'nautilus-sampler' "
+            "package. Install PICASO with `pip install 'picaso[driver]'`."
+        ) from exc
+
+    checkpoint_file = os.path.join(
+        config['InputOutput']['retrieval_output'], 'nautilus.hdf5'
+    )
+    sampler_args = prior_config['sampler'].get('sampler_kwargs', {}).copy()
+    run_args = prior_config['sampler'].get('run_kwargs', {}).copy()
+    resume = prior_config['sampler'].get('resume', False)
+
+    managed_args = {
+        'prior', 'likelihood', 'n_dim', 'pool', 'filepath', 'resume'
+    }
+    conflicts = managed_args.intersection(sampler_args)
+    if conflicts:
+        names = ', '.join(sorted(conflicts))
+        raise ValueError(
+            f'Nautilus sampler_kwargs contains PICASO-managed option(s): {names}'
+        )
+
+    run_args.setdefault('verbose', True)
+    sampler = Sampler(
+        hypercube_fn,
+        loglike_fn,
+        n_dim=ndims,
+        pool=pool,
+        filepath=checkpoint_file,
+        resume=resume,
+        **sampler_args,
+    )
+    sampler.run(**run_args)
+    return sampler
+
 def check_resume_exists(code, retrieval_output):
     if code.lower() == 'dynesty':
         checkpoint_file = os.path.join(retrieval_output, 'dynesty.save')
         return os.path.exists(checkpoint_file)
     elif code.lower() == 'ultranest':
         checkpoint_file = os.path.join(retrieval_output, 'results', 'points.hdf5')
+        return os.path.exists(checkpoint_file)
+    elif code.lower() == 'nautilus':
+        checkpoint_file = os.path.join(retrieval_output, 'nautilus.hdf5')
         return os.path.exists(checkpoint_file)
     else:
         return False
@@ -1506,15 +1553,25 @@ def retrieve(config=None, param_tools=None, driver_file=None):
     
 
     @contextlib.contextmanager
-    def maybe_pool(mpi, processes):
+    def maybe_pool(mpi, processes, maxtasksperchild=None):
         if not mpi and processes == 1:
             yield None
+        elif not mpi:
+            with MultiPool(
+                processes=processes,
+                maxtasksperchild=maxtasksperchild,
+            ) as pool:
+                yield pool
         else:
             with choose_pool(mpi=mpi, processes=processes) as pool:
                 yield pool
 
     # Dynamic pool allocation using maybe_pool
-    with maybe_pool(mpi, processes) as pool:
+    with maybe_pool(
+        mpi,
+        processes,
+        maxtasksperchild=prior_config.get('maxtasksperchild'),
+    ) as pool:
         
         # If MPI is selected, worker nodes must wait here
         if mpi and pool is not None and hasattr(pool, 'is_master') and not pool.is_master():
