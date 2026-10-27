@@ -6,7 +6,7 @@ from numpy import exp, zeros, where, sqrt, cumsum , pi, outer, sinh, cosh, min, 
 import astropy.units as u
 import virga.justdoit as vj
 
-from .fluxes import get_reflected_1d,get_thermal_1d
+from .fluxes import get_reflected_1d,get_thermal_1d, SIGMA_SB
 #from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi,get_reflected_1d_gfluxv #deprecated
 from .atmsetup import ATMSETUP, normalize_exclude_mol
 from .optics import compute_opacity
@@ -400,11 +400,9 @@ def get_kzz(grav,tidal,flux_net_ir_layer, flux_plus_ir_attop,Adiabat,nstr, Atmos
 
     f_sum = np.sum(flux_plus_ir_attop)
 
-    sigmab =  0.56687e-4 #cgs
-
-    teff_now = (f_sum/sigmab)**0.25
-    target_teff = (abs(tidal[0])/sigmab)**0.25
-    flx_min = sigmab*((target_teff*0.05)**4)
+    teff_now = (f_sum/SIGMA_SB)**0.25
+    target_teff = (abs(tidal[0])/SIGMA_SB)**0.25
+    flx_min = SIGMA_SB*((target_teff*0.05)**4)
     
     #print("Teff now ", teff_now, "Target Teff ", target_teff)
 

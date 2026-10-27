@@ -28,6 +28,17 @@ Learn PICASO's basic inputs and outputs, then continue through the rest of the t
 
 ::::
 
+## Quickstart in code
+
+```{include} ../README.md
+:start-after: <!-- quickstart:start -->
+:end-before: <!-- quickstart:end -->
+```
+
+:::{tip}
+Upgrading from PICASO v4? See {doc}`migration_v5` for the changes that can affect your results or code.
+:::
+
 :::{tip}
 Prefer to set things up by hand, or need optional data such as stellar grids, correlated-k tables or Sonora models? See {ref}`reference_data` on the Installation page, which also explains how to set environment variables permanently.
 :::
@@ -41,4 +52,5 @@ The tutorials are Jupytext `.py` files that you can run as notebooks; {doc}`note
 installation
 notebooks/Quickstart.py
 notebook_workflow
+migration_v5
 ```

@@ -13,15 +13,116 @@
 - Bug reports: https://github.com/natashabatalha/picaso/issues
 - Physics help: https://natashabatalha.github.io/picaso_dev 
 - What to cite: https://natashabatalha.github.io/picaso/credit.html 
+- Upgrading from v4: https://natashabatalha.github.io/picaso/migration_v5.html
+- For AI assistants and LLM tools: https://natashabatalha.github.io/picaso/llms.txt (page index with install and usage notes) and https://natashabatalha.github.io/picaso/llms-full.txt (all docs in one file)
 
 ## Major Features
 
-- [Reflected Light Spectroscopy of planets](https://natashabatalha.github.io/picaso/notebooks/1_GetStarted.html)
-- [Thermal Emission Spectroscopy of planets and brown dwarfs](https://natashabatalha.github.io/picaso/tutorials.html#basics-of-thermal-emission)
-- [Transit Spectroscopy of planets](https://natashabatalha.github.io/picaso/notebooks/5_AddingTransitSpectrum.html)
-- [Phase Curves of planets](https://natashabatalha.github.io/picaso/notebooks/9e_PhaseCurves.html)
-- [1D Climate modeling of planets and brown dwarfs](https://natashabatalha.github.io/picaso/notebooks/climate/12a_BrownDwarf.html)
-- [Fitting models to data](https://natashabatalha.github.io/picaso/notebooks/fitdata/GridSearch.html)
+- [Reflected Light Spectroscopy of planets](https://natashabatalha.github.io/picaso/notebooks/A_basics/1_GetStarted.html)
+- Thermal Emission Spectroscopy of [planets](https://natashabatalha.github.io/picaso/notebooks/A_basics/5_AddingThermalFlux.html) and [brown dwarfs](https://natashabatalha.github.io/picaso/notebooks/A_basics/7_BrownDwarfs.html)
+- [Transit Spectroscopy of planets](https://natashabatalha.github.io/picaso/notebooks/A_basics/6_AddingTransitSpectrum.html)
+- [Phase Curves of planets](https://natashabatalha.github.io/picaso/notebooks/E_3dmodeling/6_PhaseCurves.html)
+- 1D Climate modeling of [brown dwarfs](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html) and [planets](https://natashabatalha.github.io/picaso/notebooks/D_climate/2_Exoplanet_PreW.html)
+- Fitting models to data with [grids](https://natashabatalha.github.io/picaso/notebooks/F_fitdata/1_GridSearch.html) and [retrievals](https://natashabatalha.github.io/picaso/notebooks/J_driver%26retrievals/4_Retrieval_Setup.html)
+
+## Quickstart
+
+<!-- quickstart:start -->
+Install PICASO, then download its data with one command. Pick the bundle for what you are modeling:
+
+```bash
+pip install picaso
+picaso-data setup --bundle default-planet       # exoplanets: reference data, default opacities and PHOENIX stellar grids (~7.3 GB)
+picaso-data setup --bundle default-browndwarf   # brown dwarfs: the same without stellar grids (~5 GB)
+```
+
+PICASO remembers where the data went, so no environment variables are needed. Run `picaso-data check` to confirm everything is in place.
+
+**Example Transmission spectrum of a hot Jupiter** (needs `default-planet`):
+
+```python
+import picaso.justdoit as jdi
+
+opa = jdi.opannection(wave_range=[0.6, 5])                # default opacity database, 0.6-5 um
+
+planet = jdi.inputs()                                     # an exoplanet with a host star
+planet.phase_angle(0)
+planet.gravity(mass=1, mass_unit=jdi.u.Unit('M_jup'), radius=1.2, radius_unit=jdi.u.Unit('R_jup'))
+planet.star(opa, temp=5500, metal=0.0, logg=4.5, radius=1, radius_unit=jdi.u.Unit('R_sun'))  # PHOENIX grid
+planet.guillot_pt(Teq=1200)                               # parametric P-T profile (Guillot 2010)
+planet.chemeq_visscher_2121(cto_absolute=0.549, log_mh=0) # chemical equilibrium: solar metallicity and C/O
+planet.approx(p_reference=10)                             # the radius above is at 10 bar
+
+out = planet.spectrum(opa, calculation='transmission', full_output=True)
+wno, depth = jdi.mean_regrid(out['wavenumber'], out['transit_depth'], R=150)  # wavenumber (cm-1), (Rp/Rs)^2
+
+import matplotlib.pyplot as plt
+plt.plot(1e4 / wno, depth * 1e6)
+plt.xlabel('Wavelength (um)'); plt.ylabel('Transit depth (ppm)'); plt.show()
+```
+
+**Example Thermal emission of a brown dwarf** (needs `default-browndwarf`):
+
+```python
+import picaso.justdoit as jdi
+
+opa = jdi.opannection(wave_range=[1, 5])
+
+bd = jdi.inputs(calculation='browndwarf')                 # no host star
+bd.phase_angle(0)
+bd.gravity(gravity=200, gravity_unit=jdi.u.Unit('m/s**2'))
+bd.atmosphere(filename=jdi.brown_dwarf_pt(), sep=r'\s+')  # Teff=1270 K profile and chemistry from the reference data
+
+out = bd.spectrum(opa, full_output=True)
+fnu = jdi.convert_flux_units(out['wavenumber'], out['thermal'], to_f_unit='erg*cm^(-2)*s^(-1)*Hz^(-1)')
+wno, fnu = jdi.mean_regrid(out['wavenumber'], fnu, R=300)
+
+import matplotlib.pyplot as plt
+plt.semilogy(1e4 / wno, fnu)
+plt.xlabel('Wavelength (um)'); plt.ylabel('Flux (erg/cm2/s/Hz)'); plt.show()
+```
+
+**Example of Terrestrial Planet in Reflected Light** (needs `default-planet`):
+
+```python
+import numpy as np
+import pandas as pd
+import picaso.justdoit as jdi
+
+opa = jdi.opannection(wave_range=[0.3, 1])                # reflected light, 0.3-1 um
+
+rocky = jdi.inputs()
+rocky.phase_angle(0)                                      # full phase
+rocky.gravity(mass=1, mass_unit=jdi.u.Unit('M_earth'), radius=1, radius_unit=jdi.u.Unit('R_earth'))
+rocky.star(opa, temp=5800, metal=0.0, logg=4.4, radius=1, radius_unit=jdi.u.Unit('R_sun'),
+           semi_major=1, semi_major_unit=jdi.u.Unit('au'))  # Sun-like star at 1 au, for contrast units
+nlevel = 40
+rocky.atmosphere(df=pd.DataFrame({
+    'pressure': np.logspace(-6, 0, nlevel),               # bar: the surface is at 1 bar
+    'temperature': np.linspace(200, 288, nlevel),         # simple profile with a 288 K surface
+    'N2': np.full(nlevel, 0.98), 'CO2': np.full(nlevel, 0.01), 'H2O': np.full(nlevel, 0.01)}))
+rocky.surface_reflect(0.3, opa.wno)                       # surface albedo, and tells PICASO there is a hard surface
+rocky.approx(p_reference=1)                               # the radius above is at the surface
+
+out = rocky.spectrum(opa, calculation='reflected')
+wno, albedo = jdi.mean_regrid(out['wavenumber'], out['albedo'], R=150)          # geometric albedo
+wno, fpfs = jdi.mean_regrid(out['wavenumber'], out['fpfs_reflected'], R=150)    # planet/star contrast
+
+import matplotlib.pyplot as plt
+plt.plot(1e4 / wno, fpfs * 1e10)
+plt.xlabel('Wavelength (um)'); plt.ylabel('Planet/star contrast (x 1e-10)'); plt.show()
+```
+
+The default opacities are broadened by H2/He and do not include O2 or O3. For Earth-like atmospheres, use the rocky-planet opacities (`picaso-data get resampled_opacity photochem-R15000,0.1-250um`, 6 GB) by passing that file to `jdi.opannection(filename_db=...)`, and see the [Modern Earth benchmark](https://natashabatalha.github.io/picaso/notebooks/K_benchmarks/Modern_Earth.html).
+
+`full_output=True` also returns the atmosphere, opacities and contribution functions (`out['full_output']`), which the plotting tools in `picaso.justplotit` use.
+
+**Explore more functionality**
+
+- 1D climate models: download the correlated-k tables with `picaso-data get ck_tables pre-weighted`, then follow the [brown dwarf climate tutorial](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
+- Spectra, climate models and retrievals from a TOML file: `pip install "picaso[driver]"` and the [driver tutorial](https://natashabatalha.github.io/picaso/notebooks/J_driver%26retrievals/1_Driver_Tutorial.html)
+- Everything `picaso-data` can download: `picaso-data list`
+<!-- quickstart:end -->
 
 ## Contributing
 

@@ -3078,6 +3078,21 @@ class RetrieveOpacitiesHDF5(RetrieveOpacities):
                 pass
             self._h5 = None
 
+    def __getstate__(self):
+        """Drop live h5py handles when this opacity object is sent to a worker."""
+        state = self.__dict__.copy()
+        for name in ("_h5", "_header", "_molecular_group", "_continuum_group"):
+            state.pop(name, None)
+        return state
+
+    def __setstate__(self, state):
+        """Reopen the read-only HDF5 groups inside the worker process."""
+        self.__dict__.update(state)
+        self._h5 = h5py.File(self.db_filename, "r")
+        self._header = self._h5["header"]
+        self._molecular_group = self._h5["molecular"]
+        self._continuum_group = self._h5["continuum"]
+
     def __del__(self):
         self.close()
 
