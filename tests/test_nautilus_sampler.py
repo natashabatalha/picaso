@@ -93,3 +93,42 @@ def test_check_resume_exists_for_nautilus(tmp_path):
     assert not check_resume_exists('nautilus', str(tmp_path))
     (tmp_path / 'nautilus.hdf5').touch()
     assert check_resume_exists('NAUTILUS', str(tmp_path))
+
+
+def test_read_retrievals_nautilus(tmp_path):
+    """A short real Nautilus run on a Gaussian likelihood is read back in physical units."""
+    pytest.importorskip('nautilus')
+    from functools import partial
+
+    import numpy as np
+    from nautilus import Sampler
+
+    from picaso import retrieval as ret
+    from picaso.driver import hypercube
+
+    fitpars = {
+        'a': {'prior': 'uniform', 'uniform_kwargs': {'min': -5, 'max': 5}, 'log': False},
+        'b': {'prior': 'uniform', 'uniform_kwargs': {'min': -3, 'max': 1}, 'log': True},
+    }
+    truth = np.array([1.0, 0.01])
+
+    def loglike(x):
+        return -0.5 * (((x[0] - truth[0]) / 0.2) ** 2 + ((np.log10(x[1]) + 2) / 0.1) ** 2)
+
+    sampler = Sampler(partial(hypercube, fitpars=fitpars), loglike, n_dim=2, n_live=200,
+                      filepath=str(tmp_path / 'nautilus.hdf5'), seed=1)
+    sampler.run(n_eff=1000, verbose=False)
+
+    info = ret.read_retrievals(str(tmp_path), fitpars)
+
+    assert info['param_names'] == ['a', 'b']
+    assert info['log_params'] == ['b']
+    assert info['samples_equal'].shape[1] == 2
+    assert info['med_point'][0] == pytest.approx(1.0, abs=0.1)
+    assert np.log10(info['med_point'][1]) == pytest.approx(-2.0, abs=0.05)
+    assert info['max_logl'] == pytest.approx(0.0, abs=0.5)
+    assert info['ess'] >= 1000
+    assert np.isfinite(info['log_z'])
+
+    with pytest.raises(ValueError, match='prior_finder'):
+        ret.read_retrievals(str(tmp_path), ['a', 'b'])

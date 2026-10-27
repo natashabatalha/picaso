@@ -40,35 +40,58 @@ def log_parameters(fitpars):
     """
     return [key for key, prior in fitpars.items() if prior.get('log') in (True, 'True', 'true')]
 
-def read_retrievals(dirr, params, log_params=None):
+def read_retrievals(dirr, params, log_params=None, code=None):
     """
-    Function to parse both ultranest and dynesty results.
+    Function to parse dynesty, ultranest, and nautilus results.
 
     Parameters 
     ----------
     dirr : str
-        directory of the output (either contains dynesty.save or ultranest files)
+        directory of the output (contains dynesty.save, nautilus.hdf5, or ultranest files)
     params : list of str or dict
         list of parameter names, or the output of driver.prior_finder(config['retrieval']) 
-        in which case the log sampled parameters are found automatically 
+        in which case the log sampled parameters are found automatically. Nautilus outputs 
+        require the dict, since nautilus stores samples in the unit cube and the priors 
+        are needed to transform them back to physical values 
     log_params : list of str 
         parameters that were sampled in log10 space. Stored in the output as 'log_params' 
         so that plot_pair can plot them in log space. Default = None, which uses params if 
         it is a dict, and otherwise assumes no log sampled parameters 
+    code : str 
+        sampler that produced the output (dynesty, ultranest, or nautilus). Default = None, 
+        which detects it from the files in dirr (dynesty.save, then nautilus.hdf5, otherwise ultranest)
 
     Returns 
     -------
     dict
     """
-    if isinstance(params, dict):
+    fitpars = params if isinstance(params, dict) else None
+    if fitpars is not None:
         if log_params is None:
-            log_params = log_parameters(params)
-        params = list(params.keys())
-    checkpoint_file = os.path.join(dirr, 'dynesty.save')
-    if os.path.exists(checkpoint_file):
+            log_params = log_parameters(fitpars)
+        params = list(fitpars.keys())
+
+    if code is None:
+        if os.path.exists(os.path.join(dirr, 'dynesty.save')):
+            code = 'dynesty'
+        elif os.path.exists(os.path.join(dirr, 'nautilus.hdf5')):
+            code = 'nautilus'
+        else:
+            code = 'ultranest'
+    code = code.lower()
+
+    if code == 'dynesty':
         info = read_dynesty(dirr, params)
-    else: 
+    elif code == 'nautilus':
+        if fitpars is None:
+            raise ValueError('Reading nautilus results requires params to be the output of '
+                             "driver.prior_finder(config['retrieval']) so that the unit cube "
+                             'samples can be transformed with the priors')
+        info = read_nautilus(dirr, fitpars)
+    elif code == 'ultranest':
         info = read_ultranest(dirr, params)
+    else:
+        raise ValueError(f'Unknown sampler code {code}. Options are dynesty, ultranest, nautilus')
     info['log_params'] = [] if log_params is None else list(log_params)
     return info
     
@@ -202,6 +225,96 @@ def read_ultranest(dirr,params):
             'niter': results['niter'],
             'ess': results['ess'],
             'ultranest_out':res[1]}
+
+def read_nautilus(dirr, fitpars, param_tools=None):
+    """
+    Function to parse nautilus results. Returns dictionary with 
+    - samples_equal : equally weighted samples that can be directly used for corner plots, finding quantiles, etc 
+    - max_logl : the max log likelihood value 
+    - max_logl_point : the values of associated with the max likelihood point 
+    - med_intervals : median, errlo, errup of all the constrained parameters 
+    - param_names : list string of the parameter names 
+    - log_z : Bayesian Evidence estimate lnZ 
+    - ess : effective sample size of the posterior 
+    - n_like : number of likelihood evaluations 
+    - nautilus_out : the nautilus Sampler restored from the checkpoint 
+
+    Nautilus checkpoints after every shell so these can be read while the run is in progress. 
+    Unlike ultranest, the checkpoint does not record whether the run finished, so check 
+    that ess reached the n_eff requested in run_kwargs (default 10000). 
+
+    Parameters 
+    ----------
+    dirr : str
+        directory of the nautilus output (contains nautilus.hdf5)
+    fitpars : dict
+        output of driver.prior_finder(config['retrieval']), used to transform the 
+        unit cube samples stored by nautilus to physical values 
+    param_tools : class 
+        parameterize class, only needed for xarray_grid priors 
+
+    Returns 
+    -------
+    dict 
+    """
+    try:
+        from nautilus import Sampler
+    except ImportError as exc:
+        raise ImportError(
+            "Reading Nautilus results requires the optional 'nautilus-sampler' "
+            "package. Install PICASO with `pip install 'picaso[driver]'`."
+        ) from exc
+    from functools import partial
+    from .driver import hypercube
+
+    checkpoint_file = os.path.join(dirr, 'nautilus.hdf5')
+    if not os.path.exists(checkpoint_file):
+        raise FileNotFoundError(f'Nautilus checkpoint does not exist: {checkpoint_file}')
+    params = list(fitpars.keys())
+
+    #the likelihood is never called, the restored sampler is only used to get the posterior
+    def _no_likelihood(x):
+        raise RuntimeError('read_nautilus does not evaluate the likelihood')
+
+    sampler = Sampler(partial(hypercube, fitpars=fitpars, param_tools=param_tools),
+                      _no_likelihood, n_dim=len(params),
+                      filepath=checkpoint_file, resume=True)
+    if len(sampler.points) == 0:
+        raise ValueError(f'Nautilus checkpoint {checkpoint_file} does not contain any samples yet')
+
+    samples, log_w, logl = sampler.posterior()
+    weights = np.exp(log_w)
+    weights = weights / np.sum(weights)
+    samples_rew = dynesty.utils.resample_equal(
+        samples, weights, rstate=np.random.RandomState(0))
+
+    max_logl_idx = np.argmax(logl)
+    max_logl_point = samples[max_logl_idx]
+    max_logl_value = logl[max_logl_idx]
+
+    errlo = pd.DataFrame(samples_rew, columns=params).quantile(.158655)
+    errup = pd.DataFrame(samples_rew, columns=params).quantile(.841345)
+    median = pd.DataFrame(samples_rew, columns=params).quantile(0.50)
+    summary = {}
+    for i in params:
+        summary[i+'_errlo'] = errlo[i]
+        summary[i+'_errup'] = errup[i]
+        summary[i+'_median'] = median[i]
+    summary = pd.DataFrame(summary, index=[0])
+    eval_at_med = [summary[i+'_'+'median'].values[0] for i in params]
+
+    return {
+        'samples_equal': samples_rew,
+        'max_logl': max_logl_value,
+        'max_logl_point': max_logl_point,
+        'med_point': eval_at_med,
+        'med_intervals': summary,
+        'param_names': params,
+        'log_z': sampler.log_z,
+        'ess': sampler.n_eff,
+        'n_like': int(sampler.n_like),
+        'nautilus_out': sampler
+    }
 
 def get_bands(config, retrieval_results,
               N=100,

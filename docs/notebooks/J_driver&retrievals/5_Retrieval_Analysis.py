@@ -63,7 +63,7 @@ print(params)
 # %% [markdown]
 # ## 3. Read Retrieval Outputs
 #
-# The `read_retrievals` function in `picaso.retrieval` automatically detects if the nested sampling output is from `dynesty` (looking for a `dynesty.save` checkpoint file) or from `ultranest`. It then loads equal-weighted samples, the maximum log-likelihood value, and summary statistics.
+# The `read_retrievals` function in `picaso.retrieval` automatically detects if the nested sampling output is from `dynesty` (looking for a `dynesty.save` checkpoint file), `nautilus` (looking for a `nautilus.hdf5` checkpoint file) or from `ultranest`. Nautilus stores its samples in the unit cube, so for nautilus runs you must pass the `fitpars` dictionary below (not a list of names) so the priors can be applied. It then loads equal-weighted samples, the maximum log-likelihood value, and summary statistics.
 
 # %%
 retrieval_dir = config['InputOutput']['retrieval_output']
