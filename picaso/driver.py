@@ -30,6 +30,7 @@ dynesty.utils.pickle_module = dill
 from astropy.io import fits
 import spectres
 import contextlib
+import urllib.parse
 
 #all these come from justdoit
 #import os
@@ -56,6 +57,34 @@ climate_chem_options = ['preweighted', 'visscher', 'chemeq_on_the_fly']
 CLIMATE_CHEM_MAP = {
     'visscher': 'visscher',
     'chemeq_on_the_fly': 'on-the-fly'
+}
+
+# config path -> NASA Exoplanet Archive PSCompPars column, used by prefill_from_exoplanet_archive.
+# Archive units already match the template's (Rjup, Mjup, parsec, km/s, Rsun, AU, K, cgs logg, dex)
+ARCHIVE_TO_CONFIG = {
+    ('object', 'radius'):               'pl_radj',
+    ('object', 'mass'):                 'pl_bmassj',
+    ('object', 'distance'):             'sy_dist',
+    ('star', 'radius'):                 'st_rad',
+    ('star', 'semi_major'):             'pl_orbper',
+    ('star', 'grid', 'teff'):           'st_teff',
+    ('star', 'grid', 'logg'):           'st_logg',
+    ('star', 'grid', 'feh'):            'st_met',
+    ('temperature', 'isothermal', 'T'): 'pl_eqt',
+    ('temperature', 'guillot', 'Teq'):  'pl_eqt',
+}
+
+# PSCompPars columns returned (and filterable) by query_exoplanet_archive: column -> (description, unit)
+ARCHIVE_COLUMNS = {
+    'pl_radj':   ('Planet radius', 'Rjup'),
+    'pl_bmassj': ('Planet mass', 'Mjup'),
+    'pl_eqt':    ('Equilibrium temperature', 'K'),
+    'pl_orbper': ('Orbital period', 'days'),
+    'sy_dist':   ('Distance', 'parsec'),
+    'st_rad':    ('Star radius', 'Rsun'),
+    'st_teff':   ('Star effective temperature', 'K'),
+    'st_logg':   ('Star logg', 'cgs'),
+    'st_met':    ('Star metallicity', 'dex'),
 }
 
 # Mappings for observation types to picaso calculation types
@@ -1915,6 +1944,10 @@ def setup_climate_class(config, opacity=None, param_tools=None):
     else:
         raise Exception(f'Climate chemistry method {chem_type} is not available. Options are: {climate_chem_options}')
 
+    #clouds: in a climate run virga only stages its inputs here, the cloud is recomputed every iteration
+    if config.get('cloudy', False):
+        A.virga(**config['clouds']['virga'])
+
     return A
 
 def run_climate(driver_file=None, driver_dict=None, return_class=False):
@@ -2245,8 +2278,14 @@ def prune_dict_by_key(obj, sequence):
     for v in obj.values():
         if isinstance(v, dict):
             prune_dict_by_key(v, sequence)
-            
+
     return obj
+
+def wipe_config(config):
+    """Return a copy of config with every value blanked, keeping all keys (and units)."""
+    if isinstance(config, dict):
+        return {k: v if k == 'unit' else wipe_config(v) for k, v in config.items()}
+    return [] if isinstance(config, list) else ''
 
 def load_template_config():
     master_driver = os.path.join(os.getenv('picaso_refdata'), 'input_tomls', 'driver.toml')
@@ -2285,3 +2324,87 @@ def load_config(driver_file):
     with open(driver_file, "rb") as f:
         config = tomllib.load(f)
     return config
+
+def query_exoplanet_archive(planet_name=None, limit=50, **ranges):
+    """
+    Search the NASA Exoplanet Archive's Planetary Systems Composite Parameters (PSCompPars) table.
+
+    Parameters
+    ----------
+    planet_name : str, optional
+        Part of the planet name, ignoring case (e.g. 'wasp-39' matches 'WASP-39 b')
+    limit : int or None
+        Maximum number of planets returned, in alphabetical order (default 50; None for all)
+    **ranges : (min, max)
+        Bounds on any ARCHIVE_COLUMNS column, e.g. pl_radj=(0.5, 0.6). Use None for an open end.
+
+    Returns
+    -------
+    pandas.DataFrame
+        pl_name, hostname and the ARCHIVE_COLUMNS columns of the matching planets (empty if none match)
+
+    Examples
+    --------
+    >>> query_exoplanet_archive(pl_radj=(0.5, 0.6), pl_bmassj=(1.1, 1.2))
+    """
+    conditions = []
+    if planet_name:
+        name = planet_name.strip().lower().replace("'", "''")
+        conditions.append(f"lower(pl_name) like '%{name}%'")
+    for column, (low, high) in ranges.items():
+        if column not in ARCHIVE_COLUMNS:
+            raise ValueError(f"Cannot filter on '{column}'. Choose from: {', '.join(ARCHIVE_COLUMNS)}")
+        if low is not None:
+            conditions.append(f"{column} >= {float(low)}")
+        if high is not None:
+            conditions.append(f"{column} <= {float(high)}")
+
+    top = '' if limit is None else f'top {int(limit)} '
+    query = f"select {top}pl_name,hostname,{','.join(ARCHIVE_COLUMNS)} from PSCompPars"
+    if conditions:
+        query += ' where ' + ' and '.join(conditions)
+    query += ' order by pl_name'
+    url = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?format=csv&query=' + urllib.parse.quote(query)
+    return pd.read_csv(url)
+
+def find_exoplanet(planet_name):
+    """
+    The PSCompPars row of one planet, from its name (ignoring case). A partial name is
+    enough if it matches a single planet, e.g. 'wasp-39' finds 'WASP-39 b'.
+    """
+    matches = query_exoplanet_archive(planet_name, limit=None)  # all of them, so an exact match is never cut off
+    if matches.empty:
+        raise ValueError(f"No planet found for '{planet_name}' in the Planetary Systems "
+                         "Composite Parameters catalog. Please try again.")
+    exact = matches[matches['pl_name'].str.lower() == planet_name.strip().lower()]
+    if len(exact) == 1 or len(matches) == 1:
+        return (exact if len(exact) == 1 else matches).iloc[0]
+    shown = ', '.join(matches['pl_name'][:10]) + (', ...' if len(matches) > 10 else '')
+    raise ValueError(f"'{planet_name}' matches several planets: {shown}. Please give the full name.")
+
+def prefill_from_exoplanet_archive(planet, config):
+    """
+    Return a wiped copy of config filled only with PSCompPars values for one planet.
+
+    Parameters
+    ----------
+    planet : str or pandas.Series
+        Planet name (see find_exoplanet), or a row of the table returned by query_exoplanet_archive
+    config : dict
+        Config whose keys are kept, e.g. load_template_config()
+    """
+    row = planet if isinstance(planet, pd.Series) else find_exoplanet(planet)
+
+    filled = wipe_config(config)
+    for (*parents, key), column in ARCHIVE_TO_CONFIG.items():
+        section = filled
+        for p in parents:
+            section = section.get(p, {})
+        if key not in section or pd.isna(row[column]):
+            continue  # not in this config, or no archive value
+        value = float(row[column])
+        if isinstance(section[key], dict):
+            section[key]['value'] = value
+        else:
+            section[key] = value
+    return filled

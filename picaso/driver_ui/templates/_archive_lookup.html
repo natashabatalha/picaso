@@ -1,0 +1,9 @@
+{# Load-a-planet-by-name box on the card pages. `card.endpoint` is the page's archive view (views/spectrum.py, views/climate.py). #}
+<form hx-post="{{ url_for(card.endpoint) }}" hx-disabled-elt="find button">
+  <div class="inline-inputs">
+    <input type="text" name="planet" placeholder="e.g. WASP-39 b" aria-label="Planet name" required>
+    <button type="submit" class="button">Load planet</button>
+  </div>
+  <p class="hint">Fills in the object, star and temperature with the archive's values.
+    <a href="{{ url_for('planets.index') }}">Search planets by their properties instead</a></p>
+</form>

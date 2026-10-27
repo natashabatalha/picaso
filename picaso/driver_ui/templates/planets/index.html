@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_macros.html" import notes %}
+{% block title %}Load a planet{% endblock %}
+{% block main_class %}wide{% endblock %}
+
+{% block content %}
+<h1>Load a planet</h1>
+<p class="page-lead">Search the NASA Exoplanet Archive's Planetary Systems Composite Parameters table, then load a
+  planet's values into a spectrum or climate model. Leave any bound blank for an open range.</p>
+<div class="sidebar-layout planets-layout">
+  <form class="card sidebar" method="get" action="{{ url_for('planets.index') }}">
+    <div class="field">
+      <label for="planet-name">Planet name contains</label>
+      <div class="control"><input type="text" id="planet-name" name="name" value="{{ values.name }}" placeholder="e.g. WASP-39"></div>
+    </div>
+    {% for column, (description, unit) in columns.items() %}
+      <div class="field">
+        <label for="planet-{{ column }}-min">{{ description }} <span class="unit">[{{ unit }}]</span></label>
+        <div class="control inline-inputs">
+          <input type="number" id="planet-{{ column }}-min" name="{{ column }}_min" step="any" value="{{ values[column ~ '_min'] }}"
+                 placeholder="min" aria-label="{{ description }} minimum">
+          <span>to</span>
+          <input type="number" name="{{ column }}_max" step="any" value="{{ values[column ~ '_max'] }}"
+                 placeholder="max" aria-label="{{ description }} maximum">
+        </div>
+      </div>
+    {% endfor %}
+    <div class="button-row">
+      <button type="submit" class="button">Search</button>
+      <a class="button secondary" href="{{ url_for('planets.index') }}">Clear</a>
+    </div>
+  </form>
+
+  <section class="card">
+    {{ notes(messages) }}
+    {% if results %}
+      <div class="table-scroll">
+        <table class="planet-table">
+          <thead>
+            <tr>
+              <th>Planet</th><th>Host</th>
+              {% for column, (description, unit) in columns.items() %}<th>{{ description }} <span class="unit">[{{ unit }}]</span></th>{% endfor %}
+              <th>Load into</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for planet in results %}
+              <tr>
+                <th scope="row">{{ planet.pl_name }}</th>
+                <td>{{ planet.hostname }}</td>
+                {% for column in columns %}<td>{{ "%.4g"|format(planet[column]) if planet[column] is not none else "–" }}</td>{% endfor %}
+                <td><div class="planet-actions">
+                  {# plain form posts: the run page loads the planet, then redirects to itself #}
+                  <form method="post" action="{{ url_for('spectrum.load_planet') }}">
+                    <input type="hidden" name="planet" value="{{ planet.pl_name }}">
+                    <button type="submit" class="button secondary">Spectrum</button>
+                  </form>
+                  <form method="post" action="{{ url_for('climate.load_planet') }}">
+                    <input type="hidden" name="planet" value="{{ planet.pl_name }}">
+                    <button type="submit" class="button secondary">Climate</button>
+                  </form>
+                </div></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">Loading a planet replaces the object, star and temperature values on that page. Values the
+        archive does not have are flagged there.</p>
+    {% elif not searched %}
+      <p class="hint">Enter a name or some ranges, then press Search. Up to 50 planets are shown.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

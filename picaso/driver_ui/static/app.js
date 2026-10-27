@@ -1,26 +1,48 @@
 // Draws the plotly figures the server embeds as <div class="plot" data-figure=...>,
 // and reports failed requests (htmx otherwise ignores error responses).
 
+// The server's figures use plotly's light template; in dark mode, recolour them from the page's CSS variables.
+const darkMode = window.matchMedia("(prefers-color-scheme: dark)");
+
+function themed(layout) {
+  if (!darkMode.matches) return layout;
+  const css = getComputedStyle(document.documentElement);
+  const color = (name) => css.getPropertyValue(name).trim();
+  const axis = { gridcolor: color("--border"), zerolinecolor: color("--border-strong"), linecolor: color("--border-strong") };
+  const themedLayout = {
+    ...layout,
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: color("--card-visual"),
+    font: { ...layout.font, color: color("--text") },
+    legend: { bgcolor: "rgba(0,0,0,0)", ...layout.legend },
+  };
+  for (const key of Object.keys(layout)) {
+    if (/^[xy]axis\d*$/.test(key)) themedLayout[key] = { ...axis, ...layout[key] };
+  }
+  // subplots without their own axis entry still read the template's
+  themedLayout.xaxis = { ...axis, ...layout.xaxis };
+  themedLayout.yaxis = { ...axis, ...layout.yaxis };
+  return themedLayout;
+}
+
 function renderPlots() {
   if (typeof Plotly === "undefined") return;
   document.querySelectorAll(".plot[data-figure]").forEach((el) => {
     if (el.dataset.renderedId === el.dataset.figureId) return;
     const figure = JSON.parse(el.dataset.figure);
-    Plotly.newPlot(el, figure.data, figure.layout, { responsive: true, ...figure.config })
+    Plotly.newPlot(el, figure.data, themed(figure.layout), { responsive: true, ...figure.config })
       .then(() => el.dispatchEvent(new CustomEvent("plot:rendered", { bubbles: true })));
     el.dataset.renderedId = el.dataset.figureId;
   });
 }
 
 // Morphing would strip the DOM plotly built inside a plot; leave unchanged figures alone.
-// The builder caption is written here, not by the server (see updateBuilder), so keep it too.
 Idiomorph.defaults.callbacks.beforeNodeMorphed = (oldNode, newNode) =>
   !(oldNode.classList && oldNode.classList.contains("plot") &&
-    oldNode.dataset.figureId === newNode.dataset.figureId) &&
-  oldNode.id !== "builder-now";
+    oldNode.dataset.figureId === newNode.dataset.figureId);
 
 // A re-rendered page would close an open dropdown (the server never renders `open`); keep it open.
-// Likewise the builder strip's current step, which only the browser knows (see the builder section below).
+// Likewise the builder sidebar's current step, which only the browser knows (see the builder section below).
 Idiomorph.defaults.callbacks.beforeAttributeUpdated = (attribute, node) =>
   !(attribute === "open" && node.classList && node.classList.contains("multiselect")) &&
   !((attribute === "data-current" || attribute === "aria-current") && node.classList && node.classList.contains("builder-step"));
@@ -107,18 +129,17 @@ document.addEventListener("click", (event) => {
   group.classList.toggle("open");
 });
 
-// ---------- model-builder strip (spectrum page, templates/spectrum/_builder.html) ----------
-// The server renders each step's state; here the step whose cards are in view is marked current,
-// the caption names it (or the hovered step), and clicking a step scrolls to its cards. Clicking an
-// optional step that is switched off jumps to the switch that turns it on.
-let hoveredStep = null;
+// ---------- model-builder sidebar (spectrum and climate pages, templates/_builder.html) ----------
+// The server renders each step's state; here the step whose cards are in view is marked current, and
+// clicking a step scrolls to its cards. Clicking an optional step that is switched off jumps to the
+// switch that turns it on.
+const BUILDER_LINE = 140;  // px from the top of the window: the section crossing it is the one in view
 
-function builderCurrentStep(builder) {
+function builderCurrentStep() {
   const sections = [...document.querySelectorAll("#sections > section[data-step]")];
   if (sections.length === 0) return null;
-  const line = builder.getBoundingClientRect().bottom + 60;
   let current = sections[0];
-  for (const section of sections) if (section.getBoundingClientRect().top <= line) current = section;
+  for (const section of sections) if (section.getBoundingClientRect().top <= BUILDER_LINE) current = section;
   if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) current = sections[sections.length - 1];
   return current.dataset.step;
 }
@@ -126,18 +147,12 @@ function builderCurrentStep(builder) {
 function updateBuilder() {
   const builder = document.getElementById("builder");
   if (!builder) return;
-  document.documentElement.style.setProperty("--builder-height", `${builder.offsetHeight}px`);
-  const current = builderCurrentStep(builder);
+  const current = builderCurrentStep();
   builder.querySelectorAll(".builder-step").forEach((step) => {
     const isCurrent = step.dataset.step === current;
     step.dataset.current = String(isCurrent);
     if (isCurrent) step.setAttribute("aria-current", "step"); else step.removeAttribute("aria-current");
   });
-  const shown = builder.querySelector(`.builder-step[data-step="${hoveredStep || current}"]`);
-  const caption = document.getElementById("builder-now");
-  if (!shown || !caption) return;
-  caption.replaceChildren(hoveredStep ? "" : "Now: ", Object.assign(document.createElement("b"), { textContent: shown.dataset.label }),
-    `: ${shown.dataset.summary}${shown.dataset.state === "off" ? " Optional, currently off." : ""}`);
 }
 
 let builderTicking = false;
@@ -178,12 +193,3 @@ document.addEventListener("click", (event) => {
     if (marked) marked.dataset.state = "done";
   }
 });
-
-function setHoveredStep(step) {
-  const key = step ? step.dataset.step : null;
-  if (key === hoveredStep) return;
-  hoveredStep = key;
-  updateBuilder();
-}
-document.addEventListener("mouseover", (event) => setHoveredStep(event.target.closest && event.target.closest(".builder-step")));
-document.addEventListener("focusin", (event) => setHoveredStep(event.target.closest(".builder-step")));

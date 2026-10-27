@@ -5,7 +5,10 @@
 #    OpticalProperties.opacity_method='resortrebin', chemistry.method='visscher'
 #  - for an irradiated planet (D_climate/2_Exoplanet_PreW) set:
 #    irradiated=true, climate.rfacv=0.5, temperature.profile='guillot'
+#  - for virga clouds (D_climate/5_CloudyBrownDwarf_PreW) set:
+#    cloudy=true and configure [clouds.virga]
 irradiated=false #options: true or false (if true, user needs to input star properties)
+cloudy=false #options: true or false (if true, virga clouds are computed self-consistently with the climate, see [clouds.virga])
 calc_type='climate' #spectrum climate or retrieval
 
 [InputOutput]
@@ -128,3 +131,18 @@ log_mh=0.0
 [chemistry.chemeq_on_the_fly]
 cto_absolute=0.55
 log_mh=0.0
+
+# virga clouds (only used if cloudy=true). kzz is computed self-consistently by the climate model
+[clouds.virga]
+directory='_default_/virga/' # directory of the virga .mieff files (one per condensate)
+condensates=['H2O']
+fsed=8.0 # sedimentation efficiency
+mh=1.0 # metallicity relative to solar (linear, 1 = solar)
+mmw=2.2 # mean molecular weight
+sig=2.0 # width of the lognormal particle size distribution
+kz_min=1e5 # minimum kzz (cm^2/s)
+latent_heat=true # include latent heat release in the cloud calculation
+do_holes=false # patchy clouds: spectrum = (1-fhole)*cloudy + fhole*clear
+fhole=0.5 # clear fraction (only if do_holes=true)
+fthin_cld=0.0 # optical depth scaling of the clear patch: 0 = fully clear (only if do_holes=true)
+# can add any other virga param see justdoit.inputs.virga

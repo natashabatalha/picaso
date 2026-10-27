@@ -547,7 +547,7 @@ z
 "/>
     </defs>
     <g clip-path="url(#p85b71cdc04)">
-     <use xlink:href="#m9b3e557b83" x="0" y="108" style="fill: #d23a48; fill-opacity: 0.12"/>
+     <use xlink:href="#m9b3e557b83" x="0" y="108" style="fill: #16a3c0; fill-opacity: 0.12"/>
     </g>
    </g>
    <g id="line2d_1">
@@ -790,7 +790,7 @@ L 280.062992 40.542562
 L 281.151496 41.868885 
 L 282.24 45.214468 
 L 282.24 45.214468 
-" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #d23a48; stroke-width: 2; stroke-linecap: square"/>
+" clip-path="url(#p85b71cdc04)" style="fill: none; stroke: #16a3c0; stroke-width: 2; stroke-linecap: square"/>
    </g>
   </g>
  </g>

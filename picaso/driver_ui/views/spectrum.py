@@ -13,11 +13,11 @@ import tomllib
 
 import numpy as np
 import toml
-from flask import Blueprint, Response, abort, current_app, render_template, request
+from flask import Blueprint, Response, abort, current_app, redirect, render_template, request, url_for
 
 import picaso.driver as go
 from picaso.references import get_citations
-from picaso.driver_ui.core import clouds, free_chemistry, resources, runs
+from picaso.driver_ui.core import archive, clouds, free_chemistry, resources, runs
 from picaso.driver_ui.core.config_ops import format_references, is_irradiated
 from picaso.driver_ui.core.config_schema import (
     Bool, MultiChoice, Number, Section, Text, build_fields, find_field, replace_field)
@@ -63,6 +63,15 @@ class AdminCard(Card):
 class UploadCard(Card):
     name, title = "upload", "Pre-fill from a TOML file"
     extra = "spectrum/extras/upload.html"
+
+
+class ArchiveCard(Card):
+    name, title = "archive", "Pre-fill from the NASA Exoplanet Archive"
+    extra = "_archive_lookup.html"
+    endpoint = "spectrum.load_planet"
+
+    def notes(self, sess):
+        return archive.notes(sess.config, sess.ui.get("archive"))
 
 
 class SetupCard(Card):
@@ -267,7 +276,7 @@ class ConfigurationCard(Card):
 
 
 # phase angle sits just before the spectrum: both belong to the builder's Spectrum step (views/builder.py)
-CARDS = [UploadCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(),
+CARDS = [UploadCard(), ArchiveCard(), AdminCard(), SetupCard(), StarCard(), ObjectCard(),
          TemperatureCard(), ChemistryCard(), CloudsCard(), GeometryCard(), SpectrumCard(),
          *retrieval.CARDS, ConfigurationCard()]
 CARDS_BY_NAME = {card.name: card for card in CARDS}
@@ -283,7 +292,7 @@ def render_page(sess, errors=None, card_name=None):
         "_cards.html",
         endpoint="spectrum.update_card",
         cards=cards,
-        builder=builder.state(sess, cards, error_card=card_name if errors else None),
+        builder=builder.SPECTRUM.state(sess, cards, error_card=card_name if errors else None),
         errors=errors or {},
         sess=sess,
         exported_toml=toml.dumps(exported_config(sess)),
@@ -317,8 +326,23 @@ def update_card(name):
     if card.clears_previews:
         sess.results.pop("previews", None)
     if card.name != "clouds" or clouds_were_on:  # switching clouds on is not yet configuring them
-        builder.touch(sess, name)
+        builder.SPECTRUM.touch(sess, name)
     return render_page(sess, errors, name)
+
+
+@bp.post("/archive")
+def load_planet():
+    """Loads a planet by name, from the box on this page or a "Use in spectrum" button on the planets page."""
+    sess = current()
+    try:
+        sess.ui["archive"] = archive.load_planet(sess.config, request.form.get("planet", ""))
+        sess.results.pop("previews", None)
+        builder.SPECTRUM.touch(sess, "archive")
+    except Exception as e:
+        set_messages(sess.results, "archive", [("error", f"Could not load the planet: {e}")])
+    if not request.headers.get("HX-Request"):
+        return redirect(url_for("spectrum.index"))
+    return render_page(sess)
 
 
 @bp.post("/upload")
@@ -327,7 +351,7 @@ def upload():
     file = request.files.get("toml")
     try:
         apply_upload(sess, tomllib.load(file.stream))
-        builder.touch(sess, "upload")
+        builder.SPECTRUM.touch(sess, "upload")
         set_messages(sess.results, "upload", [("success", "Successfully loaded user-provided default values.")])
     except (tomllib.TOMLDecodeError, UnicodeDecodeError, AttributeError) as e:
         set_messages(sess.results, "upload", [("error", f"Could not read the TOML file: {e}")])
@@ -354,7 +378,7 @@ def preview(kind):
     except Exception as e:
         result = {"warning": "Make sure you have configured temperature and chemistry.", "error": str(e)}
     sess.results.setdefault("previews", {})[kind] = result
-    builder.touch(sess, PREVIEW_CARDS[kind])
+    builder.SPECTRUM.touch(sess, PREVIEW_CARDS[kind])
     return render_page(sess)
 
 
@@ -381,7 +405,7 @@ def retrieval_action(action):
         abort(404)
     retrieval.ACTIONS[action](sess)
     if action.startswith("data-check"):
-        builder.touch(sess, "observation_data")
+        builder.SPECTRUM.touch(sess, "observation_data")
     return render_page(sess)
 
 
@@ -402,7 +426,7 @@ def attachment(data, filename, mimetype):
 @bp.get("/download/configured_toml.toml")
 def download_config():
     sess = current()
-    builder.touch(sess, "configuration")
+    builder.SPECTRUM.touch(sess, "configuration")
     return attachment(toml.dumps(exported_config(sess)), "configured_toml.toml", "application/toml")
 
 

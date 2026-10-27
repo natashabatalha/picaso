@@ -3,16 +3,16 @@
 {% block main_class %}home{% endblock %}
 {% block content %}
 <section class="home-block">
-  <div class="welcome-banner">
-    {# Temporary logo: swap for the PICASO logo when it is ready. #}
-    <img class="welcome-logo" src="{{ url_for('static', filename='logo_placeholder.svg') }}" alt="PICASO logo">
-    <div class="welcome-text">
-      <p class="welcome-kicker">Welcome to</p>
-      <h1>PICASO</h1>
-      <p>The Planetary Intensity Code for Atmospheric Scattering Observations. Model, retrieve and analyze
-        exoplanet and brown dwarf spectra, right from your browser. Pick where you'd like to start below.</p>
-    </div>
-  </div>
+  <header class="hero">
+    <p class="hero-eyebrow">Planetary Intensity Code for Atmospheric Scattering Observations</p>
+    <h1>
+      <picture>
+        <source srcset="{{ url_for('static', filename='logo_dark.png') }}" media="(prefers-color-scheme: dark)">
+        <img src="{{ url_for('static', filename='logo_light.png') }}" alt="PICASO" width="1187" height="456">
+      </picture>
+    </h1>
+    <p class="hero-lede">Model, retrieve and analyze exoplanet and brown dwarf spectra, right from your browser.</p>
+  </header>
   {% if not refdata_ready %}
     {{ notes([("warning", "PICASO's reference data was not found, so the modeling and analysis pages are unavailable. "
                           "Start by setting up the reference data.")]) }}
