@@ -170,8 +170,12 @@ class ATMSETUP():
         self.c.k_b = (c.k_B.to(u.erg / u.K).value)      
         self.c.G = c.G.to(u.cm*u.cm*u.cm/u.g/u.s/u.s).value 
         self.c.amu = c.u.to(u.g).value #grams
-        self.c.rgas = c.R.value
+        self.c.rgas = c.R.to(u.erg / u.K / u.mol).value #erg/K/mol
         self.c.pi = np.pi
+
+        #standard conditions defining the amagat (used for CIA continuum opacity)
+        self.c.T_amagat = 273.15 #K
+        self.c.P_amagat = c.atm.to(u.dyn / u.cm**2).value #dyn/cm2 (1 atm)
 
         #code constants
         self.c.ngangle = self.input['disco']['num_gangle']
@@ -824,6 +828,7 @@ class ATMSETUP():
         self.layer['mmw'] = self.layer['mmw'][:,g,t]
         self.layer['mixingratios'] = pd.DataFrame(self.layer['mixingratios'][:,:,g,t],columns=self.weights.keys())
         self.layer['colden'] = self.layer['colden'][:,g,t]
+        self.layer['gravity'] = self.layer['gravity'][:,g,t]
         self.layer['electrons'] = self.layer['electrons'][:,g,t]
 
         self.layer['cloud']['opd'] = self.layer['cloud']['opd'][:,:,g,t]

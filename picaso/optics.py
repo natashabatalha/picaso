@@ -177,24 +177,26 @@ def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delt
     #====================== ADD CONTIMUUM OPACITY====================== 
     #Set up coefficients needed to convert amagat to a normal human unit
     #these COEF's are only used for the continuum opacity. 
+    #CIA opacities are in cm-1 amagat-2, so COEF1 is the layer integral of 
+    #(n/n_amagat)^2 dz in cm. Everything below is cgs: 
+    #pressure [dyn/cm2], temperature [K], gravity [cm/s2], mmw [g/mol], rgas [erg/K/mol]
     tlevel = atm.level['temperature']
-    #these units are purely because of the wonky continuum units
-    #plevel in this routine is only used for those 
-    plevel = atm.level['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum COEF's below
+    plevel = atm.level['pressure']
     tlayer = atm.layer['temperature']
-    player = atm.layer['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum
-    gravity = atm.planet.gravity / 100.0  #THIS IS DANGEROUS, used for continuum
+    gravity = atm.layer['gravity'] #layer-averaged gravity from get_altitude
 
+    #ACOEF + BCOEF*p = tlayer/T(p), assuming 1/T is linear in p across the layer
     ACOEF = (tlayer/(tlevel[:-1]*tlevel[1:]))*(
             tlevel[1:]*plevel[1:] - tlevel[:-1]*plevel[:-1])/(plevel[1:]-plevel[:-1]) #UNITLESS
 
     BCOEF = (tlayer/(tlevel[:-1]*tlevel[1:]))*(
             tlevel[:-1] - tlevel[1:])/(plevel[1:]-plevel[:-1]) #INVERSE PRESSURE
 
-    COEF1 = atm.c.rgas*273.15**2*.5E5* (
+    #integral of (p T_amagat/(P_amagat T))^2 * R T/(p mmw g) dp  [cm]
+    COEF1 = atm.c.rgas*atm.c.T_amagat**2*0.5* (
         ACOEF* (plevel[1:]**2 - plevel[:-1]**2) + BCOEF*(
             2./3.)*(plevel[1:]**3 - plevel[:-1]**3) ) / (
-        1.01325**2 *gravity*tlayer*atm.layer['mmw']) 
+        atm.c.P_amagat**2 *gravity*tlayer*atm.layer['mmw']) 
 
 
     #go through every molecule in the continuum first 
@@ -571,24 +573,26 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
     #====================== ADD CONTIMUUM OPACITY====================== 
     #Set up coefficients needed to convert amagat to a normal human unit
     #these COEF's are only used for the continuum opacity. 
+    #CIA opacities are in cm-1 amagat-2, so COEF1 is the layer integral of 
+    #(n/n_amagat)^2 dz in cm. Everything below is cgs: 
+    #pressure [dyn/cm2], temperature [K], gravity [cm/s2], mmw [g/mol], rgas [erg/K/mol]
     tlevel = atm.level['temperature']
-    #these units are purely because of the wonky continuum units
-    #plevel in this routine is only used for those 
-    plevel = atm.level['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum COEF's below
+    plevel = atm.level['pressure']
     tlayer = atm.layer['temperature']
-    player = atm.layer['pressure']/atm.c.pconv #THIS IS DANGEROUS, used for continuum
-    gravity = atm.planet.gravity / 100.0  #THIS IS DANGEROUS, used for continuum
+    gravity = atm.layer['gravity'] #layer-averaged gravity from get_altitude
 
+    #ACOEF + BCOEF*p = tlayer/T(p), assuming 1/T is linear in p across the layer
     ACOEF = (tlayer/(tlevel[:-1]*tlevel[1:]))*(
             tlevel[1:]*plevel[1:] - tlevel[:-1]*plevel[:-1])/(plevel[1:]-plevel[:-1]) #UNITLESS
 
     BCOEF = (tlayer/(tlevel[:-1]*tlevel[1:]))*(
             tlevel[:-1] - tlevel[1:])/(plevel[1:]-plevel[:-1]) #INVERSE PRESSURE
 
-    COEF1 = atm.c.rgas*273.15**2*.5E5* (
+    #integral of (p T_amagat/(P_amagat T))^2 * R T/(p mmw g) dp  [cm]
+    COEF1 = atm.c.rgas*atm.c.T_amagat**2*0.5* (
         ACOEF* (plevel[1:]**2 - plevel[:-1]**2) + BCOEF*(
             2./3.)*(plevel[1:]**3 - plevel[:-1]**3) ) / (
-        1.01325**2 *gravity*tlayer*atm.layer['mmw']) 
+        atm.c.P_amagat**2 *gravity*tlayer*atm.layer['mmw']) 
 
 
     #go through every molecule in the continuum first 
