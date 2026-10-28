@@ -55,8 +55,61 @@ def add_rayleigh_numba(tauray_gauss_0, rayleigh_opa, factor):
         for j in range(nwno):
             tauray_gauss_0[i, j] += rayleigh_opa[j] * f
 
+@jit(nopython=True, cache=True, error_model='numpy')
+def combine_opacity_numba(TAUGAS, TAURAY, TAUCLD, single_scattering_cld, raman_factor):
+    """Single pass version of the numpy block that adds up the taus and computes the
+    scattering fractions and single scattering albedos. error_model='numpy' so that 0/0 gives nan
+    like numpy instead of raising ZeroDivisionError"""
+    nlayer, nwno, ngauss = TAUGAS.shape
+    DTAU = np.empty((nlayer, nwno, ngauss))
+    ftau_cld = np.empty((nlayer, nwno, ngauss))
+    ftau_ray = np.empty((nlayer, nwno, ngauss))
+    GCOS2 = np.empty((nlayer, nwno, ngauss))
+    W0 = np.empty((nlayer, nwno, ngauss))
+    W0_no_raman = np.empty((nlayer, nwno, ngauss))
+    TAU = np.zeros((nlayer+1, nwno, ngauss))
+    for i in range(nlayer):
+        for j in range(nwno):
+            for g in range(ngauss):
+                ray = TAURAY[i, j, g]
+                cld = TAUCLD[i, j, g]
+                ssa_cld = single_scattering_cld[i, j, g]
+                dtau = TAUGAS[i, j, g] + ray + cld
+                DTAU[i, j, g] = dtau
+                ftau_cld[i, j, g] = (ssa_cld * cld)/(ssa_cld * cld + ray)
+                fray = ray/(ray + ssa_cld * cld)
+                ftau_ray[i, j, g] = fray
+                GCOS2[i, j, g] = 0.5*fray
+                W0[i, j, g] = (ray*raman_factor[i, j, g] + cld*ssa_cld) / dtau
+                W0_no_raman[i, j, g] = (ray*0.99999 + cld*ssa_cld) / dtau
+                TAU[i+1, j, g] = TAU[i, j, g] + dtau
+    return DTAU, TAU, ftau_cld, ftau_ray, GCOS2, W0, W0_no_raman
+
+@jit(nopython=True, cache=True, error_model='numpy')
+def delta_eddington_numba(DTAU, W0, COSB, stream):
+    """Single pass version of the numpy delta-eddington block"""
+    nlayer, nwno, ngauss = DTAU.shape
+    f_deltaM = np.empty((nlayer, nwno, ngauss))
+    w0_dedd = np.empty((nlayer, nwno, ngauss))
+    cosb_dedd = np.empty((nlayer, nwno, ngauss))
+    dtau_dedd = np.empty((nlayer, nwno, ngauss))
+    tau_dedd = np.zeros((nlayer+1, nwno, ngauss))
+    for i in range(nlayer):
+        for j in range(nwno):
+            for g in range(ngauss):
+                w0 = W0[i, j, g]
+                cosb = COSB[i, j, g]
+                f = cosb**stream
+                f_deltaM[i, j, g] = f
+                w0_dedd[i, j, g] = w0*(1.-f)/(1.0-w0*f)
+                cosb_dedd[i, j, g] = (cosb-f)/(1.-f)
+                dtau = DTAU[i, j, g]*(1.-w0*f)
+                dtau_dedd[i, j, g] = dtau
+                tau_dedd[i+1, j, g] = tau_dedd[i, j, g] + dtau
+    return dtau_dedd, tau_dedd, w0_dedd, cosb_dedd, f_deltaM
+
 #@jit(nopython=True)
-def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
+def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
     test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False, fthin_cld = None, do_holes = False):
     """
     Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
@@ -82,9 +135,9 @@ def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delt
         (Optional) Default =0 which corresponds to oklopcic+2018 raman scattering cross sections. 
         Other options include 1 for original pollack approximation for a 6000K blackbody. 
         And 2 for nothing.  
-    test_mode : bool 
-        (Optional) Default = False to run as normal. This will overwrite the opacities and fix the 
-        delta tau at 0.5. 
+    test_mode : str or None
+        (Optional) Default = False (or None) to run as normal. 'rayleigh' keeps only the rayleigh opacity, 
+        any other string (e.g. 'constant_tau') sets the opacities to the cloud inputs. 
     full_output : bool 
         (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class. 
         This is done so that the users can debug, plot, etc. 
@@ -222,13 +275,13 @@ def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delt
         elif (m[0] == "H-") and (m[1] == "ff"):
             factor = (player*atm.layer['mixingratios']['H'].values[:,np.newaxis] * atm.layer['electrons'][:,np.newaxis] * colden / (tlayer*mmw*atm.c.amu*atm.c.k_b))
             if plot_opacity or return_mode:
-                ADDTAU = (opacityclass.continuum_opa['H-ff'] * factor).T
+                ADDTAU = opacityclass.continuum_opa['H-ff'] * factor
                 TAUGAS[:,:,0] += ADDTAU
                 if plot_opacity: opt_figure.line(1e4/opacityclass.wno, ADDTAU[plot_layer,:], alpha=0.7,legend_label=m[0]+m[1], line_width=3, color=colors[c],
                 muted_color=colors[c], muted_alpha=0.2)
                 if return_mode: taus_by_species[m[0]+m[1]] = ADDTAU
             else:
-                add_continuum_numba(TAUGAS[:,:,0], opacityclass.continuum_opa['H-ff'], factor, transpose=True)
+                add_continuum_numba(TAUGAS[:,:,0], opacityclass.continuum_opa['H-ff'], factor, transpose=False)
 
         #H2- 
         elif (m[0] == "H2-") and (m[1] == ""): 
@@ -345,33 +398,19 @@ def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delt
         atmosphere.taucld = TAUCLD
 
     #====================== ADD EVERYTHING TOGETHER PER LAYER====================== 
-    #formerly DTAU
-    DTAU = TAUGAS + TAURAY + TAUCLD 
-    
-    # This is the fractional of the total scattering that will be due to the cloud
-    #VERY important note. You must weight the taucld by the single scattering 
-    #this is because we only care about the fractional opacity from the cloud that is 
+    #formerly DTAU = TAUGAS + TAURAY + TAUCLD, TAU is its cumsum from the top down
+    #ftau_cld: fraction of the total scattering that will be due to the cloud
+    #VERY important note. You must weight the taucld by the single scattering
+    #this is because we only care about the fractional opacity from the cloud that is
     #scattering. Equivalent to w_ray in optici.f
-    ftau_cld = (single_scattering_cld * TAUCLD)/(single_scattering_cld * TAUCLD + TAURAY)
+    #ftau_ray: formerly GCOSB2, GCOS2 = 0.5*ftau_ray Hansen & Travis 1974 for Rayleigh scattering
+    #W0: TOTAL single scattering with the Raman correction, usually used for reflected light
+    #W0_no_raman: TOTAL single scattering without raman correction but with cloud scattering, for thermal
+    DTAU, TAU, ftau_cld, ftau_ray, GCOS2, W0, W0_no_raman = combine_opacity_numba(
+        TAUGAS, TAURAY, TAUCLD, single_scattering_cld, raman_factor)
 
     #COSB = ftau_cld*asym_factor_cld
     COSB = asym_factor_cld
-
-    #formerly GCOSB2 
-    ftau_ray = TAURAY/(TAURAY + single_scattering_cld * TAUCLD)
-    GCOS2 = 0.5*ftau_ray #Hansen & Travis 1974 for Rayleigh scattering 
-
-    #Raman correction is usually used for reflected light calculations 
-    #although users to have option turn it off in reflected light as well 
-    W0 = (TAURAY*raman_factor + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
-
-    #if a user wants both reflected and thermal, this computes SSA without raman correction, but with 
-    #scattering from clouds still
-    W0_no_raman = (TAURAY*0.99999 + TAUCLD*single_scattering_cld) / (TAUGAS + TAURAY + TAUCLD) #TOTAL single scattering 
-
-    #sum up taus starting at the top, going to depth
-    TAU = np.zeros((nlayer+1, nwno,ngauss))
-    for igauss in range(ngauss): TAU[1:,:,igauss]=numba_cumsum(DTAU[:,:,igauss])
 
     # Clearsky case
     #removing this code as it is bug prone as it generally repeats all code 
@@ -390,7 +429,7 @@ def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delt
         opt_figure.legend.click_policy="mute"
         show(opt_figure)
 
-    if test_mode != None:  
+    if test_mode:  
             #this is to check against Dlugach & Yanovitskij 
             #https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
             if test_mode=='rayleigh':
@@ -430,29 +469,22 @@ def compute_opacity_numba_WIP(atmosphere, opacityclass, ngauss=1, stream=2, delt
 
         #also see these lecture notes are pretty good
         #http://irina.eas.gatech.edu/EAS8803_SPRING2012/Lec20.pdf
-        f_deltaM = COSB**stream
-        w0_dedd=W0*(1.-f_deltaM)/(1.0-W0*f_deltaM)
-        #cosb_dedd=COSB/(1.+COSB)
-        cosb_dedd=(COSB-f_deltaM)/(1.-f_deltaM)
-        dtau_dedd=DTAU*(1.-W0*f_deltaM) 
+        #f_deltaM = COSB**stream, cosb_dedd=(COSB-f_deltaM)/(1.-f_deltaM), tau_dedd is cumsum of dtau_dedd
+        dtau_dedd, tau_dedd, w0_dedd, cosb_dedd, f_deltaM = delta_eddington_numba(DTAU, W0, COSB, stream)
 
-        #sum up taus starting at the top, going to depth
-        tau_dedd = np.zeros((nlayer+1, nwno, ngauss))
-        for igauss in range(ngauss): tau_dedd[1:,:,igauss]=numba_cumsum(dtau_dedd[:,:,igauss])
-    
-        #returning the terms used in 
-        return (dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2, 
-                DTAU, TAU, W0, COSB,    #these are returned twice because we need the uncorrected 
+        #returning the terms used in
+        return (dtau_dedd, tau_dedd, w0_dedd, cosb_dedd ,ftau_cld, ftau_ray, GCOS2,
+                DTAU, TAU, W0, COSB,    #these are returned twice because we need the uncorrected
                 W0_no_raman, f_deltaM)            #values for single scattering terms where we use the TTHG phase function
                                         # w0_no_raman is used in thermal calculations only
 
-    else: 
-        return (DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2, 
+    else:
+        return (DTAU, TAU, W0, COSB, ftau_cld, ftau_ray, GCOS2,
                 DTAU, TAU, W0, COSB,  #these are returned twice for consistency with the delta-eddington option
-                W0_no_raman, 0*COSB)          #W0_no_raman is used for thermal calculations only 
+                W0_no_raman, 0*COSB)          #W0_no_raman is used for thermal calculations only
 
 
-def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
+def compute_opacity_legacy(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddington=True,
     test_mode=False,raman=0, plot_opacity=False,full_output=False, return_mode=False, fthin_cld = None, do_holes = False):
     """
     Returns total optical depth per slab layer including molecular opacity, continuum opacity. 
@@ -478,9 +510,9 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
         (Optional) Default =0 which corresponds to oklopcic+2018 raman scattering cross sections. 
         Other options include 1 for original pollack approximation for a 6000K blackbody. 
         And 2 for nothing.  
-    test_mode : bool 
-        (Optional) Default = False to run as normal. This will overwrite the opacities and fix the 
-        delta tau at 0.5. 
+    test_mode : str or None
+        (Optional) Default = False (or None) to run as normal. 'rayleigh' keeps only the rayleigh opacity, 
+        any other string (e.g. 'constant_tau') sets the opacities to the cloud inputs. 
     full_output : bool 
         (Optional) Default = False. If true, This will add taugas, taucld, tauray to the atmosphere class. 
         This is done so that the users can debug, plot, etc. 
@@ -800,7 +832,7 @@ def compute_opacity(atmosphere, opacityclass, ngauss=1, stream=2, delta_eddingto
         opt_figure.legend.click_policy="mute"
         show(opt_figure)
 
-    if test_mode != None:  
+    if test_mode:  
             #this is to check against Dlugach & Yanovitskij 
             #https://www.sciencedirect.com/science/article/pii/0019103574901675?via%3Dihub
             if test_mode=='rayleigh':

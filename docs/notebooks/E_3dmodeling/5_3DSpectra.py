@@ -30,6 +30,7 @@
 # %%
 from picaso import justplotit as jpi
 from picaso import justdoit as jdi
+import os
 import pandas as pd
 import numpy as np
 
@@ -135,7 +136,8 @@ case_3d.gravity(radius=1,radius_unit=jdi.u.Unit('R_jup'),
                 mass=1, mass_unit=jdi.u.Unit('M_jup')) #any astropy units available
 case_3d.star(opacity,5000,0,4.0, radius=1, radius_unit=jdi.u.Unit('R_sun'))
 case_3d.chemeq_3d(n_cpu=5)
-mieff_directory = '/data/virga/'
+# mieff_directory = '/data/virga/'
+mieff_directory = os.path.join(os.getenv('picaso_refdata'),'virga')
 clds = case_3d.virga_3d(['MnS'], mieff_directory,fsed=1,kz_min=1e10,
                         verbose=False,n_cpu=3, full_output=True
                        )
