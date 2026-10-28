@@ -1,7 +1,12 @@
 """Retrieval cards of the Spectrum & Retrieval Setup page, and the actions behind their buttons."""
+import os
+
+from flask import request
+
 import picaso.driver as go
 from picaso.driver_ui.core import runs
-from picaso.driver_ui.core.config_schema import Bool, Choice, Number, Section, Text, TextList, build_fields
+from picaso.driver_ui.core.config_schema import (
+    Bool, Choice, FileInput, MultiChoice, Number, Section, Text, build_fields)
 from picaso.driver_ui.core.plots import plotly_plot, prior_sample_figures
 from picaso.driver_ui.core.retrieval_setup import (
     PRIOR_TYPES, SAMPLER_CODES, SYSTEMATICS, SYSTEMATICS_LABELS, data_name, default_prior, find_prior,
@@ -50,8 +55,12 @@ class ObservationDataCard(RetrievalCard):
     def fields(self, sess):
         observations = sess.config["ObservationData"]
         filenames = observations["filenames"]
-        children = [TextList(("ObservationData", "filenames"), filenames, multiline=True,
-                             hint="Path(s) to your observation data, one per line")]
+        children = [FileInput(("ui", "data_upload"), multiple=True, label="Upload observation data",
+                              hint="Select one or more files; each upload adds to the files below")]
+        if filenames:
+            names = [os.path.basename(f) for f in filenames]
+            children.append(MultiChoice(("ui", "data_files"), names, names, label="Data files",
+                                        hint="Uncheck a file to remove it"))
         other = {k: v for k, v in observations.items() if k not in ("filenames", "instruments")}
         children += build_fields(other, ("ObservationData",)).children
 
@@ -74,11 +83,35 @@ class ObservationDataCard(RetrievalCard):
                          "specified through xarray, and should be in astropy format (enter unitless for e.g. "
                          "albedo or transit depth).")]
 
+    def update(self, sess, form):
+        errors = super().update(sess, form)
+        observations = sess.config["ObservationData"]
+        kept = sess.ui.pop("data_files", [])
+        filenames, instruments = observations["filenames"], observations.get("instruments", [])
+        keep = [i for i, f in enumerate(filenames) if os.path.basename(f) in kept]
+        observations["filenames"] = [filenames[i] for i in keep]
+        if "instruments" in observations:
+            observations["instruments"] = [instruments[i] if i < len(instruments) else None for i in keep]
+
+        # an upload replaces an existing file of the same name: the name keys the data
+        for path in sess.save_uploads(request.files.getlist("ui.data_upload")):
+            name = os.path.basename(path)
+            existing = [os.path.basename(f) for f in observations["filenames"]]
+            if name in existing:
+                observations["filenames"][existing.index(name)] = path
+            else:
+                observations["filenames"].append(path)
+        self.after_update(sess)
+        return errors
+
     def after_update(self, sess):
         observations = sess.config["ObservationData"]
         if go.get_instrument_options():
             count = len(observations["filenames"])
             observations["instruments"] = (observations.get("instruments", []) + [None] * count)[:count]
+        names = {data_name(f) for f in observations["filenames"]}
+        for kind, selected in sess.ui["systematics"].items():
+            sess.ui["systematics"][kind] = {name: on for name, on in selected.items() if name in names}
         sync_priors(sess)
 
 

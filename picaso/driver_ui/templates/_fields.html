@@ -41,7 +41,7 @@
     {% elif f.kind == "file" %}
       <div class="tf-file{{ error }}">
         <label class="file-input">{{ label }}
-          <input type="file" id="{{ id }}" name="{{ f.name }}" accept="{{ f.accept }}">
+          <input type="file" id="{{ id }}" name="{{ f.name }}" accept="{{ f.accept }}"{% if f.multiple %} multiple{% endif %}>
         </label>
         {{ support(f, errors) }}
       </div>

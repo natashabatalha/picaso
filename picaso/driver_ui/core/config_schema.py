@@ -173,6 +173,7 @@ class TextList(Field):
 class FileInput(Field):
     """A file picker. Uploads are not config values, so the card reads them from the request itself."""
     accept: str = ""
+    multiple: bool = field(default=False, kw_only=True)  # allow selecting several files at once
     kind = "file"
 
     def read(self, form):

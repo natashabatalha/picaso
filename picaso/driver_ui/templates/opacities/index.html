@@ -16,7 +16,8 @@
 {% block content %}
 <h1>View opacities</h1>
 <div id="opacity-viewer" class="sidebar-layout" hx-target="#opacity-viewer" hx-select="#opacity-viewer" hx-swap="morph:outerHTML">
-  <form class="card sidebar" hx-post="{{ url_for('opacities.plot') }}" hx-sync="this:replace" hx-disabled-elt="find button[type=submit]">
+  <form class="card sidebar" hx-post="{{ url_for('opacities.plot') }}" hx-sync="this:replace" hx-disabled-elt="find button[type=submit]"
+        hx-encoding="multipart/form-data">
     <input type="hidden" name="loaded_db" value="{{ db }}">
     <div class="field">
       <label for="opacity-db">Opacity file</label>
@@ -80,10 +81,17 @@
       <fieldset class="subsection" id="opacity-data" {% if not obs.show %}hidden{% endif %}>
         <legend>Observational data</legend>
         <div class="field">
-          <label for="opacity-obs-filenames">filenames</label>
+          <label for="opacity-obs-upload">Data files</label>
           <div class="control">
-            <textarea id="opacity-obs-filenames" name="obs_filenames" rows="{{ [obs.filenames|length + 1, 3]|max }}">{{ obs.filenames|join("\n") }}</textarea>
-            <p class="hint">Path(s) to your observation data, one per line</p>
+            <input type="file" id="opacity-obs-upload" name="obs_upload" multiple
+                   hx-post="{{ url_for('opacities.plot') }}" hx-trigger="change" hx-sync="closest form:replace">
+            <p class="hint">Select one or more files; each upload adds to the list below</p>
+            {% for filename in obs.filenames %}
+              <label><input type="checkbox" name="obs_filenames" value="{{ filename }}" checked
+                            hx-post="{{ url_for('opacities.plot') }}" hx-trigger="change" hx-sync="closest form:replace">
+                {{ filename.replace("\\", "/").split("/")[-1] }}</label>
+            {% endfor %}
+            {% if obs.filenames %}<p class="hint">Uncheck a file to remove it</p>{% endif %}
           </div>
         </div>
         {% for key in ("coord", "coord_unit", "data", "data_unit", "error") %}

@@ -8,6 +8,7 @@ import os
 from flask import Blueprint, current_app, render_template, request
 
 import picaso.data as data
+from picaso.driver_ui import state
 from picaso.driver_ui.core import opacities
 from picaso.driver_ui.core.plots import plotly_plot
 
@@ -93,7 +94,11 @@ def data_choices():
     """The observational data form. Kept even when the opacity file changes, since it does not depend on it."""
     choices = {key: request.form.get(f"obs_{key}", "").strip() for key in DATA_FIELDS}
     choices["show"] = request.form.get("show_data") == "on"
-    choices["filenames"] = [line.strip() for line in request.form.get("obs_filenames", "").splitlines() if line.strip()]
+    # files uploaded earlier come back as checked boxes; new uploads are added, replacing any of the same name
+    filenames = request.form.getlist("obs_filenames")
+    for path in state.current().save_uploads(request.files.getlist("obs_upload")):
+        filenames = [f for f in filenames if os.path.basename(f) != os.path.basename(path)] + [path]
+    choices["filenames"] = filenames
     return choices
 
 
