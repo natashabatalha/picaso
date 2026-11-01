@@ -250,11 +250,14 @@ def convert_flux_units(xgrid, flux, to_f_unit, flux_err=None, xgrid_unit='cm^(-1
         If flux_err is None: returns converted flux.
         If flux_err is provided: returns tuple of (converted_flux, converted_flux_err).
     """
-    # 1. Setup the SourceSpectrum with actual flux
+    # Preserve statistically valid negative observed fluxes. Empirical1D clips
+    # them to zero by default, which would corrupt both the data and (through
+    # the old flux_converted / flux scaling below) their uncertainties.
     ST_SS = SourceSpectrum(
         Empirical1D, 
         points=xgrid * u.Unit(xgrid_unit), 
-        lookup_table=flux * u.Unit(f_unit)
+        lookup_table=flux * u.Unit(f_unit),
+        keep_neg=True,
     )
     
     # 2. Evaluate at the native waveset to get converted flux
@@ -266,11 +269,23 @@ def convert_flux_units(xgrid, flux, to_f_unit, flux_err=None, xgrid_unit='cm^(-1
     if (xgrid_unit == 'cm^(-1)') and (xgrid[1] > xgrid[0]):
         flux_converted = flux_converted[::-1]
 
-    # 4. Handle error conversion if provided
+    # 4. Handle error conversion if provided. Convert a unit-valued spectrum
+    # to obtain the wavelength-dependent multiplicative conversion factor;
+    # deriving it by dividing converted flux by input flux fails at zero flux
+    # and previously inherited synphot's negative-flux clipping.
     if flux_err is not None:
-        # Determine the exact wavelength-dependent scale factor applied by synphot
-        # (flux_converted / flux) handles any non-trivial per-pixel unit scaling
-        scale_factor = flux_converted.value / flux
+        unit_spectrum = SourceSpectrum(
+            Empirical1D,
+            points=xgrid * u.Unit(xgrid_unit),
+            lookup_table=np.ones_like(flux, dtype=float) * u.Unit(f_unit),
+            keep_neg=True,
+        )
+        scale_factor = unit_spectrum(
+            unit_spectrum.waveset,
+            flux_unit=u.Unit(to_f_unit),
+        ).value
+        if (xgrid_unit == 'cm^(-1)') and (xgrid[1] > xgrid[0]):
+            scale_factor = scale_factor[::-1]
         
         # Scale the error and attach the destination unit
         flux_err_converted = (flux_err * scale_factor) * u.Unit(to_f_unit)
