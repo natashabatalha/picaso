@@ -21,12 +21,9 @@ from scipy import stats
 import scipy.interpolate as sci
 from scipy.special import erf
 import dill
-import dynesty
-import dynesty.utils
 from functools import partial
 import sys
 from schwimmbad import MPIPool, MultiPool, choose_pool
-dynesty.utils.pickle_module = dill
 from astropy.io import fits
 import spectres
 import contextlib
@@ -1409,6 +1406,16 @@ def register_sampler(name):
 
 @register_sampler('dynesty')
 def run_dynesty(config, loglike_fn, hypercube_fn, ndims, pool, prior_config):
+    try:
+        import dynesty
+        import dynesty.utils
+    except ImportError as exc:
+        raise ImportError(
+            "The Dynesty sampler is optional. Install it with "
+            "`pip install 'picaso[dynesty]'`."
+        ) from exc
+    dynesty.utils.pickle_module = dill
+
     checkpoint_file = config['InputOutput']['retrieval_output']+'/dynesty.save'
     sampler_args = prior_config['sampler']['sampler_kwargs'].copy()
     
@@ -1439,7 +1446,13 @@ def run_ultranest(config, loglike_fn, hypercube_fn, ndims, pool, prior_config):
     instead ultranest should be run via mpiexec -np num_procs python script.py 
     which supports either local and cluster machines and will force mpi=True
     """
-    import ultranest
+    try:
+        import ultranest
+    except ImportError as exc:
+        raise ImportError(
+            "The UltraNest sampler is optional. Install it with "
+            "`pip install 'picaso[ultranest]'`."
+        ) from exc
     fitpars = prior_finder(prior_config)
     param_names = list(fitpars.keys())
     
@@ -1471,7 +1484,7 @@ def run_nautilus(config, loglike_fn, hypercube_fn, ndims, pool, prior_config):
     except ImportError as exc:
         raise ImportError(
             "The Nautilus sampler requires the optional 'nautilus-sampler' "
-            "package. Install PICASO with `pip install 'picaso[driver]'`."
+            "package. Install it with `pip install 'picaso[nautilus]'`."
         ) from exc
 
     checkpoint_file = os.path.join(

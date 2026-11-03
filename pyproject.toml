@@ -84,9 +84,17 @@ Citation = "https://natashabatalha.github.io/picaso/credit.html"
 # picaso.driver (toml-driven runs and retrievals): pip install "picaso[driver]"
 driver = [
     "dill",
-    "dynesty",
     "schwimmbad",
     "spectres",
+    "arviz",
+    "six",
+]
+# Retrieval samplers are optional because users generally need only one backend.
+dynesty = ["dynesty"]
+ultranest = ["ultranest"]
+nautilus = ["nautilus-sampler>=1.0.6"]
+samplers = [
+    "dynesty",
     "ultranest",
     "nautilus-sampler>=1.0.6",
 ]

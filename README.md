@@ -120,7 +120,7 @@ The default opacities are broadened by H2/He and do not include O2 or O3. For Ea
 **Explore more functionality**
 
 - 1D climate models: download the correlated-k tables with `picaso-data get ck_tables pre-weighted`, then follow the [brown dwarf climate tutorial](https://natashabatalha.github.io/picaso/notebooks/D_climate/1_BrownDwarf_PreW.html)
-- Spectra, climate models and retrievals from a TOML file: `pip install "picaso[driver]"` and the [driver tutorial](https://natashabatalha.github.io/picaso/notebooks/J_driver%26retrievals/1_Driver_Tutorial.html)
+- Spectra, climate models and retrieval setup from a TOML file: `pip install "picaso[driver]"`; add the sampler you use with `picaso[dynesty]`, `picaso[ultranest]`, or `picaso[nautilus]`. See the [driver tutorial](https://natashabatalha.github.io/picaso/notebooks/J_driver%26retrievals/1_Driver_Tutorial.html).
 - Everything `picaso-data` can download: `picaso-data list`
 <!-- quickstart:end -->
 

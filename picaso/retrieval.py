@@ -3,7 +3,6 @@ import json
 from astropy.utils.misc import JsonCustomEncoder
 from astropy.convolution import convolve, Gaussian1DKernel
 import arviz as az
-import dynesty
 import pandas as pd
 from scipy import interpolate
 from scipy.stats import gaussian_kde
@@ -15,11 +14,44 @@ from .justplotit import pals
 
 import matplotlib.pyplot as plt
 import xarray as xr
-from ultranest.plot import PredictionBand
-import ultranest.integrator as uint
 import os 
 import pickle as pk
 import re
+
+
+class _QuantileLine:
+    def __init__(self, data):
+        self.data = data
+
+
+class PredictionBand:
+    """Small sampler-independent replacement for UltraNest's PredictionBand."""
+
+    def __init__(self, x):
+        self.x = np.asarray(x)
+        self._values = []
+
+    def add(self, value):
+        self._values.append(np.asarray(value))
+
+    def get_line(self, q):
+        if not self._values:
+            raise ValueError("Cannot calculate a prediction band without samples")
+        return _QuantileLine(np.quantile(np.asarray(self._values), q, axis=0))
+
+
+def _resample_equal(samples, weights, seed=0):
+    """Systematically resample weighted samples without requiring Dynesty."""
+    samples = np.asarray(samples)
+    weights = np.asarray(weights, dtype=float)
+    total = np.sum(weights)
+    if not np.isfinite(total) or total <= 0:
+        raise ValueError("Posterior weights must have a finite, positive sum")
+    weights = weights / total
+    rng = np.random.RandomState(seed)
+    positions = (rng.random() + np.arange(len(weights))) / len(weights)
+    indices = np.searchsorted(np.cumsum(weights), positions, side="right")
+    return samples[np.minimum(indices, len(weights) - 1)]
 
 __refdata__ = os.environ.get('picaso_refdata')
 
@@ -116,6 +148,14 @@ def read_dynesty(dirr,params):
     -------
     dict 
     """
+    try:
+        import dynesty
+    except ImportError as exc:
+        raise ImportError(
+            "Reading Dynesty results requires the optional Dynesty package. "
+            "Install it with `pip install 'picaso[dynesty]'`."
+        ) from exc
+
     checkpoint_file = os.path.join(dirr, 'dynesty.save')
     sampler = dynesty.NestedSampler.restore(checkpoint_file)
     results = sampler.results
@@ -131,8 +171,7 @@ def read_dynesty(dirr,params):
     if sum_weights > 0:
         weights = weights / sum_weights
         
-    samples_rew = dynesty.utils.resample_equal(
-        samples, weights, rstate=np.random.RandomState(0))
+    samples_rew = _resample_equal(samples, weights)
     
     max_logl_idx = np.argmax(logl)
     max_logl_point = samples[max_logl_idx]
@@ -182,6 +221,14 @@ def read_ultranest(dirr,params):
     -------
     dict 
     """
+    try:
+        import ultranest.integrator as uint
+    except ImportError as exc:
+        raise ImportError(
+            "Reading UltraNest results requires the optional UltraNest package. "
+            "Install it with `pip install 'picaso[ultranest]'`."
+        ) from exc
+
     res = uint.read_file(dirr,len(params))
     res[1]['paramnames'] =  params
     results = res[1]
@@ -195,8 +242,7 @@ def read_ultranest(dirr,params):
     maxlogl_point = results['maximum_likelihood']['point']
     maxlogl_value = results['maximum_likelihood']['logl']
     
-    samples_rew = dynesty.utils.resample_equal(
-        data, weights, rstate=np.random.RandomState(0))
+    samples_rew = _resample_equal(data, weights)
     #ultranest only writes info/post_summary.csv once the run finishes, so without it these are intermediate results
     converged = os.path.exists(os.path.join(dirr, 'info','post_summary.csv'))
     if converged:
@@ -262,7 +308,7 @@ def read_nautilus(dirr, fitpars, param_tools=None):
     except ImportError as exc:
         raise ImportError(
             "Reading Nautilus results requires the optional 'nautilus-sampler' "
-            "package. Install PICASO with `pip install 'picaso[driver]'`."
+            "package. Install it with `pip install 'picaso[nautilus]'`."
         ) from exc
     from functools import partial
     from .driver import hypercube
@@ -285,8 +331,7 @@ def read_nautilus(dirr, fitpars, param_tools=None):
     samples, log_w, logl = sampler.posterior()
     weights = np.exp(log_w)
     weights = weights / np.sum(weights)
-    samples_rew = dynesty.utils.resample_equal(
-        samples, weights, rstate=np.random.RandomState(0))
+    samples_rew = _resample_equal(samples, weights)
 
     max_logl_idx = np.argmax(logl)
     max_logl_point = samples[max_logl_idx]

@@ -41,7 +41,7 @@ Install with conda
 Optional: Driver and Retrievals (picaso.driver)
 -----------------------------------------------
 
-``picaso.driver`` runs spectra, climate models and retrievals from a ``toml`` configuration file. It needs a few extra packages (``dill``, ``dynesty``, ``schwimmbad``, ``spectres`` and ``ultranest``) that are not installed by default. To include them, install the ``driver`` add-on:
+``picaso.driver`` runs spectra, climate models and retrievals from a ``toml`` configuration file. Its shared driver and analysis dependencies are installed with the ``driver`` add-on:
 
 .. code-block:: bash 
 
@@ -57,8 +57,18 @@ If you installed PICASO with conda, add the dependencies yourself:
 
 .. code-block:: bash 
 
-	conda install conda-forge::dill conda-forge::dynesty conda-forge::schwimmbad conda-forge::ultranest
+	conda install conda-forge::dill conda-forge::schwimmbad conda-forge::arviz conda-forge::six
 	pip install spectres
+
+Retrieval samplers are optional. Install only the backend you plan to use:
+
+.. code-block:: bash
+
+	pip install "picaso[dynesty]"
+	pip install "picaso[ultranest]"
+	pip install "picaso[nautilus]"
+	# or install all three
+	pip install "picaso[samplers]"
 
 Optional: PICASO App (picaso-app)
 ---------------------------------
@@ -79,7 +89,7 @@ If you installed PICASO with conda, add the dependencies yourself:
 
 .. code-block:: bash 
 
-	conda install conda-forge::flask conda-forge::plotly conda-forge::dill conda-forge::dynesty conda-forge::schwimmbad conda-forge::ultranest
+	conda install conda-forge::flask conda-forge::plotly conda-forge::dill conda-forge::schwimmbad conda-forge::arviz conda-forge::six
 	pip install spectres
 
 Then launch the app, which will open in your web browser:
