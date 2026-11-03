@@ -56,6 +56,21 @@ CLIMATE_CHEM_MAP = {
     'chemeq_on_the_fly': 'on-the-fly'
 }
 
+
+def active_cloud_mie_condensates(config):
+    """Condensates whose Mie tables must be preloaded for the selected cloud types."""
+    clouds = config.get('clouds') or {}
+    condensates = []
+    for key, cloud_type in clouds.items():
+        if not key.endswith('_type') or cloud_type not in ('flex_fsed', 'brewster_mie'):
+            continue
+        cloud_name = key[:-5]  # cloud1_type -> cloud1
+        selected = clouds.get(cloud_name, {}).get(cloud_type, {})
+        condensate = selected.get('condensate')
+        if condensate and condensate not in condensates:
+            condensates.append(condensate)
+    return condensates
+
 # config path -> NASA Exoplanet Archive PSCompPars column, used by prefill_from_exoplanet_archive.
 # Archive units already match the template's (Rjup, Mjup, parsec, km/s, Rsun, AU, K, cgs logg, dex)
 ARCHIVE_TO_CONFIG = {
@@ -110,7 +125,7 @@ def run(driver_file=None,driver_dict=None,return_class=False):
         return run_climate(driver_dict=config, return_class=return_class)
 
     #PRELOAD OPACITIES OR OPTICAL CONSTANTS
-    preload_cloud_miefs = find_values_for_key(config ,'condensate')
+    preload_cloud_miefs = active_cloud_mie_condensates(config) or None
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
     #if the above are both blank then this is just returning a set of functions
     model_dir = config['temperature'].get('xarray_grid',{}).get('model_dir',None)
@@ -1556,7 +1571,7 @@ def retrieve(config=None, param_tools=None, driver_file=None):
         raise Exception('config and driver_file are None. Please specify one or the other')
     
     if not param_tools: 
-        preload_cloud_miefs = find_values_for_key(config ,'condensate')
+        preload_cloud_miefs = active_cloud_mie_condensates(config) or None
         virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
         model_dir = config['temperature'].get('xarray_grid',{}).get('model_dir',None)
         param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,
@@ -1677,7 +1692,7 @@ def check_model_samples(config, N=100, samples=None,full_likelihood=False):
         method=config['OpticalProperties']['opacity_method'], #resampled, preweighted, resortrebin
         **config['OpticalProperties']['opacity_kwargs'] #additonal inputs 
         )
-    preload_cloud_miefs = find_values_for_key(config ,'condensate')
+    preload_cloud_miefs = active_cloud_mie_condensates(config) or None
     virga_mieff   = config['OpticalProperties'].get('virga_mieff',None)
     model_dir = config['temperature'].get('xarray_grid',{}).get('model_dir',None)
     param_tools = Parameterize(load_cld_optical=preload_cloud_miefs,

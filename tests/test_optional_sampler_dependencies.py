@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from picaso import retrieval
-from picaso.driver import run_dynesty, run_ultranest
+from picaso.driver import active_cloud_mie_condensates, run_dynesty, run_ultranest
 
 
 def _block_import(monkeypatch, blocked):
@@ -44,3 +44,28 @@ def test_equal_resampling_is_sampler_independent_and_repeatable():
     second = retrieval._resample_equal(samples, weights)
     np.testing.assert_array_equal(first, second)
     assert first.shape == samples.shape
+
+
+def test_inactive_mie_cloud_options_are_not_preloaded():
+    config = {
+        "clouds": {
+            "cloud1_type": "hard_grey",
+            "cloud1": {
+                "hard_grey": {"opd": [1.0]},
+                "flex_fsed": {"condensate": "Al2O3"},
+                "brewster_mie": {"condensate": "Na2S"},
+            },
+        },
+    }
+    assert active_cloud_mie_condensates(config) == []
+
+
+@pytest.mark.parametrize("cloud_type", ["flex_fsed", "brewster_mie"])
+def test_active_mie_cloud_is_preloaded(cloud_type):
+    config = {
+        "clouds": {
+            "cloud1_type": cloud_type,
+            "cloud1": {cloud_type: {"condensate": "Al2O3"}},
+        },
+    }
+    assert active_cloud_mie_condensates(config) == ["Al2O3"]
