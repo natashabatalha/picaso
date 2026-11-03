@@ -14,7 +14,7 @@ SYSTEMATICS = {"err_inf": 0.0, "offset": 0.0, "scaling": 1.0}  # kind -> nominal
 SYSTEMATICS_LABELS = {"err_inf": "Add error inflation term", "offset": "Add instrumental offset",
                       "scaling": "Add scaling term"}
 PRIOR_TYPES = ["uniform", "gaussian"]
-SAMPLER_CODES = ["dynesty", "ultranest"]
+SAMPLER_CODES = ["dynesty", "ultranest", "nautilus"]
 _NOT_FREE = {"nlevel"}
 
 
