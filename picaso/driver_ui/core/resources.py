@@ -12,6 +12,7 @@ import os
 import threading
 
 import picaso.driver as go
+from picaso import justdoit as jdi
 from picaso.parameterizations import Parameterize
 
 
