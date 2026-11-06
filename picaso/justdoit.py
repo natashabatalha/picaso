@@ -29,6 +29,7 @@ _trapz = np.trapezoid if hasattr(np, 'trapezoid') else np.trapz
 import pandas as pd
 import copy
 import json
+import tempfile
 import warnings
 
 from synphot.models import Empirical1D
@@ -954,16 +955,18 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
     else: 
         rp = planet_params.get('rp',np.nan) 
         
-    #add required RP/MP or gravity
-    if (not np.isnan(gravity)): 
-        attrs['planet_params']['gravity'] = gravity
-        assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
-    elif (((not np.isnan(mp)) & (not np.isnan(rp))) & (((not isinstance(mp,str)) & (not isinstance(rp,str))))):
+    #add required RP/MP and/or gravity. MP and RP are kept whenever they are known: input_xarray
+    #prefers them, and the radius is needed for altitude-dependent gravity and fp/fs
+    has_mp_rp = (((not np.isnan(mp)) & (not np.isnan(rp))) & (((not isinstance(mp,str)) & (not isinstance(rp,str)))))
+    if has_mp_rp:
         attrs['planet_params']['mp'] = mp
         attrs['planet_params']['rp'] = rp
         assert isinstance(attrs['planet_params']['mp'],u.quantity.Quantity ), "User supplied mp in planet_params must be an astropy unit: e.g. 1*u.Unit('M_jup')"
         assert isinstance(attrs['planet_params']['rp'],u.quantity.Quantity ), "User supplied rp in planet_params must be an astropy unit: e.g. 1*u.Unit('R_jup')"
-    else: 
+    if (not np.isnan(gravity)):
+        attrs['planet_params']['gravity'] = gravity
+        assert isinstance(attrs['planet_params']['gravity'],u.quantity.Quantity ), "User supplied gravity in planet_params must be an astropy unit: e.g. 1*u.Unit('m/s**2')"
+    if (not has_mp_rp) and np.isnan(gravity):
         print('Mass and Radius, or gravity not provided in add_output, and wasn not found in picaso class')
     
     #add anything else the user had in planet params
@@ -988,11 +991,20 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         #stellar params 
         stellar_params = add_output.get('stellar_params',{})
         attrs['stellar_params'] = {}
-        #must be supplied in picaso
-        attrs['stellar_params']['database'] = stellar_params.get('database', picaso_class.inputs['star'].get('database',None)) 
-        attrs['stellar_params']['steff'] = stellar_params.get('steff', picaso_class.inputs['star'].get('temp',None)) 
-        attrs['stellar_params']['feh'] = stellar_params.get('feh', picaso_class.inputs['star'].get('metal',None)) 
-        attrs['stellar_params']['logg'] = stellar_params.get('logg', picaso_class.inputs['star'].get('logg',None)) 
+        user_spectrum = picaso_class.inputs['star'].get('user_spectrum')
+        if user_spectrum is not None:
+            #star came from a user file: the spectrum itself goes in the xarray so it can be rerun anywhere
+            attrs['stellar_params']['filename'] = os.path.basename(str(picaso_class.inputs['star']['filename']))
+            data_vars['stellar_flux'] = (["stellar_wavelength"], user_spectrum['flux'],
+                                         {'units': str(picaso_class.inputs['star']['f_unit'])})
+            stellar_coords = dict(stellar_wavelength=(["stellar_wavelength"], user_spectrum['wave'],
+                                         {'units': str(picaso_class.inputs['star']['w_unit'])}))
+        else:
+            #must be supplied in picaso
+            attrs['stellar_params']['database'] = stellar_params.get('database', picaso_class.inputs['star'].get('database',None)) 
+            attrs['stellar_params']['steff'] = stellar_params.get('steff', picaso_class.inputs['star'].get('temp',None)) 
+            attrs['stellar_params']['feh'] = stellar_params.get('feh', picaso_class.inputs['star'].get('metal',None)) 
+            attrs['stellar_params']['logg'] = stellar_params.get('logg', picaso_class.inputs['star'].get('logg',None)) 
         #optional could be nan
         rs = picaso_class.inputs['star'].get('radius',np.nan)
         if np.isfinite(rs):
@@ -1008,7 +1020,7 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
         for ikey in attrs['stellar_params'].keys():
             assert not isinstance(attrs['stellar_params'][ikey],type(None)), f"We couldnt find these stellar parameters in add_output or the picaso class {attrs['stellar_params']}" 
         for ikey in stellar_params.keys(): 
-            if ikey not in ['database','steff','feh','logg','rs']:
+            if ikey not in ['database','steff','feh','logg','rs','filename']:
                 if stellar_params[ikey]!='optional':attrs['stellar_params'][ikey] = stellar_params[ikey]
                 
         #orbit params
@@ -1046,8 +1058,9 @@ def output_xarray(df, picaso_class, add_output={}, savefile=None):
             pressure=(["pressure"], np.array(df_atmo['pressure'].values),{'units': 'bar'}),#required*
             wavelength=(["wavelength"], np.array(1e4/wavenumber),{'units': 'micron'})
         )
-    if 'clouds' in 'opd' in data_vars.keys(): 
-        coords['wavenumber_layer'] = (["wavenumber_layer"], picaso_class.inputs['clouds']   ,{'units': 'cm**(-1)'})
+    if 'stellar_flux' in data_vars: coords.update(stellar_coords)
+    if 'opd' in data_vars.keys():
+        coords['wavenumber_layer'] = (["wavenumber_layer"], picaso_class.inputs['clouds']['wavenumber'],{'units': 'cm**(-1)'})
         coords['pressure_layer'] = (["pressure_layer"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
     if 'dtdp' in data_vars.keys():
         coords['pressure_layer'] = (["pressure_layer"], full_output['layer']['pressure'] ,{'units': full_output['layer']['pressure_unit']})
@@ -1131,15 +1144,26 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         else: 
             semi_major=semi_major_dict['value']
             semi_major_unit=u.Unit(semi_major_dict['unit'])
-        case.star(opacity, steff,feh,logg, radius=rs['value'], 
-                  radius_unit=u.Unit(rs['unit']), database=database, 
-                  semi_major=semi_major,semi_major_unit=semi_major_unit)
+        star_kwargs = dict(radius=None if rs is None else rs['value'],
+                           radius_unit=None if rs is None else u.Unit(rs['unit']),
+                           semi_major=semi_major, semi_major_unit=semi_major_unit)
+        if 'stellar_flux' in xr_usr.data_vars:
+            #star came from a user file, which output_xarray stored in the xarray
+            with tempfile.TemporaryDirectory() as tmp:
+                star_file = os.path.join(tmp, 'star.txt')
+                np.savetxt(star_file, np.column_stack([xr_usr['stellar_wavelength'].values,
+                                                       xr_usr['stellar_flux'].values]))
+                case.star(opacity, filename=star_file,
+                          w_unit=xr_usr['stellar_wavelength'].attrs['units'],
+                          f_unit=xr_usr['stellar_flux'].attrs['units'], **star_kwargs)
+            case.inputs['star']['filename'] = _finditem(stellar_params,'filename')
+        else:
+            case.star(opacity, steff,feh,logg, database=database, **star_kwargs)
 
     mp = _finditem(planet_params,'mp')
     rp = _finditem(planet_params,'rp')
     gravity = _finditem(planet_params,'gravity')
     logg = _finditem(planet_params,'logg')
-    gravity = _finditem(planet_params,'gravity')
 
     if ((not isinstance(mp, type(None))) & (not isinstance(rp, type(None)))):
         case.gravity(mass = mp['value'], mass_unit=u.Unit(mp['unit']),
@@ -1148,8 +1172,6 @@ def input_xarray(xr_usr, opacity,calculation='planet',approx_kwargs={}):
         case.gravity(gravity = gravity['value'], gravity_unit=u.Unit(gravity['unit']))    
     elif (not isinstance(logg, type(None))): 
         case.gravity(gravity = 10**logg['value'], gravity_unit=u.Unit(logg['unit']))
-    elif (not isinstance(gravity, type(None))): 
-        case.gravity(gravity = gravity['value'], gravity_unit=u.Unit(gravity['unit']))
 
     else: 
         print('Mass and Radius or gravity not provided in xarray, user needs to run gravity function')
