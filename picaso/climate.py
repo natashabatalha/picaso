@@ -3770,6 +3770,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                #kwargs for get_kzz function
                moist=moist, do_holes=do_holes, fhole=fhole, verbose=verbose)
         bundle.inputs['atmosphere']['kzz']['sc_kzz']=kz #bookeeping current kz 
+        bundle.inputs['atmosphere']['kzz']['latest_kzz']=kz #most recent kz, returned with the converged profile
 
         if save_kzz: all_kzz = np.append(all_kzz,kz)
         #are clouds turned on such that we need the sc kzz for virga? 
@@ -3865,6 +3866,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
                 flux_net_ir_layer=flux_net_ir_layer,flux_plus_ir_attop=flux_plus_ir_attop,
                 #kwargs for get_kzz function
                 moist=moist, do_holes=do_holes,fhole=fhole, verbose=verbose)
+            bundle.inputs['atmosphere']['kzz']['latest_kzz']=kz #most recent kz, returned with the converged profile
             if save_kzz: all_kzz = np.append(all_kzz,kz)
             #are clouds turned on such that we need the sc kzz for virga? 
             if sc_kzz_and_clouds: 

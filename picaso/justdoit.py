@@ -5424,7 +5424,9 @@ class inputs():
         diseq_chem : bool
             If you want to run `on-the-fly' mixing (takes longer),True/False
         self_consistent_kzz : bool
-            If you want to run MLT in convective zones and Moses in the radiative zones
+            If you want to run MLT in convective zones and Moses in the radiative zones.
+            When a kzz profile is computed (clouds, diseq_chem or save_all_kzz), the
+            converged kzz is returned as the `kz` column of `ptchem_df` (cm2/s).
         verbose : bool or int
             Progress printout (see the climate tutorials for how to read it).
             False/0 = silent, True/1 = one line per outer iteration of each stage,
@@ -5675,12 +5677,21 @@ class inputs():
         #all output to user
         all_out['pressure'] = pressure
         all_out['temperature'] = temp
+        #keep the converged self-consistent kzz with the profile so it is saved with the .pt file
+        if need_kzz and self_consistent_kzz:
+            kz = self.inputs['atmosphere']['kzz'].get('latest_kzz')
+            if isinstance(kz, np.ndarray) and len(kz) == len(chem_out):
+                if 'kz' in chem_out: chem_out['kz'] = kz
+                else: chem_out.insert(2, 'kz', kz)
         all_out['ptchem_df'] = chem_out
         all_out['dtdp'] = dtdp
         all_out['cvz_locs'] = nstr_new
         all_out['flux_ir_attop']=flux_plus_final
         flux_net_final = rfacv * flux_net_v_final + rfaci* flux_net_ir_final + tidal
-        all_out['fnet/fnetir']=flux_net_final/flux_net_ir_final
+        #net IR flux can be exactly zero in a layer, the ratio is nan there
+        all_out['fnet/fnetir']=np.divide(flux_net_final, flux_net_ir_final,
+                                         out=np.full(np.shape(flux_net_final), np.nan),
+                                         where=flux_net_ir_final!=0)
         all_out['converged']=final_conv_flag
         all_out['flux_balance']=dict(flux_net_ir=flux_net_ir_final, 
                                     flux_net_v = flux_net_v_final,
@@ -5700,6 +5711,7 @@ class inputs():
         if save_all_profiles: 
             all_out['all_profiles'] = all_profiles 
             all_out['all_opd'] = all_opd
+        if save_all_profiles or save_all_kzz:
             all_out['all_kzz'] = all_kzz
 
         if with_spec:
