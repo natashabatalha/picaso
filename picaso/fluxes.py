@@ -1876,8 +1876,6 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
         #the flux at the top only needs the upward recursion, so skip the downward
         #fluxes and the level arrays entirely
         flux_plus_lvl = zeros(nwno) #upward flux at the bottom of the current layer
-        exptrm_positive_mdpt_top = exp(0.5*exptrm[0,:])
-        exptrm_minus_mdpt_top = 1/exptrm_positive_mdpt_top
         for ng in range(numg):
             for nt in range(numt):
                 iubar = ubar1[ng,nt]
@@ -1886,7 +1884,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                         flux_plus_lvl[w] = emissivity[w]*all_b[-1,w] *2*pi  # terrestrial flux /pi = intensity
                     else:
                         flux_plus_lvl[w] = ( all_b[-1,w] + b1[-1,w] * iubar)*2*pi #no hard surface
-                for ibot in range(nlayer-1, 0, -1):
+                for ibot in range(nlayer-1, -1, -1):
                     for w in range(nwno):
                         exptrm_angle = exp( - dtau[ibot,w] / iubar)
                         flux_plus_lvl[w]=(flux_plus_lvl[w]*exptrm_angle+
@@ -1894,15 +1892,9 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                                   (H[ibot,w]/(lamda[ibot,w]*iubar+1.0))*(1.0-exptrm_minus[ibot,w] * exptrm_angle)+
                                   alpha1[ibot,w]*(1.-exptrm_angle)+
                                   alpha2[ibot,w]*(iubar-(dtau[ibot,w]+iubar)*exptrm_angle) )
-                #midpoint of the top layer
+                #upward flux at the top level (not the top-layer midpoint)
                 for w in range(nwno):
-                    exptrm_angle = exp( - dtau[0,w] / iubar)
-                    exptrm_angle_mdpt = exp( -0.5 * dtau[0,w] / iubar)
-                    flux_at_top[ng,nt,w]=(flux_plus_lvl[w]*exptrm_angle_mdpt+
-                                       (G[0,w]/(lamda[0,w]*iubar-1.0))*(exptrm_positive[0,w]*exptrm_angle_mdpt-exptrm_positive_mdpt_top[w])-
-                                       (H[0,w]/(lamda[0,w]*iubar+1.0))*(exptrm_minus[0,w]*exptrm_angle_mdpt-exptrm_minus_mdpt_top[w])+
-                                       alpha1[0,w]*(1.-exptrm_angle_mdpt)+
-                                       alpha2[0,w]*(iubar+0.5*dtau[0,w]-(dtau[0,w]+iubar)*exptrm_angle_mdpt)  )
+                    flux_at_top[ng,nt,w] = flux_plus_lvl[w]
         empty = zeros((0, 0, 0, 0))
         return flux_at_top , (empty, empty, empty, empty)
 
@@ -1963,7 +1955,7 @@ def get_thermal_1d(nlevel, wno,nwno, numg,numt,tlevel, dtau, w0,cosb,plevel, uba
                                        alpha2[ibot,w]*(iubar+0.5*dtau[ibot,w]-(dtau[ibot,w]+iubar)*exptrm_angle_mdpt[ibot,w])  )
 
             for w in range(nwno):
-                flux_at_top[ng,nt,w] = flux_plus_mdpt[ng,nt,0,w] #nlevel by nwno
+                flux_at_top[ng,nt,w] = flux_plus[ng,nt,0,w] #upward flux at the top level (not the top-layer midpoint)
 
     return flux_at_top , (flux_minus, flux_plus, flux_minus_mdpt, flux_plus_mdpt)
 
@@ -2402,7 +2394,7 @@ def get_thermal_3d(nlevel, wno,nwno, numg,numt,tlevel_3d, dtau_3d, w0_3d,cosb_3d
                                        alpha1[ibot,:]*(1.-exptrm_angle_mdpt[ibot,:])+
                                        alpha2[ibot,:]*(ubar1[ng,nt]+0.5*dtau[ibot,:]-(dtau[ibot,:]+ubar1[ng,nt])*exptrm_angle_mdpt[ibot,:])  )
 
-            int_at_top[ng,nt,:] = int_plus_mdpt[0,:] #nlevel by nwno
+            int_at_top[ng,nt,:] = int_plus[0,:] #upward intensity at the top level (not the top-layer midpoint)
             #int_down[ng,nt,:] = int_minus_mdpt[0,:] #nlevel by nwno, Dont really need to compute this for now
 
     return int_at_top #, int_down# numg x numt x nwno

@@ -76,8 +76,8 @@ def test_single_column_cannot_be_used_for_thermal_emission(mini_opacity):
 
 
 def test_monochromatic_level_fluxes_are_in_spectrum_units(mini_opacity):
-    """With integrated_energy=False the level fluxes are monochromatic: the upward flux at the midpoint
-    of the top layer is exactly the thermal spectrum."""
+    """With integrated_energy=False the level fluxes are monochromatic: the upward flux at the top
+    level is exactly the thermal spectrum."""
     from picaso import justdoit as jdi
     case = jdi.inputs(calculation='browndwarf')
     case.approx(get_lvl_flux=True, integrated_energy=False)
@@ -87,7 +87,7 @@ def test_monochromatic_level_fluxes_are_in_spectrum_units(mini_opacity):
     case.atmosphere(df=pd.DataFrame({'pressure': pt['pressure'], 'temperature': pt['temperature'],
                                      'H2': 0.85, 'He': 0.15, 'H2O': 3e-4, 'CO2': 1e-6}))
     out = case.spectrum(mini_opacity, calculation='thermal', full_output=True)
-    top_up = np.asarray(out['full_output']['level']['thermal_fluxes']['flux_plus_mdpt'])[0]
+    top_up = np.asarray(out['full_output']['level']['thermal_fluxes']['flux_plus'])[0]
     np.testing.assert_array_equal(top_up, np.asarray(out['thermal']))
 
 

@@ -174,22 +174,21 @@ def test_sh_matches_exact_non_scattering_emission(stream, dtau):
 
 
 @pytest.mark.parametrize('dtau', [0.3, 0.05])
-def test_toon_reports_emission_at_the_top_layer_midpoint(dtau):
+def test_toon_matches_exact_non_scattering_emission_at_the_top(dtau):
     """
-    get_thermal_1d returns flux_plus_mdpt at the top layer, so its non-scattering emission equals the
-    exact solution half a layer below the top. This is why Toon emits more than SH when the top layer
-    is not optically thin (by 3-24% here, largest toward the limb).
+    get_thermal_1d reports the upward flux at the top level, so with no scattering it is the exact
+    formal solution at the top of the atmosphere, like SH. Before v5 it reported the top-layer
+    midpoint, which was 3-24% too bright here, most toward the limb (issue #443).
     """
     temperature = np.linspace(600, 1500, NLAYER + 1)
     flux, _ = thermal('toon', temperature, dtau, W0_ABSORBING)
     mu = geometry()[1][:, 0]
     # rtol allows for the token w0 = 1e-6 scattering that the exact formula leaves out
-    np.testing.assert_allclose(flux, [formal_solution(temperature, dtau, m, skip_top=dtau / 2) for m in mu],
-                               rtol=1e-5)
+    np.testing.assert_allclose(flux, [formal_solution(temperature, dtau, m) for m in mu], rtol=1e-5)
 
 
 def test_toon_and_sh_emission_agree_when_the_top_layer_is_thin():
-    """In real atmospheres the top layer is optically thin, so the midpoint offset is negligible."""
+    """With an optically thin top layer, as in real atmospheres, Toon and SH agree closely."""
     temperature = np.linspace(600, 1500, NLAYER + 1)
     thin_top = np.logspace(-5, 1, NLAYER)
     toon_flux, toon_disk = thermal('toon', temperature, thin_top, W0_ABSORBING)

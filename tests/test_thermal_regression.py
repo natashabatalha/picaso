@@ -16,7 +16,9 @@ that lives in git, with level fluxes off and on, and with patchy clouds.
 The snapshot is reference/base_cases/testing/thermal_1d_regression.npz. The spectrum_level_fluxes
 entries were updated when spectrum() started computing level fluxes as the climate code does (the
 blackbody integrated over the real wavenumber bins) instead of with zero-width bins, and stopped
-letting the level-flux request change the thermal spectrum. Regenerate it only when a change to the
+letting the level-flux request change the thermal spectrum. flux_at_top and the thermal entries
+were updated in v5 when the solver started reporting the upward flux at the top level instead of the
+top-layer midpoint (issue #443); the level fluxes did not change. Regenerate it only when a change to the
 thermal solver is meant to change its output:
 
     python tests/test_thermal_regression.py
