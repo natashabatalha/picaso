@@ -40,3 +40,27 @@ In v4, `picaso.data.get_data()` asked for any argument you left out, using `inpu
 - an unknown category or target raises a `ValueError` that lists the options, in every mode.
 
 **What to do:** in scripts, pass both names, for example `get_data('stellar_grids', 'phoenix')`, or use `picaso.data.setup(bundle=...)` for everything needed to compute spectra. `picaso-data list` shows every category and target.
+
+## Thermal emission is reported at the top of the atmosphere
+
+In v4, the Toon thermal solver (`get_thermal_1d`, `get_thermal_3d`) returned the upward flux at the midpoint of the top layer instead of at the top of the atmosphere. Light leaving the middle of the top layer has not yet crossed its upper half, so wherever the top layer has some optical depth the emission came out too bright, most toward the limb. In v5 the solver reports the top level (issue #443).
+
+**What changes:** thermal spectra (`thermal`, `fpfs_thermal`, brightness temperatures) get slightly darker only where the top layer is not optically thin, which in practice means the cores of the strongest lines. For a brown dwarf on the full opacity database the bolometric flux changes by about 0.001% and the largest change in any wavelength bin is about 5%; most bins do not change. Converged climate profiles are not affected, because climate uses the level fluxes, which have not changed.
+
+**What to do:** nothing. If you compare against v4 spectra, expect small differences in strong line cores. To limit how much the top layer matters in either version, put the top of your pressure grid where the atmosphere is optically thin.
+
+## `output_xarray` keeps the planet mass and radius, and user stellar files
+
+In v4, `output_xarray` saved only the gravity when it was known, and dropped the planet mass and radius. A model read back with `input_xarray` then had constant gravity instead of GM/r², and could not compute `fpfs_*`. It also could not save a model whose star came from `star(filename=...)`: it raised an error about missing stellar parameters (issue #449).
+
+In v5, `output_xarray` saves the mass and radius whenever both are known, as well as the gravity. A star from a user file is saved in the xarray itself, as the `stellar_flux` variable on a `stellar_wavelength` coordinate, so `input_xarray` can rebuild it without the original file.
+
+**What to do:** nothing. xarray files written by v4 still load in v5.
+
+## Grid chemistry mixing ratios sum to 1
+
+The Visscher equilibrium chemistry grids (`chem_method='visscher'`, `'visscher_1060'`, or a custom `chemistry_table`) list only a subset of the species in the equilibrium calculation, and the condensates are left out. In v4 the interpolated mixing ratios were used as they were, so they summed to less than 1: by about 0.02% at solar metallicity and by up to about 2.5% at 100× solar. In v5 they are renormalized to sum to 1 in every level (issue #339). The ratio between any two species does not change. `chem_method='on-the-fly'` was already normalized.
+
+**What changes:** every species is scaled up by the same small factor in each level, most at high metallicity. This shifts spectra and climate profiles slightly at high metallicity, and barely at all near solar.
+
+**What to do:** nothing. To reproduce v4 results exactly, multiply the mixing-ratio columns of `inputs['atmosphere']['profile']` by their v4 sums after calling `atmosphere()`.
