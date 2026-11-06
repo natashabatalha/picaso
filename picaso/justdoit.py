@@ -2039,9 +2039,11 @@ class inputs():
             star = np.genfromtxt(filename, dtype=(float, float), names='w, f')
             flux = star['f']
             wave = star['w']
+            user_spectrum = dict(wave=wave, flux=flux)
             ST_SS = SourceSpectrum(Empirical1D, points=wave*u.Unit(w_unit), lookup_table=flux*u.Unit(f_unit))
         elif ((not isinstance(temp, type(None))) & (not isinstance(metal, type(None))) & (not isinstance(logg, type(None)))):
             if database is None: database = 'phoenix'
+            user_spectrum = None
             if not os.path.isdir(os.path.join(os.environ.get('PYSYN_CDBS', ''), 'grid', database)):
                 raise FileNotFoundError(_paths.missing_stellar_message(database))
             ST_SS = sts.grid_to_spec(database, temp, metal, logg)
@@ -2141,6 +2143,7 @@ class inputs():
         self.inputs['star']['filename'] = filename
         self.inputs['star']['w_unit'] = w_unit
         self.inputs['star']['f_unit'] = f_unit 
+        self.inputs['star']['user_spectrum'] = user_spectrum
 
 
     def atmosphere(self, df=None, filename=None, exclude_mol=None, 
@@ -3556,7 +3559,14 @@ class inputs():
         abunds = 10**(((1-t_interp)* (1-p_interp) * log_abunds[i_t_low_p_low,:]) +
                      ((t_interp)  * (1-p_interp) * log_abunds[i_t_hi_p_low,:]) + 
                      ((t_interp)  * (p_interp)   * log_abunds[i_t_hi_p_hi,:]) + 
-                     ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) ) 
+                     ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) )
+
+        #the grids only list a subset of the species (and condensates) in the equilibrium
+        #calculation, so renormalize the gas mixing ratios to sum to 1 in every level (issue #339).
+        #columns that are not gas mixing ratios are left as they are: a stored row index
+        #(preweighted full_abunds) and condensates (e.g. C-gr)
+        gas = np.array([not (sp == 'index' or sp.endswith('-gr')) for sp in species])
+        abunds[:, gas] = abunds[:, gas] / abunds[:, gas].sum(axis=1, keepdims=True)
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
 
