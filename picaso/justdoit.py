@@ -4886,7 +4886,7 @@ class inputs():
             # compute the cloud structure
             ds = obj.compute(typ='full')
 
-            opd, w0, g0, df_cld = obj.virga_opacities()
+            df_cld = obj.picaso_formater(ds_prev=ds)
 
             df_cld = df_cld.sort_values(['pressure', 'wavenumber']).reset_index(drop=True)
             pressure = np.sort(df_cld['pressure'].unique())
