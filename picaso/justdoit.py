@@ -3758,7 +3758,8 @@ class inputs():
             If True, this will plot out messages, letting you know if your input data is being transformed
         zero_point : str 
             Is your zero point "night_transit", or "secondary_eclipse"
-            Default, "night_transit"
+            Default, "night_transit". Reflected light always uses "secondary_eclipse", because
+            its phase 0 is full phase; asking for "night_transit" there gives a warning.
         """ 
         if isinstance(ds, type(None)):
             ds = self.inputs['atmosphere']['profile']
@@ -3774,12 +3775,15 @@ class inputs():
         if isinstance(shift, type(None)):
             shift = np.zeros(len(phases))
         
-        if zero_point == 'night_transit':   ## does not work for reflected case!
+        if zero_point == 'night_transit':
             if 'reflected' in self.inputs['disco']['calculation']:
-                if verbose: print('Switching to zero point secondary_eclipse which is required for reflected light')
-                shift=shift
+                #reflected light phase angles are star-planet-observer angles, so phase 0 is always
+                #full phase (the dayside), and the longitudes cannot be rotated to put transit at 0
+                warnings.warn("zero_point='night_transit' does not apply to reflected light, where phase 0 "
+                    "is always full phase (secondary eclipse). Using zero_point='secondary_eclipse' "
+                    "instead; pass it explicitly to silence this warning. To plot phases from transit, "
+                    "use justplotit.phase_curve(..., reorder_output=True).", UserWarning)
             else:
-                if verbose: print('The zero_point input will be deprecated in the next PICASO version as it does not work for the reflectd light case. Instead things can be reordered in the phase_curve function in justplotit.phase_curve using reorder_output keyword')                
                 shift = shift + 180
         elif zero_point == 'secondary_eclipse':
             shift=shift
