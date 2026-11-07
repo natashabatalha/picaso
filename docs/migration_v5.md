@@ -63,4 +63,14 @@ The Visscher equilibrium chemistry grids (`chem_method='visscher'`, `'visscher_1
 
 **What changes:** every species is scaled up by the same small factor in each level, most at high metallicity. This shifts spectra and climate profiles slightly at high metallicity, and barely at all near solar.
 
+Only gas-phase species from a chemistry table now reach `inputs['atmosphere']['profile']`. In v4, every column of the table was interpolated and copied into the profile, so the profile also had an `index` column (the row number stored in the preweighted tables) and the graphite condensate (`C-gr`, or `graphite` in the 1060 grid), both treated as gases. They are now left out. A custom `chemistry_table` with other columns that are not mixing ratios (for example `kz` or `mmw`) gets a warning naming them, and they no longer overwrite the profile's own columns.
+
 **What to do:** nothing. To reproduce v4 results exactly, multiply the mixing-ratio columns of `inputs['atmosphere']['profile']` by their v4 sums after calling `atmosphere()`.
+
+## Isotopologue names with dashes are recognized
+
+PICASO names isotopologues by giving the mass number before each element, with a dash between the isotope groups: `12C-16O2`, `13C-18O2`, `1H2-16O`, or `12C-O2` to specify only one isotope. In v4 only the underscore form (`12C_16O2`) was actually parsed. A dash-named column in an atmosphere dataframe was dropped with an "Ignoring … not recognized molecule" warning, and `convert_to_simple('C_16O2')` returned `16` instead of `CO2`.
+
+In v5 both forms work and give the same molecular weight, and `convert_to_simple` returns the parent molecule for both (`CO2`).
+
+**What to do:** nothing. If you had dash-named isotopologue columns that were being ignored, they are now included in the atmosphere, so check that you meant to include them.

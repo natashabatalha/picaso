@@ -421,53 +421,20 @@ class ATMSETUP():
         ----------
         molecule : str or list
             any molecule string e.g. "H2O", "CH4" etc "TiO" or ["H2O", 'CH4']
-            Isotopologues should be specified with a dash separating the 
-            elemtents. E.g. 12C-16O2 or 13C-16O2. If you only want to specify one 
-            then you would have 12C-O2. 
+            Isotopologues give the mass number before each element, with a dash
+            (or underscore) separating the isotope groups. E.g. 12C-16O2, 13C-18O2,
+            1H2-16O or 12C_16O2. If you only want to specify one then you would
+            have 12C-O2. Deuterium can be written as D, e.g. HDO. Ions keep their
+            charge, e.g. H3+ or H-. See `molecular_weight`.
 
         Returns
         -------
         dict 
             molecule as keys with molecular weights as value
         """    
-        weights = {}
-        separator='_' #e.g. C_16O2 NOT C-16O2
         if not isinstance(molecule,list):
                 molecule = [molecule]
-                
-        for i in molecule:
-            totmass = 0
-            #this indicates the user has specified the isotope
-            if separator in i: 
-                elements = [separate_molecule_name(j) for j in i.split(separator)]
-            else:    
-                elements = separate_molecule_name(i)
-
-            for iele in elements:
-                if isinstance(iele,list):
-                    #this is the user's specified isotope
-                    if len(iele)==1:
-                        iele = iele[0]
-                        iso_num = 'main'
-                    else:
-                        iso_num = int(iele[0])
-                        iele = iele[1]
-                else: 
-                    iso_num = 'main'
-
-                sep = separate_string_number(iele)
-                if len(sep)==1:
-                    el, num = sep[0], 1
-                else: 
-                    el, num = sep
-                #default isotope
-                if iso_num=='main':
-                    #select the main isotope off according to that with the highest relative abundance
-                    main_iso = np.argmax([ele[el].isotopes[i].abundance for i in ele[el].isotopes.keys()])
-                    iso_num = list(ele[el].isotopes.keys())[main_iso] 
-                totmass += ele[el].isotopes[iso_num].mass*float(num)
-
-            weights[i]=totmass
+        weights = {i: molecular_weight(i) for i in molecule}
         
         return weights
 
@@ -927,19 +894,40 @@ class ATMSETUP():
 
 def convert_to_simple(iso_name):
     """
-    Converts iso name (e.g. 13C-16O2 to CO2)
+    Converts iso name (e.g. 13C-16O2 or 13C_16O2 to CO2)
     Returns same name if not (e.g. CO2 gives CO2)
     """
-    separator = '_'
-    if separator not in iso_name: return iso_name
-    separate = [separate_molecule_name(j) for j in iso_name.split('-')]
-    mol=''
-    for i in separate: 
-        if len(i)>1:
-            mol+=i[1]
-        else: 
-            mol += i[0]
-    return mol
+    parts = isotope_parts(iso_name)
+    if len(parts) == 1: return iso_name
+    return ''.join(re.sub(r'^\d+', '', part) for part in parts)
+
+def isotope_parts(name):
+    """
+    Splits an isotopologue name into its isotope groups, at an underscore or at a dash that is
+    followed by an isotope or element: 12C-16O2 and 12C_16O2 give ['12C', '16O2'], and 12C-O2 gives
+    ['12C', 'O2']. Names without isotope groups (CO2, ions such as H- or H2-, or C-gr) stay whole.
+    """
+    return re.split(r'_|-(?=[0-9A-Z])', name)
+
+def molecular_weight(name):
+    """
+    Molecular weight (amu) of a species name: a formula such as H2O, KCl or HDO, an isotopologue such
+    as 12C-18O2 or 1H2-16O (the main isotope is used for any element without a mass number), or an
+    ion such as H3+ (the charge is ignored). Raises KeyError for an unknown element or isotope.
+    Text that is not a formula is not an error and adds no mass ("index" gives 0); use
+    `is_gas_species` to check that a name is a species.
+    """
+    total = 0.
+    for part in isotope_parts(re.sub(r'(?<=.)[+-]$', '', name)):
+        for mass_number, el, count in re.findall(r'(\d*)([A-Z][a-z]?)(\d*)', part):
+            isotopes = ele[el].isotopes
+            if mass_number:
+                iso_num = int(mass_number)
+            else:
+                #select the main isotope off according to that with the highest relative abundance
+                iso_num = max(isotopes, key=lambda i: isotopes[i].abundance)
+            total += isotopes[iso_num].mass*(int(count) if count else 1)
+    return total
 
 def separate_molecule_name(molecule_name):
     """used for separating molecules
@@ -947,6 +935,23 @@ def separate_molecule_name(molecule_name):
     """
     elements = re.findall(r'[A-Z][a-z]?\d*|\d+', molecule_name)
     return elements
+
+def is_gas_species(name):
+    """True if `name` is a gas-phase species: a formula ("H2O", "TiO", "KCl", "HDO"), an
+    isotopologue ("12C-18O2", "1H2-16O", "12C_16O2"), an ion ("H3+", "H-") or "e-". False for
+    anything else that can end up as a column next to the mixing ratios, e.g. "index", "kz", "mmw"
+    or condensates such as "C-gr". Every element and isotope must exist, so "Xy2" and "99C-16O"
+    are rejected (checked with `molecular_weight`).
+    """
+    if name == 'e-':
+        return True
+    if not isinstance(name, str) or not re.fullmatch(
+            r'\d*[A-Z][a-z]?\d*(?:[-_]?\d*[A-Z][a-z]?\d*)*[+-]?', name):
+        return False
+    try:
+        return molecular_weight(name) > 0
+    except KeyError:
+        return False
 
 def separate_string_number(string):
     """used for separating numbers from molecules

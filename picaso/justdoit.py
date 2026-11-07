@@ -1,4 +1,4 @@
-from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol
+from .atmsetup import ATMSETUP, convert_to_simple, normalize_exclude_mol, is_gas_species
 from .fluxes import get_reflected_3d , get_thermal_1d, get_thermal_3d, get_reflected_SH, get_thermal_SH,get_transit_1d, get_transit_3d, tidal_flux, SIGMA_SB
 from .fluxes_noalloc import get_reflected_1d
 
@@ -3472,7 +3472,9 @@ class inputs():
         """
         Interpolates chemistry based on dataframe input of either 1460 or 1060 grid
         This particular function needs to have all molecules as columns as well as 
-        pressure and temperature
+        pressure and temperature. Only gas-phase species (see atmsetup.is_gas_species) are
+        interpolated, renormalized to sum to 1 and written to the atmosphere profile; any other
+        column (e.g. a row index, kz, or condensates like C-gr) is ignored.
         """
         #from user input
         plevel = self.inputs['atmosphere']['profile']['pressure'].values
@@ -3483,7 +3485,13 @@ class inputs():
         nc_p = chem_grid.groupby('temperature').size().values
         pressures = chem_grid['pressure'].unique()
         temps = chem_grid['temperature'].unique()
-        log_abunds = np.log10(chem_grid.drop(['pressure','temperature'],axis=1))
+        #only gas mixing ratios are interpolated, renormalized and written to the profile
+        not_gas = [i for i in chem_grid.columns if i not in ['pressure','temperature'] and not is_gas_species(i)]
+        #the preweighted tables store a row index and the visscher grids list condensates (C-gr, graphite)
+        unexpected = [i for i in not_gas if not (i in ['index', 'graphite'] or str(i).endswith('-gr'))]
+        if unexpected:
+            warnings.warn(f"chem_interp ignored columns that are not gas mixing ratios: {unexpected}")
+        log_abunds = np.log10(chem_grid.drop(['pressure','temperature']+not_gas,axis=1))
         species = log_abunds.keys()
 
         #make sure to interp on log and inv array
@@ -3562,11 +3570,8 @@ class inputs():
                      ((1-t_interp)* (p_interp)   * log_abunds[i_t_low_p_hi,:]) )
 
         #the grids only list a subset of the species (and condensates) in the equilibrium
-        #calculation, so renormalize the gas mixing ratios to sum to 1 in every level (issue #339).
-        #columns that are not gas mixing ratios are left as they are: a stored row index
-        #(preweighted full_abunds) and condensates (e.g. C-gr)
-        gas = np.array([not (sp == 'index' or sp.endswith('-gr')) for sp in species])
-        abunds[:, gas] = abunds[:, gas] / abunds[:, gas].sum(axis=1, keepdims=True)
+        #calculation, so renormalize the gas mixing ratios to sum to 1 in every level (issue #339)
+        abunds = abunds / abunds.sum(axis=1, keepdims=True)
 
         self.inputs['atmosphere']['profile'][species] = pd.DataFrame(abunds)
 
