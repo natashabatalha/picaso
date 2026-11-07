@@ -2704,26 +2704,58 @@ class inputs():
 
     #MAKE THIS THE DEFUALT FOR NOW FOR BACK COMAPTIBILITY
     
-    def sonora(self, sonora_path, teff, chem='low'):
+    def sonora(self, sonora_path, teff, chem=None, grid=None, log_mh=0.0, cto_relative=1.0,
+               logkzz=None, fsed=None, add_clouds=True, verbose=True):
         """
-        This queries Sonora temperature profile that can be downloaded from profiles.tar on 
-        Zenodo: 
+        Sets the atmosphere (and, for Diamondback, the clouds) from the Sonora grid model 
+        nearest to the requested parameters. Gravity is not an input because it is taken from self. 
+        Download the grids with ``picaso.data.get_data('sonora_grids', ...)``:
 
-            - Bobcat Models: [profile.tar file](https://zenodo.org/record/1309035#.Xo5GbZNKjGJ)
+            - Bobcat (Marley et al. 2021): ``'bobcat'``, profile.tar on [Zenodo](https://zenodo.org/records/1309035)
+            - Diamondback (Morley et al. 2024): ``'diamondback'`` (.pt profiles + .cld cloud files), [Zenodo](https://zenodo.org/records/12735103)
+            - Elf Owl (Mukherjee et al. 2024; v2 CO2 fix from the Wogan et al. research note): ``'elfowl-*'``, [Zenodo](https://zenodo.org/records/15150865)
+            - Flame Skimmer (Mang et al. 2026): ``'flameskimmer-*'``, [Zenodo](https://zenodo.org/records/20030439)
 
-        Note gravity is not an input because it grabs gravity from self. 
+        Use ``sonora_grid_options(sonora_path)`` to see which models are on disk. 
 
         Parameters
         ----------
         sonora_path : str   
-            Path to the untarred profile.tar file from sonora grid 
+            Directory with the unpacked grid files (subdirectories are searched for all grids but Bobcat)
         teff : float 
-            teff to query. does not have to be exact (it will query one the nearest neighbor)
+            Effective temperature (K). Does not have to be exact (nearest neighbor)
         chem : str 
-            Default = 'low'. There are two sonora chemistry grids. the default is use low. 
-            There is sublety to this that is going to be explained at length in the sonora grid paper. 
-            Until then, ONLY use chem='low' unless you have reached out to one of the developers. 
+            Chemistry to use. Default None is 'low' for Bobcat and 'model' for the other grids. 
+            'model' : the abundances saved in the grid file (not available for Bobcat)
+            'low' : the Channon solar-composition grid (only solar M/H and C/O)
+            'grid' : Visscher 2121 chemical equilibrium at the M/H and C/O of the selected model
+        grid : str 
+            'bobcat', 'diamondback', 'elfowl' or 'flameskimmer'. Default None detects it from the files in sonora_path
+        log_mh : float 
+            log10 metallicity relative to solar (Diamondback, Elf Owl, Flame Skimmer). Default 0
+        cto_relative : float 
+            C/O relative to solar (0.458) (Diamondback, Elf Owl, Flame Skimmer). Default 1
+        logkzz : float 
+            log10 Kzz in cgs (Elf Owl, Flame Skimmer). For Flame Skimmer None selects the chemical 
+            equilibrium models. Elf Owl only has disequilibrium models, so it must be given. 
+        fsed : float 
+            Diamondback sedimentation efficiency (1, 2, 3, 4 or 8). Default None selects the cloud-free models
+        add_clouds : bool 
+            Diamondback only: also add the cloud optical properties from the matching .cld file. Default True 
+        verbose : bool 
+            Print the selected model when it is not an exact match. Default True 
         """
+        if grid is None:
+            grid = _detect_sonora_grid(sonora_path)
+        grid = grid.lower().replace(' ','').replace('_','')
+        if grid not in SONORA_GRIDS:
+            raise ValueError(f"grid must be one of {SONORA_GRIDS}, not {grid}")
+        if grid != 'bobcat':
+            return self._sonora_modern(sonora_path, grid, teff, chem=chem, log_mh=log_mh,
+                    cto_relative=cto_relative, logkzz=logkzz, fsed=fsed, add_clouds=add_clouds, verbose=verbose)
+        if chem is None: chem = 'low'
+        if chem == 'model':
+            raise ValueError("Bobcat profile files only contain the pressure-temperature profile. Use chem='low' or chem='grid'.")
         try: 
             g = self.inputs['planet']['gravity']/100 #m/s2 for sonora
         except AttributeError : 
@@ -2780,6 +2812,54 @@ class inputs():
             #reads in bobcat specifically 
             self.chemeq_visscher_2121(cto_absolute=0.458,log_mh=0.0)
         self.inputs['atmosphere']['sonora_filename'] = build_filename
+
+    def _sonora_modern(self, sonora_path, grid, teff, chem=None, log_mh=0.0, cto_relative=1.0,
+                       logkzz=None, fsed=None, add_clouds=True, verbose=True):
+        """Diamondback, Elf Owl and Flame Skimmer branch of `sonora`"""
+        try: 
+            g = self.inputs['planet']['gravity']/100 #m/s2 for sonora
+        except (AttributeError, TypeError, KeyError): 
+            raise Exception('Oops! Looks like gravity has not been set. Can you please run the gravity function to set gravity')
+        if chem is None: chem = 'model'
+
+        options = sonora_grid_options(sonora_path, grid=grid)
+        row = _nearest_sonora_model(options, grid, teff=teff, grav=g, log_mh=log_mh,
+                    cto_relative=cto_relative, logkzz=logkzz, fsed=fsed, verbose=verbose)
+        filename = row['filename']
+
+        if grid == 'diamondback':
+            df = read_diamondback_pt(filename)
+        else:
+            ds = xr.open_dataset(filename)
+            cols = [i for i in ds.data_vars if ds[i].dims == ('pressure',)]
+            df = ds[cols].to_dataframe().reset_index()
+            ds.close()
+        df = df.sort_values('pressure').reset_index(drop=True)
+
+        if chem == 'model':
+            self.atmosphere(df=df)
+        else:
+            self.add_pt(df['temperature'].values, df['pressure'].values)
+            if chem == 'low':
+                self.channon_grid_low(filename=os.path.join(__refdata__,'chemistry','visscher_abunds_m+0.0_co1.0' ))
+            elif chem == 'grid':
+                self.chemeq_visscher_2121(cto_absolute=0.458*row['cto_relative'], log_mh=row['log_mh'])
+            else: 
+                raise ValueError(f"chem must be 'model', 'low' or 'grid', not {chem}")
+
+        if (grid == 'diamondback') and add_clouds and (not np.isnan(row['fsed'])):
+            cld_file = filename[:-len('.pt')] + '.cld'
+            if not os.path.exists(cld_file):
+                found = glob.glob(os.path.join(sonora_path, '**', os.path.basename(cld_file)), recursive=True)
+                if len(found) == 0:
+                    raise Exception(f"Could not find the Diamondback cloud file {os.path.basename(cld_file)} in {sonora_path}. "
+                        "Download cloud_optical_properties.zip with picaso.data.get_data('sonora_grids','diamondback') "
+                        "or set add_clouds=False for the cloudy profile without cloud opacity.")
+                cld_file = found[0]
+            self.clouds(df=read_diamondback_cld(cld_file))
+
+        self.inputs['atmosphere']['sonora_filename'] = os.path.basename(filename)
+        self.inputs['atmosphere']['sonora_params'] = {k:float(row[k]) for k in options.columns if k != 'filename'}
 
     def chemeq_on_the_fly(self, cto_absolute, log_mh, method='sonora-approx', chemeq_solver_init_args={}):
         """
@@ -5659,6 +5739,129 @@ def brown_dwarf_pt():
 def brown_dwarf_cld():
     """Function to get rough Brown Dwarf cloud model with Teff=1270 K M/H=1xSolar, C/O=1xSolar, fsed=1"""
     return os.path.join(__refdata__, 'base_cases','t1270g200f1_m0.0_co1.0.cld')    
+SONORA_GRIDS = ['bobcat', 'diamondback', 'elfowl', 'flameskimmer']
+
+_num = r'[-+]?\d+(?:\.\d+)?'
+_SONORA_PATTERNS = {
+    #t1300g3160f4_m-0.5_co1.0.pt (fsed=nc is cloud-free)
+    'diamondback': re.compile(rf'^t(?P<teff>{_num})g(?P<grav>{_num})(?P<fsed>nc|f{_num})_m(?P<log_mh>{_num})_co(?P<cto_relative>{_num})\.pt$'),
+    #spectra_logzz_2.0_teff_275.0_grav_1000.0_mh_0.0_co_0.5.nc
+    'elfowl': re.compile(rf'^spectra_logzz_(?P<logkzz>{_num})_teff_(?P<teff>{_num})_grav_(?P<grav>{_num})_mh_(?P<log_mh>{_num})_co_(?P<cto_relative>{_num})\.nc$'),
+    #spectra_logkzz_2_teff_425_grav_100_mh_+0.0_co_0.5_R30000.nc (no logkzz for chemical equilibrium)
+    'flameskimmer': re.compile(rf'^spectra_(?:logkzz_(?P<logkzz>{_num})_)?teff_(?P<teff>{_num})_grav_(?P<grav>{_num})_mh_(?P<log_mh>{_num})_co_(?P<cto_relative>{_num})_R(?P<R>\d+)\.nc$'),
+    #t1000g100nc_m0.0.cmp.gz or t200g10nc_m+0.0.dat
+    'bobcat': re.compile(rf'^t(?P<teff>{_num})g(?P<grav>{_num})nc_m(?P<log_mh>{_num})[^/]*\.(?:cmp\.gz|dat)$'),
+}
+
+def _list_sonora_files(sonora_path, grid):
+    if not os.path.isdir(sonora_path):
+        raise FileNotFoundError(f'Sonora path {sonora_path} is not a directory')
+    if grid == 'bobcat': #bobcat is read from the top directory only
+        return [os.path.join(sonora_path, i) for i in os.listdir(sonora_path) if not i.startswith('._')]
+    out = []
+    for root, _, files in os.walk(sonora_path):
+        out += [os.path.join(root, i) for i in files if not i.startswith('._')]
+    return out
+
+def _detect_sonora_grid(sonora_path):
+    found = []
+    files = [os.path.basename(i) for i in _list_sonora_files(sonora_path, 'all')]
+    for grid in ['diamondback', 'elfowl', 'flameskimmer']:
+        if any(_SONORA_PATTERNS[grid].match(i) for i in files): found.append(grid)
+    if any(i.endswith(('.cmp.gz', '.dat')) for i in os.listdir(sonora_path)): found.append('bobcat')
+    if len(found) == 1: return found[0]
+    if len(found) == 0:
+        raise Exception(f'Could not find any Sonora grid files in {sonora_path}. Download a grid with '
+            "picaso.data.get_data('sonora_grids') and point sonora_path to the unpacked files.")
+    raise Exception(f'Found files from several Sonora grids {found} in {sonora_path}. Pass grid= to pick one.')
+
+def sonora_grid_options(sonora_path, grid=None):
+    """
+    Lists the Sonora grid models found in a directory. 
+
+    Parameters
+    ----------
+    sonora_path : str 
+        Directory with the unpacked grid files (subdirectories are searched for all grids but Bobcat)
+    grid : str 
+        'bobcat', 'diamondback', 'elfowl' or 'flameskimmer'. Default None detects it from the files
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per model with teff (K), grav (m/s2), log_mh, cto_relative (relative to solar=0.458),
+        logkzz (nan for chemical equilibrium), fsed (nan for cloud-free) and filename
+    """
+    if grid is None: grid = _detect_sonora_grid(sonora_path)
+    grid = grid.lower().replace(' ','').replace('_','')
+    pattern = _SONORA_PATTERNS[grid]
+    rows = []
+    for f in _list_sonora_files(sonora_path, grid):
+        m = pattern.match(os.path.basename(f))
+        if m is None: continue
+        d = m.groupdict()
+        fsed = d.get('fsed')
+        rows.append({'teff':float(d['teff']), 'grav':float(d['grav']),
+                     'log_mh':float(d['log_mh']),
+                     'cto_relative':float(d['cto_relative']) if d.get('cto_relative') else 1.0,
+                     'logkzz':float(d['logkzz']) if d.get('logkzz') else np.nan,
+                     'fsed':np.nan if fsed in (None, 'nc') else float(fsed[1:]),
+                     'R':float(d['R']) if d.get('R') else np.nan,
+                     'filename':f})
+    cols = ['teff','grav','log_mh','cto_relative','logkzz','fsed','filename']
+    if len(rows) == 0:
+        raise Exception(f'No {grid} files found in {sonora_path}')
+    df = pd.DataFrame(rows)
+    #flame skimmer quickstart (R=3000) and full (R=30000) files hold the same model, keep the highest resolution
+    df = df.sort_values('R', ascending=False).drop_duplicates(cols[:-1])
+    return df[cols].sort_values(cols[:-1]).reset_index(drop=True)
+
+def _nearest_sonora_model(options, grid, teff, grav, log_mh=0.0, cto_relative=1.0, logkzz=None, fsed=None, verbose=True):
+    """Picks the nearest model one parameter at a time: teff, log gravity, M/H, C/O, Kzz, fsed"""
+    df = options
+    if grid == 'elfowl' and logkzz is None:
+        raise ValueError(f'Elf Owl only has disequilibrium chemistry models, so logkzz must be given. Options: {sorted(df["logkzz"].unique())}')
+    #categorical choices first: chemical equilibrium (no kzz) and cloud-free (no fsed)
+    df = df[df['logkzz'].isna()] if logkzz is None else df[df['logkzz'].notna()]
+    df = df[df['fsed'].isna()] if fsed is None else df[df['fsed'].notna()]
+    if len(df) == 0:
+        raise Exception(f"No {grid} models with logkzz={logkzz} and fsed={fsed} were found. "
+                        "Use sonora_grid_options to see the models on disk.")
+    request = {'teff':teff, 'grav':grav, 'log_mh':log_mh, 'cto_relative':cto_relative, 'logkzz':logkzz, 'fsed':fsed}
+    for key in ['teff', 'grav', 'log_mh', 'cto_relative', 'logkzz', 'fsed']:
+        if request[key] is None: continue
+        vals = df[key].values
+        dist = np.abs(np.log10(vals) - np.log10(request[key])) if key == 'grav' else np.abs(vals - request[key])
+        df = df[dist == dist.min()]
+    row = df.iloc[0]
+    if verbose:
+        off = {k:(request[k], row[k]) for k in request if (request[k] is not None) and (not np.isclose(row[k], request[k]))}
+        if len(off) > 0:
+            print(f'Sonora {grid}: no exact match, using nearest model {os.path.basename(row["filename"])}. '
+                  + ', '.join(f'{k}: asked {a}, using {b}' for k, (a, b) in off.items()))
+    return row
+
+def read_diamondback_pt(filename):
+    """
+    Reads a Sonora Diamondback .pt file (header of species names, then gravity, then one row per level). 
+
+    Returns
+    -------
+    pandas.DataFrame with pressure (bars), temperature (K) and volume mixing ratios
+    """
+    with open(filename) as f:
+        names = f.readline().split()
+    df = pd.read_csv(filename, sep=r'\s+', skiprows=2, header=None, names=names)
+    return df.drop(columns='n').rename(columns={'P':'pressure', 'T':'temperature'})
+
+def read_diamondback_cld(filename):
+    """
+    Reads a Sonora Diamondback .cld file (eddysed format, 196 wavenumber points per layer) into the 
+    opd, g0, w0 columns that `inputs.clouds(df=)` expects
+    """
+    df = pd.read_csv(filename, sep=r'\s+')
+    return df.rename(columns={'tau':'opd'})[['opd','g0','w0']]
+
 def w17_data():
     """Function to get WASP-17 Grant et al data from here 
         https://zenodo.org/records/8360121/files/ExoTiC-MIRI.zip?download=1

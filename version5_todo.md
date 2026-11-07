@@ -96,12 +96,15 @@ bibtexparser 2.x is a rewrite with a different API (`bibtexparser.load` / `BibTe
 
 ### Code
 
-- [ ] Elf Owl entry point in `sonora()` (#175)
-- [ ] Diamondback support, including the `.pt` file format and cloud information (#224)
-- [ ] `method='nearest_neighbor' | 'interp'` to interpolate to exact Teff / log g (#151)
-- [ ] Make each grid downloadable with `picaso-data` (ties into the "easy data downloading" highlight)
-- [ ] Unit tests: interpolation at a grid point returns the grid profile; each grid's file format parses
-- [ ] Tutorial update (the brown dwarf notebooks)
+- [x] Elf Owl entry point in `sonora()` (#175): `sonora(path, teff, grid='elfowl', logkzz=, log_mh=, cto_relative=)`, grid auto-detected from the files; chemistry from the file by default (`chem='model'`)
+- [x] Flame Skimmer entry point in `sonora()` (eq when `logkzz=None`, deq otherwise; quickstart R=3000 and full R=30000 files both read)
+- [x] Diamondback support, including the `.pt` file format and cloud information (#224): `fsed=None` is cloud-free, `fsed=1..8` also loads the matching `.cld` (eddysed 196-wavenumber format) through `clouds()`
+- [x] `jdi.sonora_grid_options(path)` lists the models on disk (for the app viewer)
+- [ ] `method='nearest_neighbor' | 'interp'` to interpolate to exact Teff / log g (#151). Nearest neighbour now works for every grid.
+- [ ] Driver/app: `sonora_bobcat` pt type passes kwargs straight to `sonora()`, so the new grids work there already; consider renaming it to `sonora`
+- [x] Make each grid downloadable with `picaso-data`: fixed the Elf Owl v2 URLs (were the v1 filenames, so they 404'd), added `diamondback`, `flameskimmer-quickstart`, `flameskimmer-eq`, `flameskimmer-deq-{Y,T,L}type`
+- [ ] Unit tests: interpolation at a grid point returns the grid profile; ~~each grid's file format parses~~ (`tests/test_sonora_grids.py`)
+- [ ] Tutorial update (create a sonora specific tutorial that mirrors C. Morley's poster and describes what models to use when)
 
 ### Web app: Sonora viewer (Explore section)
 
