@@ -7,7 +7,6 @@ import astropy.units as u
 import virga.justdoit as vj
 
 from .fluxes import get_reflected_1d,get_thermal_1d, SIGMA_SB
-#from .fluxes import get_thermal_1d_newclima, get_thermal_1d_gfluxi,get_reflected_1d_gfluxv #deprecated
 from .atmsetup import ATMSETUP, normalize_exclude_mol
 from .optics import compute_opacity
 from .disco import compress_thermal

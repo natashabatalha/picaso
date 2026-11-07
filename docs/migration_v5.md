@@ -74,3 +74,26 @@ PICASO names isotopologues by giving the mass number before each element, with a
 In v5 both forms work and give the same molecular weight, and `convert_to_simple` returns the parent molecule for both (`CO2`).
 
 **What to do:** nothing. If you had dash-named isotopologue columns that were being ignored, they are now included in the atmosphere, so check that you meant to include them.
+
+## The old `.npy` correlated-k tables are no longer read
+
+v4 could read the per-molecule correlated-k tables used by `opannection(method='resortrebin')` in either the old `.npy` format (`{molecule}_1460.npy`) or HDF5 (`{molecule}_1460.hdf5`), and warned that `.npy` support would end in v5. In v5 only HDF5 is read. If a molecule has only a `.npy` table, `opannection` raises a `FileNotFoundError` naming the molecules and saying what to download. HDF5 tables are used as before, even if old `.npy` files are in the same folder.
+
+**What to do:** download the HDF5 tables with `picaso-data get ck_tables by-molecule` (or `picaso.data.get_data('ck_tables', 'by-molecule')`), and point `ck_db` at that folder.
+
+## Deprecated functions are removed
+
+These functions and classes were marked deprecated (their names end in `_deprecate`) and nothing in PICASO used them. They are removed in v5:
+
+- `picaso.fluxes`: `get_reflected_1d_deprecate`, `get_reflected_1d_gfluxv_deprecate`, `get_thermal_1d_deprecate`, `get_thermal_1d_gfluxi_deprecate`, `set_bb_deprecate`, `blackbody_climate_deprecate`, `spline_deprecate`, `planck_cgs_deprecate`, `planck_rad_deprecate`
+- `picaso.retrieval`: `Parameterize_deprecate`, `atlev_deprecate`, `picaso_format_deprecate`, `allowed_keys_deprecate`, `create_template_deprecate`, `remove_lines_with_markers_deprecate`, `remove_code_blocks_deprecate`, `get_evaluations_deprecate`, `get_chisq_max_deprecate`, `plot_spectra_bands_deprecate`, `plot_pressure_bands_deprecate`, `data_output_deprecate`
+- `picaso.optics.RetrieveCKs`: `load_kcoeff_arrays_deprecate`, `mix_my_opacities_deprecate`, `get_gauss_pts_661_1460_deprecate`, `get_opacities_deq_deprecate`, `run_cia_spline_deprecate`, `run_cia_spline_661_deprecate` (the old Karilid disequilibrium method, replaced by mixing on the fly)
+- `picaso.justdoit.inputs`: `premix_atmosphere_diseq_deprecate`, `premix_atmosphere_photochem_deprecate`
+- `picaso.deq_chem`: `quench_level_deprecate`
+- `picaso.analyze`: `plot_chi_posteriors_deprecate`
+- `picaso.atmsetup.ATMSETUP`: `get_altitude_deprecate`
+- the `picaso.WIP_justplotit` module, which only re-exported `picaso.justplotit`
+
+Functions labelled legacy are kept, including `compute_opacity_legacy`, `t_start_legacy`, `get_legacy_data_1460` and `get_legacy_data_1060`, as is the 1060-grid code (`chem_method='visscher_1060'`).
+
+**What to do:** if you call one of these, switch to its current version: `get_reflected_1d`, `get_thermal_1d`, `premix_atmosphere` / `premix_atmosphere_photochem`, `deq_chem.get_quench_levels`, `get_altitude`, the `picaso.retrieval` and `picaso.analyze` tools, and `picaso.justplotit` instead of `picaso.WIP_justplotit`.

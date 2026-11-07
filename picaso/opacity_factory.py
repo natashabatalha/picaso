@@ -2676,6 +2676,7 @@ def get_ck_tables(path, preload_gases=None, avail_continuum=None):
         check_npy = glob.glob(os.path.join(path, '*.npy'))
         output['kappas'] = {}
         msg = []
+        npy_only = [] #molecules that only have the old .npy tables, which v5 no longer reads
         for imol in preload_gases:
             if os.path.join(path, f'{imol}_1460.hdf5') in check_hdf5:
                 with h5py.File(os.path.join(path, f'{imol}_1460.hdf5'), "r") as f:
@@ -2692,31 +2693,19 @@ def get_ck_tables(path, preload_gases=None, avail_continuum=None):
                     #want the axes to be [npressure, ntemperature, nwave, ngauss ]
                     output['kappas'][imol] = f["kcoeffs"][:]
             elif os.path.join(path, f'{imol}_1460.npy') in check_npy:
-                msg += ['Warning: npy files for DEQ will be deprecated in PICASO v5. Please download the hdf5 files, explanation here https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html']
-                array = np.load(os.path.join(path, f'{imol}_1460.npy'))
-                pts, wts = g_w_2gauss(order=4, gfrac=0.95)
-
-                # Logic from get_new_wvno_grid_661
-                wvno_path = os.path.join(__refdata__, 'climate_INPUTS/')
-                wvno_new, dwni_new = np.loadtxt(os.path.join(wvno_path, "wvno_661"), usecols=[0, 1], unpack=True)
-                output['wno'] = wvno_new
-                output['delta_wno'] = dwni_new
-                output['nwno'] = len(wvno_new)
-
-                s1460 = pd.read_csv(os.path.join(__refdata__, 'opacities', 'grid1460.csv'))
-                pres = s1460['pressure_bar'].unique().astype(float)
-                temp = s1460['temperature_K'].unique().astype(float)
-                output['nc_p'] = s1460.groupby('temperature_K').size().values
-                output['pressures'] = pres
-                output['temps'] = temp
-                output['gauss_wts'] = wts
-                output['gauss_pts'] = pts
-                output['ngauss'] = array.shape[-1]
-                output['kappas'][imol] = array
+                npy_only += [imol]
             elif avail_continuum and imol in ''.join(avail_continuum):
                 msg += [f'Found a CIA molecule, which doesnt require a correlated-K table. The gaseous opacity of {imol} will not be included unless you first create a CK table for it.']
             else:
-                msg += [f'hdf5 or npy ck tables for {imol} not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder']
+                msg += [f'hdf5 ck tables for {imol} not found in {path}. Please see tutorial documentation https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html to make sure you have downloaded the needed files and placed them in this folder']
+
+        if npy_only:
+            raise FileNotFoundError(
+                f"Found only the old .npy correlated-k tables for {', '.join(npy_only)} in {path}. "
+                "PICASO v5 no longer reads .npy tables; it needs the HDF5 tables ({molecule}_1460.hdf5). "
+                "Download them with `picaso-data get ck_tables by-molecule` in a terminal, or "
+                "`picaso.data.get_data('ck_tables', 'by-molecule')` in python, and point ck_db at that folder. "
+                "See https://natashabatalha.github.io/picaso/notebooks/climate/12c_BrownDwarf_DEQ.html")
 
         if msg:
             warnings.warn(' '.join(np.unique(msg)), UserWarning)
