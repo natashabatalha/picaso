@@ -13,6 +13,7 @@ Release v5.0 from `gridtree`
 7. Easy data downloading (`picaso-data`)
 8. Optional enviornment setting for easier setup
 9. Modern docs with LLM docs builds
+10. Bond albedo function from Nagpal et al. 2026
 
 ### Minor but useful changes 
 
