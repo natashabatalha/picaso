@@ -4633,10 +4633,14 @@ class inputs():
 
         results = Parallel(n_jobs=n_cpu)(delayed(run_virga)(ilon,ilat) for ilon in range(ng) for ilat in range(nt))
         
-        wno_grid = 1e4/results[0]['wave']
-        wno_grid_sorted = sorted(wno_grid)
+        #virga returns arrays ordered by ascending wavelength (i.e. descending wavenumber).
+        #we label the data with virga's native grid here and sort the whole dataset below,
+        #so data and coordinates always stay aligned regardless of virga's ordering
+        wno_grid = 1e4/np.asarray(results[0]['wave'])
         nwno = len(wno_grid)
-        pres = results[0]['pressure']
+        pres = np.asarray(results[0]['pressure'])
+        if len(pres) != nlayer:
+            raise Exception(f'virga returned {len(pres)} pressure layers but the atmosphere has {nlayer} layers')
 
         data_vars=dict(
                 opd=(["pressure","wno","lon", "lat"], np.zeros((nlayer,nwno,ng,nt)),{'units': 'depth per layer'}),
@@ -4645,7 +4649,7 @@ class inputs():
             )
 
         i=0
-        if full_output: all_out = {f'lat{i}':{} for i in range(ng)}
+        if full_output: all_out = {f'lat{i}':{} for i in range(nt)}
         for ig in range(ng):
             for it in range(nt):
                 out = results[i];i+=1
@@ -4660,11 +4664,12 @@ class inputs():
                 lon=(["lon"], lon,{'units': 'degrees'}),#required
                 lat=(["lat"], lat,{'units': 'degrees'}),#required
                 pressure=(["pressure"], pres,{'units': 'bar'}),#required
-                # wno=(["wno"], wno_grid,{'units': 'cm^(-1)'})#required for clouds
-                wno=(["wno"], wno_grid_sorted,{'units': 'cm^(-1)'})#required for clouds
+                wno=(["wno"], wno_grid,{'units': 'cm^(-1)'})#required for clouds
             ),
             attrs=dict(description="coords with vectors"),
         )
+        #sort data AND coordinates together so that wno and pressure are ascending
+        ds_virga = ds_virga.sortby('wno').sortby('pressure')
 
         self.inputs['clouds']['profile'] = ds_virga 
         self.inputs['clouds']['wavenumber'] = ds_virga.coords['wno'].values
@@ -4753,8 +4758,11 @@ class inputs():
             ng = self.inputs['disco']['num_gangle']
             phase = self.inputs['phase_angle']
 
+        #sort data and coordinates together so wno and pressure are ascending.
+        #safe for any input order as long as the coords correctly label the data
+        ds = ds.sortby('wno').sortby('pressure')
 
-        if regrid: 
+        if regrid:
             #cannot regrid from a course grid to a high one
             assert nt <= len(lat), f'Cannot regrid from a course grid. num_tangle={nt} and input grid has len(lat)={len_lat}'
             assert ng <= len(lon), f'Cannot regrid from a course grid. num_gangle={nt} and input grid has len(lon)={len_lon}'
@@ -4766,26 +4774,26 @@ class inputs():
                 #call regridder to get to gauss angle chevychev angle grid
                 if verbose: print(f'verbose=True;regrid=True; Regridding 3D output to ngangle={ng}, ntangle={nt}, with phase={phase}.')
                 ds = regrid_xarray(ds, num_gangle=ng, num_tangle=nt, phase_angle=phase)
-        else: 
+        else:
             #check lat and lons match up
             assert np.array_equal(self.inputs['disco']['latitude']*180/np.pi,
-                lat), f"""Latitudes from the GCM do not match the PICASO grid even 
-                          though the number of grid points are the same. 
-                          Most likely this could be that the input phase of {phase}, is 
-                          different from what the regridder used prior to this function. 
-                          A simple fix is to provide this function with the native 
-                          GCM xarray, turn regrid=True and it will ensure the grids are 
+                lat), f"""Latitudes from the GCM do not match the PICASO grid even
+                          though the number of grid points are the same.
+                          Most likely this could be that the input phase of {phase}, is
+                          different from what the regridder used prior to this function.
+                          A simple fix is to provide this function with the native
+                          GCM xarray, turn regrid=True and it will ensure the grids are
                           the same."""
             assert np.array_equal(self.inputs['disco']['longitude']*180/np.pi,
-                lon), f"""Longitude from the GCM do not match the PICASO grid even 
-                          though the number of grid points are the same. 
-                          Most likely this could be that the input phase of {phase}, is 
-                          different from what the regridder used prior to this function. 
-                          A simple fix is to provide this function with the native  
-                          GCM xarray, turn regrid=True and it will ensure the grids are 
+                lon), f"""Longitude from the GCM do not match the PICASO grid even
+                          though the number of grid points are the same.
+                          Most likely this could be that the input phase of {phase}, is
+                          different from what the regridder used prior to this function.
+                          A simple fix is to provide this function with the native
+                          GCM xarray, turn regrid=True and it will ensure the grids are
                           the same."""
 
-        if plot: 
+        if plot:
             if ((ng>1) & (nt>1)):
                 ds['opd'].isel(pressure=iz_plot,wno=iw_plot).plot(x='lon', y ='lat')
             elif ((ng==1) & (nt>1)):
