@@ -42,7 +42,7 @@ w_unit = ''
 f_unit = '' 
 
 [temperature]
-profile = 'isothermal' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09', 'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora_bobcat'...
+profile = 'isothermal' #options: 'userfile','isothermal', 'knots', 'madhu_seager_09', 'guillot', 'zj_24', 'molliere_20', 'Kitzman_20', 'sonora'...
 
 [temperature.userfile]
 filename='file.csv' #columns names: temperature,pressure # units:Kelvin,bar

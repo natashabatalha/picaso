@@ -42,13 +42,13 @@ import urllib.parse
 # import dynesty
 
 
-chem_options = ['visscher', 'free', 'chemeq_on_the_fly','userfile', 'xarray_grid']
+chem_options = ['visscher', 'free', 'chemeq_on_the_fly','userfile', 'xarray_grid', 'sonora']
 cloud_options = ['brewster_grey', 'brewster_mie', 'virga', 'flex_fsed', 'hard_grey', 'userfile']
-pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora_bobcat',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj23', 'xarray_grid'] #, 'molliere_20', 'Kitzman_20', 
+pt_options = ['userfile','isothermal', 'knots', 'guillot', 'sonora',  'madhu_seager_09_inversion','madhu_seager_09_noinversion', 'zj23', 'xarray_grid'] #, 'molliere_20', 'Kitzman_20', 
 
 # climate options (see reference/input_tomls/climate.toml)
 climate_opacity_options = ['preweighted', 'resortrebin']
-climate_pt_options = ['isothermal', 'guillot', 'sonora_bobcat', 'userfile', 'knots', 'zj23', 'madhu_seager_09_inversion', 'madhu_seager_09_noinversion'] #initial guess
+climate_pt_options = ['isothermal', 'guillot', 'sonora', 'userfile', 'knots', 'zj23', 'madhu_seager_09_inversion', 'madhu_seager_09_noinversion'] #initial guess
 climate_chem_options = ['preweighted', 'visscher', 'chemeq_on_the_fly']
 # Mappings for climate chemistry methods to justdoit.inputs.atmosphere chem_method
 CLIMATE_CHEM_MAP = {
@@ -196,10 +196,10 @@ def references(driver_file=None, driver_dict=None):
 
     dois = {'temperature':{}, 'chemistry':{}, 'clouds':{}}
 
-    #temperature: mirrors PT_handler's dispatch. userfile and sonora_bobcat
-    #don't call a pt_ prefixed Parameterize method, everything else does
+    #temperature: mirrors PT_handler's dispatch. userfile and sonora (sonora_bobcat is the
+    #old name) don't call a pt_ prefixed Parameterize method, everything else does
     pt_type = config.get('temperature',{}).get('profile')
-    if pt_type and pt_type not in ('userfile','sonora_bobcat'):
+    if pt_type and pt_type not in ('userfile','sonora','sonora_bobcat'):
         func_name = f'pt_{pt_type}'
         cites = list(get_citations(func_name))
         if cites:
@@ -207,7 +207,7 @@ def references(driver_file=None, driver_dict=None):
 
     #chemistry: mirrors setup_spectrum_class's dispatch
     chem_type = config.get('chemistry',{}).get('method','')
-    if chem_type and chem_type != 'userfile':
+    if chem_type and chem_type not in ('userfile', 'sonora'):
         func_name = f'chem_{chem_type}'
         cites = list(get_citations(func_name))
         if cites:
@@ -1808,6 +1808,14 @@ def setup_spectrum_class(config, opacity, param_tools, stage=None):
         df_cleaned = df_mixingratio.drop(columns=['temperature', 'pressure'])
         df_mixingratio = pd.merge(A.inputs['atmosphere']['profile'].loc[:,['temperature', 'pressure']], 
                                   df_cleaned, left_index=True, right_index=True, how='inner')
+    elif chem_type == 'sonora':
+        #keep the abundances of the Sonora model set by temperature.profile='sonora'
+        df_mixingratio = A.inputs['atmosphere']['profile']
+        gases = [i for i in df_mixingratio.columns if i not in ('pressure', 'temperature', 'kz')]
+        if (pt_config.get('profile') not in ('sonora', 'sonora_bobcat')) or (len(gases) == 0):
+            raise Exception("chemistry.method='sonora' uses the abundances of the Sonora model, so it needs "
+                            "temperature.profile='sonora' with a grid that saves chemistry (diamondback, elfowl, flameskimmer) "
+                            "and temperature.sonora.chem='model' (or left blank)")
     elif chem_type!='': 
         chemistry_function = getattr(param_tools, f'chem_{chem_type}')
         df_mixingratio  = chemistry_function(**chem_config[chem_type].get('grid_kwargs',chem_config[chem_type]))#note, this includes P and T already
@@ -2052,12 +2060,14 @@ def PT_handler(pt_config, picaso_class, param_tools): #WIP
         kwargs = pt_config['userfile'].get('pd_kwargs', {})
         pt_df = pd.read_csv(filename, **kwargs)
 
-    elif type == 'sonora_bobcat':
-        #sonora bobcat grid pt profile from picaso-data
-        params = pt_config.get('sonora_bobcat', {})
-        #call picaso's sonora function with parameters
+    elif type in ('sonora', 'sonora_bobcat'):
+        #Sonora grid model (bobcat, diamondback, elfowl, flameskimmer) from picaso-data.
+        #'sonora_bobcat' is the old name of this option and is still read
+        params = {k:v for k, v in pt_config.get(type, {}).items() if not k.endswith('_options')}
+        params['sonora_path'] = params.get('sonora_path', '').replace('_default_', os.getenv('picaso_refdata', ''))
         picaso_class.sonora(**params)
-        #the resulting pt profile is stored inside a.inputs['atmosphere']['profile']
+        #the profile (and the grid chemistry, for chem='model') is stored inside inputs['atmosphere']['profile']
+        #a Diamondback cloud (fsed) is kept unless the config also has a [clouds] section
         pt_df = picaso_class.inputs['atmosphere']['profile']
     
     elif type == 'xarray_grid':
@@ -2338,7 +2348,7 @@ def load_template_config():
     config['OpticalProperties']['opacity_file']=config['OpticalProperties']['opacity_file'].replace('_default_',os.getenv('picaso_refdata'))
     config['OpticalProperties']['virga_mieff']=config['OpticalProperties']['virga_mieff'].replace('_default_',os.getenv('picaso_refdata'))
     config['temperature']['userfile']['filename'] =config['temperature']['userfile']['filename'].replace('_default_',os.getenv('picaso_refdata'))
-    config['temperature']['sonora_bobcat']['sonora_path'] =config['temperature']['sonora_bobcat']['sonora_path'].replace('_default_',os.getenv('picaso_refdata'))
+    config['temperature']['sonora']['sonora_path'] =config['temperature']['sonora']['sonora_path'].replace('_default_',os.getenv('picaso_refdata'))
     config['chemistry']['userfile']['filename'] =config['chemistry']['userfile']['filename'].replace('_default_',os.getenv('picaso_refdata'))
     config['clouds']['cloud1']['userfile']['filename'] =config['clouds']['cloud1']['userfile']['filename'].replace('_default_',os.getenv('picaso_refdata'))
 

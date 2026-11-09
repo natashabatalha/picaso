@@ -223,9 +223,10 @@ print('Here are some default knot inputs',config['temperature']['knots'])
 #   * Parameters: `pressures`, `dTs`, `Tbottom` (based on Zhang+24 parameterization)
 #   * API Link: See [Parameterize.pt_zj23](../../picaso.html#picaso.parameterizations.Parameterize.pt_zj23) or Sphinx role: :meth:`picaso.parameterizations.Parameterize.pt_zj23`
 #
-# * **`'sonora_bobcat'`**
-#   * Dict block: `[temperature.sonora_bobcat]`
-#   * Parameters: `sonora_path`, `teff` (retrieves Bobcat P-T profile from grid)
+# * **`'sonora'`** (`'sonora_bobcat'` is the old name and still works)
+#   * Dict block: `[temperature.sonora]`
+#   * Parameters: `sonora_path`, `grid` (`bobcat`, `diamondback`, `elfowl`, `flameskimmer`), `teff`, `log_mh`, `cto_relative`, `logkzz`, `fsed`, `chem` (loads the nearest Sonora grid model, see the Sonora models tutorial). A Diamondback model with `fsed` also brings its cloud.
+#   * API Link: See [inputs.sonora](../../picaso.html#picaso.justdoit.inputs.sonora) or Sphinx role: :meth:`picaso.justdoit.inputs.sonora`
 #
 # * **`'userfile'`**
 #   * Dict block: `[temperature.userfile]`
@@ -260,6 +261,10 @@ print('Here are some default knot inputs',config['temperature']['knots'])
 #   * Dict block: `[chemistry.chemeq_on_the_fly]`
 #   * Parameters: `cto_absolute`, `log_mh`
 #   * API Link: See [Parameterize.chem_chemeq_on_the_fly](../../picaso.html#picaso.parameterizations.Parameterize.chem_chemeq_on_the_fly) or Sphinx role: :meth:`picaso.parameterizations.Parameterize.chem_chemeq_on_the_fly`
+#
+# * **`'sonora'`** (Keep the abundances of the Sonora model loaded with `temperature.profile='sonora'`):
+#   * Dict block: `[chemistry.sonora]` (no parameters)
+#   * Works with the grids that save their chemistry: `diamondback`, `elfowl`, `flameskimmer`
 #
 # * **`'userfile'`** (User-provided chemistry profiles):
 #   * Dict block: `[chemistry.userfile]`

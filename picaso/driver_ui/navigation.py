@@ -53,6 +53,9 @@ GROUPS = (
         Page("/opacities/", "View opacities",
              "Plot molecular and continuum cross sections from an opacity database at chosen temperatures, "
              "pressures and resolution."),
+        Page("/sonora/", "View Sonora models",
+             "Browse the Sonora Bobcat, Elf Owl, Diamondback and Flame Skimmer grids you have downloaded: "
+             "pressure-temperature profiles, chemistry, clouds and published spectra, and see how big each download is."),
     )),
 )
 

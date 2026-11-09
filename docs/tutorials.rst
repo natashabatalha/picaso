@@ -14,6 +14,7 @@ Step-by-step introductions to each part of PICASO, from a first spectrum to 3D m
    Thermal Emission Spectroscopy <notebooks/A_basics/5_AddingThermalFlux.py>
    Transmission Spectroscopy <notebooks/A_basics/6_AddingTransitSpectrum.py>
    Brown Dwarf Spectroscopy <notebooks/A_basics/7_BrownDwarfs.py>
+   Sonora Models (Bobcat, Elf Owl, Diamondback, Flame Skimmer) <notebooks/A_basics/8_SonoraModels.py>
 
 .. toctree::
    :caption: Chemistry

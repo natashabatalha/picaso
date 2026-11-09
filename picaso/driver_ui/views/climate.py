@@ -167,7 +167,7 @@ class TemperatureCard(ClimatePageCard):
 
     def notes(self, sess):
         return [("info", "The climate model iterates from this guess on its pressure grid. Configure pressure "
-                         "(ignored for a userfile or sonora bobcat guess, which bring their own pressure grid).")]
+                         "(ignored for a userfile or Sonora grid guess, which bring their own pressure grid).")]
 
 
 class ChemistryCard(ClimatePageCard):

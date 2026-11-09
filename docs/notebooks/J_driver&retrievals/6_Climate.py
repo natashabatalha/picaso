@@ -122,8 +122,8 @@ print(list(config.keys()))
 #
 # In a climate config, `[temperature]` sets the **initial guess** of the temperature profile and the pressure grid of the climate model. It uses the same blocks as `driver.toml`:
 #
-# * `profile` (str): One of `go.climate_pt_options`, e.g. `'isothermal'` (as in the brown dwarf tutorial), `'guillot'` (as in the exoplanet tutorial), `'sonora_bobcat'` (as in the resort-rebin tutorial), or `'userfile'`.
-# * `[temperature.pressure]`: Pressure grid (`min`, `max`, `nlevel`, `spacing`) for parameterized profiles. `userfile` and `sonora_bobcat` guesses bring their own pressure grid.
+# * `profile` (str): One of `go.climate_pt_options`, e.g. `'isothermal'` (as in the brown dwarf tutorial), `'guillot'` (as in the exoplanet tutorial), `'sonora'` (a Sonora grid model, as in the resort-rebin tutorial), or `'userfile'`.
+# * `[temperature.pressure]`: Pressure grid (`min`, `max`, `nlevel`, `spacing`) for parameterized profiles. `userfile` and `sonora` guesses bring their own pressure grid.
 #
 # ### 8. Chemistry Section
 #
@@ -196,8 +196,9 @@ config_rr['OpticalProperties']['opacity_kwargs'] = {'preload_gases':['CO','CH4',
                                                                      'PH3','C2H2','Na','K','TiO','VO','FeH']}
 config_rr['object']['gravity'] = {'value':316, 'unit':'m/s**2'}
 config_rr['object']['teff'] = {'value':700, 'unit':'K'}
-config_rr['temperature']['profile'] = 'sonora_bobcat'
-config_rr['temperature']['sonora_bobcat']['teff'] = 700
+config_rr['temperature']['profile'] = 'sonora'
+config_rr['temperature']['sonora']['grid'] = 'bobcat'
+config_rr['temperature']['sonora']['teff'] = 700
 config_rr['climate']['rcb_guess'] = 79
 config_rr['chemistry']['method'] = 'visscher'
 config_rr['chemistry']['visscher'] = {'log_mh':0.0, 'cto_relative':1.0} #solar metallicity and C/O

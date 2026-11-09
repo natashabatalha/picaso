@@ -12,7 +12,7 @@ from flask import Flask, render_template, send_file
 
 from picaso.driver_ui import navigation
 from picaso.driver_ui.core.config_ops import driver_template_path
-from picaso.driver_ui.views import home, opacities, refdata
+from picaso.driver_ui.views import home, opacities, refdata, sonora
 
 # pages that import PICASO, which needs the reference data at import time
 PICASO_PAGES = ("/spectrum/", "/climate/", "/analysis/", "/info-content/", "/planets/")
@@ -31,6 +31,8 @@ def create_app(refdata_dir=None):
     app.register_blueprint(refdata.bp)
     # reads the opacity database directly, so it works without importing PICASO
     app.register_blueprint(opacities.bp)
+    # reads the Sonora grid files directly, so it also works without importing PICASO
+    app.register_blueprint(sonora.bp)
     register_picaso_pages(app)
 
     @app.context_processor

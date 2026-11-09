@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% from "_macros.html" import multiselect, notes, plot %}
+{% block title %}View Sonora models{% endblock %}
+{% block main_class %}wide{% endblock %}
+{% block head %}<script src="{{ url_for('plotly_js') }}"></script>{% endblock %}
+
+{% macro post_on_change() %}hx-post="{{ url_for('sonora.plot') }}" hx-trigger="change" hx-sync="closest form:replace"{% endmacro %}
+
+{% macro value_text(key, v) -%}
+  {%- if v is none -%}{{ "equilibrium" if key == "logkzz" else "cloud-free" }}
+  {%- elif key in ("log_mh",) -%}{{ "%+g"|format(v) }}
+  {%- else -%}{{ "%g"|format(v) }}{%- endif -%}
+{%- endmacro %}
+
+{% block content %}
+<h1>View Sonora models</h1>
+<p class="page-lead">Browse the Sonora brown dwarf and giant planet grids you have downloaded: pressure-temperature profiles,
+  chemistry, clouds and the published spectra, exactly as published (nothing is recomputed). The full grids are large, so the
+  <a href="#sonora-downloads">table at the bottom</a> shows what you have, what each download holds and how big it is.</p>
+
+<div id="sonora-viewer" class="sidebar-layout" hx-target="#sonora-viewer" hx-select="#sonora-viewer" hx-swap="morph:outerHTML">
+  <form class="card sidebar" hx-post="{{ url_for('sonora.plot') }}" hx-sync="this:replace" hx-disabled-elt="find button[type=submit]">
+    <input type="hidden" name="loaded_root" value="{{ root }}">
+    <input type="hidden" name="loaded_grid" value="{{ choices.grid or '' }}">
+    {% for f in choices.compare %}<input type="hidden" name="compare" value="{{ f }}">{% endfor %}
+
+    <div class="field">
+      <label for="sonora-root">Sonora grid folder</label>
+      <div class="control">
+        <input type="text" id="sonora-root" name="root" value="{{ root }}" {{ post_on_change() }}>
+        <p class="hint">Holds one folder per grid (bobcat, elfowl, diamondback, flameskimmer), where picaso-data puts them.</p>
+      </div>
+    </div>
+
+    {% if grids_on_disk %}
+      <div class="field">
+        <label>Grid</label>
+        <div class="control">
+          <div class="radio-row">
+            {% for g in grids_on_disk %}
+              <label><input type="radio" name="grid" value="{{ g }}" {% if g == choices.grid %}checked{% endif %} {{ post_on_change() }}>
+                {{ grids[g][0] }} <span class="hint">({{ "{:,}".format(counts[g]) }})</span></label>
+            {% endfor %}
+          </div>
+          <p class="hint">{{ grids[choices.grid][3] }}
+            <a href="{{ grids[choices.grid][2] }}" target="_blank" rel="noopener">{{ grids[choices.grid][1] }}</a></p>
+        </div>
+      </div>
+
+      {% for key, label, unit in parameters if key in values %}
+        <div class="field">
+          <label for="sonora-{{ key }}">{{ label }}{% if unit %} <span class="unit">[{{ unit }}]</span>{% endif %}</label>
+          <div class="control">
+            <select id="sonora-{{ key }}" name="{{ key }}" {{ post_on_change() }}>
+              {% for v in values[key] %}
+                <option value="{{ '' if v is none else v }}" {% if v == choices.request.get(key) %}selected{% endif %}>{{ value_text(key, v) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      {% endfor %}
+      <p class="hint">The nearest model on disk is shown. Gravity is in m/s² (log g = log10(100 g) in cgs).</p>
+
+      <fieldset class="subsection">
+        <legend>Compare models</legend>
+        {% if choices.compare_labels %}
+          {% for f, label in choices.compare_labels %}
+            <div class="inline-inputs"><span>{{ label }}</span>
+              <button type="submit" class="link-button" name="action" value="remove:{{ f }}" aria-label="Remove {{ label }}">remove</button></div>
+          {% endfor %}
+        {% else %}
+          <p class="hint">Add models to overlay them. The comparison is kept when you change grid.</p>
+        {% endif %}
+        <div class="button-row">
+          <button type="submit" class="button secondary" name="action" value="add">Add this model</button>
+          {% if choices.compare %}<button type="submit" class="button secondary" name="action" value="clear">Clear</button>{% endif %}
+        </div>
+      </fieldset>
+
+      {% if choices.available_molecules %}
+        <div class="field">
+          <label>Molecules</label>
+          <div class="control">{{ multiselect("molecule", choices.available_molecules, choices.molecules) }}</div>
+        </div>
+      {% endif %}
+
+      <fieldset class="subsection">
+        <legend>Spectrum</legend>
+        <div class="field">
+          <label for="sonora-R">Resolution (R)</label>
+          <div class="control">
+            <input type="number" id="sonora-R" name="R" min="1" step="any" placeholder="native"
+                   value="{{ '%g'|format(choices.R) if choices.R else '' }}">
+            <p class="hint">Leave blank for the native resolution.</p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="sonora-wave-min">Wavelength <span class="unit">[μm]</span></label>
+          <div class="control inline-inputs">
+            <input type="number" id="sonora-wave-min" name="wave_min" step="any" min="0" value="{{ '%g'|format(choices.wave_min) }}" aria-label="Minimum wavelength">
+            <span>to</span>
+            <input type="number" name="wave_max" step="any" min="0" value="{{ '%g'|format(choices.wave_max) }}" aria-label="Maximum wavelength">
+          </div>
+        </div>
+        <div class="field">
+          <label>y axis</label>
+          <div class="control radio-row">
+            {% for value, label in [("log", "Log"), ("linear", "Linear")] %}
+              <label><input type="radio" name="yscale" value="{{ value }}" {% if value == choices.yscale %}checked{% endif %} {{ post_on_change() }}> {{ label }}</label>
+            {% endfor %}
+          </div>
+        </div>
+      </fieldset>
+
+      {% if choices.grid == "diamondback" or figures.clouds %}
+        <div class="field">
+          <label for="sonora-cloud-wave">Cloud wavelength <span class="unit">[μm]</span></label>
+          <div class="control"><input type="number" id="sonora-cloud-wave" name="cloud_wave" step="any" min="0" value="{{ '%g'|format(choices.cloud_wave) }}"></div>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <div class="button-row"><button type="submit" class="button">{% if grids_on_disk %}Plot{% else %}Look again{% endif %}</button></div>
+  </form>
+
+  <div class="plot-column">
+    <section class="card plot-panel">
+      {{ notes(messages) }}
+      {% if figures.pt %}
+        {% if selected is not none %}<p class="hint">Showing <code>{{ selected.filename.replace("\\", "/").split("/")[-1] }}</code></p>{% endif %}
+        <div class="sonora-plots">
+          {% if spectrum_messages %}
+            <div class="spectrum-missing">
+              <h3>Published spectrum</h3>
+              {{ notes(spectrum_messages) }}
+            </div>
+          {% endif %}
+          {{ plot(figures.spectrum, "sonora-spectrum") }}
+          <div class="sonora-plot-pair">
+            {{ plot(figures.pt, "sonora-pt") }}
+            {{ plot(figures.chemistry, "sonora-chemistry") }}
+          </div>
+          {{ plot(figures.clouds, "sonora-clouds") }}
+        </div>
+      {% elif not messages %}
+        <p class="hint">Choose a grid and parameters, then press Plot.</p>
+      {% endif %}
+    </section>
+
+    <section class="card" id="sonora-downloads">
+      <h2>Sonora grids: what you have and how to get it</h2>
+      <p class="hint">Sizes are download sizes. Download a product here, from the
+        <a href="{{ url_for('refdata.index') }}#download">reference data page</a>, or in a terminal with
+        <code>picaso-data get sonora_grids &lt;download&gt;</code>. Each goes into its grid's folder in
+        <code>{{ root or "$picaso_refdata/sonora_grids" }}</code>. The spectra downloads are only needed to view the
+        published Bobcat and Diamondback spectra here (Elf Owl and Flame Skimmer save the spectrum with each model).</p>
+      {% for g, targets in catalog.items() %}
+        {% set have = targets|selectattr("found")|list %}
+        <section class="grid-downloads grid-{{ g }}">
+          <header class="grid-downloads-head">
+            <h3>{{ grids[g][0] }}
+              {% if have %}<span class="disk-badge">✓ {{ have|length }} of {{ targets|length }} on disk</span>{% endif %}</h3>
+            <p class="hint">{{ grids[g][3] }} <a href="{{ grids[g][2] }}" target="_blank" rel="noopener">{{ grids[g][1] }}</a></p>
+          </header>
+          <div class="table-scroll">
+            <table class="planet-table download-table">
+              <colgroup><col class="col-name"><col class="col-size"><col class="col-disk"><col><col class="col-action"></colgroup>
+              <thead><tr><th>Download</th><th>Size</th><th>On disk</th><th>What it is</th><th></th></tr></thead>
+              <tbody>
+                {% for t in targets %}
+                  <tr{% if t.found %} class="have"{% endif %}>
+                    <td><code>{{ t.name }}</code></td>
+                    <td>{{ "%.3g"|format(t.size_gb) if t.size_gb >= 0.01 else "<0.01" }} GB</td>
+                    <td>{% if t.found %}<span class="on-disk"><span class="check" aria-hidden="true">✓</span> {{ "{:,}".format(t.found) }} {{ t.found_note }}</span>
+                        {%- else %}<span class="hint">not downloaded</span>{% endif %}</td>
+                    <td>{{ t.description }}</td>
+                    <td>
+                      <form hx-post="{{ url_for('refdata.download') }}" hx-target="next .download-result" hx-select="unset"
+                            hx-swap="innerHTML" hx-disabled-elt="find button"
+                            hx-confirm="Download {{ t.name }} ({{ '%.3g'|format(t.size_gb) }} GB) into its default folder? This can take a long time.">
+                        <input type="hidden" name="category" value="sonora_grids">
+                        <input type="hidden" name="target" value="{{ t.name }}">
+                        <input type="hidden" name="destination" value="default">
+                        <button class="button secondary">{{ "Download again" if t.found else "Download" }}</button>
+                      </form>
+                      <div class="download-result"></div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% endfor %}
+    </section>
+  </div>
+</div>
+{% endblock %}

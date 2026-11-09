@@ -453,6 +453,7 @@ pre { overflow-x: auto; background: var(--bg); padding: 12px; border-radius: 6px
 /* ---------- sidebar form + plot (opacity viewer) ---------- */
 main.wide { max-width: 1500px; }
 .sidebar-layout { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.plot-column { display: grid; gap: 16px; min-width: 0; }
 .sidebar .field { grid-template-columns: 1fr; }
 .sidebar .field > label { padding-top: 0; }
 .sidebar .checkbox-grid { max-height: 160px; }
@@ -664,3 +665,33 @@ main.form-page:has(.builder) {
 @media (prefers-reduced-motion: reduce) {
   .builder *, .builder *::after, .builder-flash { transition: none !important; animation: none !important; }
 }
+
+/* ---------- sonora viewer: downloads, one block per grid ---------- */
+.grid-downloads { --grid-color: var(--accent); margin-top: 20px; border: 1px solid var(--border);
+  border-left: 5px solid var(--grid-color); border-radius: var(--radius); overflow: hidden; }
+.grid-downloads.grid-bobcat { --grid-color: var(--step-pt); }
+.grid-downloads.grid-elfowl { --grid-color: var(--step-chemistry); }
+.grid-downloads.grid-diamondback { --grid-color: var(--step-spectrum); }
+.grid-downloads.grid-flameskimmer { --grid-color: var(--step-star); }
+.grid-downloads-head { padding: 12px 16px; background: var(--surface-container); border-bottom: 1px solid var(--border); }
+.grid-downloads-head h3 { margin: 0; font-size: 17px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.grid-downloads .table-scroll { padding: 0 16px 4px; }
+.download-table { table-layout: fixed; min-width: 640px; }
+.download-table .col-name { width: 24%; }
+.download-table .col-size { width: 9%; }
+.download-table .col-disk { width: 22%; }
+.download-table .col-action { width: 150px; }
+.download-table tbody tr:last-child td { border-bottom: none; }
+.download-table td code { overflow-wrap: anywhere; }
+.download-table tr.have td:first-child code { font-weight: 600; }
+.on-disk { color: var(--success); font-weight: 600; }
+.on-disk .check { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 2px;
+  border-radius: 50%; background: var(--success); color: var(--surface); font-size: 12px; line-height: 1; }
+.disk-badge { font-size: 12px; font-weight: 600; color: var(--success); background: var(--success-bg);
+  border: 1px solid var(--success); border-radius: 999px; padding: 2px 10px; }
+.spectrum-missing { margin-top: 16px; }
+.spectrum-missing h3 { margin: 0 0 6px; font-size: 16px; }
+.sonora-plots { display: grid; gap: 12px; }
+.plot-panel .sonora-plots .plot { min-height: 0; margin: 0; }
+.sonora-plot-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .sonora-plot-pair { grid-template-columns: 1fr; } }

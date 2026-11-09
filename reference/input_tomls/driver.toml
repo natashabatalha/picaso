@@ -108,9 +108,17 @@ logg1=-1.0
 logKir=-1.5
 alpha=0.5
 
-[temperature.sonora_bobcat]
-sonora_path='_default_/sonora_grids/bobcat'
+[temperature.sonora]
+# Sonora grid model nearest to these parameters (gravity comes from [object]). Download grids with picaso-data.
+sonora_path='_default_/sonora_grids' # folder with one subfolder per grid, or the folder of one grid
+grid='bobcat'
+grid_options=['bobcat', 'diamondback', 'elfowl', 'flameskimmer']
 teff=1000.0
+log_mh=0.0 # diamondback, elfowl, flameskimmer
+cto_relative=1.0 # relative to solar=0.458 (diamondback, elfowl, flameskimmer)
+logkzz='' # elfowl, flameskimmer. blank: chemical equilibrium (flameskimmer)
+fsed='' # diamondback. blank: cloud-free
+chem='' # blank: 'low' for bobcat, 'model' (the grid's own abundances) for the others. Or 'grid'
 
 [temperature.xarray_grid]
 model_dir='/Users/nbatalh1/Documents/data/models/wasp-17-v1'
@@ -173,6 +181,9 @@ log_mh=0.0
 [chemistry.chemeq_on_the_fly]
 cto_absolute=0.55
 log_mh=0.0
+
+[chemistry.sonora]
+# uses the abundances of the Sonora model from temperature.profile='sonora' (diamondback, elfowl, flameskimmer)
 
 [chemistry.userfile]
 filename='_default_/base_cases/HJ.pt'

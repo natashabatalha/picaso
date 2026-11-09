@@ -143,7 +143,7 @@ class TemperatureCard(Card):
         return tree
 
     def notes(self, sess):
-        notes = [("info", "Configure pressure (can be ignored when using a userfile, sonora bobcat, or a custom xarray for temperature)")]
+        notes = [("info", "Configure pressure (can be ignored when using a userfile, a Sonora grid model, or a custom xarray for temperature)")]
         if sess.config["temperature"]["profile"] == "xarray_grid":
             _, error = xarray_grid_tools(sess.config)
             notes += [("error", error)] if error else []

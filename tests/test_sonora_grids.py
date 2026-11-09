@@ -163,3 +163,107 @@ def test_mixed_directory_needs_grid(diamondback):
     case = bd(100)
     case.sonora(diamondback, 1500, grid='diamondback')
     assert case.inputs['atmosphere']['sonora_filename'] == 't1500g100nc_m0.0_co1.0.pt'
+
+
+def test_parent_directory_and_blank_toml_values(diamondback):
+    #sonora_path can be the folder that holds one folder per grid; '' means "not set", as in the TOML templates
+    case = bd(100)
+    case.sonora(diamondback.parent, 1500, grid='diamondback', fsed='1', logkzz='', chem='')
+    assert case.inputs['atmosphere']['sonora_filename'] == 't1500g100f1_m0.0_co1.0.pt'
+    assert case.inputs['clouds']['profile'] is not None
+    case = bd(100)
+    case.sonora(diamondback.parent, 1500, grid='diamondback', fsed='nc')
+    assert case.inputs['clouds']['profile'] is None
+
+
+def test_driver_pt_handler(diamondback):
+    import picaso.driver as go
+    pt_config = {'profile': 'sonora',
+                 'sonora': {'sonora_path': str(diamondback.parent), 'grid': 'diamondback',
+                            'grid_options': ['bobcat', 'diamondback', 'elfowl', 'flameskimmer'],
+                            'teff': 1500.0, 'log_mh': 0.0, 'cto_relative': 1.0,
+                            'logkzz': '', 'fsed': 1, 'chem': ''}}
+    case = bd(100)
+    df = go.PT_handler(pt_config, case, None)
+    assert 'H2O' in df and df.shape[0] == NLEVEL
+    assert case.inputs['clouds']['profile'] is not None
+    #the old name of the option still works
+    case = bd(100)
+    df_old = go.PT_handler({'profile': 'sonora_bobcat', 'sonora_bobcat': pt_config['sonora']}, case, None)
+    pd.testing.assert_frame_equal(df, df_old)
+
+
+def test_driver_templates_have_sonora_blocks():
+    import picaso.driver as go
+    config = go.load_template_config()
+    assert 'sonora' in go.pt_options and 'sonora' in go.climate_pt_options and 'sonora' in go.chem_options
+    assert 'sonora' in config['temperature'] and 'sonora' in config['chemistry']
+    assert 'sonora' in go.load_climate_template_config()['temperature']
+
+
+def write_spectra(diamondback_dir):
+    """Published spectra in the Diamondback (.spec, W/m2/m) and Bobcat (sp_*.gz, erg/cm2/s/Hz) formats"""
+    import gzip
+    wave = np.linspace(20, 1, 50)  #micron, decreasing as in the published files
+    with open(diamondback_dir / 't1500g100f1_m0.0_co1.0.spec', 'w') as f:
+        f.write('wavelength (micron) \t flux (W/m2/m)\t\ncalculated using grid spacing: std \t\nmolecules included: [] \t\n')
+        f.writelines(f'{w}\t1.0\n' for w in wave)
+    bobcat = diamondback_dir.parent / 'bobcat'
+    (bobcat / 'spectra').mkdir(parents=True)
+    with gzip.open(bobcat / 'spectra' / 'sp_t900g100nc_m0.0.gz', 'wt') as f:
+        f.write('  900.  100.  0.28  0.00  1.0000E+05  0.00  1.00  1.00  Teff, grav (MKS), Y, f_rain, Kzz, [Fe/H], C/O, f_hole\n')
+        f.write('    microns  Flux (erg/cm^2/s/Hz)\n')
+        f.writelines(f'  {w:.7f}  1.0E-05\n' for w in wave)
+    with open(bobcat / 't900g100nc_m0.0.dat', 'w') as f:
+        f.write(' header\n')
+        f.writelines(f'{i+1} {p:.4e} {t:.1f}\n' for i, (p, t) in enumerate(zip(PRESSURE, temperature(900))))
+    return bobcat
+
+
+def test_published_spectra_and_models(diamondback):
+    from picaso import sonora
+    bobcat = write_spectra(diamondback)
+    pt = str(diamondback / 't1500g100f1_m0.0_co1.0.pt')
+    wave, flux = sonora.read_sonora_spectrum(sonora.find_sonora_spectrum(pt))
+    assert np.all(np.diff(wave) > 0)
+    np.testing.assert_allclose(flux, 10.0)  #1 W/m2/m = 10 erg/cm2/s/cm
+    spec = sonora.find_sonora_spectrum(str(bobcat / 't900g100nc_m0.0.dat'), str(bobcat))
+    assert spec.endswith('sp_t900g100nc_m0.0.gz')
+    wave, flux = sonora.read_sonora_spectrum(spec)
+    np.testing.assert_allclose(flux, 1e-5 * 2.99792458e10 / (wave * 1e-4)**2)  #F_nu to F_lambda
+    assert sonora.find_sonora_spectrum(str(diamondback / 't1500g100nc_m0.0_co1.0.pt')) is None
+    assert sonora.find_sonora_cloud(pt).endswith('.cld')
+    assert sonora.find_sonora_cloud(str(diamondback / 't1500g100nc_m0.0_co1.0.pt')) is None
+    df = sonora.read_sonora_model(str(bobcat / 't900g100nc_m0.0.dat'))
+    assert list(df.columns) == ['pressure', 'temperature'] and len(df) == NLEVEL
+
+
+def test_sonora_viewer_page(diamondback, elfowl, flameskimmer):
+    from picaso.driver_ui.app import create_app
+    write_spectra(diamondback)
+    root = diamondback.parent  #holds one folder per grid, like $picaso_refdata/sonora_grids
+    client = create_app(str(jdi.__refdata__)).test_client()
+    page = client.get(f'/sonora/?root={root}').get_data(as_text=True)
+    for grid in ['Bobcat', 'Diamondback', 'Elf Owl', 'Flame Skimmer']:
+        assert f'value="{grid.lower().replace(" ", "")}"' in page
+    assert 'diamondback-spectra' in page and '8.56 GB' in page  #every download is listed with its size
+    assert 'class="on-disk"' in page  #downloads on disk get a check mark
+    form = {'root': str(root), 'loaded_root': str(root), 'grid': 'diamondback', 'loaded_grid': 'diamondback',
+            'teff': '1500.0', 'grav': '100.0', 'log_mh': '0.0', 'cto_relative': '1.0', 'fsed': '1.0', 'action': 'add'}
+    page = client.post('/sonora/plot', data=form).get_data(as_text=True)
+    for plot in ['pt', 'chemistry', 'clouds', 'spectrum']:
+        assert f'id="plot-sonora-{plot}"' in page
+    assert 'Spectra not downloaded' not in page
+    compare = str(diamondback / 't1500g100f1_m0.0_co1.0.pt')
+    assert f'name="compare" value="{compare}"' in page
+    #the cloud-free model has no published spectrum on disk
+    page = client.post('/sonora/plot', data={**form, 'fsed': '', 'action': ''}).get_data(as_text=True)
+    assert 'Spectra not downloaded' in page and "diamondback-spectra" in page
+    assert 'id="plot-sonora-pt"' in page
+    #the comparison is kept when browsing another grid
+    page = client.post('/sonora/plot', data={'root': str(root), 'loaded_root': str(root), 'grid': 'elfowl',
+                                             'loaded_grid': 'diamondback', 'compare': compare}).get_data(as_text=True)
+    assert f'name="compare" value="{compare}"' in page and 'id="plot-sonora-spectrum"' in page
+    page = client.get('/sonora/?root=/no/such/folder').get_data(as_text=True)
+    assert 'Sonora grid folder not found' in page
+    assert 'diamondback-spectra' in page  #the downloads are still listed

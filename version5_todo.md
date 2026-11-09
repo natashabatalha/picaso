@@ -100,23 +100,26 @@ bibtexparser 2.x is a rewrite with a different API (`bibtexparser.load` / `BibTe
 - [x] Flame Skimmer entry point in `sonora()` (eq when `logkzz=None`, deq otherwise; quickstart R=3000 and full R=30000 files both read)
 - [x] Diamondback support, including the `.pt` file format and cloud information (#224): `fsed=None` is cloud-free, `fsed=1..8` also loads the matching `.cld` (eddysed 196-wavenumber format) through `clouds()`
 - [x] `jdi.sonora_grid_options(path)` lists the models on disk (for the app viewer)
-- [ ] `method='nearest_neighbor' | 'interp'` to interpolate to exact Teff / log g (#151). Nearest neighbour now works for every grid.
-- [ ] Driver/app: `sonora_bobcat` pt type passes kwargs straight to `sonora()`, so the new grids work there already; consider renaming it to `sonora`
+- Interpolation to exact Teff / log g (#151): moved to v5.x (section 3). Nearest neighbour works for every grid.
+- [x] Driver: `temperature.profile='sonora'` with a `[temperature.sonora]` block (`grid`, `teff`, `log_mh`, `cto_relative`, `logkzz`, `fsed`, `chem`) for all four grids; `sonora_bobcat` still read as the old name. New `chemistry.method='sonora'` keeps the model's abundances.
+- [x] `diamondback-spectra` download target (spectra.zip, 8.6 GB, for the app only; not pulled with `diamondback`). Every Sonora target has a `size_gb`.
 - [x] Make each grid downloadable with `picaso-data`: fixed the Elf Owl v2 URLs (were the v1 filenames, so they 404'd), added `diamondback`, `flameskimmer-quickstart`, `flameskimmer-eq`, `flameskimmer-deq-{Y,T,L}type`
-- [ ] Unit tests: interpolation at a grid point returns the grid profile; ~~each grid's file format parses~~ (`tests/test_sonora_grids.py`)
-- [ ] Tutorial update (create a sonora specific tutorial that mirrors C. Morley's poster and describes what models to use when)
+- [x] Unit tests: each grid's file format parses, driver `sonora` option (`tests/test_sonora_grids.py`)
+- [x] Tutorial `docs/notebooks/A_basics/8_SonoraModels.py` (in `tutorials.rst`): which model to use (from C. Morley's Exoclimes VI poster), download sizes, then Bobcat, Elf Owl, Diamondback, Flame Skimmer: load with `sonora()`, compute with PICASO, compare with the published spectrum; driver TOML example
+- [ ] Default opacity db (`opacities_0.3_15_R15000.db`, v3.3) has only 10 molecules (no NH3, PH3, FeH, CrH, TiO, VO), so PICASO spectra of cold Sonora models miss the 8-15 µm NH3 bands. Decide: new default db with all molecules, or keep and document (the tutorial explains it)
 
 ### Web app: Sonora viewer (Explore section)
 
 New page in the **Explore** group of `picaso/driver_ui/navigation.py`, next to "View opacities". Follow the same pattern as the opacities page (`views/opacities.py`, `core/opacities.py`, `templates/opacities/`).
 
-- [ ] Choose a grid (Bobcat, Elf Owl, Diamondback) from the grids found in the reference data
-- [ ] Choose grid parameters (Teff, log g, and M/H, C/O, Kzz, fsed where the grid has them), using nearest-neighbour or interpolation
-- [ ] Plot pressure–temperature profiles, overlaying several models to compare them
-- [ ] Plot chemistry profiles, and spectra where the grid includes them
-- [ ] Show which parts of the grid exist (available parameter combinations)
+- [x] `/sonora/` page (`views/sonora.py`, `core/sonora.py`, `templates/sonora/`); reads files through `picaso/sonora.py`, so it works without importing PICASO
+- [x] Choose a grid (Bobcat, Elf Owl, Diamondback, Flame Skimmer) from the grids found in `$picaso_refdata/sonora_grids`
+- [x] Choose grid parameters (Teff, log g, and M/H, C/O, Kzz, fsed where the grid has them), using nearest-neighbour
+- [x] Plot pressure–temperature profiles, overlaying several models to compare them (comparison kept across grids)
+- [x] Plot chemistry profiles, Diamondback clouds (opd, w0, g0 at a chosen wavelength), and published spectra (binned to R)
+- [x] Show which parts of the grid exist (Teff-log g coverage map) and a table of every download: size, what is on disk, download button
 - [ ] "Use this profile" button that sends the profile into the spectrum or climate page as a P–T input or starting guess
-- [ ] If no Sonora data is found, link to the download page
+- [x] If no Sonora data is found, link to the download page
 - [ ] Add a GIF of it (section 3, Phase C)
 
 ---
@@ -126,6 +129,7 @@ New page in the **Explore** group of `picaso/driver_ui/navigation.py`, next to "
 - Convergence: #110, #384, #407
 - Memory and GPU: #263 (Nick's chunked branch `big_memory_fix`), #319
 - HDF5 migration: #383, #403 (beyond removing deprecated code)
+- Sonora grid interpolation to exact Teff / log g (#151), if users ask for it
 - New physics: #342, #343, #349, #358 (bond albedo; merge if Vighnesh sends a PR), #415
 - Cloud-hosted opacities #255, if it doesn't make v5
 

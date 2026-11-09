@@ -156,6 +156,7 @@ def get_data_config():
                     'teff_350_400.tar.gz':'https://zenodo.org/records/15150865/files/teff_350_400.tar.gz',
                     'teff_425_475.tar.gz':'https://zenodo.org/records/15150865/files/teff_425_475.tar.gz',
                     'teff_500_550.tar.gz':'https://zenodo.org/records/15150865/files/teff_500_550.tar.gz'},
+            'size_gb':38,
             'description':'The models between Teff of 275 to 550 K (applicable to Y-type objects). V2 corrects quenched CO2. Total: ~40 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
@@ -164,6 +165,7 @@ def get_data_config():
                     'teff_700_800.tar.gz':'https://zenodo.org/records/15150874/files/teff_700_800.tar.gz',
                     'teff_850_950.tar.gz':'https://zenodo.org/records/15150874/files/teff_850_950.tar.gz',
                     'teff_1000_1200.tar.gz':'https://zenodo.org/records/15150874/files/teff_1000_1200.tar.gz'},
+            'size_gb':38,
             'description':'The models for Teff between 575 to 1200 K (applicable for T-type objects). V2 corrects quenched CO2. Total: ~40 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
@@ -172,6 +174,7 @@ def get_data_config():
                     'teff_1600_1800.tar.gz':'https://zenodo.org/records/15150881/files/teff_1600_1800.tar.gz',
                     'teff_1900_2100.tar.gz':'https://zenodo.org/records/15150881/files/teff_1900_2100.tar.gz',
                     'teff_2200_2400.tar.gz':'https://zenodo.org/records/15150881/files/teff_2200_2400.tar.gz'},
+            'size_gb':38,
             'description':'Models for Teff between 1300 to 2400 K (applicable for L-type objects). V2 corrects quenched CO2. Total: ~40 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
@@ -180,6 +183,7 @@ def get_data_config():
                     'output_350.0_400.0.tar.gz':'https://zenodo.org/records/10381250/files/output_350.0_400.0.tar.gz',
                     'output_500.0_550.0.tar.gz':'https://zenodo.org/records/10381250/files/output_500.0_550.0.tar.gz',
                     'output_425.0_475.0.tar.gz':'https://zenodo.org/records/10381250/files/output_425.0_475.0.tar.gz'},
+            'size_gb':40.4,
             'description':'The models between Teff of 275 to 550 K (applicable to Y-type objects). Total: ~40 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
@@ -188,6 +192,7 @@ def get_data_config():
                     'output_850.0_950.tar.gz':'https://zenodo.org/records/10385821/files/output_850.0_950.tar.gz',
                     'output_1000.0_1200.tar.gz':'https://zenodo.org/records/10385821/files/output_1000.0_1200.tar.gz',
                     'output_575.0_650.tar.gz':'https://zenodo.org/records/10385821/files/output_575.0_650.tar.gz'},
+            'size_gb':40.4,
             'description':'The models for Teff between 575 to 1200 K (applicable for T-type objects). Total: ~40 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
@@ -197,22 +202,38 @@ def get_data_config():
                     'output_2200.0_2400.tar.gz':'https://zenodo.org/records/10385987/files/output_2200.0_2400.tar.gz',
                     'output_1300.0_1400.tar.gz':'https://zenodo.org/records/10385987/files/output_1300.0_1400.tar.gz'
                 },
+            'size_gb':40.4,
             'description':'Models for Teff between 1300 to 2400 K (applicable for L-type objects). Total: ~40 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'elfowl')
             },
         'bobcat':{
             'url':{'profile.tar':'https://zenodo.org/records/1309035/files/profile.tar'},
+            'size_gb':0.00157,
             'description':'Sonora bobcat pressure-temperature profiles',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'bobcat')
+            },
+        'bobcat-spectra':{
+            'url':{'spectra.tar':'https://zenodo.org/records/1309035/files/spectra.tar'},
+            'size_gb':1.2,
+            'description':'Sonora bobcat published spectra (sp_ files) for the profiles above, used by the Sonora viewer in picaso-app. Not needed to compute models. Total: ~1.2 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'bobcat')
             },
         'diamondback':{
             'url':{'pressure-temperature_profiles.zip':'https://zenodo.org/records/12735103/files/pressure-temperature_profiles.zip',
                     'cloud_optical_properties.zip':'https://zenodo.org/records/12735103/files/cloud_optical_properties.zip'},
+            'size_gb':0.307,
             'description':'Sonora Diamondback (Morley et al. 2024) cloudy pressure-temperature-chemistry profiles and cloud optical properties, Teff 900 to 2400 K. Total: ~0.3 Gb.',
+            'default_destination':os.path.join(__refdata__, 'sonora_grids', 'diamondback')
+            },
+        'diamondback-spectra':{
+            'url':{'spectra.zip':'https://zenodo.org/records/12735103/files/spectra.zip'},
+            'size_gb':8.56,
+            'description':'Sonora Diamondback published spectra (.spec files), used by the Sonora viewer in picaso-app. Not needed to compute models. Total: ~8.6 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'diamondback')
             },
         'flameskimmer-quickstart':{
             'url':{'spectra_R3k_quickstart.zip':'https://zenodo.org/records/20030439/files/spectra_R3k_quickstart.zip'},
+            'size_gb':8.68,
             'description':'Sonora Flame Skimmer (Mang et al. 2026) sparse quickstart grid at R=3000 spanning the full parameter space (eq and deq). Total: ~9 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'flameskimmer')
             },
@@ -232,6 +253,7 @@ def get_data_config():
                     'spectra_R30k_set13_teff_1600-1800_eq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set13_teff_1600-1800_eq.zip',
                     'spectra_R30k_set14_teff_1900-2100_eq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set14_teff_1900-2100_eq.zip',
                     'spectra_R30k_set15_teff_2200-2400_eq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set15_teff_2200-2400_eq.zip'},
+            'size_gb':29.1,
             'description':'Sonora Flame Skimmer chemical equilibrium models, Teff 50 to 2400 K, R=30000. Total: ~29 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'flameskimmer')
             },
@@ -242,6 +264,7 @@ def get_data_config():
                     'spectra_R30k_set04_teff_275-325_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set04_teff_275-325_deq.zip',
                     'spectra_R30k_set05_teff_350-400_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set05_teff_350-400_deq.zip',
                     'spectra_R30k_set06_teff_425-475_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set06_teff_425-475_deq.zip'},
+            'size_gb':57.8,
             'description':'Sonora Flame Skimmer disequilibrium models, Teff 50 to 475 K, R=30000. Total: ~58 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'flameskimmer')
             },
@@ -251,6 +274,7 @@ def get_data_config():
                     'spectra_R30k_set09_teff_700-800_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set09_teff_700-800_deq.zip',
                     'spectra_R30k_set10_teff_850-950_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set10_teff_850-950_deq.zip',
                     'spectra_R30k_set11_teff_1000-1200_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set11_teff_1000-1200_deq.zip'},
+            'size_gb':48.5,
             'description':'Sonora Flame Skimmer disequilibrium models, Teff 500 to 1200 K, R=30000. Total: ~49 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'flameskimmer')
             },
@@ -259,6 +283,7 @@ def get_data_config():
                     'spectra_R30k_set13_teff_1600-1800_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set13_teff_1600-1800_deq.zip',
                     'spectra_R30k_set14_teff_1900-2100_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set14_teff_1900-2100_deq.zip',
                     'spectra_R30k_set15_teff_2200-2400_deq.zip':'https://zenodo.org/records/20030439/files/spectra_R30k_set15_teff_2200-2400_deq.zip'},
+            'size_gb':38.7,
             'description':'Sonora Flame Skimmer disequilibrium models, Teff 1300 to 2400 K, R=30000. Total: ~39 Gb.',
             'default_destination':os.path.join(__refdata__, 'sonora_grids', 'flameskimmer')
             },
