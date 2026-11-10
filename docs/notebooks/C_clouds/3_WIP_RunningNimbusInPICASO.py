@@ -30,8 +30,6 @@
 # Note: you should have [Nimbus](https://nimbus-kiefersv.readthedocs.io/en/latest/Install_And_Quick_Start.html) and [MieNet](https://mienet.readthedocs.io/en/latest/Install_And_Quick_Start.html) already installed in your environment for this tutorial to run
 
 # %%
-import os
-
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,12 +52,14 @@ atmosphere["kz"] = 1e9  # cm²/s, at every pressure level
 
 metallicity = 1  # relative to Solar
 mean_molecular_weight = 2.2
+
+# note that Nimbus does not need an fsed since it is a microphysical cloud model and not a parametertized cloud model. Here we set the fsed for the Virga cloud comparison later.
 fsed = 1
 
 # %% [markdown]
 # ## Submit a H2O cloud Nimbus run through PICASO
 #
-# Nimbus needs the deep H2O **mass** mixing ratio (MMr) explicitly, which is related to the number mixing ratio (VMR):
+# Nimbus needs the deep H2O **mass** mixing ratio (MMR) explicitly, which is related to the number mixing ratio (VMR):
 # $$ MMR = VMR ~\frac{\mu_\mathrm{H_2O}}{\mu_\mathrm{MMW}}$$
 # The value below is a Solar-composition estimate (H2O number mixing ratio 7.54e-4 converted with molecular weights 18 and 2.34). This is taken directly from Virga. The returned dictionary contains layer optical depth, single-scattering albedo, asymmetry, pressure, and wavelength.
 
@@ -182,9 +182,9 @@ fig.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## Use Nimbus outside Picaso for more control
+# ## Use Nimbus outside PICASO for more control
 #
-# Nimbus offeres additional flexibility and control over the microphysics and numerical set-up which are not available when run through PICASO. Here we show an example of how an external Nimbus run can be integrated into Picaso. For further infromation on how to use Nimbus see the [documentation](https://nimbus-kiefersv.readthedocs.io/en/latest/). 
+# Nimbus offeres additional flexibility and control over the microphysics and numerical set-up which are not available when run through PICASO. Here we show an example of how an external Nimbus run can be integrated into PICASO. For further infromation on how to use Nimbus see the [documentation](https://nimbus-kiefersv.readthedocs.io/en/latest/). 
 
 # %%
 from nimbus import Nimbus
@@ -207,13 +207,13 @@ obj.set_up_atmosphere(
 obj.set_up_solver()
 
 # compute the cloud structure
-ds = obj.compute()
+obj.compute()
 
 # get optical properties
-df_nimbus = ds.picaso_formater()
+df_nimbus = obj.picaso_formater()
 
-# add optical properties to Picaso
-nimbus_planet.clouds(df=df_cloud)
+df_nimbus
 
-# %%
+# %% [markdown]
+# And now you have a dataframe that is ready to use when generating a PICASO spectrum as you would with any other Virga or standalone cloud profile to be processed!
 
