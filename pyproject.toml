@@ -64,7 +64,7 @@ dependencies = [
     "pooch",
     "platformdirs",
     "tqdm",
-    "bibtexparser==1.4.4",
+    "bibtexparser>=2.0",
     "netcdf4",
     "h5netcdf",
     "jupytext",

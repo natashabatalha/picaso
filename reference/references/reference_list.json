@@ -34,11 +34,11 @@
          "SO2" :  "underwood2016exomol" ,
          "TiO" : ["McKemmish2019TiO" ,"GharibNezhad2021"],
          "VO" :   ["McKemmish16" , "GharibNezhad2021"],
-         "Li" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
-         "Na" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
-         "K" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
-         "Rb" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"],
-         "Cs" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016, Allard2019"]
+         "Li" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016","Allard2019"],
+         "Na" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016","Allard2019"],
+         "K" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016","Allard2019"],
+         "Rb" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016","Allard2019"],
+         "Cs" :  ["Ryabchikova2015","Allard2007AA", "Allard2007EPJD","Allard2016","Allard2019"]
     },
 "methods":
     {"radiative transfer":"toon1989rapid", 

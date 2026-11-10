@@ -30,11 +30,9 @@ plus the paper defining its exact equations):
 """
 
 import bibtexparser
-from bibtexparser.bwriter import BibTexWriter
-from bibtexparser.bibdatabase import BibDatabase
+from bibtexparser import Library
 import os
-import json 
-import numpy as np
+import json
 
 CITATIONS = {}
 
@@ -81,11 +79,14 @@ class References():
     def __init__(self): 
         bibfile = os.path.join(os.environ['picaso_refdata'],'references','references.bib')
         reflist = os.path.join(os.environ['picaso_refdata'],'references','reference_list.json')
-        with open(bibfile) as bibtex_file:
-            bib_database = bibtexparser.load(bibtex_file)
+        # bibtexparser>=2: duplicate keys in the .bib are kept once (the
+        # first occurrence) and the extras are reported in failed_blocks
+        bib_database = bibtexparser.parse_file(bibfile)
 
-        self.bib_dict = {i['ID']:i for i in bib_database.entries}
-        self.reflist = json.load(open(reflist))         
+        #{ID: bibtexparser.model.Entry}
+        self.bib_dict = bib_database.entries_dict
+        with open(reflist) as f:
+            self.reflist = json.load(f)
 
     def get_opa(self, full_output=None, molecules=[]):
         """
@@ -100,7 +101,9 @@ class References():
 
         Returns
         -------
-        latex formatted table, bib database
+        str, bibtexparser.Library
+            latex formatted table, and a bib library holding each cited
+            entry once (pass it to `create_bib` to write a .bib file)
         """
         opa_tex_start = r"""
         \begin{table*}
@@ -164,11 +167,14 @@ class References():
 
         opa_tex = opa_tex_start+opa_tex+opa_tex_end
 
-        #bibdb = bibtexparser.Library()
-        db = BibDatabase()
-        for ID in all_ids:
-            db.entries += [self.bib_dict[ID]]
-        
+        #several molecules can share a reference (e.g. the alkali lines)
+        #so keep each entry once, in the order it is first cited
+        unique_ids = list(dict.fromkeys(all_ids))
+        missing = [ID for ID in unique_ids if ID not in self.bib_dict]
+        if len(missing) > 0:
+            raise KeyError(f'References {missing} are listed in reference_list.json but are not in references.bib')
+        db = Library([self.bib_dict[ID] for ID in unique_ids])
+
         return opa_tex, db
 
 def create_bib(bibdb, filename):
@@ -177,11 +183,9 @@ def create_bib(bibdb, filename):
     
     Parameters
     ----------
-    bibdb : bibtexparser.bibdatabase.BibDatabase
-        bib database 
-    file : str 
+    bibdb : bibtexparser.Library
+        bib library, e.g. the second output of `References.get_opa`
+    filename : str
         filename
     """
-    writer = BibTexWriter()
-    with open(filename, 'w') as bibfile:
-        bibfile.write(writer.write(bibdb))
+    bibtexparser.write_file(filename, bibdb)

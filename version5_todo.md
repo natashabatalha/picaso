@@ -42,7 +42,7 @@ v5 already changes results relative to v4 (PHOENIX default stellar grid, gravity
 
 - [x] **#344** Removed the 32 functions/classes labelled `_deprecate` (none were used) and the `WIP_justplotit` module; the old `.npy` k-tables now raise an error naming the HDF5 download. Kept everything labelled legacy (`compute_opacity_legacy`, `t_start_legacy`, `get_legacy_data_1460`, `get_legacy_data_1060`) and the 1060 code. Migration-guide sections added.
   - [x] `atmosphere_4d(zero_point='night_transit')`: kept. Dropped the "will be deprecated" message; reflected light now gets a real `UserWarning` and uses `secondary_eclipse` (`tests/test_zero_point.py`)
-- [ ] **#151 + #175 + #224** Sonora grids, see section 2.
+- [x] **#151 + #175 + #224** Sonora grids, see section 2.
 
 ### Under consideration: cloud-hosted opacities (#255)
 
@@ -84,11 +84,11 @@ The goal: the user sets a cloud profile at the start of a climate run, and the c
 
 bibtexparser 2.x is a rewrite with a different API (`bibtexparser.load` / `BibTexWriter` / `BibDatabase` become `bibtexparser.parse_file` / `parse_string`, `Library`, `write_string`, and entries are `Entry` objects with `fields` instead of dicts). We've done this port before, so there are examples to follow.
 
-- [ ] Collect the earlier port as the reference
-- [ ] Port `picaso/references.py` (`cite()` and the bib-writing helpers) to the 2.x API
-- [ ] Check every caller of `picaso.references` (`justdoit` imports `cite`) and any notebooks that use it
-- [ ] Pin `bibtexparser>=2.0` in `pyproject.toml`
-- [ ] Unit test: parsing `reference/` bib data and writing citations gives the same entries as the 1.x version
+- [ ] Collect the earlier port as the reference (skipped: worked from the installed 2.0.0 source instead; `gh` isn't installed here, so #450 wasn't pulled)
+- [x] Port `picaso/references.py` (`cite()` and the bib-writing helpers) to the 2.x API
+- [x] Check every caller of `picaso.references` (`justdoit` imports `cite`) and any notebooks that use it
+- [x] Pin `bibtexparser>=2.0` in `pyproject.toml`
+- [x] Unit test: parsing `reference/` bib data and writing citations gives the same entries as the 1.x version (`tests/test_references.py`)
 
 ---
 

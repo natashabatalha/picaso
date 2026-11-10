@@ -81,6 +81,16 @@ v4 could read the per-molecule correlated-k tables used by `opannection(method='
 
 **What to do:** download the HDF5 tables with `picaso-data get ck_tables by-molecule` (or `picaso.data.get_data('ck_tables', 'by-molecule')`), and point `ck_db` at that folder.
 
+## References use bibtexparser 2
+
+`picaso.references` now needs `bibtexparser>=2.0`, which has a different API from 1.x.
+
+- `References().get_opa(...)` returns a `bibtexparser.Library` instead of a `BibDatabase`. Its entries are `bibtexparser.model.Entry` objects: `entry['ID']` and `entry['title']` still work, and `entry.key` and `entry.fields` are the 2.x way to read them.
+- `References().bib_dict` maps each ID to an `Entry` instead of a dict.
+- Each reference appears once in the returned library and in the `.bib` file that `create_bib` writes. Before, a reference shared by several molecules (e.g. the alkali line-shape papers) was written once per molecule.
+- Months are written as BibTeX macros (`month = oct`) instead of full names (`month = {October}`). BibTeX shows the same thing either way.
+- `get_opa` no longer fails for Li, Na, K, Rb or Cs (a typo in `reference_list.json` joined two IDs into one).
+
 ## Deprecated functions are removed
 
 These functions and classes were marked deprecated (their names end in `_deprecate`) and nothing in PICASO used them. They are removed in v5:
