@@ -33,6 +33,7 @@ dependencies = [
     "netcdf4",
     "h5netcdf",
     "jupytext",
+    "nimbus-exo",
 ]
 
 [tool.setuptools.packages.find]
