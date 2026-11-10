@@ -17,7 +17,7 @@
 # %% [markdown]
 # # Running Nimbus in PICASO
 #
-# Here we will explore a different cloud model. This is [Nimbus](https://nimbus-kiefersv.readthedocs.io/en/latest/), an open-source efficient microphysical cloud model recently developed in [Kiefer et al. 2026](https://ui.adsabs.harvard.edu/abs/2026ApJ..1001...98K/abstract). In this notebook we will run Nimbus through PICASO and compare it to the Virga cloud profile. They will use the same Jupiter pressure–temperature profile, constant mixing, and H2O cloud, then replace Virga with Nimbus and compare their reflected-light spectra and cloud optical properties.
+# Here we will explore a different cloud model. This is [Nimbus](https://nimbus-kiefersv.readthedocs.io/en/latest/), an open-source efficient microphysical cloud model recently developed in [Kiefer et al. 2026](https://iopscience.iop.org/article/10.3847/1538-4357/ae5101). In this notebook we will run Nimbus through PICASO and compare it to the Virga cloud profile. They will use the same Jupiter pressure–temperature profile, constant mixing, and H2O cloud, then replace Virga with Nimbus and compare their reflected-light spectra and cloud optical properties.
 #
 # What you will learn:
 #
@@ -27,7 +27,7 @@
 #
 # 1. How to run `Virga` through PICASO via [this tutorial](https://natashabatalha.github.io/picaso/notebooks/C_Clouds/1_PairingPICASOToVIRGA.html).
 #
-# Note: you should have Nimbus already installed in your environment for this tutorial to run
+# Note: you should have [Nimbus](https://nimbus-kiefersv.readthedocs.io/en/latest/Install_And_Quick_Start.html) and [MieNet](https://mienet.readthedocs.io/en/latest/Install_And_Quick_Start.html) already installed in your environment for this tutorial to run
 
 # %%
 import os
@@ -59,7 +59,9 @@ fsed = 1
 # %% [markdown]
 # ## Submit a H2O cloud Nimbus run through PICASO
 #
-# Nimbus needs the deep H2O **mass** mixing ratio explicitly. The value below is a Solar-composition estimate (H2O number mixing ratio 7.54e-4 converted with molecular weights 18 and 2.34). This is taken directly from Virga. The returned dictionary contains layer optical depth, single-scattering albedo, asymmetry, pressure, and wavelength.
+# Nimbus needs the deep H2O **mass** mixing ratio (MMr) explicitly, which is related to the number mixing ratio (VMR):
+# $$ MMR = VMR ~\frac{\mu_\mathrm{H_2O}}{\mu_\mathrm{MMW}}$$
+# The value below is a Solar-composition estimate (H2O number mixing ratio 7.54e-4 converted with molecular weights 18 and 2.34). This is taken directly from Virga. The returned dictionary contains layer optical depth, single-scattering albedo, asymmetry, pressure, and wavelength.
 
 # %%
 nimbus_planet = jdi.inputs()
@@ -70,7 +72,7 @@ nimbus_planet.atmosphere(df=atmosphere.copy())
 
 solar_h2o_mmr = 7.54e-4 * 18.0 / 2.34
 nimbus_cloud = nimbus_planet.nimbus(
-    ["H2O"], fsed=fsed, mh=metallicity, mmw=mean_molecular_weight,
+    ["H2O"], mh=metallicity, mmw=mean_molecular_weight,
     gas_mmr={"H2O": solar_h2o_mmr}, verbose=False,
 )
 nimbus_spectrum = nimbus_planet.spectrum(opacity, calculation="reflected")
@@ -84,7 +86,7 @@ nimbus_spectrum = nimbus_planet.spectrum(opacity, calculation="reflected")
 # %%
 target_wave = 4.0  # µm
 
-
+# find the index for the 4µm optical properties within Nimbus
 def cloud_column(cloud, wavelength):
     wave = np.asarray(cloud["wave"])
     index = np.argmin(np.abs(wave - wavelength))
@@ -179,4 +181,39 @@ fig.suptitle("H2O cloud optical properties near 4 µm")
 fig.tight_layout()
 plt.show()
 
+# %% [markdown]
+# ## Use Nimbus outside Picaso for more control
+#
+# Nimbus offeres additional flexibility and control over the microphysics and numerical set-up which are not available when run through PICASO. Here we show an example of how an external Nimbus run can be integrated into Picaso. For further infromation on how to use Nimbus see the [documentation](https://nimbus-kiefersv.readthedocs.io/en/latest/). 
+
 # %%
+from nimbus import Nimbus
+
+# define temperature [K] and pressure [bar] structure
+temperature = np.asarray([554, 572, 607, 653, 775, 951, 1073, 1111, 1540, 2654, 3000])
+pressure = np.asarray([1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4])
+
+# set up Nimbus object
+obj = Nimbus()
+obj.set_up_atmosphere(
+    temperature = temperature,
+    pressure = pressure,
+    kzz = np.ones_like(pressure) * 1e9,
+    mmw = 2.34,
+    gravity = 10**2.49,
+    species = 'SiO',
+    deep_mmr = 10**-3,
+)
+obj.set_up_solver()
+
+# compute the cloud structure
+ds = obj.compute()
+
+# get optical properties
+df_nimbus = ds.picaso_formater()
+
+# add optical properties to Picaso
+nimbus_planet.clouds(df=df_cloud)
+
+# %%
+

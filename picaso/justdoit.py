@@ -4797,8 +4797,7 @@ class inputs():
         self.inputs['clouds']['profile'] = ds 
         self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
 
-    def nimbus(self, condensates,
-        fsed=1, mh=1, mmw=2.2, gas_mmr=None, verbose=True,
+    def nimbus(self, condensates, mh=1, mmw=2.2, gas_mmr=None, verbose=True,
         do_holes=False,fhole=None,fthin_cld=None):
         """
         Runs nimbus cloud code based on the PT and Kzz profiles
@@ -4807,8 +4806,6 @@ class inputs():
         ----------
         condensates : str
             Condensates to run in cloud model
-        fsed : float
-            Sedimentation efficiency coefficient
         mh : float
             Metallicity
         mmw : float
@@ -4879,7 +4876,6 @@ class inputs():
                 species = condensates,
                 deep_mmr = gas_mmr, #future work make this pull from virga gas_mmr
                 metalicity = mh, #relative to solar
-                fsed = fsed
             )
             obj.set_up_solver()
 
