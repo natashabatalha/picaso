@@ -1338,6 +1338,151 @@ def find_press(at_tau, a, b, c):
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
 
+def _phase_quadrature(n_phase=12):
+    """
+    Gauss-Legendre quadrature nodes and weights for the phase integral.
+
+    Substituting mu = cos(alpha) into the spherical albedo (Cahoy et al. 2010, Eqs. 4-5),
+
+        A_s = 2 int_0^pi A(alpha) sin(alpha) d(alpha) = 2 int_{-1}^{1} A(mu) d(mu),
+
+    so Gauss-Legendre nodes in mu integrate it with few phases. The nodes are the roots of
+    the Legendre polynomial P_n(mu); in phase angle they are nearly evenly spaced (about
+    11 to 169 deg for n_phase = 12). They never fall on alpha = pi, where PICASO's
+    reflected-light geometry is singular.
+
+    Parameters
+    ----------
+    n_phase : int
+        (Optional) Default = 12. Number of quadrature nodes.
+
+    Returns
+    -------
+    array
+        Phase angles in radians, sorted from small to large.
+    array
+        Weights such that ``A_s = np.sum(weights * albedo_at_phases)``. They include the
+        factor of 2, so they sum to 4.
+
+    Examples
+    --------
+    >>phases, weights = _phase_quadrature(12)
+    """
+    #nodes and weights on mu = cos(alpha) in [-1, 1]
+    cos_phase_nodes, legendre_weights = np.polynomial.legendre.leggauss(int(n_phase))
+    #convert to phase angle; reverse so phases increase from ~0 to ~pi
+    phases = np.arccos(cos_phase_nodes)[::-1]
+    #factor of 2 from Cahoy et al. 2010 Eq. 4
+    weights = 2.0 * legendre_weights[::-1]
+    return phases, weights
+
+def _phase_integral(phases, albedo_by_phase, geometric_albedo=None, weights=None):
+    """
+    Spherical albedo and phase integral from albedo spectra at several phase angles.
+
+    Uses Cahoy et al. 2010 (ApJ 724, 189). PICASO's ``albedo`` at phase alpha is
+    A(alpha) = A_g Phi(alpha) (Eq. 3), so the spherical albedo (Eqs. 4-5) is
+
+        A_s = q A_g = 2 int_0^pi A(alpha) sin(alpha) d(alpha)
+
+    A_s is integrated directly, without dividing by A_g first, so wavelengths where
+    A_g = 0 (e.g. saturated line cores) give a finite A_s. The phase integral
+    q = A_s / A_g is returned as NaN there.
+
+    Parameters
+    ----------
+    phases : array
+        Phase angles in radians, shape (nphase,).
+    albedo_by_phase : array
+        Albedo spectra at each phase, shape (nphase, nwno).
+    geometric_albedo : array
+        (Optional) Default = None. Albedo at zero phase, shape (nwno,). If None, the row of
+        ``albedo_by_phase`` at phase 0 is used.
+    weights : array
+        (Optional) Default = None. Quadrature weights from `_phase_quadrature`. If None, the
+        trapezoid rule in phase angle is used; the grid should then run from 0 to close
+        to pi (e.g. 179 deg; the integrand goes to zero at pi).
+
+    Returns
+    -------
+    array
+        Spherical albedo A_s(wavenumber), shape (nwno,).
+    array
+        Phase integral q(wavenumber), shape (nwno,). NaN where A_g <= 0.
+
+    Examples
+    --------
+    >>phases, weights = _phase_quadrature(12)
+    >>spherical_albedo, q = _phase_integral(phases, albedo_by_phase, geometric_albedo=a_g, weights=weights)
+    """
+    phases = np.asarray(phases, dtype=float)
+    albedo_by_phase = np.atleast_2d(np.asarray(albedo_by_phase, dtype=float))
+    if albedo_by_phase.shape[0] != phases.size:
+        raise Exception('albedo_by_phase must have shape (nphase, nwno) with nphase = len(phases)')
+
+    #spherical albedo, Cahoy et al. 2010 Eqs. 4-5: A_s = 2 int A(alpha) sin(alpha) dalpha
+    if weights is None:
+        #trapezoid rule needs phases in increasing order
+        phase_order = np.argsort(phases)
+        sorted_phases = phases[phase_order]
+        integrand = albedo_by_phase[phase_order] * np.sin(sorted_phases)[:, None]
+        spherical_albedo = 2.0 * _trapz(integrand, x=sorted_phases, axis=0)
+    else:
+        #Gauss-Legendre in cos(alpha): sin(alpha) and the factor of 2 are in the weights
+        weights = np.asarray(weights, dtype=float)
+        if weights.size != phases.size:
+            raise Exception('weights must have the same length as phases')
+        spherical_albedo = np.sum(weights[:, None] * albedo_by_phase, axis=0)
+
+    #geometric albedo is the albedo at zero phase (Cahoy et al. 2010 Eq. 2)
+    if geometric_albedo is None:
+        zero_phase_index = np.where(np.isclose(phases, 0.0))[0]
+        if zero_phase_index.size == 0:
+            raise Exception('geometric_albedo was not supplied and phases does not include 0')
+        geometric_albedo = albedo_by_phase[zero_phase_index[0]]
+    geometric_albedo = np.asarray(geometric_albedo, dtype=float)
+
+    #phase integral q = A_s / A_g (Cahoy et al. 2010 Eq. 5), undefined where A_g = 0
+    phase_integral_spectrum = np.full_like(spherical_albedo, np.nan)
+    has_geometric_albedo = geometric_albedo > 0
+    phase_integral_spectrum[has_geometric_albedo] = (spherical_albedo[has_geometric_albedo]
+                                                     / geometric_albedo[has_geometric_albedo])
+    return spherical_albedo, phase_integral_spectrum
+
+def _bond_albedo_from_spherical(wno, spherical_albedo, stellar_flux):
+    """
+    Stellar-flux-weighted Bond albedo (Cahoy et al. 2010 Eq. 6),
+
+        A_B = int A_s F_star d(lambda) / int F_star d(lambda),
+
+    integrated over the wavelength range of the opacity database only.
+
+    Parameters
+    ----------
+    wno : array
+        Wavenumber grid in cm-1.
+    spherical_albedo : array
+        Spherical albedo on ``wno``, e.g. from `_phase_integral`.
+    stellar_flux : array
+        Stellar flux on ``wno``. Units cancel.
+
+    Returns
+    -------
+    float
+        Bond albedo.
+
+    Examples
+    --------
+    >>a_b = _bond_albedo_from_spherical(wno, spherical_albedo, case.inputs['star']['flux'])
+    """
+    #integrate in wavelength (1/wno), same as eq. 18 of Batalha et al. 2019 in picaso()
+    wavelength_cm = 1 / np.asarray(wno, dtype=float)
+    #zero out any non-finite values so they do not propagate into A_B
+    flux_weighted_spherical_albedo = np.nan_to_num(np.asarray(spherical_albedo) * stellar_flux,
+                                                   nan=0.0, posinf=0.0, neginf=0.0)
+    return (_trapz(x=wavelength_cm, y=flux_weighted_spherical_albedo)
+            / _trapz(x=wavelength_cm, y=stellar_flux))
+
 def opannection(
     wave_range=None, 
     filename_db=None, 
