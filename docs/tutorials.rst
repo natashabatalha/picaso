@@ -27,6 +27,7 @@ Basics of Spectral Modeling
    Thermal Emission Spectroscopy </notebooks/A_basics/5_AddingThermalFlux.py>
    Transmission Spectroscopy </notebooks/A_basics/6_AddingTransitSpectrum.py>
    Brown Dwarf Spectroscopy </notebooks/A_basics/7_BrownDwarfs.py>
+   Geometric, Spherical & Bond Albedos </notebooks/A_basics/8_BondAlbedo.py>
 
 Chemistry
 ---------
