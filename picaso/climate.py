@@ -3697,9 +3697,10 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         hole_kwargs = {key.replace('patchy_',''):getattr(CloudParameters,key) for key in CloudParameters._fields if 'patchy' in key}
         do_holes = hole_kwargs['do_holes'];fhole=hole_kwargs['fhole']
         #cld_species = CloudParameters.virga_condensates #neb commenting out not used 
-    else: 
-        #cld_species=[] ; #neb commenting out not used 
-        do_holes = False; fhole=None
+    else:
+        #cld_species=[] ; #neb commenting out not used
+        #a fixed cloud (added with clouds() before climate()) can still be patchy
+        do_holes = bundle.inputs['clouds'].get('do_holes',False); fhole=bundle.inputs['clouds'].get('fhole',None)
         
 
     min_temp = np.min(temp)
@@ -3758,7 +3759,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
     OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere , holes =  calculate_atm(bundle, opacityclass)
     #was there hole information returned? 
     #i am conpressing this for readability as these things are usually None, unless the user sets it 
-    OpacityWEd_clear=holes[0]; OpacityNoEd_clear=holes[0]
+    OpacityWEd_clear=holes[0]; OpacityNoEd_clear=holes[1]
 
     ### 2) IF: UPDATE KZZ 
     if do_kzz_calc:
@@ -3901,7 +3902,7 @@ def profile(bundle, nofczns, nstr, temp, pressure,
         refresh_needed = full_kinetis or do_quench_appox or cloudy
         if refresh_needed:
             OpacityWEd, OpacityNoEd, ScatteringPhase, Disco, Atmosphere,hole=calculate_atm(bundle, opacityclass )
-            OpacityWEd_clear=hole[0]; OpacityNoEd_clear=hole[0]
+            OpacityWEd_clear=hole[0]; OpacityNoEd_clear=hole[1]
         
         # 6) PREP RETURNS! 
         # TO DO : add chemistry and also condense last three "all" variables into one tuple

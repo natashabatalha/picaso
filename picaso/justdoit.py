@@ -4273,7 +4273,7 @@ class inputs():
     
     def clouds_reset(self):
         """Reset cloud dict to zeros"""
-        df = self.inputs['clouds']['profile']
+        df = self.inputs['clouds']['profile'].copy()
         zeros=np.zeros(196*(self.nlevel-1))
 
         #add in cloud layers 
@@ -5070,13 +5070,36 @@ class inputs():
                 f"gravity {planet['gravity']*0.01:g} m/s2",
                 f"{len(pressure)} levels, {np.min(pressure):.2g}-{np.max(pressure):.3g} bar",
                 f"chemistry: {chemistry}",
-                f"clouds: {'yes' if cloudy else 'no'}",
+                f"clouds: {'virga' if cloudy else ('fixed' if self._fixed_cloud(cloudy) else 'no')}",
                 f"moist adiabat: {'yes' if moist else 'no'}"]
+
+    def _fixed_cloud(self, cloudy):
+        """True if climate() should hold a cloud fixed: one was added with clouds() and virga() was not set up."""
+        return (not cloudy) and (not isinstance(self.inputs['clouds'].get('profile'), type(None)))
+
+    def _check_fixed_cloud(self, pressure):
+        """
+        A fixed cloud has one row per (layer, wavenumber) of the climate pressure grid. Raises an
+        error if it was made for a different grid (e.g. clouds() was called before inputs_climate()).
+        """
+        df = self.inputs['clouds']['profile']
+        nlayer = len(pressure) - 1
+        nwave = len(self.inputs['clouds']['wavenumber'])
+        fix = 'Call clouds() after inputs_climate() so the cloud is made on the climate pressure grid.'
+        if len(df) != nlayer*nwave:
+            raise Exception(f'The fixed cloud has {len(df)} rows but the climate grid needs {nlayer} layers x {nwave} wavenumbers. {fix}')
+        if 'pressure' in df.keys():
+            #cloud layers should line up with the climate layers to within half a layer
+            log_layer = np.log10(np.sqrt(pressure[1:]*pressure[:-1]))
+            log_cld = np.log10(np.sort(df['pressure'].unique()))
+            if (len(log_cld) != nlayer) or np.any(np.abs(log_cld - np.sort(log_layer)) > 0.5*np.min(np.abs(np.diff(log_layer)))):
+                raise Exception(f'The pressures of the fixed cloud do not match the climate pressure layers. {fix}')
 
     def interpret_run(self):
         print('SUMMARY')
         print('-------')
-        print('Clouds:', self.inputs['climate'].get('cloudy',False))
+        cloudy = self.inputs['climate'].get('cloudy',False)
+        print('Clouds:', 'virga' if cloudy else ('fixed' if self._fixed_cloud(cloudy) else False))
         for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
         print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
 
@@ -5364,6 +5387,10 @@ class inputs():
 
         # cloud inputs
         cloudy = self.inputs['climate'].get('cloudy',False)
+        #a cloud added with clouds() (and not virga()) is a fixed cloud: its opacity is included at
+        #every step but it is not recomputed as the T(P) profile changes
+        fixed_cloud = self._fixed_cloud(cloudy)
+        if fixed_cloud: self._check_fixed_cloud(pressure)
 
         #kzz treatment ? lets store a constant kz profile if it exists 
         #DO I NEED A KZZ? 
@@ -5496,6 +5523,9 @@ class inputs():
             all_out['cld_df'] = df_cld
             all_out['virga_output'] = cld_out
             #all_out['cld_output_final'] = df_cld_final
+        elif fixed_cloud:
+            #the cloud that was held fixed, so it can be saved with the profile
+            all_out['cld_df'] = self.inputs['clouds']['profile'].copy()
 
         if save_all_profiles: 
             all_out['all_profiles'] = all_profiles 
@@ -5518,8 +5548,108 @@ class inputs():
             df_spec = self.spectrum(opacityclass,full_output=True,calculation='thermal')    
             all_out['spectrum_output'] = df_spec 
 
-        #suggest retiring this and always returning dict 
+        #suggest retiring this and always returning dict
         return all_out
+
+    def energy_budget(self, opacityclass, rfacv=None):
+        """
+        Radiative energy budget of an atmosphere at a FIXED temperature, from the level fluxes
+        (see ``approx(get_lvl_flux=True)``). The output has the same format as ``climate()``
+        so it can be passed to ``justplotit.flux_analyzer``.
+
+        It uses the atmosphere and cloud currently in this bundle. To change them, use the usual
+        functions first, e.g. ``atmosphere(df=clima_out['ptchem_df'])`` for the converged profile of a
+        climate run (or any other profile), ``clouds(...)`` to add a cloud, ``clouds_reset()`` to
+        remove it. This is useful to see what a change does *before* the temperature responds to it,
+        e.g. adding a cloud to a converged cloud-free atmosphere (the cloud radiative effect),
+        or to check how close any profile (retrieved, parameterized, ...) is to radiative-convective
+        equilibrium (``tint_computed``, see ``justplotit.equilibrium_check``).
+        The calculation runs on a copy of this bundle, so the bundle itself is not changed. The
+        opacities, star, Raman setting, etc. are those of this bundle (for a climate bundle, those
+        of the climate code).
+
+        Parameters
+        ----------
+        opacityclass : class
+            Opacity class from `justdoit.opannection`
+        rfacv : float
+            (Optional) Fraction of the stellar flux that heats the atmosphere (as in ``inputs_climate``).
+            Default is the climate value of this bundle.
+
+        Returns
+        -------
+        dict
+            pressure (levels, bars), temperature, ptchem_df, cld_df (if there is a cloud),
+            flux_balance (net stellar and thermal fluxes at each level, as in ``climate()``),
+            flux_ir_attop (outgoing thermal flux in each wavenumber bin),
+            spectrum_output (thermal spectrum with full output),
+            level_fluxes (wavenumber, and stellar_down/up, thermal_down/up at each level and
+            wavenumber, erg/cm2/s per bin), and the top-of-atmosphere budget in erg/cm2/s:
+            absorbed_stellar (rfacv x net stellar), outgoing_thermal, internal_heat (sigma T_eff^4),
+            imbalance (absorbed + internal - outgoing, zero for a converged model) and bond_albedo.
+            For radiative-convective equilibrium: flux_net_radiative (net upward radiative flux at each
+            level, rfaci x thermal - rfacv x absorbed stellar, which equals the internal heat through the
+            radiative zone in equilibrium) and tint_computed, the same flux as a temperature,
+            sign(F) (|F|/sigma)^(1/4), to compare with T_int (T_eff for a brown dwarf). It is negative
+            where the net radiative flux points down, i.e. more energy flows down into the layers below
+            than comes up out of them (they gain energy and would warm).
+        """
+        bundle = copy.deepcopy(self)
+        approx = bundle.inputs['approx']
+        if not (approx.get('get_lvl_flux',False) and approx.get('integrated_energy',False)):
+            raise Exception('energy_budget needs approx(get_lvl_flux=True, integrated_energy=True), '
+                            'called before star() (climate runs always have this)')
+        if isinstance(rfacv, type(None)):
+            rfacv = bundle.inputs['climate'].get('rfacv', None)
+            if isinstance(rfacv, type(None)):
+                raise Exception('Please supply rfacv (the fraction of stellar flux that heats the atmosphere)')
+        rfaci = bundle.inputs['climate'].get('rfaci', 1)
+
+        #starlight: a single column lit at mu0=0.5, which is the geometry of the climate code
+        nostar = ('browndwarf' in bundle.inputs['calculation']) or ('nostar' in str(bundle.inputs['star']['database']))
+        if not nostar:
+            bundle.phase_angle(0, num_gangle=1, num_tangle=1)
+            refl = bundle.spectrum(opacityclass, calculation='reflected', full_output=True)
+            stellar = refl['full_output']['level']['reflected_fluxes']
+        #thermal emission
+        bundle.phase_angle(0)
+        therm = bundle.spectrum(opacityclass, calculation='thermal', full_output=True)
+        thermal = therm['full_output']['level']['thermal_fluxes']
+
+        lw_down, lw_up = np.array(thermal['flux_minus']), np.array(thermal['flux_plus'])
+        if nostar:
+            sw_down, sw_up = np.zeros_like(lw_down), np.zeros_like(lw_down)
+        else:
+            sw_down, sw_up = np.array(stellar['flux_minus']), np.array(stellar['flux_plus'])
+
+        #same sign conventions as climate(): net stellar is negative (it goes down), net thermal is positive
+        flux_net_v = -np.sum(sw_down - sw_up, axis=1)
+        flux_net_ir = np.sum(lw_up - lw_down, axis=1)
+        internal = c.sigma_sb.cgs.value*(bundle.inputs['planet'].get('T_eff') or 0)**4
+        tidal = np.zeros_like(flux_net_ir) - internal
+        flux_net_radiative = rfacv*flux_net_v + rfaci*flux_net_ir
+        flux_net = flux_net_radiative + tidal
+        sigma = c.sigma_sb.cgs.value
+        incident = np.sum(sw_down[0])
+
+        out = dict(pressure=np.array(therm['full_output']['level']['pressure']),
+                   temperature=np.array(therm['full_output']['level']['temperature']),
+                   ptchem_df=bundle.inputs['atmosphere']['profile'],
+                   flux_balance=dict(flux_net_ir=flux_net_ir, flux_net_v=flux_net_v, tidal=tidal,
+                                     rfacv=rfacv, rfaci=rfaci, flux_net=flux_net),
+                   flux_ir_attop=lw_up[0],
+                   spectrum_output=therm,
+                   level_fluxes=dict(wavenumber=opacityclass.wno, stellar_down=sw_down, stellar_up=sw_up,
+                                     thermal_down=lw_down, thermal_up=lw_up),
+                   absorbed_stellar=-rfacv*flux_net_v[0], outgoing_thermal=flux_net_ir[0],
+                   internal_heat=internal, imbalance=-flux_net[0],
+                   bond_albedo=np.sum(sw_up[0])/incident if incident > 0 else np.nan,
+                   flux_net_radiative=flux_net_radiative,
+                   #signed so that a net downward flux shows up as a negative temperature
+                   tint_computed=np.sign(flux_net_radiative)*(np.abs(flux_net_radiative)/sigma)**0.25)
+        if not isinstance(bundle.inputs['clouds']['profile'], type(None)):
+            out['cld_df'] = bundle.inputs['clouds']['profile']
+        return out
 
 
 def get_targets():

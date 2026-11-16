@@ -14,6 +14,8 @@ Release v5.0 from `gridtree`
 8. Optional enviornment setting for easier setup
 9. Modern docs with LLM docs builds
 10. Bond albedo function from Nagpal et al. 2026
+11. Adds Static Clouds to climate runs
+12. Adds direct energy_budget function and flux_analyzer function and tutorials that enable users to analyze radiative forcing (e.g., leaving a molecular opacity source from climate and checking heating/cooling). Checkout tutorials D_Climate/11_StaticClouds, D_Climate/10_Exoplanet_ExcludeMol.py and I_usefultools/Level_Fluxes.py
 
 ### Minor but useful changes 
 
@@ -63,7 +65,7 @@ Only if beta cloud resources come through in time. If not, move it to v5.1.
 
 ### Open PRs
 
-- [ ] **#450** bibtexparser 1.4 → 2.1: see "References tools on bibtexparser 2.1" below. Merge (or close in favour of our own PR) once the port is done.
+- [x] **#450** bibtexparser 1.4 → 2.1: see "References tools on bibtexparser 2.1" below. Merge (or close in favour of our own PR) once the port is done.
 - [ ] **#279** Fixed clouds: the PR can't be merged as is (see "Fixed clouds in climate" below). Close it with a note pointing to the v5 work, and credit @aditya-sengupta.
 - [x] **#360** Optimize opacity reading: closed.
 - [ ] **#406** Nimbus integration: merge into v5
@@ -72,13 +74,18 @@ Only if beta cloud resources come through in time. If not, move it to v5.1.
 
 The goal: the user sets a cloud profile at the start of a climate run, and the cloud does not change while the climate calculation iterates (it is not recomputed with virga as the temperature profile changes). PR #279 adds this, but it also moves a lot of code to different files, so the feature can't be separated from that refactor. Re-implement it on `gridtree`, using #279 as the reference.
 
-- [ ] Read #279 and list what the fixed-cloud feature actually needs (inputs, where clouds are updated in `climate.py`, outputs)
-- [ ] API: e.g. `inputs_climate(..., cloudy=True)` plus `clouds(df=...)` / `clouds(p=, dp=, opd=, ...)` before `climate()`, with an explicit flag like `fixed_clouds=True` so the cloud update step is skipped
-- [ ] Skip the virga update in `profile()` / `find_strat()` when clouds are fixed, and make sure the fixed cloud is re-gridded if the pressure grid changes
-- [ ] Return the cloud that was used in the climate output (`cld_df`) so it can be saved with the profile
-- [ ] Tests: the cloud optical properties are identical at every iteration; a zero-opacity fixed cloud gives the same profile as a cloud-free run; an opaque fixed deck warms the atmosphere below it
-- [ ] Tutorial section in the climate notebooks, and the climate page in picaso-app if it's easy
-- [ ] Credit @aditya-sengupta in HISTORY.rst
+- [x] Read #279 and list what the fixed-cloud feature actually needs. It is small: put the user's cloud in the opacities once and skip every virga update. The rest of the PR (moving code into `grad.py`, `numerics.py`, `clouds.py`, `calculate_atm.py`) is the refactor that can't be merged.
+- [x] API: no new flag. `inputs_climate()` → `clouds(p=, dp=, opd=, g0=, w0=)` or `clouds(df=...)` → `climate()`. Without `virga()`, `climate()` treats the cloud as fixed (`inputs._fixed_cloud`); `virga()` still means self-consistent clouds and takes precedence. The run header says `clouds: fixed`.
+- [x] Skip the virga update when clouds are fixed: nothing to change, since `update_clouds` only runs when `cloudy` (virga) is on and `calculate_atm` already reads `inputs['clouds']` at every step. Patchy fixed clouds (`clouds(..., do_holes=True)`) are passed to the solver in `profile()`. The pressure grid does not change during a climate run, so instead of re-gridding, `inputs._check_fixed_cloud` raises a clear error if the cloud is not on the climate layers (e.g. `clouds()` called before `inputs_climate()`).
+- [x] Return the cloud that was used in the climate output (`cld_df`)
+- [x] Tests (`tests/test_fixed_clouds.py`): cloud unchanged after the run, zero-opacity cloud == cloud-free run (exactly; it needs `g0=w0=0` too, see note), opaque deck warms a brown dwarf below it, grid checks
+- [x] Tutorial: `docs/notebooks/D_climate/11_StaticClouds.py` ("Static Clouds in Climate Model"). Climate page in picaso-app: not done
+- [x] Tutorial uses picaso functions instead of in-notebook helpers: new `inputs.energy_budget` (level fluxes at fixed T, climate-output format), `jpi.pt` with several profiles, cloud hatching in `jpi.flux_analyzer`. `flux_analyzer` is still matplotlib only (a plotly backend would be a nice follow-up)
+- [x] Level_Fluxes tutorial (I_usefultools) uses `energy_budget` (`flux_net_radiative`, `tint_computed`; the profile/cloud are set with `atmosphere(df=)` / `clouds()` / `clouds_reset()` beforehand, `energy_budget` never changes the bundle) and the new `jpi.equilibrium_check` instead of its own helper and matplotlib figure; same numbers as before. 10_ExcludeMol T(P) and brightness-temperature comparisons use `jpi.pt` / `jpi.spectrum` (plotly)
+- [ ] Optional: the other D_climate tutorials still compare T(P) to Sonora/ERS references with hand-made matplotlib (could use `jpi.pt` with a list)
+- [x] Credit @aditya-sengupta in HISTORY.rst
+- Note: `optics.py` uses the cloud `g0` as the layer asymmetry even where the cloud `opd` is 0, so a cloud with `opd=0, g0>0` changes the delta-Eddington scaling of the gas. Existing behaviour, not changed here.
+- Fixed on the way: `profile()` unpacked the patchy-cloud clear opacities as `holes[0]` twice (no-delta-Eddington tuple should be `holes[1]`); affects patchy virga clouds in climate too.
 
 ### Medium: references tools on bibtexparser 2.1 (#450)
 

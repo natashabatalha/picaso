@@ -137,13 +137,8 @@ plt.legend()
 # First, the simplest diagnostic: how does the converged temperature structure change?
 
 # %%
-plt.figure(figsize=(6,6))
-plt.semilogy(out_all['temperature'],out_all['pressure'],color="k",linewidth=3,label="All molecules")
-plt.semilogy(out_noco2['temperature'],out_noco2['pressure'],color="tab:red",linewidth=3,label="No CO$_2$ opacity")
-plt.ylim(100,1e-6)
-plt.ylabel("Pressure [Bars]", fontsize=20)
-plt.xlabel('Temperature [K]', fontsize=20)
-plt.legend(fontsize=12)
+jpi.pt([out_all, out_noco2], legend=['All molecules', 'No CO2 opacity'], colors=['black', 'red'],
+       backend='plotly', y_range=[100, 1e-6], width=600, height=500)
 
 # %% [markdown]
 # ## Understanding *why* the temperature changed: Analyzing Level-Fluxes
@@ -227,16 +222,10 @@ print(f"Outgoing thermal flux, no CO2       : {diagnostics[1]['olr']:.4e} erg/cm
 # %%
 bt_all = jpi.brightness_temperature(out_all['spectrum_output'], plot=False)
 bt_noco2 = jpi.brightness_temperature(out_noco2['spectrum_output'], plot=False)
-wave = 1e4/out_all['spectrum_output']['wavenumber']
 
-plt.figure(figsize=(12,6))
-plt.semilogx(wave, bt_all, color='k', label='All molecules')
-plt.semilogx(wave, bt_noco2, color='tab:red', label='No CO$_2$ opacity')
-plt.xlim(1,20)
-plt.ylim(500,2500)
-plt.xlabel('Wavelength [$\\mu$m]', fontsize=16)
-plt.ylabel('Brightness Temperature [K]', fontsize=16)
-plt.legend(fontsize=13)
+jpi.spectrum(out_all['spectrum_output']['wavenumber'], [bt_all, bt_noco2],
+             legend=['All molecules', 'No CO2 opacity'], palette=['black', 'red'], backend='plotly',
+             x_axis_type='log', x_range=[1, 20], y_range=[500, 2500], y_axis_label='Brightness Temperature [K]')
 
 # %% [markdown]
 # ## Try it yourself

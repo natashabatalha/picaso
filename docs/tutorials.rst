@@ -46,6 +46,7 @@ Step-by-step introductions to each part of PICASO, from a first spectrum to 3D m
    Brown Dwarfs w/ Disequilibrium Chemistry (Constant Kzz) <notebooks/D_climate/4b_BrownDwarf_DEQ_const_kzz.py>
    Brown Dwarfs w/ Clouds <notebooks/D_climate/5_CloudyBrownDwarf_PreW.py>
    Brown Dwarfs w/ Clouds and Disequilibrium Chemistry <notebooks/D_climate/6_CloudyBrownDwarf_DEQ.py>
+   Static Clouds in Climate Model <notebooks/D_climate/11_StaticClouds.py>
    Creating a Grid of Models for Fitting <notebooks/D_climate/7_CreateModelGrid.py>
    Brown Dwarfs w/ Energy Injection <notebooks/D_climate/8_EnergyInjection.py>
    Brown Dwarfs w/ Moist Adiabat <notebooks/D_climate/9_BrownDwarf_Moistgrad.py>

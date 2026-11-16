@@ -371,19 +371,24 @@ def mixing_ratio(full_output,limit=50,ng=None,nt=None, plot_type='bokeh',
     return Analyzer(full_output, backend=backend).mixing_ratio(limit=limit, ng=ng, nt=nt,
                                                                molecules=molecules, **kwargs)
     
-def pt(full_output,ng=None, nt=None, backend='bokeh', **kwargs):
+def pt(full_output,ng=None, nt=None, backend='bokeh', legend=None, colors=Colorblind8, **kwargs):
     """Returns plot of pressure temperature profile
 
     Parameters
     ----------
-    full_output : class
-        picaso.atmsetup.ATMSETUP
+    full_output : class, dict or list
+        picaso.atmsetup.ATMSETUP (full output of spectrum), or the output of climate().
+        A list of these plots several profiles together, e.g. to compare climate models.
     backend : str
         Options are "bokeh" (default), "matplotlib" or "plotly"
+    legend : list of str
+        (Optional) Legend for each profile when plotting several
+    colors : list of str
+        (Optional) Colors for each profile
     **kwargs : dict
         Any key word argument for bokeh.figure()
     """
-    return Analyzer(full_output, backend=backend).pt(ng=ng, nt=nt, **kwargs)
+    return Analyzer(full_output, backend=backend).pt(ng=ng, nt=nt, legend=legend, colors=colors, **kwargs)
 
 def spectrum(xarray, yarray,legend=None,wno_to_micron=True, palette = Colorblind8,muted_alpha=0.2,
     backend='bokeh', **kwargs):
@@ -1907,36 +1912,54 @@ class Analyzer:
 
         return fig
 
-    def pt(self, ng=None, nt=None, backend=None, **kwargs):
-        """Returns plot of pressure temperature profile. See ``justplotit.pt``"""
+    def pt(self, ng=None, nt=None, backend=None, legend=None, colors=Colorblind8, **kwargs):
+        """Returns plot of pressure temperature profile(s). See ``justplotit.pt``"""
         backend = self._backend(backend)
-        if ((ng==None) & (nt==None)):
-            pressure = self.full_output['layer']['pressure']
-            temperature = self.full_output['layer']['temperature']
-        else:
-            pressure = self.full_output['layer']['pressure'][:,ng,nt]
-            temperature = self.full_output['layer']['temperature'][:,ng,nt]
+        outputs = self.full_output if isinstance(self.full_output, list) else [self.full_output]
+        profiles = []
+        for out in outputs:
+            if isinstance(out, dict) and ('temperature' in out) and ('pressure' in out):
+                #output of climate(): levels
+                profiles += [(np.array(out['pressure']), np.array(out['temperature']))]
+            else:
+                if isinstance(out, dict) and ('full_output' in out): out = out['full_output']
+                if ((ng==None) & (nt==None)):
+                    profiles += [(out['layer']['pressure'], out['layer']['temperature'])]
+                else:
+                    profiles += [(out['layer']['pressure'][:,ng,nt], out['layer']['temperature'][:,ng,nt])]
+        if isinstance(legend, str): legend = [legend]
+        if isinstance(legend, type(None)): legend = [None]*len(profiles)
+        pmax = np.max([np.max(p) for p, t in profiles]); pmin = np.min([np.min(p) for p, t in profiles])
 
         kwargs = _bokeh_size(kwargs, 400, 300)
         kwargs['title'] = kwargs.get('title','Pressure-Temperature Profile')
         kwargs['y_axis_label'] = kwargs.get('y_axis_label','Pressure(Bars)')
         kwargs['x_axis_label'] = kwargs.get('x_axis_label','Temperature (K)')
         kwargs['y_axis_type'] = kwargs.get('y_axis_type','log')
-        kwargs['y_range'] = kwargs.get('y_range',[np.max(pressure),np.min(pressure)])
+        kwargs['y_range'] = kwargs.get('y_range',[pmax,pmin])
 
         if backend == 'bokeh':
             fig = figure(**kwargs)
-            fig.line(temperature,pressure,line_width=3)
+            for i, ((pressure, temperature), lab) in enumerate(zip(profiles, legend)):
+                line_kwargs = dict(line_width=3, color=colors[np.mod(i, len(colors))])
+                if lab is not None: line_kwargs['legend_label'] = lab
+                fig.line(temperature,pressure,**line_kwargs)
             plot_format(fig)
 
         elif backend == 'matplotlib':
             fig, ax = plt.subplots(figsize=(kwargs['width']/100, kwargs['height']/100))
-            ax.plot(temperature, pressure, linewidth=3)
+            for i, ((pressure, temperature), lab) in enumerate(zip(profiles, legend)):
+                ax.plot(temperature, pressure, linewidth=3, color=colors[np.mod(i, len(colors))], label=lab)
             _mpl_format(ax, kwargs)
+            if any(lab is not None for lab in legend): ax.legend()
 
         elif backend == 'plotly':
             go, _ = _plotly()
-            fig = go.Figure(go.Scatter(x=temperature, y=pressure, mode='lines', line=dict(width=3)))
+            fig = go.Figure()
+            for i, ((pressure, temperature), lab) in enumerate(zip(profiles, legend)):
+                fig.add_trace(go.Scatter(x=temperature, y=pressure, mode='lines', name=lab,
+                                         showlegend=lab is not None,
+                                         line=dict(width=3, color=colors[np.mod(i, len(colors))])))
             _plotly_format(fig, kwargs)
 
         return fig
@@ -2758,7 +2781,12 @@ def flux_analyzer(clima_out, clima_out_compare=None, labels=None,
 
     If a second climate output is given via `clima_out_compare` (e.g. the same model with 
     `exclude_mol`), both are plotted on the top row and a second row shows the difference 
-    (compare - clima_out) of each quantity. Convective zones are shaded in the pressure panels. 
+    (compare - clima_out) of each quantity. Convective zones are shaded in the pressure panels, 
+    and cloud layers are hatched if the output has a cloud (``cld_df``). 
+
+    Besides climate outputs, this also accepts the output of ``inputs.energy_budget``: the energy 
+    budget of an atmosphere at a fixed temperature (e.g. right after a cloud is added). Energy budgets
+    have no convective zones, so none are shaded.
 
     Parameters
     ----------
@@ -2854,7 +2882,15 @@ def flux_analyzer(clima_out, clima_out_compare=None, labels=None,
                     flux_stellar_absorbed=f_v, flux_ir_net=f_ir, 
                     heating_stellar=heat_v, cooling_ir=cool_ir, heating_net=heat_v+cool_ir,
                     wavelength=1e4/wno, flux_toa=flux_toa_spec, olr=np.sum(flux_toa),
-                    cvz_locs=out.get('cvz_locs',None))
+                    cvz_locs=out.get('cvz_locs',None), cloud_range=cloud_range(out))
+
+    def cloud_range(out):
+        """Pressure range (bars) of the layers with cloud optical depth > 1e-3 at any wavelength, if there is a cloud"""
+        cld = out.get('cld_df', None)
+        if isinstance(cld, type(None)): return None
+        cloudy = cld.groupby('pressure')['opd'].max()
+        cloudy = cloudy[cloudy > 1e-3]
+        return (cloudy.index.min(), cloudy.index.max()) if len(cloudy) > 0 else None
 
     compare = not isinstance(clima_out_compare, type(None))
     diags = [get_diagnostics(clima_out)]
@@ -2884,13 +2920,13 @@ def flux_analyzer(clima_out, clima_out_compare=None, labels=None,
                      label=f"{lab}: OLR={d['olr']:.3e} erg/cm$^2$/s")
         #shade convective zones 
         #nstr format: convective zones are [nstr[1]:nstr[2]] and, if nstr[3]!=0, [nstr[4]:nstr[5]]
-        if not isinstance(d['cvz_locs'], type(None)): 
-            nstr = np.array(d['cvz_locs']).astype(int)
-            zones = [(nstr[1],nstr[2])] + ([(nstr[4],nstr[5])] if nstr[3]!=0 else [])
-            for itop, ibot in zones: 
-                ibot = min(ibot+1, len(d['pressure'])-1)
-                for a in ax[:,:2].ravel(): 
-                    a.axhspan(d['pressure'][itop], d['pressure'][ibot], color=col, alpha=0.08, lw=0)
+        for ptop, pbot in _convective_zones(d['pressure'], d['cvz_locs']): 
+            for a in ax[:,:2].ravel(): 
+                a.axhspan(ptop, pbot, color=col, alpha=0.08, lw=0)
+        #shade cloud layers (if the output has a cld_df, e.g. a cloudy climate run)
+        if not isinstance(d['cloud_range'], type(None)): 
+            for a in ax[:,:2].ravel(): 
+                a.axhspan(*d['cloud_range'], facecolor='none', edgecolor=col, hatch='//', alpha=0.3, lw=0)
 
     #legend entries for line styles 
     for lab, col in zip(labels, colors[:len(diags)]): 
@@ -2898,6 +2934,8 @@ def flux_analyzer(clima_out, clima_out_compare=None, labels=None,
     ax[0,0].plot([],[],color='grey',ls='--',label='Net absorbed stellar')
     ax[0,0].plot([],[],color='grey',ls='-',label='Net upward thermal')
     ax[0,0].fill_between([],[],color='grey',alpha=0.2,label='Convective zone')
+    if any(not isinstance(d['cloud_range'], type(None)) for d in diags): 
+        ax[0,0].fill_between([],[],facecolor='none',edgecolor='grey',hatch='//',label='Cloud')
     ax[0,1].plot([],[],color='grey',ls='--',label='Stellar heating')
     ax[0,1].plot([],[],color='grey',ls='-',label='Thermal cooling')
 
@@ -2951,4 +2989,119 @@ def flux_analyzer(clima_out, clima_out_compare=None, labels=None,
     fig.tight_layout()
 
     return returns, fig
+
+
+def _convective_zones(pressure, cvz_locs):
+    """(top, bottom) pressures of the convective zones of a climate output, from cvz_locs (nstr):
+    zones are levels [nstr[1]:nstr[2]] and, if nstr[3]!=0, [nstr[4]:nstr[5]]"""
+    if isinstance(cvz_locs, type(None)): return []
+    nstr = np.array(cvz_locs).astype(int)
+    zones = [(nstr[1],nstr[2])] + ([(nstr[4],nstr[5])] if nstr[3]!=0 else [])
+    return [(pressure[itop], pressure[min(ibot+1, len(pressure)-1)]) for itop, ibot in zones]
+
+def equilibrium_check(energy_budgets, labels=None, colors=Colorblind8, cvz_locs=None, target_tint=None, backend='matplotlib'):
+    """
+    Is a temperature profile in radiative-convective equilibrium? Plots the T(P) profile(s) (left)
+    and, for each energy budget, the internal temperature computed from its net radiative flux at
+    each level, ``tint_computed`` = sign(F_net) (|F_net|/sigma)^(1/4) (right), against a single
+    target internal temperature (dashed line). For a brown dwarf, T_int is T_eff.
+
+    The target is ``target_tint`` if given, otherwise it is computed from the FIRST energy budget
+    (its ``internal_heat``, sigma T_eff^4 of that bundle). Every budget is compared with this one target.
+
+    How to read the right panel, through the radiative zone:
+
+    - equal to the target: the net radiative flux carries exactly the internal heat (equilibrium)
+    - larger than the target: more energy leaves through that level than the interior supplies,
+      so the layers below lose energy and would cool
+    - smaller than the target: less energy leaves than the interior supplies, so the layers below
+      gain energy and would warm
+    - negative: the extreme case of "smaller". The net radiative flux points *down*: more energy
+      flows down into the layers below (absorbed starlight, or thermal emission from hotter layers
+      above) than comes up out of them. The sign is kept so this case stays visible; the
+      magnitude is still (|F_net|/sigma)^(1/4). Without a star this needs a strong temperature
+      inversion, so it is rare for brown dwarfs.
+
+    In convective zones (shaded, if ``cvz_locs`` is given) the computed value falls below the target
+    even in equilibrium, because convection carries the rest of the flux.
+
+    Parameters
+    ----------
+    energy_budgets : dict or list of dict
+        Output(s) of ``justdoit.inputs.energy_budget``
+    labels : list of str
+        (Optional) Legend labels, one per energy budget
+    colors : list of str
+        (Optional) Colors, one per energy budget
+    cvz_locs : list
+        (Optional) Convective zones to shade, as in the output of ``climate()`` (``out['cvz_locs']``),
+        on the same pressure levels as the energy budgets
+    target_tint : float
+        (Optional) Target internal temperature (K; T_eff for a brown dwarf). Default is the one of the
+        first energy budget. A warning is raised if it differs from that one by more than 1%.
+    backend : str
+        "matplotlib" (default) or "plotly"
+
+    Returns
+    -------
+    figure
+    """
+    _check_backend(backend)
+    budgets = energy_budgets if isinstance(energy_budgets, list) else [energy_budgets]
+    if isinstance(labels, str): labels = [labels]
+    if isinstance(labels, type(None)): labels = [None]*len(budgets)
+    tint_budget = (budgets[0]['internal_heat']/const.sigma_sb.cgs.value)**0.25
+    if isinstance(target_tint, type(None)):
+        tint = tint_budget
+    else:
+        tint = target_tint
+        if abs(tint - tint_budget) > 0.01*tint:
+            warnings.warn(f'target_tint={tint} K differs from the internal temperature of the first '
+                          f'energy budget ({tint_budget:.1f} K, from T_eff of its bundle)')
+    pmax = np.max([np.max(b['pressure']) for b in budgets]); pmin = np.min([np.min(b['pressure']) for b in budgets])
+    xlabel = 'Computed internal temperature (K)'
+    target = f'target T_int = {tint:.0f} K'
+
+    if backend == 'matplotlib':
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
+        for i, (b, lab) in enumerate(zip(budgets, labels)):
+            col = colors[np.mod(i, len(colors))]
+            ax[0].semilogy(b['temperature'], b['pressure'], color=col, lw=2.5, label=lab)
+            ax[1].semilogy(b['tint_computed'], b['pressure'], color=col, lw=2.5, label=lab)
+        for ptop, pbot in _convective_zones(budgets[0]['pressure'], cvz_locs):
+            for a in ax: a.axhspan(ptop, pbot, color='grey', alpha=0.15, lw=0)
+        ax[1].axvline(tint, color='grey', ls='--', label=target)
+        ax[1].axvline(0, color='grey', lw=0.5)
+        ax[0].set_ylim(pmax, pmin)
+        ax[0].set_ylabel('Pressure (bar)'); ax[0].set_xlabel('Temperature (K)'); ax[1].set_xlabel(xlabel)
+        ax[0].set_title('Temperature'); ax[1].set_title('Radiative-convective equilibrium check (shaded: convective zones)')
+        for a in ax:
+            if any(lab is not None for lab in labels): a.legend()
+        fig.tight_layout()
+
+    elif backend == 'plotly':
+        go, make_subplots = _plotly()
+        fig = make_subplots(rows=1, cols=2, shared_yaxes=True, subplot_titles=['Temperature',
+                            'Radiative-convective equilibrium check (shaded: convective zones)'])
+        for i, (b, lab) in enumerate(zip(budgets, labels)):
+            col = colors[np.mod(i, len(colors))]
+            for icol, x in [(1, b['temperature']), (2, b['tint_computed'])]:
+                fig.add_trace(go.Scatter(x=x, y=b['pressure'], mode='lines', name=lab, legendgroup=str(i),
+                                         showlegend=(icol==1) and (lab is not None),
+                                         line=dict(color=col, width=3)), row=1, col=icol)
+        for ptop, pbot in _convective_zones(budgets[0]['pressure'], cvz_locs):
+            for icol in (1, 2):
+                fig.add_hrect(y0=ptop, y1=pbot, fillcolor='grey', opacity=0.15, line_width=0, row=1, col=icol)
+        fig.add_vline(x=tint, line_dash='dash', line_color='grey', row=1, col=2,
+                      annotation_text=target, annotation_position='top right')
+        fig.update_yaxes(type='log', range=[np.log10(pmax), np.log10(pmin)])
+        fig.update_yaxes(title_text='Pressure (bar)', row=1, col=1)
+        fig.update_xaxes(title_text='Temperature (K)', row=1, col=1)
+        fig.update_xaxes(title_text=xlabel, row=1, col=2)
+        fig.update_layout(width=1100, height=500)
+
+    else:
+        raise ValueError("equilibrium_check supports backend='matplotlib' or 'plotly'")
+
+    return fig
 

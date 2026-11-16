@@ -3,6 +3,23 @@
 History
 -------
 
+5.0 (in development)
+~~~~~~~~~~~~~~~~~~~~
+Major functionality:
+
+* Static (fixed) clouds in climate: a cloud added with ``clouds()`` after ``inputs_climate()`` is held fixed while the climate converges (based on the work of @aditya-sengupta in #279). New tutorial: Static Clouds in Climate Model
+* ``inputs.energy_budget``: radiative energy budget (level fluxes, absorbed/outgoing flux, Bond albedo) of the atmosphere and cloud currently in the bundle, at a fixed temperature, in the format of ``climate()`` output so it works with ``jpi.flux_analyzer`` (e.g. the instantaneous radiative effect of a cloud). Set the profile and cloud first with ``atmosphere(df=...)``, ``clouds()`` or ``clouds_reset()``; the bundle is not changed. Returns the internal temperature computed from the net flux at each level (``tint_computed``), to check radiative-convective equilibrium
+* ``jpi.equilibrium_check``: plots T(P) and the computed internal temperature of ``energy_budget`` outputs against a target (``target_tint``, or that of the first budget), with the convective zones of a climate run shaded (matplotlib or plotly)
+
+Enhancements:
+
+* ``jpi.pt`` plots several profiles (spectrum or climate outputs) with a legend
+* ``jpi.flux_analyzer`` hatches the cloud layers of outputs that have a cloud (``cld_df``)
+
+Bug fixes:
+
+* ``clouds_reset()`` no longer zeros the cloud dataframe in place (it was shared with outputs that saved it, e.g. a fixed-cloud ``climate()`` output)
+
 4.1 (2026-9-16)
 ~~~~~~~~~~~~~~~
 Major functionality: 
