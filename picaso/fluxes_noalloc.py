@@ -413,7 +413,6 @@ def get_reflected_1d(
         Selects the Toon et al. coefficient set.
     b_top : float
         Diffuse radiation incident at the top of the atmosphere.
-
     Returns
     -------
     xint_at_top : ndarray of float64
@@ -424,7 +423,6 @@ def get_reflected_1d(
         nwno)`` when level fluxes are enabled, otherwise an empty array.
     """
 
-    # Allocate work space
     reflected = GetReflected1D(nlevel - 1, nwno, numg, numt, get_lvl_flux, get_toa_intensity)
 
     # Parallel loop over wavelength
