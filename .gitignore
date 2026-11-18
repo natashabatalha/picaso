@@ -44,3 +44,6 @@ docs/notebooks/D_climate/photochem_rxns.yaml
 docs/notebooks/D_climate/photochem_thermo.yaml
 docs/notebooks/picaso_floppity_retrieval.ipynb
 docs/notebooks/sbi-logs/
+
+# sphinx build output and notebook execution cache
+docs/_build/

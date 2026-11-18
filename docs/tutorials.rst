@@ -46,6 +46,7 @@ Clouds
 
    Virga (Ackerman & Marley Clouds) </notebooks/C_clouds/1_PairingPICASOToVIRGA.py>
    Patchy Clouds </notebooks/C_clouds/2_PatchyClouds.py>
+   Running Nimbus in PICASO </notebooks/C_clouds/3_RunningNimbusInPICASO.py>
 
 1D Climate Modeling
 -------------------
