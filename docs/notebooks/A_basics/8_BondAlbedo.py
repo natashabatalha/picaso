@@ -31,9 +31,10 @@
 # in *all* directions. The Bond albedo is its average weighted by the stellar spectrum. This is
 # the quantity that sets the planet's energy budget.
 #
-# **The `bond_albedo` key returned by `spectrum()` is not the true Bond albedo.** It is the
-# stellar-flux-weighted albedo at whatever phase you requested (eq. 18 of Batalha et al. 2019),
-# which is equivalent to assuming $q = 1$. Cahoy et al. (2010, Table 5) find $q \approx 1.2$-$1.8$ for
+# **The `flux_weighted_geometric_albedo` key returned by `spectrum()` is not the true Bond albedo.**
+# It is the stellar-flux-weighted albedo at whatever phase you requested (eq. 18 of Batalha et al.
+# 2019), which is equivalent to assuming $q = 1$. In older versions of PICASO this key was called
+# `bond_albedo`; it was renamed because it is not a Bond albedo. Cahoy et al. (2010, Table 5) find $q \approx 1.2$-$1.8$ for
 # Jupiter and Neptune analogs, so this underestimates $A_B$. Use `inputs.bond_albedo()` instead.
 
 # %%
@@ -81,10 +82,10 @@ clear_out = case.bond_albedo(opa, n_phase=8)
 # `phase_angle` settings. Compare its result with the $q = 1$ value from `spectrum`:
 
 # %%
-q1_bond_albedo = case.spectrum(opa)['bond_albedo']
-print(f"spectrum()['bond_albedo'] (q = 1)           : {q1_bond_albedo:.4f}")
-print(f"bond_albedo()['bond_albedo']                : {clear_out['bond_albedo']:.4f}")
-print(f"flux-weighted phase integral A_B/<A_g>      : {clear_out['phase_integral_flux_weighted']:.4f}")
+q1_albedo = case.spectrum(opa)['flux_weighted_geometric_albedo']
+print(f"spectrum()['flux_weighted_geometric_albedo'] (q = 1) : {q1_albedo:.4f}")
+print(f"bond_albedo()['bond_albedo']                         : {clear_out['bond_albedo']:.4f}")
+print(f"flux-weighted phase integral A_B/<A_g>               : {clear_out['phase_integral_flux_weighted']:.4f}")
 
 # %%
 wavelength_um = 1e4 / clear_out['wavenumber']
@@ -106,7 +107,7 @@ ax[1].legend()
 # ## Adding clouds
 #
 # Forward-scattering clouds and hazes change the phase function, so the cloudy planet's $q$
-# differs from the clear_out one even where $A_g$ is similar.
+# differs from the clear one even where $A_g$ is similar.
 
 # %%
 case.clouds(filename=jdi.jupiter_cld(), sep=r'\s+')
@@ -116,7 +117,7 @@ print(f"cloudy A_B = {cloudy_out['bond_albedo']:.4f}, "
 
 # %%
 fig, ax = plt.subplots(figsize=(7, 3.5))
-ax.plot(wavelength_um, clear_out['phase_integral'], label='clear_out')
+ax.plot(wavelength_um, clear_out['phase_integral'], label='clear')
 ax.plot(wavelength_um, cloudy_out['phase_integral'], label='cloudy')
 ax.set_ylabel('Phase integral $q$')
 ax.set_xlabel(r'Wavelength [$\mu$m]')
@@ -125,7 +126,7 @@ ax.legend()
 # %% [markdown]
 # ## Practical notes
 #
-# - **Accuracy.** For the clear_out case above, `n_phase = 12` agrees with a 2-degree trapezoid grid to
+# - **Accuracy.** For the clear case above, `n_phase = 12` agrees with a 2-degree trapezoid grid to
 #   0.02% in $A_B$. Check with a larger value for strongly forward-scattering particles.
 # - **Your own phase grid.** Pass `phase_grid` (radians, including 0, below $\pi$) to integrate with
 #   the trapezoid rule instead. For example, `np.radians(list(range(0, 180, 12)) + [179])`.

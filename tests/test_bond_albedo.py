@@ -26,6 +26,7 @@ if os.environ.get('PICASO_TEST_PYSYN_CDBS'):
     os.environ['PYSYN_CDBS'] = os.environ['PICASO_TEST_PYSYN_CDBS']
 
 from picaso import justdoit as jdi
+from picaso import disco
 
 
 def lambert_phase_function(alpha):
@@ -41,7 +42,7 @@ def lambert_albedo(alpha, geometric_albedo):
 # ------------------------------------------------------------------ unit tests
 
 def test_quadrature_weights():
-    phases, weights = jdi._phase_quadrature(12)
+    phases, weights = disco.get_phase_quadrature(12)
     assert np.all(np.diff(phases) > 0)
     assert phases.min() > 0 and phases.max() < np.pi
     # int_0^pi 2 sin(a) da = 4
@@ -51,7 +52,7 @@ def test_quadrature_weights():
 @pytest.mark.parametrize('n_phase', [8, 12, 24])
 def test_lambert_gauss(n_phase):
     geometric_albedo = np.array([0.1, 0.4, 2/3])
-    phases, weights = jdi._phase_quadrature(n_phase)
+    phases, weights = disco.get_phase_quadrature(n_phase)
     spherical_albedo, phase_integral_q = jdi._phase_integral(phases, lambert_albedo(phases, geometric_albedo),
                                 geometric_albedo=geometric_albedo, weights=weights)
     # Lambert sphere: q = 3/2 (Cahoy et al. 2010 Sec. 4.4)
@@ -78,7 +79,7 @@ def test_trapezoid_matches_ratio_form():
 
 
 def test_zero_geometric_albedo():
-    phases, weights = jdi._phase_quadrature(12)
+    phases, weights = disco.get_phase_quadrature(12)
     geometric_albedo = np.array([0.0, 0.5])
     albedo = lambert_albedo(phases, geometric_albedo)
     albedo[:, 0] = 1e-3  # e.g. nonzero scattering away from zero phase in a line core
@@ -88,7 +89,7 @@ def test_zero_geometric_albedo():
 
 
 def test_missing_zero_phase():
-    phases, weights = jdi._phase_quadrature(8)
+    phases, weights = disco.get_phase_quadrature(8)
     with pytest.raises(Exception):
         jdi._phase_integral(phases, np.ones((8, 3)), weights=weights)
 
@@ -96,11 +97,11 @@ def test_missing_zero_phase():
 def test_bond_from_spherical():
     wno = np.linspace(1e4, 3e4, 200)
     # constant A_s returns A_s for any stellar spectrum
-    assert np.isclose(jdi._bond_albedo_from_spherical(wno, np.full(200, 0.42), np.exp(-wno / 1e4)), 0.42)
+    assert np.isclose(jdi._flux_weighted_albedo(wno, np.full(200, 0.42), np.exp(-wno / 1e4)), 0.42)
     # NaNs in the spherical albedo do not propagate
     spherical_albedo = np.full(200, 0.42)
     spherical_albedo[10] = np.nan
-    assert np.isfinite(jdi._bond_albedo_from_spherical(wno, spherical_albedo, np.ones(200)))
+    assert np.isfinite(jdi._flux_weighted_albedo(wno, spherical_albedo, np.ones(200)))
 
 
 # ------------------------------------------------------------------ integration tests
@@ -144,4 +145,7 @@ def test_rayleigh_phase_integral(rayleigh_case):
     assert np.nanmax(bond_out['spherical_albedo']) <= 1.0 + 1e-2
     assert 0 < bond_out['bond_albedo'] < 1
     # phase_integral_q > 1, so the true Bond albedo exceeds the phase_integral_q=1 value from spectrum()
-    assert bond_out['bond_albedo'] > case.spectrum(opacity)['bond_albedo']
+    spectrum_out = case.spectrum(opacity)
+    assert bond_out['bond_albedo'] > spectrum_out['flux_weighted_geometric_albedo']
+    # the Bond albedo only comes from inputs.bond_albedo(), not spectrum()
+    assert 'bond_albedo' not in spectrum_out

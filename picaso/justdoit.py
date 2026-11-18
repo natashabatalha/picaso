@@ -7,7 +7,7 @@ from .climate import  namedtuple,run_chemeq_climate_workflow,run_diseq_climate_w
 
 from .wavelength import get_cld_input_grid
 from .optics import RetrieveOpacities, RetrieveOpacitiesHDF5, compute_opacity, RetrieveCKs
-from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal
+from .disco import get_angles_1d, get_angles_3d, get_phase_quadrature, compute_disco, compress_disco, compress_thermal
 from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray
 
@@ -598,8 +598,7 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
         #NOTE: this is the stellar-flux-weighted albedo at the requested phase. It assumes a
         #phase integral q=1 and is NOT the true Bond albedo. Use inputs.bond_albedo() for
         #A_B = int A_g q F_star / int F_star (issue #358)
-        returns['bond_albedo'] = (_trapz(x=1/wno, y=albedo*inputs['star']['flux'])/
-                                    _trapz(x=1/wno, y=stellar_flux))
+        returns['flux_weighted_geometric_albedo'] = _flux_weighted_albedo(wno, albedo, stellar_flux)
 
         if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
@@ -1344,44 +1343,6 @@ def find_press(at_tau, a, b, c):
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
 
-def _phase_quadrature(n_phase=12):
-    """
-    Gauss-Legendre quadrature nodes and weights for the phase integral.
-
-    Substituting mu = cos(alpha) into the spherical albedo (Cahoy et al. 2010, Eqs. 4-5),
-
-        A_s = 2 int_0^pi A(alpha) sin(alpha) d(alpha) = 2 int_{-1}^{1} A(mu) d(mu),
-
-    so Gauss-Legendre nodes in mu integrate it with few phases. The nodes are the roots of
-    the Legendre polynomial P_n(mu); in phase angle they are nearly evenly spaced (about
-    11 to 169 deg for n_phase = 12). They never fall on alpha = pi, where PICASO's
-    reflected-light geometry is singular.
-
-    Parameters
-    ----------
-    n_phase : int
-        (Optional) Default = 12. Number of quadrature nodes.
-
-    Returns
-    -------
-    array
-        Phase angles in radians, sorted from small to large.
-    array
-        Weights such that ``A_s = np.sum(weights * albedo_at_phases)``. They include the
-        factor of 2, so they sum to 4.
-
-    Examples
-    --------
-    >>phases, weights = _phase_quadrature(12)
-    """
-    #nodes and weights on mu = cos(alpha) in [-1, 1]
-    cos_phase_nodes, legendre_weights = np.polynomial.legendre.leggauss(int(n_phase))
-    #convert to phase angle; reverse so phases increase from ~0 to ~pi
-    phases = np.arccos(cos_phase_nodes)[::-1]
-    #factor of 2 from Cahoy et al. 2010 Eq. 4
-    weights = 2.0 * legendre_weights[::-1]
-    return phases, weights
-
 def _phase_integral(phases, albedo_by_phase, geometric_albedo=None, weights=None):
     """
     Spherical albedo and phase integral from albedo spectra at several phase angles.
@@ -1405,7 +1366,7 @@ def _phase_integral(phases, albedo_by_phase, geometric_albedo=None, weights=None
         (Optional) Default = None. Albedo at zero phase, shape (nwno,). If None, the row of
         ``albedo_by_phase`` at phase 0 is used.
     weights : array
-        (Optional) Default = None. Quadrature weights from `_phase_quadrature`. If None, the
+        (Optional) Default = None. Quadrature weights from `disco.get_phase_quadrature`. If None, the
         trapezoid rule in phase angle is used; the grid should then run from 0 to close
         to pi (e.g. 179 deg; the integrand goes to zero at pi).
 
@@ -1418,7 +1379,7 @@ def _phase_integral(phases, albedo_by_phase, geometric_albedo=None, weights=None
 
     Examples
     --------
-    >>phases, weights = _phase_quadrature(12)
+    >>phases, weights = get_phase_quadrature(12)
     >>spherical_albedo, q = _phase_integral(phases, albedo_by_phase, geometric_albedo=a_g, weights=weights)
     """
     phases = np.asarray(phases, dtype=float)
@@ -1455,38 +1416,43 @@ def _phase_integral(phases, albedo_by_phase, geometric_albedo=None, weights=None
                                                      / geometric_albedo[has_geometric_albedo])
     return spherical_albedo, phase_integral_spectrum
 
-def _bond_albedo_from_spherical(wno, spherical_albedo, stellar_flux):
+def _flux_weighted_albedo(wno, albedo, stellar_flux):
     """
-    Stellar-flux-weighted Bond albedo (Cahoy et al. 2010 Eq. 6),
+    Stellar-flux-weighted average of an albedo spectrum (eq. 18 of Batalha et al. 2019;
+    Cahoy et al. 2010 Eq. 6),
 
-        A_B = int A_s F_star d(lambda) / int F_star d(lambda),
+        <A> = int A F_star d(lambda) / int F_star d(lambda),
 
     integrated over the wavelength range of the opacity database only.
+
+    Passing the spherical albedo gives the Bond albedo A_B. Passing the albedo at one
+    phase (what `spectrum` does) gives ``flux_weighted_geometric_albedo``, which is
+    only equal to A_B if the phase integral q = 1.
 
     Parameters
     ----------
     wno : array
         Wavenumber grid in cm-1.
-    spherical_albedo : array
-        Spherical albedo on ``wno``, e.g. from `_phase_integral`.
+    albedo : array
+        Albedo on ``wno``, e.g. the spherical albedo from `_phase_integral`.
     stellar_flux : array
         Stellar flux on ``wno``. Units cancel.
 
     Returns
     -------
     float
-        Bond albedo.
+        Flux-weighted albedo.
 
     Examples
     --------
-    >>a_b = _bond_albedo_from_spherical(wno, spherical_albedo, case.inputs['star']['flux'])
+    >>a_b = _flux_weighted_albedo(wno, spherical_albedo, case.inputs['star']['flux'])
     """
-    #integrate in wavelength (1/wno), same as eq. 18 of Batalha et al. 2019 in picaso()
+    #integrate in wavelength (1/wno)
     wavelength_cm = 1 / np.asarray(wno, dtype=float)
-    #zero out any non-finite values so they do not propagate into A_B
-    flux_weighted_spherical_albedo = np.nan_to_num(np.asarray(spherical_albedo) * stellar_flux,
-                                                   nan=0.0, posinf=0.0, neginf=0.0)
-    return (_trapz(x=wavelength_cm, y=flux_weighted_spherical_albedo)
+    #zero out any non-finite values so they do not propagate into the average
+    flux_weighted = np.nan_to_num(np.asarray(albedo) * stellar_flux,
+                                  nan=0.0, posinf=0.0, neginf=0.0)
+    return (_trapz(x=wavelength_cm, y=flux_weighted)
             / _trapz(x=wavelength_cm, y=stellar_flux))
 
 def opannection(
@@ -5240,8 +5206,8 @@ class inputs():
         """
         Compute the Bond albedo of a 1D atmosphere, including the phase integral.
 
-        The ``bond_albedo`` returned by `spectrum` is the stellar-flux-weighted albedo at
-        the requested phase (Batalha et al. 2019, eq. 18), which assumes a phase integral
+        The ``flux_weighted_geometric_albedo`` returned by `spectrum` (formerly
+        ``bond_albedo``) is the stellar-flux-weighted albedo at the requested phase (Batalha et al. 2019, eq. 18), which assumes a phase integral
         q = 1. This function computes reflected-light spectra at several phases and
         follows Cahoy et al. 2010 (ApJ 724, 189):
 
@@ -5262,7 +5228,7 @@ class inputs():
             Opacity class from `justdoit.opannection`
         n_phase : int
             (Optional) Default = 12. Number of Gauss-Legendre nodes in cos(phase); see
-            `_phase_quadrature`. Ignored if ``phase_grid`` is given.
+            `disco.get_phase_quadrature`. Ignored if ``phase_grid`` is given.
         phase_grid : array
             (Optional) Default = None. Phase angles in radians, 0 <= phase < pi, including 0.
             Integrated with the trapezoid rule instead of Gauss-Legendre.
@@ -5296,7 +5262,7 @@ class inputs():
         #choose the phases to integrate over
         if phase_grid is None:
             method = 'gauss'
-            phases, weights = _phase_quadrature(n_phase)
+            phases, weights = get_phase_quadrature(n_phase)
         else:
             method = 'trapezoid'
             phases = np.sort(np.asarray(phase_grid, dtype=float))
@@ -5338,10 +5304,11 @@ class inputs():
 
         #Bond albedo, Cahoy et al. 2010 Eq. 6
         stellar_flux = np.asarray(self.inputs['star']['flux'])
-        bond_albedo_value = _bond_albedo_from_spherical(wno, spherical_albedo, stellar_flux)
+        bond_albedo_value = _flux_weighted_albedo(wno, spherical_albedo, stellar_flux)
 
-        #ratio to the q=1 value (what spectrum() returns at zero phase) is an effective q
-        flux_weighted_geometric_albedo = _bond_albedo_from_spherical(wno, geometric_albedo, stellar_flux)
+        #ratio to the q=1 value (spectrum()['flux_weighted_geometric_albedo'] at zero phase)
+        #is an effective q
+        flux_weighted_geometric_albedo = _flux_weighted_albedo(wno, geometric_albedo, stellar_flux)
         if flux_weighted_geometric_albedo > 0:
             effective_phase_integral = bond_albedo_value / flux_weighted_geometric_albedo
         else:
@@ -5384,10 +5351,11 @@ class inputs():
 
         Notes
         -----
-        For reflected light, the returned ``bond_albedo`` is the stellar-flux-weighted
-        albedo at the requested phase angle (Batalha et al. 2019, eq. 18). It assumes a
-        phase integral q = 1, so it is not the true Bond albedo. Use `inputs.bond_albedo`
-        to compute the Bond albedo including the phase integral.
+        For reflected light, the returned ``flux_weighted_geometric_albedo`` is the
+        stellar-flux-weighted albedo at the requested phase angle (Batalha et al. 2019,
+        eq. 18). It assumes a phase integral q = 1, so it is not the true Bond albedo. Use
+        `inputs.bond_albedo` to compute the Bond albedo including the phase integral.
+        (This key was called ``bond_albedo`` in earlier versions of PICASO.)
         """
         #CHECKS 
 
