@@ -148,7 +148,7 @@ comp_file.head()
 df = start_case.spectrum(opacity,calculation='reflected')#other options: transmission, thermal or a combo of many e.g., "reflected+transmission"
 
 # %% [markdown]
-# Checkout out what was returned (Note this is a change in v1.0). This dictionary will change based on what you have requested to be computed. For example, for reflected light you will see albedo, bond_albedo, fpfs_reflected. For thermal you will see
+# Checkout out what was returned (Note this is a change in v1.0). This dictionary will change based on what you have requested to be computed. For example, for reflected light you will see albedo, flux_weighted_geometric_albedo, fpfs_reflected. For thermal you will see
 
 # %%
 df.keys()
