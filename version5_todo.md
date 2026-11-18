@@ -16,6 +16,7 @@ Release v5.0 from `gridtree`
 10. Bond albedo function from Nagpal et al. 2026
 11. Adds Static Clouds to climate runs
 12. Adds direct energy_budget function and flux_analyzer function and tutorials that enable users to analyze radiative forcing (e.g., leaving a molecular opacity source from climate and checking heating/cooling). Checkout tutorials D_Climate/11_StaticClouds, D_Climate/10_Exoplanet_ExcludeMol.py and I_usefultools/Level_Fluxes.py
+13. One top level `sonora` function that reads all sonora files. tutorial that shows how to reproduce four major sonora runs (adds diamondback, elf owl, and flameskimmer)
 
 ### Minor but useful changes 
 
@@ -66,7 +67,7 @@ Only if beta cloud resources come through in time. If not, move it to v5.1.
 ### Open PRs
 
 - [x] **#450** bibtexparser 1.4 → 2.1: see "References tools on bibtexparser 2.1" below. Merge (or close in favour of our own PR) once the port is done.
-- [ ] **#279** Fixed clouds: the PR can't be merged as is (see "Fixed clouds in climate" below). Close it with a note pointing to the v5 work, and credit @aditya-sengupta.
+- [x] **#279** Fixed clouds: the PR can't be merged as is (see "Fixed clouds in climate" below). Close it with a note pointing to the v5 work, and credit @aditya-sengupta.
 - [x] **#360** Optimize opacity reading: closed.
 - [ ] **#406** Nimbus integration: merge into v5
 
