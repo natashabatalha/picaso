@@ -91,6 +91,14 @@ v4 could read the per-molecule correlated-k tables used by `opannection(method='
 - Months are written as BibTeX macros (`month = oct`) instead of full names (`month = {October}`). BibTeX shows the same thing either way.
 - `get_opa` no longer fails for Li, Na, K, Rb or Cs (a typo in `reference_list.json` joined two IDs into one).
 
+## The `bond_albedo` spectrum output is renamed `flux_weighted_geometric_albedo`
+
+In v4, reflected-light runs of `spectrum()` returned a key called `bond_albedo`. It was not a Bond albedo: it is the geometric albedo at the phase you requested, weighted by the stellar flux (eq. 18 of Batalha et al. 2019). That is the same as assuming a phase integral of $q = 1$. Cahoy et al. (2010) find $q \approx 1.2$–$1.8$ for Jupiter and Neptune analogs, so the old value underestimates the true Bond albedo. In v5 the key is called `flux_weighted_geometric_albedo`, and `spectrum()` no longer returns `bond_albedo`. The value is unchanged.
+
+The true Bond albedo comes from the new `inputs.bond_albedo(opacityclass, n_phase=12)`. It computes reflected light at several phase angles and integrates over phase (Cahoy et al. 2010, Eqs. 4–6). It returns the Bond albedo plus the spherical albedo, phase integral and geometric albedo spectra. It costs `n_phase + 1` reflected-light calculations. See the [Bond albedo tutorial](https://natashabatalha.github.io/picaso/notebooks/A_basics/9_BondAlbedo.html) (Nagpal et al. 2026).
+
+**What to do:** replace `out['bond_albedo']` with `out['flux_weighted_geometric_albedo']` if you want the same number as before. If you used it as a Bond albedo (for example, in an energy budget or for an equilibrium temperature), use `case.bond_albedo(opa)['bond_albedo']` instead.
+
 ## Deprecated functions are removed
 
 These functions and classes were marked deprecated (their names end in `_deprecate`) and nothing in PICASO used them. They are removed in v5:

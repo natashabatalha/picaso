@@ -93,6 +93,10 @@ driver = [
 dynesty = ["dynesty"]
 ultranest = ["ultranest"]
 nautilus = ["nautilus-sampler>=1.0.6"]
+# the nimbus cloud model (C_clouds/3_RunningNimbusInPICASO): pip install "picaso[nimbus]"
+# MieNet is also needed but is not on PyPI (PyPI rejects git dependencies), so install it separately:
+# pip install git+https://github.com/MieNet-org/mienet.git
+nimbus = ["nimbus-exo>=2.1"]
 samplers = [
     "dynesty",
     "ultranest",

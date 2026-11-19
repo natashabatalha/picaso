@@ -153,6 +153,49 @@ def compute_transit_disco(theta, phi, inclination):
     longitude = np.arctan2(np.einsum('i,ijk->jk', east, v), np.einsum('i,ijk->jk', substellar, v))
     return latitude, longitude
 
+    
+def get_phase_quadrature(n_phase=12):
+    """
+    Gauss-Legendre quadrature nodes and weights for integrating over planetary phase
+    angle (e.g. the phase integral needed for the Bond albedo).
+
+    This is distinct from `get_angles_3d`, which places Gauss/Chebyshev angles on the
+    planet disk at a single phase. Here the nodes are phase angles themselves.
+
+    Substituting mu = cos(alpha) into the spherical albedo (Cahoy et al. 2010, Eqs. 4-5),
+
+        A_s = 2 int_0^pi A(alpha) sin(alpha) d(alpha) = 2 int_{-1}^{1} A(mu) d(mu),
+
+    so Gauss-Legendre nodes in mu integrate it with few phases. The nodes are the roots of
+    the Legendre polynomial P_n(mu); in phase angle they are nearly evenly spaced (about
+    11 to 169 deg for n_phase = 12). They never fall on alpha = pi, where the
+    reflected-light geometry in `compute_disco` is singular.
+
+    Parameters
+    ----------
+    n_phase : int
+        (Optional) Default = 12. Number of quadrature nodes.
+
+    Returns
+    -------
+    array
+        Phase angles in radians, sorted from small to large.
+    array
+        Weights such that ``A_s = np.sum(weights * albedo_at_phases)``. They include the
+        factor of 2, so they sum to 4.
+
+    Examples
+    --------
+    >>phases, weights = get_phase_quadrature(12)
+    """
+    #nodes and weights on mu = cos(alpha) in [-1, 1]
+    cos_phase_nodes, legendre_weights = polynomial.legendre.leggauss(int(n_phase))
+    #convert to phase angle; reverse so phases increase from ~0 to ~pi
+    phases = arccos(cos_phase_nodes)[::-1]
+    #factor of 2 from Cahoy et al. 2010 Eq. 4
+    weights = 2.0 * legendre_weights[::-1]
+    return phases, weights
+
 @jit(nopython=True, cache=True)
 def compress_disco( nwno, cos_theta, xint_at_top, gweight, tweight,F0PI): 
     """

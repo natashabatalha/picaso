@@ -368,6 +368,25 @@ diag_dark, fig = jpi.flux_analyzer(budget_instant, budget_instant_dark,
 #
 # Note that `cl_run.virga(...)` would instead turn on the **self-consistent** cloud, which is recomputed at every step.
 #
+# ## Fixing a cloud from Nimbus
+#
+# You can do the same with the [Nimbus cloud model](https://natashabatalha.github.io/picaso/notebooks/C_clouds/3_RunningNimbusInPICASO.html) (install it with `pip install "picaso[nimbus]"` and install MieNet, see that tutorial). Run `nimbus` **once** on a separate case that is not a climate run, then pass its cloud to `clouds(df=...)`. `nimbus` needs a Kzz profile and the condensate mass mixing ratios (`gas_mmr`):
+#
+# ```python
+# import virga.justdoit as vj  # only for picaso_format
+# cld_case = jdi.inputs()
+# cld_case.gravity(gravity=grav, gravity_unit=u.Unit('m/(s**2)'))
+# cld_case.atmosphere(df=jdi.pd.DataFrame({'pressure':out_clear['pressure'], 'temperature':out_clear['temperature'], 'kz':1e9}))
+# cld = cld_case.nimbus(['H2O'], mh=10, mmw=2.3, gas_mmr={'H2O':7.54e-4*18/2.34})  # solar H2O mass mixing ratio, as in the Nimbus tutorial
+#
+# cl_run.inputs_climate(temp_guess= temp_guess, pressure= pressure, rcb_guess=rcb_guess, rfacv = rfacv)
+# cl_run.clouds(df=vj.picaso_format(cld['opd_per_layer'], cld['single_scattering'], cld['asymmetry'],
+#                                   pressure=cld['pressure'], wavenumber=1e4/cld['wave']))
+# out_nimbus = cl_run.climate(opacity_ck, with_spec=True)
+# ```
+#
+# As with virga, calling `cl_run.nimbus(...)` on the climate case turns on the **self-consistent** Nimbus cloud instead.
+#
 # **Removing the cloud:** a cloud added with `clouds()` stays in `cl_run` for later climate runs and energy budgets. This is why we ran the cloud-free model first. Use `cl_run.clouds_reset()` to remove it (it sets the cloud opacity to zero), as we did for the cloud-free energy budget.
 
 # %% [markdown]

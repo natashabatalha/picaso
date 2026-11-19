@@ -10,11 +10,14 @@ from .wavelength import get_cld_input_grid
 from .sonora import (SONORA_GRIDS, sonora_grid_options, find_sonora_spectrum, read_sonora_spectrum,
                      read_sonora_model, find_sonora_cloud, read_diamondback_pt, read_diamondback_cld, _detect_sonora_grid, _nearest_sonora_model)
 from .optics import RetrieveOpacities, RetrieveOpacitiesHDF5, compute_opacity, RetrieveCKs
-from .disco import get_angles_1d, get_angles_3d, compute_disco, compress_disco, compress_thermal, compute_transit_disco
+from .disco import get_angles_1d, get_angles_3d, get_phase_quadrature, compute_disco, compress_disco, compress_thermal, compute_transit_disco
 from .justplotit import numba_cumsum, mean_regrid
 from .build_3d_input import regrid_xarray, regrid_transit
 
-
+try:
+    from nimbus import Nimbus
+except ImportError:
+    Nimbus = None
 from virga import justdoit as vj
 from scipy.interpolate import UnivariateSpline, interp1d,RegularGridInterpolator
 from scipy import special
@@ -635,8 +638,10 @@ def picaso(bundle,opacityclass, dimension = '1d',calculation='reflected',
 
 
         #see equation 18 Batalha+2019 PICASO 
-        returns['bond_albedo'] = (_trapz(x=1/wno, y=albedo*inputs['star']['flux'])/
-                                    _trapz(x=1/wno, y=stellar_flux))
+        #NOTE: this is the stellar-flux-weighted albedo at the requested phase. It assumes a
+        #phase integral q=1 and is NOT the true Bond albedo. Use inputs.bond_albedo() for
+        #A_B = int A_g q F_star / int F_star (issue #358)
+        returns['flux_weighted_geometric_albedo'] = _flux_weighted_albedo(wno, albedo, stellar_flux)
 
         if ((not np.isnan(sa ) and (not np.isnan(atm.planet.radius))) ):
             returns['fpfs_reflected'] = albedo*(atm.planet.radius/sa)**2.0
@@ -1406,6 +1411,118 @@ def find_press(at_tau, a, b, c):
     for iw in range(b): 
         at_press.append(np.interp([at_tau],a[:,iw],c)[0])
     return at_press
+
+def _phase_integral(phases, albedo_by_phase, geometric_albedo=None, weights=None):
+    """
+    Spherical albedo and phase integral from albedo spectra at several phase angles.
+
+    Uses Cahoy et al. 2010 (ApJ 724, 189). PICASO's ``albedo`` at phase alpha is
+    A(alpha) = A_g Phi(alpha) (Eq. 3), so the spherical albedo (Eqs. 4-5) is
+
+        A_s = q A_g = 2 int_0^pi A(alpha) sin(alpha) d(alpha)
+
+    A_s is integrated directly, without dividing by A_g first, so wavelengths where
+    A_g = 0 (e.g. saturated line cores) give a finite A_s. The phase integral
+    q = A_s / A_g is returned as NaN there.
+
+    Parameters
+    ----------
+    phases : array
+        Phase angles in radians, shape (nphase,).
+    albedo_by_phase : array
+        Albedo spectra at each phase, shape (nphase, nwno).
+    geometric_albedo : array
+        (Optional) Default = None. Albedo at zero phase, shape (nwno,). If None, the row of
+        ``albedo_by_phase`` at phase 0 is used.
+    weights : array
+        (Optional) Default = None. Quadrature weights from `disco.get_phase_quadrature`. If None, the
+        trapezoid rule in phase angle is used; the grid should then run from 0 to close
+        to pi (e.g. 179 deg; the integrand goes to zero at pi).
+
+    Returns
+    -------
+    array
+        Spherical albedo A_s(wavenumber), shape (nwno,).
+    array
+        Phase integral q(wavenumber), shape (nwno,). NaN where A_g <= 0.
+
+    Examples
+    --------
+    >>phases, weights = get_phase_quadrature(12)
+    >>spherical_albedo, q = _phase_integral(phases, albedo_by_phase, geometric_albedo=a_g, weights=weights)
+    """
+    phases = np.asarray(phases, dtype=float)
+    albedo_by_phase = np.atleast_2d(np.asarray(albedo_by_phase, dtype=float))
+    if albedo_by_phase.shape[0] != phases.size:
+        raise Exception('albedo_by_phase must have shape (nphase, nwno) with nphase = len(phases)')
+
+    #spherical albedo, Cahoy et al. 2010 Eqs. 4-5: A_s = 2 int A(alpha) sin(alpha) dalpha
+    if weights is None:
+        #trapezoid rule needs phases in increasing order
+        phase_order = np.argsort(phases)
+        sorted_phases = phases[phase_order]
+        integrand = albedo_by_phase[phase_order] * np.sin(sorted_phases)[:, None]
+        spherical_albedo = 2.0 * _trapz(integrand, x=sorted_phases, axis=0)
+    else:
+        #Gauss-Legendre in cos(alpha): sin(alpha) and the factor of 2 are in the weights
+        weights = np.asarray(weights, dtype=float)
+        if weights.size != phases.size:
+            raise Exception('weights must have the same length as phases')
+        spherical_albedo = np.sum(weights[:, None] * albedo_by_phase, axis=0)
+
+    #geometric albedo is the albedo at zero phase (Cahoy et al. 2010 Eq. 2)
+    if geometric_albedo is None:
+        zero_phase_index = np.where(np.isclose(phases, 0.0))[0]
+        if zero_phase_index.size == 0:
+            raise Exception('geometric_albedo was not supplied and phases does not include 0')
+        geometric_albedo = albedo_by_phase[zero_phase_index[0]]
+    geometric_albedo = np.asarray(geometric_albedo, dtype=float)
+
+    #phase integral q = A_s / A_g (Cahoy et al. 2010 Eq. 5), undefined where A_g = 0
+    phase_integral_spectrum = np.full_like(spherical_albedo, np.nan)
+    has_geometric_albedo = geometric_albedo > 0
+    phase_integral_spectrum[has_geometric_albedo] = (spherical_albedo[has_geometric_albedo]
+                                                     / geometric_albedo[has_geometric_albedo])
+    return spherical_albedo, phase_integral_spectrum
+
+def _flux_weighted_albedo(wno, albedo, stellar_flux):
+    """
+    Stellar-flux-weighted average of an albedo spectrum (eq. 18 of Batalha et al. 2019;
+    Cahoy et al. 2010 Eq. 6),
+
+        <A> = int A F_star d(lambda) / int F_star d(lambda),
+
+    integrated over the wavelength range of the opacity database only.
+
+    Passing the spherical albedo gives the Bond albedo A_B. Passing the albedo at one
+    phase (what `spectrum` does) gives ``flux_weighted_geometric_albedo``, which is
+    only equal to A_B if the phase integral q = 1.
+
+    Parameters
+    ----------
+    wno : array
+        Wavenumber grid in cm-1.
+    albedo : array
+        Albedo on ``wno``, e.g. the spherical albedo from `_phase_integral`.
+    stellar_flux : array
+        Stellar flux on ``wno``. Units cancel.
+
+    Returns
+    -------
+    float
+        Flux-weighted albedo.
+
+    Examples
+    --------
+    >>a_b = _flux_weighted_albedo(wno, spherical_albedo, case.inputs['star']['flux'])
+    """
+    #integrate in wavelength (1/wno)
+    wavelength_cm = 1 / np.asarray(wno, dtype=float)
+    #zero out any non-finite values so they do not propagate into the average
+    flux_weighted = np.nan_to_num(np.asarray(albedo) * stellar_flux,
+                                  nan=0.0, posinf=0.0, neginf=0.0)
+    return (_trapz(x=wavelength_cm, y=flux_weighted)
+            / _trapz(x=wavelength_cm, y=stellar_flux))
 
 def opannection(
     wave_range=None, 
@@ -4524,10 +4641,14 @@ class inputs():
                             Teff=Teff, alpha_pressure=alpha_pressure, supsat=supsat,
                             gas_mmr=gas_mmr, do_virtual=do_virtual, verbose=verbose,
                             aggregates=aggregates, Df=Df, N_mon=N_mon, r_mon=r_mon, k0=k0,latent_heat=latent_heat)
+            cloud_kwargs = dict(patchy_do_holes=do_holes, patchy_fthin_cld=fthin_cld,
+                                patchy_fhole=fhole)
             #turn on clouds for this calculation
             self.inputs['climate']['cloudy'] = True
+            self.inputs['climate']['cld_model'] = 'virga'
             #passes all the virga params 
             self.inputs['climate']['virga_kwargs'] = virga_kwargs
+            self.inputs['climate']['cloud_kwargs'] = cloud_kwargs
         
         #if we are all good for a run, run virga and produce output
         if run:     
@@ -4803,6 +4924,118 @@ class inputs():
 
         self.inputs['clouds']['profile'] = ds 
         self.inputs['clouds']['wavenumber'] = ds.coords['wno'].values
+
+    def nimbus(self, condensates, mh=1, mmw=2.2, gas_mmr=None, verbose=True,
+        do_holes=False,fhole=None,fthin_cld=None):
+        """
+        Runs nimbus cloud code based on the PT and Kzz profiles
+        that have been added to inptus class.
+        Parameters
+        ----------
+        condensates : str
+            Condensates to run in cloud model
+        mh : float
+            Metallicity
+        mmw : float
+            Atmospheric mean molecular weight
+        gas_mmr : dict
+            Required gas MMR as a dictionary for individual condensates.
+            E.g. {'H2O':1e-6}
+        verbose : bool
+            Turn off warnings
+        clouds_kwargs : dict
+            Added so that users can add do_hole=True, with fhole and fthin_cld and it will make the nimbus cloud
+            patchy
+        do_holes : bool
+            If True, the clouds will be patchy. This is done by using the fthin_cld and fhole parameters
+        fhole : float
+            Fraction of the clear hole such that spec = (1-fhole) * cloudy_spec + fhole * clear_spec
+        fthin_cld : float
+            Scales the hole (the clear part) such that fthin_cld=0 would simply be a fully clear patch
+        """
+        if Nimbus is None:
+            raise ImportError("The nimbus cloud model is not installed. Install it with "
+                "`pip install \"picaso[nimbus]\"` and install MieNet with "
+                "`pip install git+https://github.com/MieNet-org/mienet.git`. See the installation "
+                "instructions in the Nimbus tutorial: "
+                "https://natashabatalha.github.io/picaso/notebooks/C_clouds/3_RunningNimbusInPICASO.html")
+        if gas_mmr is None:
+            raise Exception("Nimbus requires gas_mmr to be defined. Please pass gas_mmr as a dict of condensate mass mixing ratios, e.g. gas_mmr={'H2O': 1e-6}.")
+
+        #stages inputs for cloudy run and also get kwargs for clouds function which we run at the end of this
+        clouds_kwargs=dict(do_holes=do_holes,fhole=fhole,fthin_cld=fthin_cld)
+        self.inputs['clouds']['do_holes']=do_holes
+        self.inputs['clouds']['fhole']=fhole
+        self.inputs['clouds']['fthin_cld']=fthin_cld
+
+        if ((('temperature' not in self.inputs['atmosphere']['profile'].keys())
+            or ('kz' not in self.inputs['atmosphere']['profile'].keys()))
+            and ('climate' in self.inputs['calculation'])):
+            #if there is no temprature and a user has specified clouds, then assume this is just a setup inputs function
+            #and the user does not want an actual run
+            run=False
+        else:
+            run=True
+
+        #if this is a climate run lets make sure we have all the right inputs set
+        if 'climate' in self.inputs['calculation']:
+            nimbus_kwargs = dict(condensates=condensates, mh=mh, mmw=mmw,
+                                 gas_mmr=gas_mmr, verbose=verbose)
+            cloud_kwargs = dict(patchy_do_holes=do_holes, patchy_fthin_cld=fthin_cld,
+                                patchy_fhole=fhole)
+            #turn on clouds for this calculation
+            self.inputs['climate']['cloudy'] = True
+            self.inputs['climate']['cld_model'] = 'nimbus'
+            self.inputs['climate']['nimbus_kwargs'] = nimbus_kwargs
+            self.inputs['climate']['cloud_kwargs'] = cloud_kwargs
+
+        #if we are all good for a run, run nimbus and produce output
+        if run:
+            obj = Nimbus(create_analytic_plots=False, verbose=False, mute=not verbose)
+
+            if 'kz' not in self.inputs['atmosphere']['profile'].keys():
+                raise Exception ("Must supply kz to atmosphere/chemistry DataFrame, \
+                    if running `nimbus` through `picaso`. This should go in the \
+                    same place that you specified you pressure-temperature profile. \
+                    Alternatively, you can manually add it by doing \
+                    `case.inputs['atmosphere']['profile']['kz'] = KZ`")
+            df = self.inputs['atmosphere']['profile'].loc[:,['pressure','temperature','kz']].copy()
+
+            obj.set_up_atmosphere(
+                temperature = self.inputs['atmosphere']['profile']['temperature'].values,
+                pressure = self.inputs['atmosphere']['profile']['pressure'].values,
+                kzz = self.inputs['atmosphere']['profile']['kz'].values,
+                mmw = mmw,
+                gravity = self.inputs['planet']['gravity'], #convert from m/s^2 to cm/s^2 for nimbus
+                species = condensates,
+                deep_mmr = gas_mmr, #future work make this pull from virga gas_mmr
+                metalicity = mh, #relative to solar
+            )
+            obj.set_up_solver()
+
+            # compute the cloud structure
+            ds = obj.compute(typ='full')
+
+            df_cld = obj.picaso_formater(ds_prev=ds)
+
+            df_cld = df_cld.sort_values(['pressure', 'wavenumber']).reset_index(drop=True)
+            pressure = np.sort(df_cld['pressure'].unique())
+            wavenumber = np.sort(df_cld['wavenumber'].unique())
+            opd = df_cld['opd'].values.reshape(len(pressure), len(wavenumber))
+            w0 = df_cld['w0'].values.reshape(len(pressure), len(wavenumber))
+            g0 = df_cld['g0'].values.reshape(len(pressure), len(wavenumber))
+
+            # format to be similar to virga output so that climate can use the same cloud workflow
+            out = {}
+            out['opd_per_layer'] = opd
+            out['single_scattering'] = w0
+            out['asymmetry'] = g0
+            out['pressure'] = pressure
+            out['wave'] = 1e4 / wavenumber
+
+            #only pass through clouds 1d if clouds are one dimension
+            self.clouds(df=df_cld,**clouds_kwargs)
+            return out
     
     def approx(self,single_phase='TTHG_ray',multi_phase='N=2',delta_eddington=True,
         raman='pollack',tthg_frac=[1,-1,2], tthg_back=-0.5, tthg_forward=1,
@@ -4965,6 +5198,130 @@ class inputs():
         #return dict such that each key is a different phase 
         return {iphase:results[i] for i,iphase in enumerate(phases)}
 
+    def bond_albedo(self, opacityclass, n_phase=12, phase_grid=None, num_gangle=8,
+        num_tangle=8, n_cpu=1, verbose=False):
+        """
+        Compute the Bond albedo of a 1D atmosphere, including the phase integral.
+
+        The ``flux_weighted_geometric_albedo`` returned by `spectrum` (formerly
+        ``bond_albedo``) is the stellar-flux-weighted albedo at the requested phase (Batalha et al. 2019, eq. 18), which assumes a phase integral
+        q = 1. This function computes reflected-light spectra at several phases and
+        follows Cahoy et al. 2010 (ApJ 724, 189):
+
+            q(lambda)   = 2 int_0^pi Phi(lambda, alpha) sin(alpha) d(alpha)   (Eq. 4)
+            A_s(lambda) = q(lambda) A_g(lambda)                               (Eq. 5)
+            A_B         = int A_s F_star d(lambda) / int F_star d(lambda)     (Eq. 6)
+
+        For reference, a Lambert sphere has q = 3/2 and a Rayleigh phase function has
+        q = 4/3 (Cahoy et al. 2010, Sec. 4.4).
+
+        Costs ``n_phase + 1`` reflected-light calculations (``len(phase_grid)`` if a grid
+        is given). Set up the case as for `spectrum` first. The case's own
+        ``phase_angle`` settings are not changed.
+
+        Parameters
+        ----------
+        opacityclass : class
+            Opacity class from `justdoit.opannection`
+        n_phase : int
+            (Optional) Default = 12. Number of Gauss-Legendre nodes in cos(phase); see
+            `disco.get_phase_quadrature`. Ignored if ``phase_grid`` is given.
+        phase_grid : array
+            (Optional) Default = None. Phase angles in radians, 0 <= phase < pi, including 0.
+            Integrated with the trapezoid rule instead of Gauss-Legendre.
+        num_gangle : int
+            (Optional) Default = 8. Gauss angles per phase, see `phase_angle`.
+        num_tangle : int
+            (Optional) Default = 8. Chebyshev angles per phase, see `phase_angle`.
+        n_cpu : int
+            (Optional) Default = 1. Number of CPUs to parallelize over phases. Each
+            process holds its own copy of the case, so memory grows with ``n_cpu``.
+        verbose : bool
+            (Optional) Default = False. Print each phase as it is computed.
+
+        Returns
+        -------
+        dict
+            ``bond_albedo`` (float), ``spherical_albedo``, ``phase_integral`` and
+            ``geometric_albedo`` (arrays on ``wavenumber``), ``phase_integral_flux_weighted``
+            (A_B over the flux-weighted A_g), ``phase_grid`` and ``weights`` used,
+            ``albedo_by_phase`` (nphase x nwno) and ``method`` ('gauss' or 'trapezoid').
+
+        Examples
+        --------
+        >>out = case.bond_albedo(opa, n_phase=12)
+        >>out['bond_albedo']
+        """
+        #a Bond albedo needs an illuminating star
+        if 'nostar' in str(self.inputs['star'].get('database', 'nostar')):
+            raise Exception('bond_albedo requires a star. Set one with the `star` function.')
+
+        #choose the phases to integrate over
+        if phase_grid is None:
+            method = 'gauss'
+            phases, weights = get_phase_quadrature(n_phase)
+        else:
+            method = 'trapezoid'
+            phases = np.sort(np.asarray(phase_grid, dtype=float))
+            weights = None
+            if (phases.min() < 0) or (phases.max() >= np.pi):
+                raise Exception('phase_grid must be in radians with 0 <= phase < pi')
+            if not np.any(np.isclose(phases, 0.0)):
+                raise Exception('phase_grid must include 0 so the geometric albedo is defined')
+
+        #Gauss nodes exclude zero phase, so add it to get the geometric albedo
+        if method == 'gauss':
+            phases_to_compute = np.concatenate([[0.0], phases])
+        else:
+            phases_to_compute = phases
+
+        def compute_albedo_at_phase(phase):
+            #work on a copy so the user's phase_angle/disco settings are not changed
+            if verbose: print('Computing reflected light at phase', np.degrees(phase), 'deg')
+            case_at_phase = copy.deepcopy(self)
+            case_at_phase.phase_angle(phase, num_gangle=num_gangle, num_tangle=num_tangle)
+            spectrum_out = case_at_phase.spectrum(opacityclass, calculation='reflected')
+            return spectrum_out['wavenumber'], spectrum_out['albedo']
+
+        spectra_by_phase = Parallel(n_jobs=n_cpu)(
+            delayed(compute_albedo_at_phase)(phase) for phase in phases_to_compute)
+        wno = np.asarray(spectra_by_phase[0][0])
+        albedo_all_phases = np.array([albedo for _, albedo in spectra_by_phase])
+
+        #first computed phase is always 0, i.e. the geometric albedo
+        geometric_albedo = albedo_all_phases[0]
+        if method == 'gauss':
+            albedo_by_phase = albedo_all_phases[1:]
+        else:
+            albedo_by_phase = albedo_all_phases
+
+        #spherical albedo and phase integral, Cahoy et al. 2010 Eqs. 4-5
+        spherical_albedo, phase_integral_spectrum = _phase_integral(
+            phases, albedo_by_phase, geometric_albedo=geometric_albedo, weights=weights)
+
+        #Bond albedo, Cahoy et al. 2010 Eq. 6
+        stellar_flux = np.asarray(self.inputs['star']['flux'])
+        bond_albedo_value = _flux_weighted_albedo(wno, spherical_albedo, stellar_flux)
+
+        #ratio to the q=1 value (spectrum()['flux_weighted_geometric_albedo'] at zero phase)
+        #is an effective q
+        flux_weighted_geometric_albedo = _flux_weighted_albedo(wno, geometric_albedo, stellar_flux)
+        if flux_weighted_geometric_albedo > 0:
+            effective_phase_integral = bond_albedo_value / flux_weighted_geometric_albedo
+        else:
+            effective_phase_integral = np.nan
+
+        return {'bond_albedo': bond_albedo_value,
+                'spherical_albedo': spherical_albedo,
+                'phase_integral': phase_integral_spectrum,
+                'phase_integral_flux_weighted': effective_phase_integral,
+                'geometric_albedo': geometric_albedo,
+                'wavenumber': wno,
+                'phase_grid': phases,
+                'weights': weights,
+                'albedo_by_phase': albedo_by_phase,
+                'method': method}
+
     def spectrum(self, opacityclass, calculation='reflected', dimension = '1d',  full_output=False, 
         plot_opacity= False, as_dict=True):
         """Run Spectrum
@@ -4988,6 +5345,14 @@ class inputs():
             If false, returns the atmosphere class, which can be used for debugging. 
             The class is clunky to navigate so if you are consiering navigating through this, ping one of the 
             developers. 
+
+        Notes
+        -----
+        For reflected light, the returned ``flux_weighted_geometric_albedo`` is the
+        stellar-flux-weighted albedo at the requested phase angle (Batalha et al. 2019,
+        eq. 18). It assumes a phase integral q = 1, so it is not the true Bond albedo. Use
+        `inputs.bond_albedo` to compute the Bond albedo including the phase integral.
+        (This key was called ``bond_albedo`` in earlier versions of PICASO.)
         """
         #CHECKS 
 
@@ -5070,8 +5435,14 @@ class inputs():
                 f"gravity {planet['gravity']*0.01:g} m/s2",
                 f"{len(pressure)} levels, {np.min(pressure):.2g}-{np.max(pressure):.3g} bar",
                 f"chemistry: {chemistry}",
-                f"clouds: {'virga' if cloudy else ('fixed' if self._fixed_cloud(cloudy) else 'no')}",
+                f"clouds: {self._cloud_label(cloudy) or 'no'}",
                 f"moist adiabat: {'yes' if moist else 'no'}"]
+
+    def _cloud_label(self, cloudy):
+        """'virga' or 'nimbus' for a self-consistent cloud, 'fixed' for a cloud added with clouds(), else None."""
+        if cloudy:
+            return self.inputs['climate'].get('cld_model', 'virga')
+        return 'fixed' if self._fixed_cloud(cloudy) else None
 
     def _fixed_cloud(self, cloudy):
         """True if climate() should hold a cloud fixed: one was added with clouds() and virga() was not set up."""
@@ -5099,7 +5470,7 @@ class inputs():
         print('SUMMARY')
         print('-------')
         cloudy = self.inputs['climate'].get('cloudy',False)
-        print('Clouds:', 'virga' if cloudy else ('fixed' if self._fixed_cloud(cloudy) else False))
+        print('Clouds:', self._cloud_label(cloudy) or False)
         for i,j in self.inputs['approx']['chem_params'].items(): print(i,j)
         print('Moist Adiabat:', self.inputs['climate']['moistgrad'])
 
@@ -5411,6 +5782,9 @@ class inputs():
 
         #virga inputs 
         virga_kwargs = self.inputs['climate'].get('virga_kwargs',{})
+        nimbus_kwargs = self.inputs['climate'].get('nimbus_kwargs',{})
+        cloud_kwargs = self.inputs['climate'].get('cloud_kwargs',{})
+        cld_model = self.inputs['climate'].get('cld_model','virga')
         
         #now these are in virga kwargs!!! 
         #do_holes = self.inputs['climate']['do_holes']
@@ -5419,17 +5793,22 @@ class inputs():
 
         # check the dimensions of the mieff grid  
         if cloudy:
-            mieff_dir = virga_kwargs.get('directory',None)
-            if mieff_dir is None:
-                raise Exception('Need to specify directory for cloudy runs via Virga function')
-            # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size 
-            # check if the mieff file is on 661 grid
-            list_mieff_files=[f for f in os.listdir(mieff_dir) if f.endswith('.mieff')]
-            assert len(list_mieff_files)>0, 'Did not find any mieff files in the supplied virga directory'
-            testfile = list_mieff_files[0]
-            miefftest = os.path.join(mieff_dir, testfile)
-            with open(miefftest, 'r') as file:
-                nwno_clouds = int(float(file.readline().split()[0]))
+            if cld_model == 'virga':
+                mieff_dir = virga_kwargs.get('directory',None)
+                if mieff_dir is None:
+                    raise Exception('Need to specify directory for cloudy runs via Virga function')
+                # get_clouds should reinterpolate so it is okay that this isnt on the same grid but need to get the size
+                # check if the mieff file is on 661 grid
+                list_mieff_files=[f for f in os.listdir(mieff_dir) if f.endswith('.mieff')]
+                assert len(list_mieff_files)>0, 'Did not find any mieff files in the supplied virga directory'
+                testfile = list_mieff_files[0]
+                miefftest = os.path.join(mieff_dir, testfile)
+                with open(miefftest, 'r') as file:
+                    nwno_clouds = int(float(file.readline().split()[0]))
+            elif cld_model == 'nimbus':
+                nwno_clouds = 196
+            else:
+                raise Exception(f'Unknown cloud model {cld_model}. Supported cloud models are virga and nimbus.')
         else: 
             nwno_clouds = nwno
             #if diseq_chem and not chemeq_first and gridsize != 661:
@@ -5444,14 +5823,19 @@ class inputs():
         w0_cld_climate = np.zeros(shape=(self.nlevel-1,nwno_clouds,4))
         #BUNDLING
         virga_specific =[['virga_'+i,val] for i ,val in virga_kwargs.items() if 'patchy' not in i]
-        hole_specific =  [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
-        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'OPD','G0','W0']
+        hole_specific =  [[i,val] for i ,val in cloud_kwargs.items()]
+        if not hole_specific:
+            hole_specific = [[i,val] for i ,val in virga_kwargs.items() if 'patchy' in i]
+        nimbus_specific = [['nimbus_'+i,val] for i ,val in nimbus_kwargs.items()]
+        CloudParametersT = namedtuple('CloudParameters',['cloudy', 'model','OPD','G0','W0']
                                       +[i[0] for i in virga_specific]
-                                      +[i[0] for i in hole_specific])
+                                      +[i[0] for i in hole_specific]
+                                      +[i[0] for i in nimbus_specific])
         #this adds the cloud params that are always needed plus the virga kwargs, if they are used 
-        CloudParameters=CloudParametersT(*([cloudy, opd_cld_climate,g0_cld_climate,w0_cld_climate]
+        CloudParameters=CloudParametersT(*([cloudy, cld_model, opd_cld_climate,g0_cld_climate,w0_cld_climate]
                                         +[i[1] for i in virga_specific]
-                                        +[i[1] for i in hole_specific]))
+                                        +[i[1] for i in hole_specific]
+                                        +[i[1] for i in nimbus_specific]))
 
 
         reporter = ClimateReporter(verbose, watch)
@@ -5521,7 +5905,11 @@ class inputs():
             df_cld = vj.picaso_format(cld_out['opd_per_layer'],cld_out['single_scattering'],cld_out['asymmetry'], 
                                       pressure = cld_out['pressure'], wavenumber=1e4/cld_out['wave'])
             all_out['cld_df'] = df_cld
-            all_out['virga_output'] = cld_out
+            all_out['cloud_output'] = cld_out
+            if cld_model == 'virga':
+                all_out['virga_output'] = cld_out
+            elif cld_model == 'nimbus':
+                all_out['nimbus_output'] = cld_out
             #all_out['cld_output_final'] = df_cld_final
         elif fixed_cloud:
             #the cloud that was held fixed, so it can be saved with the profile
@@ -5541,9 +5929,12 @@ class inputs():
                                         cold_trap = self.inputs['approx']['chem_params']['cold_trap'], 
                                         vol_rainout= self.inputs['approx']['chem_params']['vol_rainout'])
             if cloudy == 1:
-                cld_kwargs =dict( do_holes=virga_kwargs.get('patchy_do_holes',False), 
-                                  fhole = virga_kwargs.get('patchy_fhole',0),
-                                  fthin_cld = virga_kwargs.get('patchy_fthin_cld',0))
+                cld_kwargs =dict( do_holes=cloud_kwargs.get('patchy_do_holes',
+                                                            virga_kwargs.get('patchy_do_holes',False)),
+                                  fhole = cloud_kwargs.get('patchy_fhole',
+                                                           virga_kwargs.get('patchy_fhole',0)),
+                                  fthin_cld = cloud_kwargs.get('patchy_fthin_cld',
+                                                               virga_kwargs.get('patchy_fthin_cld',0)))
                 self.clouds(df=df_cld,**cld_kwargs)
             df_spec = self.spectrum(opacityclass,full_output=True,calculation='thermal')    
             all_out['spectrum_output'] = df_spec 

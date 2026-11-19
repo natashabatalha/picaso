@@ -15,6 +15,7 @@ Step-by-step introductions to each part of PICASO, from a first spectrum to 3D m
    Transmission Spectroscopy <notebooks/A_basics/6_AddingTransitSpectrum.py>
    Brown Dwarf Spectroscopy <notebooks/A_basics/7_BrownDwarfs.py>
    Sonora Models (Bobcat, Elf Owl, Diamondback, Flame Skimmer) <notebooks/A_basics/8_SonoraModels.py>
+   Geometric, Spherical & Bond Albedos <notebooks/A_basics/9_BondAlbedo.py>
 
 .. toctree::
    :caption: Chemistry
@@ -27,8 +28,9 @@ Step-by-step introductions to each part of PICASO, from a first spectrum to 3D m
    :caption: Clouds
    :maxdepth: 1
 
-   Virga (Ackerman & Marley Clouds) <notebooks/C_clouds/1_PairingPICASOToVIRGA.py>
+   Virga Cloud Model (Ackerman & Marley 2001) <notebooks/C_clouds/1_PairingPICASOToVIRGA.py>
    Patchy Clouds <notebooks/C_clouds/2_PatchyClouds.py>
+   Nimbus Cloud Model (Kiefer et al. 2026) </notebooks/C_clouds/3_RunningNimbusInPICASO.py>
 
 1D climate modeling: cite `Mukherjee et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023ApJ...942...71M/abstract>`_ and `Mang et al. 2026 <https://ui.adsabs.harvard.edu/abs/2026ApJ..1000...98M/abstract>`_.
 
